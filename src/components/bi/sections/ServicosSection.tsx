@@ -2,9 +2,8 @@ import { Wrench, AlertCircle, CheckCircle, Clock, Timer, FolderOpen } from "luci
 import { useServicosData } from "@/hooks/bi/useServicosData";
 import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
-import { NivoHorizontalBarChart, NivoVerticalBarChart } from "@/components/bi/nivo/NivoBarChart";
-import { NivoPieChartWithLabels } from "@/components/bi/nivo/NivoPieChart";
-import { NIVO_COLORS } from "@/lib/nivoTheme";
+import { HorizontalBarChart, VerticalBarChart, PieChartWithLabels } from "@/components/bi/charts";
+import { CHART_COLORS } from "@/lib/chartTheme";
 import { formatDias } from "@/lib/dateUtils";
 
 interface Props {
@@ -28,55 +27,55 @@ export default function ServicosSection({ active }: Props) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <ChartCard title="OS por Status" description="Distribuicao entre fechadas, abertas e canceladas" loading={isLoading}>
-          <NivoPieChartWithLabels
+          <PieChartWithLabels
             data={agg.porStatus.map(item => ({ id: item.name, value: item.value, name: item.name }))}
             title=""
-            colors={NIVO_COLORS}
+            colors={CHART_COLORS}
           />
         </ChartCard>
 
         <ChartCard title="Tempo de Resolucao por Faixa" description="Quantas OS sao resolvidas em cada janela de tempo" loading={isLoading}>
-          <NivoVerticalBarChart
+          <VerticalBarChart
             data={agg.faixasResolucao.map(item => ({ name: item.name, value: item.value }))}
             keys={['value']}
             title=""
-            colors={[NIVO_COLORS[0]]}
+            colors={[CHART_COLORS[0]]}
           />
         </ChartCard>
 
         <ChartCard title="Evolucao Mensal de Aberturas" description="Numero de OS abertas por mes" loading={isLoading}>
-          <NivoVerticalBarChart
+          <VerticalBarChart
             data={agg.evolucaoAberturas.map(item => ({ name: item.name, value: item.value }))}
             keys={['value']}
             title=""
-            colors={[NIVO_COLORS[1]]}
+            colors={[CHART_COLORS[1]]}
           />
         </ChartCard>
 
         <ChartCard title="Atividade de Campo — Ocorrencias" description="Deslocamento, atendimento e pausas registradas pelos tecnicos" loading={isLoading}>
-          <NivoHorizontalBarChart
+          <HorizontalBarChart
             data={agg.situacaoOcorrencias.map(item => ({ name: item.name, value: item.value }))}
             keys={['value']}
             title=""
-            colors={[NIVO_COLORS[2]]}
+            colors={[CHART_COLORS[2]]}
           />
         </ChartCard>
 
         <ChartCard title="Motivos de Pausa" description="Gargalos operacionais (ex: aguardando pecas)" loading={isLoading}>
-          <NivoHorizontalBarChart
+          <HorizontalBarChart
             data={agg.motivosPausa.map(item => ({ name: item.name, value: item.value }))}
             keys={['value']}
             title=""
-            colors={[NIVO_COLORS[5]]}
+            colors={[CHART_COLORS[5]]}
           />
         </ChartCard>
 
         <ChartCard title="Causas de Atendimento Mais Comuns" description="Principais motivos de chamado tecnico" loading={isLoading}>
-          <NivoHorizontalBarChart
+          <HorizontalBarChart
             data={agg.causasAtendimento.map(item => ({ name: item.name, value: item.value }))}
             keys={['value']}
             title=""
-            colors={[NIVO_COLORS[3]]}
+            colors={[CHART_COLORS[3]]}
           />
         </ChartCard>
       </div>

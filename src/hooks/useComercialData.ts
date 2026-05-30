@@ -229,8 +229,10 @@ export function useComercialData() {
   } = useQuery({
     queryKey: ["registros-comerciais"],
     queryFn: fetchRegistrosComerciais,
-    staleTime: 60_000,
-    refetchInterval: 60_000,
+    // Antes: staleTime 60s + refetchInterval 60s -> rebaixava a view INTEIRA do
+    // SQL Server a cada minuto (lentidao/jank). Agora 5 min de cache; atualizacao
+    // manual continua via botao "Atualizar Dados" (invalidateQueries).
+    staleTime: 5 * 60_000,
   });
 
   const error = queryError ? (queryError as Error).message : null;

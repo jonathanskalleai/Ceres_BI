@@ -3,10 +3,8 @@ import { usePedidosData } from "@/hooks/bi/usePedidosData";
 import { usePedidosItensData } from "@/hooks/bi/usePedidosItensData";
 import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
-import { NivoHorizontalBarChart } from "@/components/bi/nivo/NivoBarChart";
-import { NivoPieChartWithLabels } from "@/components/bi/nivo/NivoPieChart";
-import NivoLineChart from "@/components/bi/nivo/NivoLineChart";
-import { NIVO_COLORS, POSITIVE_COLOR } from "@/lib/nivoTheme";
+import { HorizontalBarChart, PieChartWithLabels, LineChart } from "@/components/bi/charts";
+import { CHART_COLORS, POSITIVE_COLOR } from "@/lib/chartTheme";
 import { formatBRL, formatBRLShort } from "@/lib/dateUtils";
 
 interface Props {
@@ -38,20 +36,20 @@ export default function PedidosSection({ active }: Props) {
           <div className="h-full">
             <div className="grid grid-cols-1 gap-4 h-full">
               <div className="h-1/2">
-                <NivoHorizontalBarChart
+                <HorizontalBarChart
                   data={agg.evolucaoMensal.map(item => ({ name: item.name, faturamento: item.faturamento }))}
                   keys={['faturamento']}
                   title="Faturamento"
                   tooltipFormatter={formatBRL}
-                  colors={[NIVO_COLORS[0]]}
+                  colors={[CHART_COLORS[0]]}
                   height={130}
                 />
               </div>
               <div className="h-1/2">
-                <NivoLineChart
+                <LineChart
                   data={agg.evolucaoMensal.map(item => ({ x: item.name, y: item.qtd }))}
                   title="Pedidos"
-                  color={NIVO_COLORS[1]}
+                  color={CHART_COLORS[1]}
                   height={130}
                   tooltipFormatter={(v: number) => v.toLocaleString("pt-BR")}
                 />
@@ -65,13 +63,13 @@ export default function PedidosSection({ active }: Props) {
           description="Recurso proprio vs financiado (R$ aprovado)"
           loading={isLoading}
         >
-          <NivoPieChartWithLabels
+          <PieChartWithLabels
             data={[
               { id: 'proprio', value: agg.mixPagamento[0]?.value || 0, name: 'Recurso próprio' },
               { id: 'financiado', value: agg.mixPagamento[1]?.value || 0, name: 'Financiado' }
             ]}
             title=""
-            colors={[POSITIVE_COLOR, NIVO_COLORS[1]]}
+            colors={[POSITIVE_COLOR, CHART_COLORS[1]]}
           />
         </ChartCard>
 
@@ -80,7 +78,7 @@ export default function PedidosSection({ active }: Props) {
           description="R$ em cada status (aprovado, cancelado, etc.)"
           loading={isLoading}
         >
-          <NivoHorizontalBarChart
+          <HorizontalBarChart
             data={agg.porSituacao.map(item => ({
               name: item.name,
               valor: item.valor,
@@ -89,7 +87,7 @@ export default function PedidosSection({ active }: Props) {
             keys={['valor']}
             title=""
             tooltipFormatter={(value, d) => `${formatBRL(value)} (${d?.qtd ?? 0} pedidos)`}
-            colors={[NIVO_COLORS[2]]}
+            colors={[CHART_COLORS[2]]}
           />
         </ChartCard>
 
@@ -98,7 +96,7 @@ export default function PedidosSection({ active }: Props) {
           description="Top 10 por receita aprovada"
           loading={isLoading}
         >
-          <NivoHorizontalBarChart
+          <HorizontalBarChart
             data={agg.porVendedor.map(item => ({
               name: item.name,
               value: item.value
@@ -106,7 +104,7 @@ export default function PedidosSection({ active }: Props) {
             keys={['value']}
             title=""
             tooltipFormatter={formatBRL}
-            colors={[NIVO_COLORS[1]]}
+            colors={[CHART_COLORS[1]]}
           />
         </ChartCard>
 
@@ -115,7 +113,7 @@ export default function PedidosSection({ active }: Props) {
           description="Faturamento aprovado por cidade/UF"
           loading={isLoading}
         >
-          <NivoHorizontalBarChart
+          <HorizontalBarChart
             data={agg.porCidade.map(item => ({
               name: item.name,
               value: item.value
@@ -123,7 +121,7 @@ export default function PedidosSection({ active }: Props) {
             keys={['value']}
             title=""
             tooltipFormatter={formatBRL}
-            colors={[NIVO_COLORS[3]]}
+            colors={[CHART_COLORS[3]]}
           />
         </ChartCard>
 
@@ -132,7 +130,7 @@ export default function PedidosSection({ active }: Props) {
           description="Valor vendido por grupo de produto (itens dos pedidos)"
           loading={itensLoading}
         >
-          <NivoHorizontalBarChart
+          <HorizontalBarChart
             data={itens.porGrupo.map(item => ({
               name: item.name,
               valor: item.valor,
@@ -141,7 +139,7 @@ export default function PedidosSection({ active }: Props) {
             keys={['valor']}
             title=""
             tooltipFormatter={(value, d) => `${formatBRL(value)} (${d?.qtd ?? 0} un)`}
-            colors={[NIVO_COLORS[4]]}
+            colors={[CHART_COLORS[4]]}
           />
         </ChartCard>
       </div>

@@ -12,7 +12,18 @@ import ProdutosModule from "./pages/ProdutosModule";
 import DashboardBI from "./pages/DashboardBI";
 import NotFound from "./pages/NotFound.tsx";
 
-const queryClient = new QueryClient();
+// Cache global: dados de BI/SQL Server não são realtime. Sem isso (staleTime:0
+// padrão) toda troca de aba/remontagem refazia o fetch inteiro — causa da lentidão.
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60_000, // 5 min "fresco" — não refetch ao trocar de aba
+      gcTime: 30 * 60_000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

@@ -43,7 +43,14 @@ const DashboardBIReal = () => {
   const [activeTab, setActiveTab] = useState<TabValue>("comercial");
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="relative p-6 space-y-4">
+      {/* Fundo ambiente — radiais suaves para o efeito glass (blur) refratar */}
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
+        <div className="absolute -top-24 -left-16 h-72 w-72 rounded-full bg-amber-400/20 blur-3xl" />
+        <div className="absolute top-1/3 right-0 h-80 w-80 rounded-full bg-blue-500/15 blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-violet-500/15 blur-3xl" />
+      </div>
+
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Dashboard BI</h1>
         <p className="text-sm text-muted-foreground">

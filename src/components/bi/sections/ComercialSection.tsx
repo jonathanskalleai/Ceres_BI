@@ -5,9 +5,8 @@ import { useNegociosBI } from "@/hooks/bi/useNegociosBI";
 import { useFunilData } from "@/hooks/bi/useFunilData";
 import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
-import { NivoHorizontalBarChart } from "@/components/bi/nivo/NivoBarChart";
-import NivoLineChart from "@/components/bi/nivo/NivoLineChart";
-import { NIVO_COLORS, POSITIVE_COLOR, NEGATIVE_COLOR } from "@/lib/nivoTheme";
+import { HorizontalBarChart, LineChart } from "@/components/bi/charts";
+import { CHART_COLORS, POSITIVE_COLOR, NEGATIVE_COLOR } from "@/lib/chartTheme";
 import { formatBRL, formatBRLShort, formatDias } from "@/lib/dateUtils";
 
 interface Props {
@@ -62,12 +61,12 @@ export default function ComercialSection({ active }: Props) {
           description="Valor em aberto (R$) acumulado em cada etapa do funil"
           loading={isLoading}
         >
-          <NivoHorizontalBarChart
+          <HorizontalBarChart
             data={agg.funilPorEtapa.map(item => ({ name: item.name, valor: item.valor }))}
             keys={['valor']}
             title=""
             tooltipFormatter={formatBRL}
-            colors={[NIVO_COLORS[0]]}
+            colors={[CHART_COLORS[0]]}
           />
         </ChartCard>
 
@@ -76,7 +75,7 @@ export default function ComercialSection({ active }: Props) {
           description="Negocios por canal de entrada (ganho / perdido / em aberto)"
           loading={isLoading}
         >
-          <NivoHorizontalBarChart
+          <HorizontalBarChart
             data={agg.porOrigem.map(item => ({
               name: item.name,
               ganhos: item.ganhos,
@@ -86,7 +85,7 @@ export default function ComercialSection({ active }: Props) {
             keys={['ganhos', 'perdidos', 'andamento']}
             title=""
             tooltipFormatter={(v: number) => v.toLocaleString("pt-BR")}
-            colors={[POSITIVE_COLOR, NEGATIVE_COLOR, NIVO_COLORS[1]]}
+            colors={[POSITIVE_COLOR, NEGATIVE_COLOR, CHART_COLORS[1]]}
           />
         </ChartCard>
 
@@ -95,7 +94,7 @@ export default function ComercialSection({ active }: Props) {
           description="Onde a receita esta vazando (R$ em negocios perdidos)"
           loading={isLoading}
         >
-          <NivoHorizontalBarChart
+          <HorizontalBarChart
             data={agg.motivosPerda.map(item => ({
               name: item.name,
               valor: item.valor,
@@ -113,7 +112,7 @@ export default function ComercialSection({ active }: Props) {
           description="Tempo medio (dias) que negocios permanecem em cada etapa"
           loading={funilLoading}
         >
-          <NivoHorizontalBarChart
+          <HorizontalBarChart
             data={funil.velocidadePorEtapa.map(item => ({
               name: item.name,
               diasMedio: item.diasMedio,
@@ -122,7 +121,7 @@ export default function ComercialSection({ active }: Props) {
             keys={['diasMedio']}
             title=""
             tooltipFormatter={(value, d) => `${formatDias(value)} (${d?.qtd ?? 0} passagens)`}
-            colors={[NIVO_COLORS[4]]}
+            colors={[CHART_COLORS[4]]}
           />
         </ChartCard>
 
@@ -134,20 +133,20 @@ export default function ComercialSection({ active }: Props) {
           <div className="h-full">
             <div className="grid grid-cols-1 gap-4 h-full">
               <div className="h-1/2">
-                <NivoHorizontalBarChart
+                <HorizontalBarChart
                   data={agg.evolucaoMensal.map(item => ({ name: item.name, novos: item.novos }))}
                   keys={['novos']}
                   title="Novos negocios"
                   tooltipFormatter={(v: number) => v.toLocaleString("pt-BR")}
-                  colors={[NIVO_COLORS[1]]}
+                  colors={[CHART_COLORS[1]]}
                   height={130}
                 />
               </div>
               <div className="h-1/2">
-                <NivoLineChart
+                <LineChart
                   data={agg.evolucaoMensal.map(item => ({ x: item.name, y: item.valorCriado }))}
                   title="Valor negociado"
-                  color={NIVO_COLORS[0]}
+                  color={CHART_COLORS[0]}
                   height={130}
                   tooltipFormatter={formatBRL}
                 />
@@ -161,7 +160,7 @@ export default function ComercialSection({ active }: Props) {
           description="Top 10 por receita fechada (taxa de conversao no tooltip)"
           loading={isLoading}
         >
-          <NivoHorizontalBarChart
+          <HorizontalBarChart
             data={agg.rankingConsultor.map(item => ({
               name: item.name,
               valorGanho: item.valorGanho,
@@ -172,7 +171,7 @@ export default function ComercialSection({ active }: Props) {
             keys={['valorGanho']}
             title=""
             tooltipFormatter={(value, d) => `${formatBRL(value)} · ${d?.ganhos ?? 0}/${d?.total ?? 0} (${pct((d?.taxa as number) ?? 0)})`}
-            colors={NIVO_COLORS}
+            colors={CHART_COLORS}
           />
         </ChartCard>
       </div>

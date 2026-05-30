@@ -2,9 +2,8 @@ import { Cpu, Users, Layers, Tag } from "lucide-react";
 import { useProdutosData } from "@/hooks/bi/useProdutosData";
 import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
-import { NivoHorizontalBarChart } from "@/components/bi/nivo/NivoBarChart";
-import { NivoPieChartWithLabels } from "@/components/bi/nivo/NivoPieChart";
-import { NIVO_COLORS } from "@/lib/nivoTheme";
+import { HorizontalBarChart, PieChartWithLabels } from "@/components/bi/charts";
+import { CHART_COLORS } from "@/lib/chartTheme";
 
 interface Props {
   active: boolean;
@@ -25,28 +24,28 @@ export default function ProdutosSection({ active }: Props) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <ChartCard title="Base Instalada por Grupo" description="Quantidade de maquinas por tipo de equipamento" loading={isLoading}>
-          <NivoPieChartWithLabels
+          <PieChartWithLabels
             data={agg.porGrupo.map(item => ({ id: item.name, value: item.value, name: item.name }))}
             title=""
-            colors={NIVO_COLORS}
+            colors={CHART_COLORS}
           />
         </ChartCard>
 
         <ChartCard title="Base Instalada por Marca" description="Top 10 marcas no parque dos clientes" loading={isLoading}>
-          <NivoHorizontalBarChart
+          <HorizontalBarChart
             data={agg.porMarca.map(item => ({ name: item.name, value: item.value }))}
             keys={['value']}
             title=""
-            colors={[NIVO_COLORS[1]]}
+            colors={[CHART_COLORS[1]]}
           />
         </ChartCard>
 
         <ChartCard title="Top Modelos no Parque" description="Modelos mais presentes na base instalada" loading={isLoading}>
-          <NivoHorizontalBarChart
+          <HorizontalBarChart
             data={agg.topModelos.map(item => ({ name: item.name, value: item.value }))}
             keys={['value']}
             title=""
-            colors={[NIVO_COLORS[2]]}
+            colors={[CHART_COLORS[2]]}
           />
         </ChartCard>
       </div>

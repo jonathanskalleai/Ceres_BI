@@ -2,9 +2,8 @@ import { Users, Route, Activity, Coffee, Calendar, CheckCircle } from "lucide-re
 import { useOperacionalData } from "@/hooks/bi/useOperacionalData";
 import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
-import { NivoHorizontalBarChart, NivoVerticalBarChart } from "@/components/bi/nivo/NivoBarChart";
-import NivoPieChart, { NivoPieChartWithLabels } from "@/components/bi/nivo/NivoPieChart";
-import { NIVO_COLORS, POSITIVE_COLOR, NEGATIVE_COLOR } from "@/lib/nivoTheme";
+import { HorizontalBarChart, VerticalBarChart, PieChart, PieChartWithLabels } from "@/components/bi/charts";
+import { CHART_COLORS, POSITIVE_COLOR, NEGATIVE_COLOR } from "@/lib/chartTheme";
 
 interface Props {
   active: boolean;
@@ -34,39 +33,39 @@ export default function OperacionalSection({ active }: Props) {
           loading={isLoading}
           height={300}
         >
-          <NivoHorizontalBarChart
+          <HorizontalBarChart
             data={agg.utilizacaoPorTecnico}
             keys={['atendimento', 'deslocamento', 'ocioso']}
             title=""
             tooltipFormatter={(v: number) => `${Math.round(v)}%`}
-            colors={[POSITIVE_COLOR, NIVO_COLORS[1], NEGATIVE_COLOR]}
+            colors={[POSITIVE_COLOR, CHART_COLORS[1], NEGATIVE_COLOR]}
           />
         </ChartCard>
 
         <ChartCard title="KM Rodado por Tecnico" description="Distancia percorrida em atendimentos de campo" loading={isLoading} height={300}>
-          <NivoHorizontalBarChart
+          <HorizontalBarChart
             data={agg.kmPorTecnico.map(item => ({ name: item.name, value: item.value }))}
             keys={['value']}
             title=""
             tooltipFormatter={(v: number) => `${v.toLocaleString("pt-BR")} km`}
-            colors={[NIVO_COLORS[3]]}
+            colors={[CHART_COLORS[3]]}
           />
         </ChartCard>
 
         <ChartCard title="Agenda por Status" description="Situacao dos agendamentos de servico" loading={isLoading}>
-          <NivoPieChartWithLabels
+          <PieChartWithLabels
             data={agg.agendaPorStatus.map(item => ({ id: item.name, value: item.value, name: item.name }))}
             title=""
-            colors={NIVO_COLORS}
+            colors={CHART_COLORS}
           />
         </ChartCard>
 
         <ChartCard title="Agenda por Tipo de Servico" description="Tipos de atendimento agendados" loading={isLoading}>
-          <NivoHorizontalBarChart
+          <HorizontalBarChart
             data={agg.agendaPorTipo.map(item => ({ name: item.name, value: item.value }))}
             keys={['value']}
             title=""
-            colors={[NIVO_COLORS[2]]}
+            colors={[CHART_COLORS[2]]}
           />
         </ChartCard>
       </div>

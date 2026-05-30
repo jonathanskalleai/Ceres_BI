@@ -2,9 +2,8 @@ import { Users, UserCheck, UserPlus, Globe, Briefcase, Building2 } from "lucide-
 import { useAdminData } from "@/hooks/bi/useAdminData";
 import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
-import { NivoHorizontalBarChart } from "@/components/bi/nivo/NivoBarChart";
-import { NivoPieChartWithLabels } from "@/components/bi/nivo/NivoPieChart";
-import { NIVO_COLORS, POSITIVE_COLOR } from "@/lib/nivoTheme";
+import { HorizontalBarChart, PieChartWithLabels } from "@/components/bi/charts";
+import { CHART_COLORS, POSITIVE_COLOR } from "@/lib/chartTheme";
 
 interface Props {
   active: boolean;
@@ -27,40 +26,40 @@ export default function AdminSection({ active }: Props) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <ChartCard title="Prospects vs Clientes Ativos" description="Composicao da carteira" loading={isLoading}>
-          <NivoPieChartWithLabels
+          <PieChartWithLabels
             data={[
               { id: 'ativos', value: agg.prospectVsAtivo[0]?.value || 0, name: 'Clientes Ativos' },
               { id: 'prospects', value: agg.prospectVsAtivo[1]?.value || 0, name: 'Prospects' }
             ]}
             title=""
-            colors={[POSITIVE_COLOR, NIVO_COLORS[1]]}
+            colors={[POSITIVE_COLOR, CHART_COLORS[1]]}
           />
         </ChartCard>
 
         <ChartCard title="Cobertura Geografica" description="Clientes por UF" loading={isLoading}>
-          <NivoHorizontalBarChart
+          <HorizontalBarChart
             data={agg.porUF.map(item => ({ name: item.name, value: item.value }))}
             keys={['value']}
             title=""
-            colors={[NIVO_COLORS[0]]}
+            colors={[CHART_COLORS[0]]}
           />
         </ChartCard>
 
         <ChartCard title="Carteira por Consultor" description="Top 10 por numero de clientes" loading={isLoading}>
-          <NivoHorizontalBarChart
+          <HorizontalBarChart
             data={agg.porConsultor.map(item => ({ name: item.name, value: item.value }))}
             keys={['value']}
             title=""
-            colors={[NIVO_COLORS[2]]}
+            colors={[CHART_COLORS[2]]}
           />
         </ChartCard>
 
         <ChartCard title="Classificacao de Clientes" description="Distribuicao por tipo (A/B/C/D)" loading={isLoading}>
-          <NivoHorizontalBarChart
+          <HorizontalBarChart
             data={agg.porTipoCliente.map(item => ({ name: item.name, value: item.value }))}
             keys={['value']}
             title=""
-            colors={[NIVO_COLORS[4]]}
+            colors={[CHART_COLORS[4]]}
           />
         </ChartCard>
       </div>
