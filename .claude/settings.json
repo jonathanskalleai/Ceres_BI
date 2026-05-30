@@ -1,0 +1,122 @@
+{
+  "permissions": {
+    "allow": [
+      "Edit(./.claude/approved-plans/**)",
+      "Read(**/**)",
+      "Write(**/**)",
+      "Edit(**/**)",
+      "Bash",
+      "WebFetch",
+      "WebSearch",
+      "Task",
+      "Glob",
+      "Grep",
+      "NotebookEdit",
+      "Bash(git pull:*)",
+      "Skill(*)"
+    ],
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(rm -rf /*)",
+      "Bash(sudo rm -rf /*)",
+      "Bash(mkfs:*)",
+      "Bash(dd if=/dev/zero:*)",
+      "Bash(chmod -R 777 /)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "supabase",
+    "playwright",
+    "context7",
+    "github",
+    "vercel",
+    "magic"
+  ],
+  "outputStyle": "default",
+  "sandbox": {
+    "enabled": false
+  },
+  "alwaysThinkingEnabled": true,
+  "statusLine": {
+    "type": "command",
+    "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/statusline.sh\""
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|NotebookEdit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/pipeline-guard.sh\""
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if echo \"$CLAUDE_TOOL_INPUT\" | grep -qE '^git push'; then npm run lint --if-present && npm run typecheck --if-present; fi"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/secret-scan.sh\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/telemetry.sh\" tool"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/telemetry.sh\" prompt"
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/context-watch.sh\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/telemetry.sh\" stop"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/precompact-digest.cjs"
+          }
+        ]
+      }
+    ]
+  }
+}

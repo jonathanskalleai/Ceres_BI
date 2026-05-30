@@ -1,0 +1,113 @@
+project:
+  name: ""
+  type: greenfield                # greenfield ou brownfield
+
+# Modo de execucao do Smart Router
+# - false (default): Router apresenta plano e pede confirmacao
+# - true: Router executa pipeline end-to-end automaticamente sem pausar
+yolo_mode: true
+
+# Plan Mode (3 tiers: Opus planning, Sonnet execution, Haiku scan/docs)
+# Router usa Claude Code Task tool para spawnar cada agente com o modelo
+# correto automaticamente — SEM precisar rodar /model opus-plan manualmente.
+#
+# Planning agents (Opus):         @analyst, @pm, @architect, @ux
+# Execution agents (Sonnet):      @dev, @qa, @devops, @data-engineer
+# Scan/Docs agents (Haiku):       @scribe (documentacao + context scan)
+plan_mode:
+  enabled: true
+  planning_model: opus            # opus | sonnet | haiku
+  execution_model: sonnet         # sonnet | opus | haiku
+  scribe_model: haiku             # haiku para docs/scan (eficiencia)
+  auto_switch: true               # router faz switch automatico via Task tool
+
+# Model Tier — dois perfis de custo/qualidade, trocaveis via *tier no router
+# - premium (default): planning em Opus, execution em Sonnet, scribe em Haiku
+# - economy: tudo que era Opus vira Sonnet (planning tambem). Sonnet/Haiku
+#   nao mudam. Usar quando a demanda nao precisa do raciocinio profundo de Opus.
+#
+# Override em tempo de sessao:
+#   /aivoux/router *tier           # mostra tier atual
+#   /aivoux/router *tier economy   # troca para economy nesta sessao
+#   /aivoux/router *tier premium   # volta para premium nesta sessao
+#   /aivoux/router *tier reset     # remove override e usa o default daqui
+#
+# O override fica em .aivoux/.session-tier (gitignored, TTL 4h).
+model_tier: premium               # premium | economy
+
+# Context Scan (PASSO 0 do router)
+# Router le o estado do projeto antes de planejar/executar qualquer coisa.
+# Usa Haiku (leitura/sintese barata) e cacheia o resultado para reuso.
+context_scan:
+  enabled: true
+  model: haiku
+  cache_file: .aivoux/context-snapshot.md
+  cache_ttl_days: 7               # re-escanea se cache > 7 dias
+  invalidate_on:                  # arquivos cujo mtime invalida cache
+    - package.json
+    - tsconfig.json
+    - .aivoux/config.yaml
+  read_feature_docs: true         # antes de alterar, le docs/features/{slug}.md se existir
+
+# Documentation Mode (Haiku, barato)
+# Apos @qa PASS em features MEDIUM/COMPLEX, @scribe gera/atualiza doc compacta
+# em docs/features/{slug}.md para que futuras alteracoes consumam menos tokens.
+documentation_mode:
+  enabled: true
+  model: haiku
+  feature_docs_dir: docs/features
+  update_on: [feature_complete]   # feature_complete | manual
+  max_tokens_per_doc: 400         # mantem doc compacto (reduz custo de leitura futura)
+  update_claude_md: false         # nao mexe no CLAUDE.md raiz (bloco aivoux e controlado)
+
+# Discussion Mode (deliberacao multi-agente antes de implementar)
+# Agentes dao suas opinioes em paralelo, router sintetiza consenso, e
+# debate acontece apenas se houver divergencia significativa.
+# Detalhes em .claude/rules/discussion-protocol.md
+discussion_mode:
+  enabled: true
+  min_complexity: MEDIUM          # SIMPLE | MEDIUM | COMPLEX
+  participants: [analyst, pm, architect, ux]
+  include_data_engineer: auto     # auto | always | never
+  max_tokens_per_agent: 500
+  max_total_tokens: 5500
+  allow_debate_round: true        # 1 round de replica se divergirem
+  parallel_execution: true        # opinioes em paralelo (reduz latencia)
+
+# Story mode (cria story em docs/stories/ antes de implementar)
+story_mode: false
+
+# Quality gates (executados antes de finalizar qualquer trabalho)
+quality_gates:
+  lint: true
+  typecheck: true
+  tests: true
+  build: true
+  coderabbit: false
+
+# 12 Best Practices (coding standards)
+# Quando true, @dev aplica e @qa valida durante reviews
+coding_standards:
+  enforce: true
+  max_component_lines: 250
+  max_any_usage: 0                # 0 = proibido any sem justificativa
+  min_test_coverage: 80           # % minima para logica critica
+  enforce_a11y: true              # WCAG 2.1 AA
+
+coderabbit:
+  enabled: false
+  installation_mode: local
+  max_iterations: 2
+  severity_filter: [CRITICAL, HIGH]
+
+# Context Watch — avisa quando sessao esta longa para sugerir /clear
+# warn_at: numero de turnos para comecar a avisar (default: 20)
+# Apos o primeiro aviso, repete a cada 10 turnos adicionais (30, 40, ...)
+# Reset automatico apos 1h de inatividade (nova sessao detectada)
+context_watch:
+  enabled: true
+  warn_at: 20
+
+dev:
+  stories_location: docs/stories
+  architecture_location: docs/architecture

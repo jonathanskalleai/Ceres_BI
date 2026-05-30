@@ -1,0 +1,107 @@
+import { useMemo } from "react";
+import { DadosComerciais } from "@/types/comercial";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { Badge } from "@/components/ui/badge";
+import { Filters } from "@/types/comercial";
+import { filterRegistros, hasActiveFilters } from "@/lib/filterUtils";
+
+interface Props {
+  data: DadosComerciais;
+  filters: Filters;
+}
+
+const formatCurrency = (v: number) =>
+  v >= 1e6 ? `R$ ${(v / 1e6).toFixed(1)}M` : `R$ ${(v / 1e3).toFixed(0)}K`;
+
+export const DashboardRegioes = ({ data, filters }: Props) => {
+  const isFiltered = hasActiveFilters(filters);
+
+  const regioes = useMemo(() => {
+    if (!isFiltered) return [...data.regioes];
+
+    const filtered = filterRegistros(data.registrosRecentes, filters);
+    const map = new Map<string, { totalAcoes: number; clientes: Set<string>; pipeline: number; visitas: number }>();
+    for (const r of filtered) {
+      if (!r.cidade) continue;
+      if (!map.has(r.cidade)) map.set(r.cidade, { totalAcoes: 0, clientes: new Set(), pipeline: 0, visitas: 0 });
+      const s = map.get(r.cidade)!;
+      s.totalAcoes++;
+      s.clientes.add(r.cliente);
+      s.pipeline += r.negocioValor || 0;
+      if (r.tipoContato?.toLowerCase().includes("visita")) s.visitas++;
+    }
+    return Array.from(map.entries())
+      .map(([cidade, s]) => ({ cidade, totalAcoes: s.totalAcoes, clientes: s.clientes.size, pipeline: s.pipeline, visitas: s.visitas }))
+      .sort((a, b) => b.pipeline - a.pipeline);
+  }, [data, filters, isFiltered]);
+
+  return (
+    <div className="p-6 space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-foreground">Análise Regional</h2>
+        <p className="text-sm text-muted-foreground">
+          Performance por região e oportunidades
+          {isFiltered && <span className="ml-2 text-primary font-medium">({regioes.length} regiões filtradas)</span>}
+        </p>
+      </div>
+
+      <Card className="border-0 shadow-sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-semibold">Pipeline por Região</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart data={regioes.slice(0, 20)} layout="vertical" margin={{ left: 100 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={(v) => `${(v / 1e6).toFixed(0)}M`} />
+              <YAxis type="category" dataKey="cidade" tick={{ fontSize: 10 }} width={95} />
+              <Tooltip formatter={(v: number) => formatCurrency(v)} />
+              <Bar dataKey="pipeline" fill="hsl(217, 91%, 60%)" radius={[0, 4, 4, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {regioes.slice(0, 15).map((r, i) => (
+          <Card key={r.cidade} className="border-0 shadow-sm">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-semibold text-sm">{r.cidade}</h4>
+                <Badge variant="outline" className="text-[10px]">#{i + 1}</Badge>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <p className="text-lg font-bold text-primary">{formatCurrency(r.pipeline)}</p>
+                  <p className="text-[10px] text-muted-foreground">Pipeline</p>
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-accent">{r.clientes}</p>
+                  <p className="text-[10px] text-muted-foreground">Clientes</p>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">{r.totalAcoes}</p>
+                  <p className="text-[10px] text-muted-foreground">Ações</p>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">{r.visitas}</p>
+                  <p className="text-[10px] text-muted-foreground">Visitas</p>
+                </div>
+              </div>
+              <div className="mt-3 pt-2 border-t border-border">
+                <p className="text-[10px] text-muted-foreground italic">
+                  {r.pipeline > 1e6
+                    ? "⚡ Alta prioridade — intensificar demonstrações"
+                    : r.clientes > 20
+                    ? "📋 Boa cobertura — foco em conversão"
+                    : "🔍 Expandir prospecção na região"}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+};
