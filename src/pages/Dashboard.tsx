@@ -24,8 +24,26 @@ type View = "overview" | "consultores" | "regioes" | "registros" | "consultor-de
 
 const emptyFilters: Filters = { vendedor: "", cidade: "", periodo: "", ano: "", mes: "", tipoAcao: "" };
 
+/** Skeleton só da área de conteúdo (o shell/menu já renderiza na hora). */
+function ContentSkeleton() {
+  return (
+    <div className="p-6 space-y-6">
+      <Skeleton className="h-8 w-48" />
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-24" />
+        ))}
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Skeleton className="h-72" />
+        <Skeleton className="h-72" />
+      </div>
+    </div>
+  );
+}
+
 const Dashboard = () => {
-  const { data, allData, isLoading, error, lastUpdated } = useComercialData();
+  const { data, allData, error, lastUpdated } = useComercialData();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [currentView, setCurrentView] = useState<View>("overview");
@@ -78,32 +96,6 @@ const Dashboard = () => {
     );
   }
 
-  if (isLoading || !data) {
-    return (
-      <div className="flex h-screen overflow-hidden bg-background">
-        <div className="w-64 border-r border-border p-4 space-y-4">
-          <Skeleton className="h-8 w-full" />
-          <Skeleton className="h-6 w-3/4" />
-          <Skeleton className="h-6 w-3/4" />
-          <Skeleton className="h-6 w-3/4" />
-          <Skeleton className="h-6 w-3/4" />
-        </div>
-        <div className="flex-1 p-6 space-y-6">
-          <Skeleton className="h-8 w-48" />
-          <div className="grid grid-cols-6 gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-24" />
-            ))}
-          </div>
-          <div className="grid grid-cols-2 gap-6">
-            <Skeleton className="h-72" />
-            <Skeleton className="h-72" />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <DashboardSidebar
@@ -114,8 +106,8 @@ const Dashboard = () => {
         }}
         filters={filters}
         onFiltersChange={setFilters}
-        vendedores={data.listaVendedores}
-        cidades={data.listaCidades}
+        vendedores={data?.listaVendedores ?? []}
+        cidades={data?.listaCidades ?? []}
         tiposAcao={tiposAcao}
         anos={anos}
         lastUpdated={lastUpdated}
@@ -133,50 +125,57 @@ const Dashboard = () => {
             {isRefreshing ? "Atualizando..." : "Atualizar Dados"}
           </Button>
         </div>
-        {currentView === "overview" && (
-          <DashboardOverview
-            data={data}
-            filters={filters}
-            onSelectConsultor={handleSelectConsultor}
-            totalRegistrosBase={allData?.kpis.totalRegistros}
-          />
-        )}
-        {currentView === "consultores" && (
-          <DashboardConsultores data={data} filters={filters} onSelectConsultor={handleSelectConsultor} />
-        )}
-        {currentView === "regioes" && (
-          <DashboardRegioes data={data} filters={filters} />
-        )}
-        {currentView === "registros" && (
-          <DashboardRegistros data={data} filters={filters} />
-        )}
-        {currentView === "criticos" && (
-          <DashboardClientesCriticos data={data} filters={filters} />
-        )}
-        {currentView === "insights" && (
-          <DashboardInsights data={data} filters={filters} />
-        )}
-        {currentView === "mapa" && (
-          <DashboardMapa data={data} filters={filters} />
-        )}
-        {currentView === "negocios-mensais" && (
-          <DashboardNegociosMensais filters={filters} crmData={data} />
-        )}
-        {currentView === "administrativo" && allData && (
-          <DashboardAdministrativo data={allData} filters={filters} />
-        )}
-        {currentView === "view-explorer" && (
-          <DashboardViewExplorer />
-        )}
-        {currentView === "dashboard-bi" && (
-          <DashboardBIReal />
-        )}
-        {currentView === "consultor-detail" && selectedVendedor && (
-          <DashboardConsultorDetail
-            vendedor={data.vendedores.find((v) => v.nome === selectedVendedor)!}
-            registros={data.registrosRecentes}
-            onBack={handleBack}
-          />
+        {/* Views com dados próprios — renderizam na hora, sem esperar a base comercial */}
+        {currentView === "view-explorer" && <DashboardViewExplorer />}
+        {currentView === "dashboard-bi" && <DashboardBIReal />}
+
+        {/* Views da base comercial — skeleton só na área de conteúdo enquanto carrega */}
+        {currentView !== "view-explorer" && currentView !== "dashboard-bi" && (
+          !data ? (
+            <ContentSkeleton />
+          ) : (
+            <>
+              {currentView === "overview" && (
+                <DashboardOverview
+                  data={data}
+                  filters={filters}
+                  onSelectConsultor={handleSelectConsultor}
+                  totalRegistrosBase={allData?.kpis.totalRegistros}
+                />
+              )}
+              {currentView === "consultores" && (
+                <DashboardConsultores data={data} filters={filters} onSelectConsultor={handleSelectConsultor} />
+              )}
+              {currentView === "regioes" && (
+                <DashboardRegioes data={data} filters={filters} />
+              )}
+              {currentView === "registros" && (
+                <DashboardRegistros data={data} filters={filters} />
+              )}
+              {currentView === "criticos" && (
+                <DashboardClientesCriticos data={data} filters={filters} />
+              )}
+              {currentView === "insights" && (
+                <DashboardInsights data={data} filters={filters} />
+              )}
+              {currentView === "mapa" && (
+                <DashboardMapa data={data} filters={filters} />
+              )}
+              {currentView === "negocios-mensais" && (
+                <DashboardNegociosMensais filters={filters} crmData={data} />
+              )}
+              {currentView === "administrativo" && allData && (
+                <DashboardAdministrativo data={allData} filters={filters} />
+              )}
+              {currentView === "consultor-detail" && selectedVendedor && (
+                <DashboardConsultorDetail
+                  vendedor={data.vendedores.find((v) => v.nome === selectedVendedor)!}
+                  registros={data.registrosRecentes}
+                  onBack={handleBack}
+                />
+              )}
+            </>
+          )
         )}
       </main>
     </div>
