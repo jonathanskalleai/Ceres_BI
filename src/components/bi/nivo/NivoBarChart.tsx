@@ -69,7 +69,7 @@ export default function NivoBarChart({
           legend: layout === 'horizontal' ? title : '',
           legendPosition: 'middle',
           legendOffset: layout === 'horizontal' ? -100 : -45,
-          format: (v) => tooltipFormatter ? tooltipFormatter(v as number) : String(v),
+          format: (v) => (typeof v === 'number' && tooltipFormatter) ? tooltipFormatter(v) : String(v ?? ''),
         }}
         tooltip={({ id, value, color, indexValue }) => (
           <div
