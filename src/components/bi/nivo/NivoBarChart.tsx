@@ -1,4 +1,4 @@
-import { Bar as NivoBar } from '@nivo/bar'
+import { ResponsiveBar } from '@nivo/bar'
 import { nivoTheme, NIVO_COLORS } from '@/lib/nivoTheme'
 
 export interface NivoBarChartData {
@@ -24,63 +24,75 @@ export default function NivoBarChart({
   keys,
   colors = NIVO_COLORS,
   title,
-  height = 260,
+  height = 280,
   loading = false,
   tooltipFormatter,
   groupMode = 'grouped',
 }: NivoBarChartProps) {
   if (loading) {
     return (
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="animate-pulse bg-gray-200 rounded h-64 w-full" />
+      <div className="w-full animate-pulse bg-gray-100 rounded-lg" style={{ height }} />
+    )
+  }
+
+  if (!data.length) {
+    return (
+      <div className="w-full flex items-center justify-center text-gray-400 text-sm" style={{ height }}>
+        Sem dados
       </div>
     )
   }
 
+  const isHorizontal = layout === 'horizontal'
+  const marginLeft = isHorizontal ? Math.min(140, Math.max(...data.map(d => String(d.name).length)) * 7 + 16) : 52
+  const marginBottom = isHorizontal ? 40 : 56
+
   return (
     <div className="w-full" style={{ height }}>
-      <NivoBar
-        width={800}
-        height={height}
+      <ResponsiveBar
         data={data}
         indexBy="name"
         layout={layout}
         keys={keys}
         groupMode={groupMode}
-        margin={{ top: 20, right: 20, bottom: 60, left: layout === 'horizontal' ? 120 : 60 }}
-        borderRadius={4}
-        enableGridX={layout === 'horizontal'}
-        enableGridY={layout === 'vertical'}
+        margin={{ top: 12, right: 16, bottom: marginBottom, left: marginLeft }}
+        borderRadius={3}
+        enableGridX={isHorizontal}
+        enableGridY={!isHorizontal}
+        gridYValues={5}
+        gridXValues={5}
         theme={nivoTheme}
         colors={colors as any}
         borderWidth={0}
-        axisBottom={{
-          tickSize: 5,
-          tickPadding: 5,
-          tickRotation: layout === 'vertical' ? -30 : 0,
-          legend: layout === 'vertical' ? title : '',
-          legendPosition: 'middle',
-          legendOffset: 50,
+        enableLabel={false}
+        axisBottom={isHorizontal ? {
+          tickSize: 0,
+          tickPadding: 8,
+          format: (v) => (typeof v === 'number' && tooltipFormatter) ? tooltipFormatter(v) : String(v ?? ''),
+        } : {
+          tickSize: 0,
+          tickPadding: 8,
+          tickRotation: data.length > 6 ? -30 : 0,
         }}
-        axisLeft={{
-          tickSize: 5,
-          tickPadding: 5,
-          tickRotation: 0,
-          legend: layout === 'horizontal' ? title : '',
-          legendPosition: 'middle',
-          legendOffset: layout === 'horizontal' ? -100 : -45,
+        axisLeft={isHorizontal ? {
+          tickSize: 0,
+          tickPadding: 10,
+        } : {
+          tickSize: 0,
+          tickPadding: 8,
+          tickValues: 5,
           format: (v) => (typeof v === 'number' && tooltipFormatter) ? tooltipFormatter(v) : String(v ?? ''),
         }}
         tooltip={({ id, value, color, indexValue }) => (
           <div
-            style={nivoTheme.tooltip.container as any}
-            className="p-3 rounded-lg backdrop-blur-md"
+            style={nivoTheme.tooltip.container as React.CSSProperties}
+            className="px-3 py-2 rounded-lg shadow-lg"
           >
-            <div className="text-sm font-semibold text-gray-100 mb-1">{String(indexValue)}</div>
+            <p className="text-xs font-semibold text-slate-400 mb-1">{String(indexValue)}</p>
             <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-              <span className="text-sm text-gray-300">
-                {String(id)}: {tooltipFormatter ? tooltipFormatter(value) : value}
+              <span className="inline-block w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+              <span className="text-sm text-slate-100">
+                {String(id)}: <strong>{tooltipFormatter ? tooltipFormatter(value) : value}</strong>
               </span>
             </div>
           </div>
@@ -92,70 +104,14 @@ export default function NivoBarChart({
   )
 }
 
-export function NivoVerticalBarChart({
-  data,
-  keys,
-  title,
-  height = 260,
-  loading = false,
-  tooltipFormatter,
-  colors,
-}: Omit<NivoBarChartProps, 'layout' | 'groupMode'>) {
-  return (
-    <NivoBarChart
-      data={data}
-      layout="vertical"
-      keys={keys}
-      title={title}
-      height={height}
-      loading={loading}
-      tooltipFormatter={tooltipFormatter}
-      colors={colors}
-    />
-  )
+export function NivoVerticalBarChart(props: Omit<NivoBarChartProps, 'layout' | 'groupMode'>) {
+  return <NivoBarChart {...props} layout="vertical" />
 }
 
-export function NivoHorizontalBarChart({
-  data,
-  keys,
-  title,
-  height = 260,
-  loading = false,
-  tooltipFormatter,
-  colors,
-}: Omit<NivoBarChartProps, 'layout' | 'groupMode'>) {
-  return (
-    <NivoBarChart
-      data={data}
-      layout="horizontal"
-      keys={keys}
-      title={title}
-      height={height}
-      loading={loading}
-      tooltipFormatter={tooltipFormatter}
-      colors={colors}
-    />
-  )
+export function NivoHorizontalBarChart(props: Omit<NivoBarChartProps, 'layout' | 'groupMode'>) {
+  return <NivoBarChart {...props} layout="horizontal" />
 }
 
-export function NivoStackedBarChart({
-  data,
-  keys,
-  title,
-  height = 260,
-  loading = false,
-  tooltipFormatter,
-}: Omit<NivoBarChartProps, 'layout'>) {
-  return (
-    <NivoBarChart
-      data={data}
-      layout="vertical"
-      keys={keys}
-      title={title}
-      height={height}
-      loading={loading}
-      tooltipFormatter={tooltipFormatter}
-      groupMode="stacked"
-    />
-  )
+export function NivoStackedBarChart(props: Omit<NivoBarChartProps, 'layout'>) {
+  return <NivoBarChart {...props} layout="vertical" groupMode="stacked" />
 }

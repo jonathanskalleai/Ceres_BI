@@ -1,4 +1,4 @@
-import { Pie as NivoPie } from '@nivo/pie'
+import { ResponsivePie } from '@nivo/pie'
 import { nivoTheme, NIVO_COLORS } from '@/lib/nivoTheme'
 
 export interface NivoPieChartData {
@@ -17,57 +17,73 @@ export interface NivoPieChartProps {
   padAngle?: number
   cornerRadius?: number
   enableLabels?: boolean
+  tooltipFormatter?: (value: number) => string
   labelFormatter?: (data: NivoPieChartData) => string
 }
 
 export default function NivoPieChart({
   data,
   title,
-  height = 260,
+  height = 280,
   loading = false,
   colors = NIVO_COLORS,
   innerRadius = 0,
-  padAngle = 2,
-  cornerRadius = 4,
+  padAngle = 1.5,
+  cornerRadius = 3,
   enableLabels = true,
-  labelFormatter,
+  tooltipFormatter,
 }: NivoPieChartProps) {
   if (loading) {
     return (
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="animate-pulse bg-gray-200 rounded h-64 w-full" />
+      <div className="w-full animate-pulse bg-gray-100 rounded-full mx-auto" style={{ height, maxWidth: height }} />
+    )
+  }
+
+  if (!data.length) {
+    return (
+      <div className="w-full flex items-center justify-center text-gray-400 text-sm" style={{ height }}>
+        Sem dados
       </div>
     )
   }
 
+  const normalizedInnerRadius = innerRadius > 1 ? innerRadius / 100 : innerRadius
+
   return (
     <div className="w-full" style={{ height }}>
-      <NivoPie
-        width={800}
-        height={height}
+      <ResponsivePie
         data={data}
-        margin={{ top: 20, right: 80, bottom: 20, left: 80 }}
-        innerRadius={innerRadius / 100}
+        margin={{ top: 20, right: enableLabels ? 80 : 20, bottom: 20, left: enableLabels ? 80 : 20 }}
+        innerRadius={normalizedInnerRadius}
         padAngle={padAngle}
         cornerRadius={cornerRadius}
         colors={colors as any}
-        borderWidth={1}
-        borderColor={{ from: 'color', modifiers: [['darker', 0.6]] }}
+        borderWidth={0}
         theme={nivoTheme}
+        enableArcLabels={enableLabels}
+        enableArcLinkLabels={enableLabels}
+        arcLabelsSkipAngle={15}
+        arcLinkLabelsSkipAngle={10}
+        arcLinkLabelsThickness={1}
+        arcLinkLabelsColor={{ from: 'color' }}
+        arcLinkLabelsTextColor={{ from: 'color', modifiers: [['brighter', 1.5]] }}
+        arcLabelsTextColor="#ffffff"
         tooltip={({ datum }) => (
           <div
-            style={nivoTheme.tooltip.container as any}
-            className="p-3 rounded-lg backdrop-blur-md"
+            style={nivoTheme.tooltip.container as React.CSSProperties}
+            className="px-3 py-2 rounded-lg shadow-lg"
           >
             <div className="flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: datum.color }} />
-              <span className="text-sm text-gray-300">
-                {datum.label || datum.id}: {datum.value}
+              <span className="inline-block w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: datum.color }} />
+              <span className="text-sm text-slate-100">
+                {datum.label || datum.id}:{' '}
+                <strong>{tooltipFormatter ? tooltipFormatter(datum.value) : datum.value}</strong>
               </span>
             </div>
           </div>
         )}
         animate={true}
+        motionConfig="gentle"
         role="img"
         ariaLabel={title || 'Pie chart'}
       />
@@ -78,10 +94,10 @@ export default function NivoPieChart({
 export function NivoPieChartWithLabels({
   data,
   title,
-  height = 260,
+  height = 280,
   loading = false,
   colors,
-  labelFormatter,
+  tooltipFormatter,
 }: Omit<NivoPieChartProps, 'innerRadius' | 'padAngle' | 'cornerRadius' | 'enableLabels'>) {
   return (
     <NivoPieChart
@@ -90,11 +106,11 @@ export function NivoPieChartWithLabels({
       height={height}
       loading={loading}
       colors={colors}
+      tooltipFormatter={tooltipFormatter}
       innerRadius={0}
-      padAngle={2}
-      cornerRadius={4}
+      padAngle={1.5}
+      cornerRadius={3}
       enableLabels={true}
-      labelFormatter={labelFormatter}
     />
   )
 }
@@ -102,9 +118,10 @@ export function NivoPieChartWithLabels({
 export function NivoDonutChart({
   data,
   title,
-  height = 260,
+  height = 280,
   loading = false,
   colors,
+  tooltipFormatter,
   innerRadius = 60,
 }: Omit<NivoPieChartProps, 'padAngle' | 'cornerRadius' | 'enableLabels'>) {
   return (
@@ -114,9 +131,10 @@ export function NivoDonutChart({
       height={height}
       loading={loading}
       colors={colors}
+      tooltipFormatter={tooltipFormatter}
       innerRadius={innerRadius}
-      padAngle={2}
-      cornerRadius={4}
+      padAngle={1.5}
+      cornerRadius={3}
       enableLabels={false}
     />
   )
