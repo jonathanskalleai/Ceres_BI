@@ -16,7 +16,7 @@ export interface NivoLineChartProps {
   area?: boolean
   enableGrid?: boolean
   tooltipFormatter?: (value: number) => string
-  curve?: 'monotone' | 'linear' | 'step' | 'stepBefore' | 'stepAfter' | 'natural' | 'basis'
+  curve?: 'monotoneX' | 'linear' | 'step' | 'stepBefore' | 'stepAfter' | 'natural' | 'basis'
 }
 
 export default function NivoLineChart({
@@ -29,7 +29,7 @@ export default function NivoLineChart({
   area = false,
   enableGrid = true,
   tooltipFormatter,
-  curve = 'monotone',
+  curve = 'monotoneX',
 }: NivoLineChartProps) {
   if (loading) {
     return (

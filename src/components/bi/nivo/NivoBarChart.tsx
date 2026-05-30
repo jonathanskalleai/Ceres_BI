@@ -14,7 +14,7 @@ export interface NivoBarChartProps {
   title?: string
   height?: number
   loading?: boolean
-  tooltipFormatter?: (value: number) => string
+  tooltipFormatter?: (value: number, datum?: NivoBarChartData) => string
   groupMode?: 'grouped' | 'stacked'
 }
 
@@ -68,7 +68,6 @@ export default function NivoBarChart({
         axisBottom={isHorizontal ? {
           tickSize: 0,
           tickPadding: 8,
-          format: (v) => (typeof v === 'number' && tooltipFormatter) ? tooltipFormatter(v) : String(v ?? ''),
         } : {
           tickSize: 0,
           tickPadding: 8,
@@ -81,9 +80,8 @@ export default function NivoBarChart({
           tickSize: 0,
           tickPadding: 8,
           tickValues: 5,
-          format: (v) => (typeof v === 'number' && tooltipFormatter) ? tooltipFormatter(v) : String(v ?? ''),
         }}
-        tooltip={({ id, value, color, indexValue }) => (
+        tooltip={({ id, value, color, indexValue, data: datum }) => (
           <div
             style={nivoTheme.tooltip.container as React.CSSProperties}
             className="px-3 py-2 rounded-lg shadow-lg"
@@ -92,7 +90,7 @@ export default function NivoBarChart({
             <div className="flex items-center gap-2">
               <span className="inline-block w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
               <span className="text-sm text-slate-100">
-                {String(id)}: <strong>{tooltipFormatter ? tooltipFormatter(value) : value}</strong>
+                {String(id)}: <strong>{tooltipFormatter ? tooltipFormatter(value, datum as NivoBarChartData) : value}</strong>
               </span>
             </div>
           </div>

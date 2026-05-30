@@ -103,7 +103,7 @@ export default function ComercialSection({ active }: Props) {
             }))}
             keys={['valor']}
             title=""
-            tooltipFormatter={(v: number) => `${formatBRL(v)} (${v.qtd} negocios)`}
+            tooltipFormatter={(value, d) => `${formatBRL(value)} (${d?.qtd ?? 0} negocios)`}
             colors={[NEGATIVE_COLOR]}
           />
         </ChartCard>
@@ -121,7 +121,7 @@ export default function ComercialSection({ active }: Props) {
             }))}
             keys={['diasMedio']}
             title=""
-            tooltipFormatter={(v: number) => `${formatDias(v)} (${v.qtd} passagens)`}
+            tooltipFormatter={(value, d) => `${formatDias(value)} (${d?.qtd ?? 0} passagens)`}
             colors={[NIVO_COLORS[4]]}
           />
         </ChartCard>
@@ -171,7 +171,7 @@ export default function ComercialSection({ active }: Props) {
             }))}
             keys={['valorGanho']}
             title=""
-            tooltipFormatter={(v: number) => `${formatBRL(v)} · ${v.ganhos}/${v.total} (${pct(v.taxa)})`}
+            tooltipFormatter={(value, d) => `${formatBRL(value)} · ${d?.ganhos ?? 0}/${d?.total ?? 0} (${pct((d?.taxa as number) ?? 0)})`}
             colors={NIVO_COLORS}
           />
         </ChartCard>

@@ -88,7 +88,7 @@ export default function PedidosSection({ active }: Props) {
             }))}
             keys={['valor']}
             title=""
-            tooltipFormatter={(v: number) => `${formatBRL(v)} (${v.qtd} pedidos)`}
+            tooltipFormatter={(value, d) => `${formatBRL(value)} (${d?.qtd ?? 0} pedidos)`}
             colors={[NIVO_COLORS[2]]}
           />
         </ChartCard>
@@ -140,7 +140,7 @@ export default function PedidosSection({ active }: Props) {
             }))}
             keys={['valor']}
             title=""
-            tooltipFormatter={(v: number) => `${formatBRL(v)} (${v.qtd} un)`}
+            tooltipFormatter={(value, d) => `${formatBRL(value)} (${d?.qtd ?? 0} un)`}
             colors={[NIVO_COLORS[4]]}
           />
         </ChartCard>
