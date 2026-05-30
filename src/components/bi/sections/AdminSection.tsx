@@ -1,12 +1,10 @@
-import {
-  BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-} from "recharts";
 import { Users, UserCheck, UserPlus, Globe, Briefcase, Building2 } from "lucide-react";
 import { useAdminData } from "@/hooks/bi/useAdminData";
 import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
-import { CHART_COLORS, COLOR_POSITIVE } from "@/lib/chartColors";
+import { NivoHorizontalBarChart } from "@/components/bi/nivo/NivoBarChart";
+import { NivoPieChartWithLabels } from "@/components/bi/nivo/NivoPieChart";
+import { NIVO_COLORS, POSITIVE_COLOR } from "@/lib/nivoTheme";
 
 interface Props {
   active: boolean;
@@ -29,44 +27,41 @@ export default function AdminSection({ active }: Props) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <ChartCard title="Prospects vs Clientes Ativos" description="Composicao da carteira" loading={isLoading}>
-          <PieChart>
-            <Pie data={agg.prospectVsAtivo} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label>
-              <Cell fill={COLOR_POSITIVE} />
-              <Cell fill={CHART_COLORS[1]} />
-            </Pie>
-            <Tooltip />
-            <Legend />
-          </PieChart>
+          <NivoPieChartWithLabels
+            data={[
+              { id: 'ativos', value: agg.prospectVsAtivo[0]?.value || 0, name: 'Clientes Ativos' },
+              { id: 'prospects', value: agg.prospectVsAtivo[1]?.value || 0, name: 'Prospects' }
+            ]}
+            title=""
+            colors={[POSITIVE_COLOR, NIVO_COLORS[1]]}
+          />
         </ChartCard>
 
         <ChartCard title="Cobertura Geografica" description="Clientes por UF" loading={isLoading}>
-          <BarChart data={agg.porUF}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
-            <Tooltip />
-            <Bar dataKey="value" name="Clientes" fill={CHART_COLORS[0]} />
-          </BarChart>
+          <NivoHorizontalBarChart
+            data={agg.porUF.map(item => ({ name: item.name, value: item.value }))}
+            keys={['value']}
+            title=""
+            colors={[NIVO_COLORS[0]]}
+          />
         </ChartCard>
 
         <ChartCard title="Carteira por Consultor" description="Top 10 por numero de clientes" loading={isLoading}>
-          <BarChart data={agg.porConsultor} layout="vertical" margin={{ left: 8 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis type="number" tick={{ fontSize: 10 }} allowDecimals={false} />
-            <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={130} />
-            <Tooltip />
-            <Bar dataKey="value" name="Clientes" fill={CHART_COLORS[2]} />
-          </BarChart>
+          <NivoHorizontalBarChart
+            data={agg.porConsultor.map(item => ({ name: item.name, value: item.value }))}
+            keys={['value']}
+            title=""
+            colors={[NIVO_COLORS[2]]}
+          />
         </ChartCard>
 
         <ChartCard title="Classificacao de Clientes" description="Distribuicao por tipo (A/B/C/D)" loading={isLoading}>
-          <BarChart data={agg.porTipoCliente} layout="vertical" margin={{ left: 8 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis type="number" tick={{ fontSize: 10 }} allowDecimals={false} />
-            <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={130} />
-            <Tooltip />
-            <Bar dataKey="value" name="Clientes" fill={CHART_COLORS[4]} />
-          </BarChart>
+          <NivoHorizontalBarChart
+            data={agg.porTipoCliente.map(item => ({ name: item.name, value: item.value }))}
+            keys={['value']}
+            title=""
+            colors={[NIVO_COLORS[4]]}
+          />
         </ChartCard>
       </div>
     </div>

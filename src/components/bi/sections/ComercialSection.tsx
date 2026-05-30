@@ -1,15 +1,13 @@
 import {
-  BarChart, Bar, ComposedChart, Line, XAxis, YAxis,
-  CartesianGrid, Tooltip, Legend, Cell,
-} from "recharts";
-import {
   Briefcase, Percent, DollarSign, Trophy, Clock, Wallet,
 } from "lucide-react";
 import { useNegociosBI } from "@/hooks/bi/useNegociosBI";
 import { useFunilData } from "@/hooks/bi/useFunilData";
 import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
-import { CHART_COLORS, COLOR_POSITIVE, COLOR_NEGATIVE } from "@/lib/chartColors";
+import { NivoHorizontalBarChart } from "@/components/bi/nivo/NivoBarChart";
+import NivoLineChart from "@/components/bi/nivo/NivoLineChart";
+import { NIVO_COLORS, POSITIVE_COLOR, NEGATIVE_COLOR } from "@/lib/nivoTheme";
 import { formatBRL, formatBRLShort, formatDias } from "@/lib/dateUtils";
 
 interface Props {
@@ -64,13 +62,13 @@ export default function ComercialSection({ active }: Props) {
           description="Valor em aberto (R$) acumulado em cada etapa do funil"
           loading={isLoading}
         >
-          <BarChart data={agg.funilPorEtapa} layout="vertical" margin={{ left: 8 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={formatBRLShort} />
-            <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={130} />
-            <Tooltip formatter={(v: number) => formatBRL(v)} />
-            <Bar dataKey="valor" name="Valor em aberto" fill={CHART_COLORS[0]} />
-          </BarChart>
+          <NivoHorizontalBarChart
+            data={agg.funilPorEtapa.map(item => ({ name: item.name, valor: item.valor }))}
+            keys={['valor']}
+            title=""
+            tooltipFormatter={formatBRL}
+            colors={[NIVO_COLORS[0]]}
+          />
         </ChartCard>
 
         <ChartCard
@@ -78,16 +76,18 @@ export default function ComercialSection({ active }: Props) {
           description="Negocios por canal de entrada (ganho / perdido / em aberto)"
           loading={isLoading}
         >
-          <BarChart data={agg.porOrigem} layout="vertical" margin={{ left: 8 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis type="number" tick={{ fontSize: 10 }} />
-            <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={130} />
-            <Tooltip />
-            <Legend />
-            <Bar dataKey="ganhos" stackId="a" name="Ganhos" fill={COLOR_POSITIVE} />
-            <Bar dataKey="perdidos" stackId="a" name="Perdidos" fill={COLOR_NEGATIVE} />
-            <Bar dataKey="andamento" stackId="a" name="Em aberto" fill={CHART_COLORS[1]} />
-          </BarChart>
+          <NivoHorizontalBarChart
+            data={agg.porOrigem.map(item => ({
+              name: item.name,
+              ganhos: item.ganhos,
+              perdidos: item.perdidos,
+              andamento: item.andamento
+            }))}
+            keys={['ganhos', 'perdidos', 'andamento']}
+            title=""
+            tooltipFormatter={(v: number) => v.toLocaleString("pt-BR")}
+            colors={[POSITIVE_COLOR, NEGATIVE_COLOR, NIVO_COLORS[1]]}
+          />
         </ChartCard>
 
         <ChartCard
@@ -95,13 +95,17 @@ export default function ComercialSection({ active }: Props) {
           description="Onde a receita esta vazando (R$ em negocios perdidos)"
           loading={isLoading}
         >
-          <BarChart data={agg.motivosPerda} layout="vertical" margin={{ left: 8 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={formatBRLShort} />
-            <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={130} />
-            <Tooltip formatter={(v: number, _n, p) => [`${formatBRL(v)} (${p.payload.qtd} negocios)`, "Perdido"]} />
-            <Bar dataKey="valor" fill={COLOR_NEGATIVE} />
-          </BarChart>
+          <NivoHorizontalBarChart
+            data={agg.motivosPerda.map(item => ({
+              name: item.name,
+              valor: item.valor,
+              qtd: item.qtd
+            }))}
+            keys={['valor']}
+            title=""
+            tooltipFormatter={(v: number) => `${formatBRL(v)} (${v.qtd} negocios)`}
+            colors={[NEGATIVE_COLOR]}
+          />
         </ChartCard>
 
         <ChartCard
@@ -109,13 +113,17 @@ export default function ComercialSection({ active }: Props) {
           description="Tempo medio (dias) que negocios permanecem em cada etapa"
           loading={funilLoading}
         >
-          <BarChart data={funil.velocidadePorEtapa} layout="vertical" margin={{ left: 8 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={(v: number) => `${Math.round(v)}d`} />
-            <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={130} />
-            <Tooltip formatter={(v: number, _n, p) => [`${formatDias(v)} (${p.payload.qtd} passagens)`, "Tempo medio"]} />
-            <Bar dataKey="diasMedio" fill={CHART_COLORS[4]} />
-          </BarChart>
+          <NivoHorizontalBarChart
+            data={funil.velocidadePorEtapa.map(item => ({
+              name: item.name,
+              diasMedio: item.diasMedio,
+              qtd: item.qtd
+            }))}
+            keys={['diasMedio']}
+            title=""
+            tooltipFormatter={(v: number) => `${formatDias(v)} (${v.qtd} passagens)`}
+            colors={[NIVO_COLORS[4]]}
+          />
         </ChartCard>
 
         <ChartCard
@@ -123,16 +131,29 @@ export default function ComercialSection({ active }: Props) {
           description="Novos negocios criados e valor negociado por mes"
           loading={isLoading}
         >
-          <ComposedChart data={agg.evolucaoMensal}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-            <YAxis yAxisId="left" tick={{ fontSize: 10 }} />
-            <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10 }} tickFormatter={formatBRLShort} />
-            <Tooltip formatter={(v: number, n) => (n === "Valor negociado" ? formatBRL(v) : v)} />
-            <Legend />
-            <Bar yAxisId="left" dataKey="novos" name="Novos negocios" fill={CHART_COLORS[1]} />
-            <Line yAxisId="right" type="monotone" dataKey="valorCriado" name="Valor negociado" stroke={CHART_COLORS[0]} dot={false} />
-          </ComposedChart>
+          <div className="h-full">
+            <div className="grid grid-cols-1 gap-4 h-full">
+              <div className="h-1/2">
+                <NivoHorizontalBarChart
+                  data={agg.evolucaoMensal.map(item => ({ name: item.name, novos: item.novos }))}
+                  keys={['novos']}
+                  title="Novos negocios"
+                  tooltipFormatter={(v: number) => v.toLocaleString("pt-BR")}
+                  colors={[NIVO_COLORS[1]]}
+                  height={130}
+                />
+              </div>
+              <div className="h-1/2">
+                <NivoLineChart
+                  data={agg.evolucaoMensal.map(item => ({ x: item.name, y: item.valorCriado }))}
+                  title="Valor negociado"
+                  color={NIVO_COLORS[0]}
+                  height={130}
+                  tooltipFormatter={formatBRL}
+                />
+              </div>
+            </div>
+          </div>
         </ChartCard>
 
         <ChartCard
@@ -140,17 +161,19 @@ export default function ComercialSection({ active }: Props) {
           description="Top 10 por receita fechada (taxa de conversao no tooltip)"
           loading={isLoading}
         >
-          <BarChart data={agg.rankingConsultor} layout="vertical" margin={{ left: 8 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={formatBRLShort} />
-            <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={130} />
-            <Tooltip formatter={(v: number, _n, p) => [`${formatBRL(v)} · ${p.payload.ganhos}/${p.payload.total} (${pct(p.payload.taxa)})`, "Ganho"]} />
-            <Bar dataKey="valorGanho">
-              {agg.rankingConsultor.map((_, i) => (
-                <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-              ))}
-            </Bar>
-          </BarChart>
+          <NivoHorizontalBarChart
+            data={agg.rankingConsultor.map(item => ({
+              name: item.name,
+              valorGanho: item.valorGanho,
+              ganhos: item.ganhos,
+              total: item.total,
+              taxa: item.taxa
+            }))}
+            keys={['valorGanho']}
+            title=""
+            tooltipFormatter={(v: number) => `${formatBRL(v)} · ${v.ganhos}/${v.total} (${pct(v.taxa)})`}
+            colors={NIVO_COLORS}
+          />
         </ChartCard>
       </div>
     </div>
