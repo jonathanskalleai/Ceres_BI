@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchNegociosBI, type NegocioBIRow } from "@/services/bi/negociosBIService";
+import { USE_MIRROR } from "@/config/featureFlags";
 import { yearMonth } from "@/lib/dateUtils";
 
 interface NegociosKPIs {
@@ -94,7 +95,8 @@ export function dedupeNegocios(rows: NegocioBIRow[]): NegocioBIRow[] {
 const num = (v: number | null): number => (typeof v === "number" && isFinite(v) ? v : 0);
 
 export function aggregateNegociosBI(rawRows: NegocioBIRow[]): NegociosAgg {
-  const rows = dedupeNegocios(rawRows);
+  // Mirror ja deduplica na ingestao (PK por ngo_numero) — skip dedup
+  const rows = USE_MIRROR.crm_negocios ? rawRows : dedupeNegocios(rawRows);
 
   let ganhos = 0;
   let perdidos = 0;

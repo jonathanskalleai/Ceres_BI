@@ -1,7 +1,9 @@
 import { useState, Suspense, lazy } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import { DashboardViewExplorer } from "@/components/dashboard/DashboardViewExplorer";
+import { useSyncStatus } from "@/hooks/bi/useSyncStatus";
 
 const ComercialSection = lazy(() => import("@/components/bi/sections/ComercialSection"));
 const PedidosSection = lazy(() => import("@/components/bi/sections/PedidosSection"));
@@ -22,6 +24,15 @@ const TABS = [
 
 type TabValue = (typeof TABS)[number]["value"];
 
+function formatMinutesAgo(date: Date): string {
+  const diffMs = Date.now() - date.getTime();
+  const diffMin = Math.round(diffMs / 60_000);
+  if (diffMin < 1) return "agora";
+  if (diffMin < 60) return `${diffMin} min`;
+  const diffH = Math.round(diffMin / 60);
+  return `${diffH}h`;
+}
+
 function SectionFallback() {
   return (
     <div className="p-6 space-y-4">
@@ -41,6 +52,11 @@ function SectionFallback() {
 
 const DashboardBIReal = () => {
   const [activeTab, setActiveTab] = useState<TabValue>("comercial");
+  const { lastSyncAt, isStale } = useSyncStatus();
+
+  const syncLabel = lastSyncAt
+    ? `Atualizado ha ${formatMinutesAgo(lastSyncAt)}`
+    : "Sync indisponivel";
 
   return (
     <div className="relative p-6 space-y-4">
@@ -51,11 +67,19 @@ const DashboardBIReal = () => {
         <div className="absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-violet-500/15 blur-3xl" />
       </div>
 
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard BI</h1>
-        <p className="text-sm text-muted-foreground">
-          Analise completa de todas as views do SQL Server
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Dashboard BI</h1>
+          <p className="text-sm text-muted-foreground">
+            Analise completa de todas as views do SQL Server
+          </p>
+        </div>
+        <Badge
+          variant={isStale ? "destructive" : "secondary"}
+          className={isStale ? "bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-100" : ""}
+        >
+          {syncLabel}
+        </Badge>
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
