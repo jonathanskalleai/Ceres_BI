@@ -226,7 +226,7 @@ export function aggregateNegociosBI(rawRows: NegocioBIRow[]): NegociosAgg {
   return { kpis, funilPorEtapa, porOrigem, motivosPerda, evolucaoMensal, rankingConsultor };
 }
 
-export function useNegociosBI(enabled: boolean, dateRange?: import("react-day-picker").DateRange) {
+export function useNegociosBI(enabled: boolean, dateRange?: import("react-day-picker").DateRange, funil?: string) {
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["bi-negocios"],
     queryFn: fetchNegociosBI,
@@ -235,15 +235,23 @@ export function useNegociosBI(enabled: boolean, dateRange?: import("react-day-pi
   });
 
   const filteredRows = useMemo(() => {
-    if (!dateRange?.from) return rows;
-    return rows.filter((r) => {
-      const d = r.NGO_DataCadastro ? new Date(r.NGO_DataCadastro) : null;
-      if (!d) return false;
-      if (dateRange.from && d < dateRange.from) return false;
-      if (dateRange.to && d > dateRange.to) return false;
-      return true;
-    });
-  }, [rows, dateRange]);
+    let result = rows;
+    // Filtro por funil
+    if (funil && funil !== "__all__") {
+      result = result.filter((r) => r.NGO_Funil === funil);
+    }
+    // Filtro por data
+    if (dateRange?.from) {
+      result = result.filter((r) => {
+        const d = r.NGO_DataCadastro ? new Date(r.NGO_DataCadastro) : null;
+        if (!d) return false;
+        if (dateRange.from && d < dateRange.from) return false;
+        if (dateRange.to && d > dateRange.to) return false;
+        return true;
+      });
+    }
+    return result;
+  }, [rows, dateRange, funil]);
 
   const agg = useMemo(() => aggregateNegociosBI(filteredRows), [filteredRows]);
 

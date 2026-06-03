@@ -3,6 +3,7 @@ import { type DateRange } from "react-day-picker";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { DashboardViewExplorer } from "@/components/dashboard/DashboardViewExplorer";
 import { useSyncStatus } from "@/hooks/bi/useSyncStatus";
@@ -52,9 +53,23 @@ function SectionFallback() {
   );
 }
 
+const FUNIS = [
+  { value: "__all__", label: "Todos os funis" },
+  { value: "VENDAS", label: "Vendas" },
+  { value: "Vendas AP", label: "Vendas AP" },
+  { value: "ADM", label: "ADM" },
+  { value: "Adm AP", label: "Adm AP" },
+  { value: "BANCOS", label: "Bancos" },
+  { value: "Logistica AP", label: "Logística AP" },
+  { value: "MARKETING", label: "Marketing" },
+  { value: "OFICINA", label: "Oficina" },
+  { value: "REPASSE DE MAQUINA", label: "Repasse de Máquina" },
+] as const;
+
 const DashboardBIReal = () => {
   const [activeTab, setActiveTab] = useState<TabValue>("comercial");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [funil, setFunil] = useState<string>("__all__");
   const { lastSyncAt, isStale } = useSyncStatus();
 
   const syncLabel = lastSyncAt
@@ -79,6 +94,16 @@ const DashboardBIReal = () => {
         </div>
         <div className="flex items-center gap-3">
           <DateRangePicker value={dateRange} onChange={setDateRange} />
+          <Select value={funil} onValueChange={setFunil}>
+            <SelectTrigger className="w-[180px] h-9 text-sm">
+              <SelectValue placeholder="Funil" />
+            </SelectTrigger>
+            <SelectContent>
+              {FUNIS.map((f) => (
+                <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Badge
             variant={isStale ? "destructive" : "secondary"}
             className={isStale ? "bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-100" : ""}
@@ -99,7 +124,7 @@ const DashboardBIReal = () => {
 
         <TabsContent value="comercial">
           <Suspense fallback={<SectionFallback />}>
-            <ComercialSection active={activeTab === "comercial"} dateRange={dateRange} />
+            <ComercialSection active={activeTab === "comercial"} dateRange={dateRange} funil={funil} />
           </Suspense>
         </TabsContent>
 

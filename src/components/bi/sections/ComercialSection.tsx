@@ -13,13 +13,14 @@ import { formatBRL, formatBRLShort, formatDias } from "@/lib/dateUtils";
 interface Props {
   active: boolean;
   dateRange?: DateRange;
+  funil?: string;
 }
 
 const pct = (v: number) => `${v.toFixed(1)}%`;
 
-export default function ComercialSection({ active, dateRange }: Props) {
-  const { agg, isLoading } = useNegociosBI(active, dateRange);
-  const { agg: funil, isLoading: funilLoading } = useFunilData(active);
+export default function ComercialSection({ active, dateRange, funil }: Props) {
+  const { agg, isLoading } = useNegociosBI(active, dateRange, funil);
+  const { agg: funil_, isLoading: funilLoading } = useFunilData(active);
   const { kpis } = agg;
 
   return (
@@ -115,7 +116,7 @@ export default function ComercialSection({ active, dateRange }: Props) {
           loading={funilLoading}
         >
           <HorizontalBarChart
-            data={funil.velocidadePorEtapa.map(item => ({
+            data={funil_.velocidadePorEtapa.map(item => ({
               name: item.name,
               diasMedio: item.diasMedio,
               qtd: item.qtd
