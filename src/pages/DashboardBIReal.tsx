@@ -1,7 +1,9 @@
 import { useState, Suspense, lazy } from "react";
+import { type DateRange } from "react-day-picker";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { DashboardViewExplorer } from "@/components/dashboard/DashboardViewExplorer";
 import { useSyncStatus } from "@/hooks/bi/useSyncStatus";
 
@@ -52,6 +54,7 @@ function SectionFallback() {
 
 const DashboardBIReal = () => {
   const [activeTab, setActiveTab] = useState<TabValue>("comercial");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const { lastSyncAt, isStale } = useSyncStatus();
 
   const syncLabel = lastSyncAt
@@ -74,12 +77,15 @@ const DashboardBIReal = () => {
             Analise completa de todas as views do SQL Server
           </p>
         </div>
-        <Badge
-          variant={isStale ? "destructive" : "secondary"}
-          className={isStale ? "bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-100" : ""}
-        >
-          {syncLabel}
-        </Badge>
+        <div className="flex items-center gap-3">
+          <DateRangePicker value={dateRange} onChange={setDateRange} />
+          <Badge
+            variant={isStale ? "destructive" : "secondary"}
+            className={isStale ? "bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-100" : ""}
+          >
+            {syncLabel}
+          </Badge>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
@@ -93,37 +99,37 @@ const DashboardBIReal = () => {
 
         <TabsContent value="comercial">
           <Suspense fallback={<SectionFallback />}>
-            <ComercialSection active={activeTab === "comercial"} />
+            <ComercialSection active={activeTab === "comercial"} dateRange={dateRange} />
           </Suspense>
         </TabsContent>
 
         <TabsContent value="pedidos">
           <Suspense fallback={<SectionFallback />}>
-            <PedidosSection active={activeTab === "pedidos"} />
+            <PedidosSection active={activeTab === "pedidos"} dateRange={dateRange} />
           </Suspense>
         </TabsContent>
 
         <TabsContent value="produtos">
           <Suspense fallback={<SectionFallback />}>
-            <ProdutosSection active={activeTab === "produtos"} />
+            <ProdutosSection active={activeTab === "produtos"} dateRange={dateRange} />
           </Suspense>
         </TabsContent>
 
         <TabsContent value="servicos">
           <Suspense fallback={<SectionFallback />}>
-            <ServicosSection active={activeTab === "servicos"} />
+            <ServicosSection active={activeTab === "servicos"} dateRange={dateRange} />
           </Suspense>
         </TabsContent>
 
         <TabsContent value="operacional">
           <Suspense fallback={<SectionFallback />}>
-            <OperacionalSection active={activeTab === "operacional"} />
+            <OperacionalSection active={activeTab === "operacional"} dateRange={dateRange} />
           </Suspense>
         </TabsContent>
 
         <TabsContent value="admin">
           <Suspense fallback={<SectionFallback />}>
-            <AdminSection active={activeTab === "admin"} />
+            <AdminSection active={activeTab === "admin"} dateRange={dateRange} />
           </Suspense>
         </TabsContent>
 

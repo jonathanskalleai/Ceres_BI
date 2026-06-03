@@ -126,7 +126,7 @@ export function aggregatePedidos(rows: PedidoRow[]): PedidosAgg {
   };
 }
 
-export function usePedidosData(enabled: boolean) {
+export function usePedidosData(enabled: boolean, dateRange?: import("react-day-picker").DateRange) {
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["bi-pedidos"],
     queryFn: fetchPedidosBI,
@@ -134,7 +134,18 @@ export function usePedidosData(enabled: boolean) {
     enabled,
   });
 
-  const agg = useMemo(() => aggregatePedidos(rows), [rows]);
+  const filteredRows = useMemo(() => {
+    if (!dateRange?.from) return rows;
+    return rows.filter((r) => {
+      const d = r.PDO_DthPedido ? new Date(r.PDO_DthPedido) : null;
+      if (!d) return false;
+      if (dateRange.from && d < dateRange.from) return false;
+      if (dateRange.to && d > dateRange.to) return false;
+      return true;
+    });
+  }, [rows, dateRange]);
+
+  const agg = useMemo(() => aggregatePedidos(filteredRows), [filteredRows]);
 
   return { agg, isLoading };
 }

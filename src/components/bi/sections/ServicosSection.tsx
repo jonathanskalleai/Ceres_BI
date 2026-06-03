@@ -1,4 +1,5 @@
 import { Wrench, AlertCircle, CheckCircle, Clock, Timer, FolderOpen } from "lucide-react";
+import { type DateRange } from "react-day-picker";
 import { useServicosData } from "@/hooks/bi/useServicosData";
 import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
@@ -8,10 +9,11 @@ import { formatDias } from "@/lib/dateUtils";
 
 interface Props {
   active: boolean;
+  dateRange?: DateRange;
 }
 
-export default function ServicosSection({ active }: Props) {
-  const { agg, isLoading } = useServicosData(active);
+export default function ServicosSection({ active, dateRange }: Props) {
+  const { agg, isLoading } = useServicosData(active, dateRange);
   const { kpis } = agg;
 
   return (

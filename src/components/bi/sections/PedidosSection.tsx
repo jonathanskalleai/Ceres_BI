@@ -1,4 +1,5 @@
 import { ShoppingCart, DollarSign, TrendingUp, CreditCard, Percent, XCircle } from "lucide-react";
+import { type DateRange } from "react-day-picker";
 import { usePedidosData } from "@/hooks/bi/usePedidosData";
 import { usePedidosItensData } from "@/hooks/bi/usePedidosItensData";
 import { KPICard } from "@/components/bi/KPICard";
@@ -9,10 +10,11 @@ import { formatBRL, formatBRLShort } from "@/lib/dateUtils";
 
 interface Props {
   active: boolean;
+  dateRange?: DateRange;
 }
 
-export default function PedidosSection({ active }: Props) {
-  const { agg, isLoading } = usePedidosData(active);
+export default function PedidosSection({ active, dateRange }: Props) {
+  const { agg, isLoading } = usePedidosData(active, dateRange);
   const { agg: itens, isLoading: itensLoading } = usePedidosItensData(active);
   const { kpis } = agg;
 

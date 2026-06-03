@@ -1,4 +1,5 @@
 import { Users, Route, Activity, Coffee, Calendar, CheckCircle } from "lucide-react";
+import { type DateRange } from "react-day-picker";
 import { useOperacionalData } from "@/hooks/bi/useOperacionalData";
 import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
@@ -7,11 +8,12 @@ import { CHART_COLORS, POSITIVE_COLOR, NEGATIVE_COLOR } from "@/lib/chartTheme";
 
 interface Props {
   active: boolean;
+  dateRange?: DateRange;
 }
 
 const pct = (v: number) => `${v.toFixed(1)}%`;
 
-export default function OperacionalSection({ active }: Props) {
+export default function OperacionalSection({ active, dateRange }: Props) {
   const { agg, isLoading } = useOperacionalData(active);
   const { kpis } = agg;
 

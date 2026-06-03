@@ -1,6 +1,7 @@
 import {
   Briefcase, Percent, DollarSign, Trophy, Clock, Wallet,
 } from "lucide-react";
+import { type DateRange } from "react-day-picker";
 import { useNegociosBI } from "@/hooks/bi/useNegociosBI";
 import { useFunilData } from "@/hooks/bi/useFunilData";
 import { KPICard } from "@/components/bi/KPICard";
@@ -11,12 +12,13 @@ import { formatBRL, formatBRLShort, formatDias } from "@/lib/dateUtils";
 
 interface Props {
   active: boolean;
+  dateRange?: DateRange;
 }
 
 const pct = (v: number) => `${v.toFixed(1)}%`;
 
-export default function ComercialSection({ active }: Props) {
-  const { agg, isLoading } = useNegociosBI(active);
+export default function ComercialSection({ active, dateRange }: Props) {
+  const { agg, isLoading } = useNegociosBI(active, dateRange);
   const { agg: funil, isLoading: funilLoading } = useFunilData(active);
   const { kpis } = agg;
 

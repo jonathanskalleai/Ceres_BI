@@ -1,4 +1,5 @@
 import { Cpu, Users, Layers, Tag } from "lucide-react";
+import { type DateRange } from "react-day-picker";
 import { useProdutosData } from "@/hooks/bi/useProdutosData";
 import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
@@ -7,9 +8,10 @@ import { CHART_COLORS } from "@/lib/chartTheme";
 
 interface Props {
   active: boolean;
+  dateRange?: DateRange;
 }
 
-export default function ProdutosSection({ active }: Props) {
+export default function ProdutosSection({ active, dateRange }: Props) {
   const { agg, isLoading } = useProdutosData(active);
   const { kpis } = agg;
 

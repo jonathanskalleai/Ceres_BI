@@ -226,7 +226,7 @@ export function aggregateNegociosBI(rawRows: NegocioBIRow[]): NegociosAgg {
   return { kpis, funilPorEtapa, porOrigem, motivosPerda, evolucaoMensal, rankingConsultor };
 }
 
-export function useNegociosBI(enabled: boolean) {
+export function useNegociosBI(enabled: boolean, dateRange?: import("react-day-picker").DateRange) {
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["bi-negocios"],
     queryFn: fetchNegociosBI,
@@ -234,7 +234,18 @@ export function useNegociosBI(enabled: boolean) {
     enabled,
   });
 
-  const agg = useMemo(() => aggregateNegociosBI(rows), [rows]);
+  const filteredRows = useMemo(() => {
+    if (!dateRange?.from) return rows;
+    return rows.filter((r) => {
+      const d = r.NGO_DataCadastro ? new Date(r.NGO_DataCadastro) : null;
+      if (!d) return false;
+      if (dateRange.from && d < dateRange.from) return false;
+      if (dateRange.to && d > dateRange.to) return false;
+      return true;
+    });
+  }, [rows, dateRange]);
+
+  const agg = useMemo(() => aggregateNegociosBI(filteredRows), [filteredRows]);
 
   return { agg, isLoading };
 }

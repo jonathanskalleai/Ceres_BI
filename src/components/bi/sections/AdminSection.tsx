@@ -1,4 +1,5 @@
 import { Users, UserCheck, UserPlus, Globe, Briefcase, Building2 } from "lucide-react";
+import { type DateRange } from "react-day-picker";
 import { useAdminData } from "@/hooks/bi/useAdminData";
 import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
@@ -7,9 +8,10 @@ import { CHART_COLORS, POSITIVE_COLOR } from "@/lib/chartTheme";
 
 interface Props {
   active: boolean;
+  dateRange?: DateRange;
 }
 
-export default function AdminSection({ active }: Props) {
+export default function AdminSection({ active, dateRange }: Props) {
   const { agg, isLoading } = useAdminData(active);
   const { kpis } = agg;
 

@@ -123,14 +123,25 @@ export function aggregateServicos(
   };
 }
 
-export function useServicosData(enabled: boolean) {
+export function useServicosData(enabled: boolean, dateRange?: import("react-day-picker").DateRange) {
   const ordensQ = useQuery({ queryKey: ["bi-os"], queryFn: fetchOrdensServico, staleTime: 60_000, enabled });
   const atendQ = useQuery({ queryKey: ["bi-os-atend"], queryFn: fetchAtendimentosOS, staleTime: 60_000, enabled });
   const ocorrQ = useQuery({ queryKey: ["bi-os-ocorr"], queryFn: fetchOcorrencias, staleTime: 60_000, enabled });
 
+  const filteredOrdens = useMemo(() => {
+    if (!dateRange?.from) return ordensQ.data ?? [];
+    return (ordensQ.data ?? []).filter((r) => {
+      const d = r.OS_dthAbertura ? new Date(r.OS_dthAbertura) : null;
+      if (!d) return false;
+      if (dateRange.from && d < dateRange.from) return false;
+      if (dateRange.to && d > dateRange.to) return false;
+      return true;
+    });
+  }, [ordensQ.data, dateRange]);
+
   const agg = useMemo(
-    () => aggregateServicos(ordensQ.data ?? [], atendQ.data ?? [], ocorrQ.data ?? []),
-    [ordensQ.data, atendQ.data, ocorrQ.data],
+    () => aggregateServicos(filteredOrdens, atendQ.data ?? [], ocorrQ.data ?? []),
+    [filteredOrdens, atendQ.data, ocorrQ.data],
   );
 
   return { agg, isLoading: ordensQ.isLoading || atendQ.isLoading || ocorrQ.isLoading };
