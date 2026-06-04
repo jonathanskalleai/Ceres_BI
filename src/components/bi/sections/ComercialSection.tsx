@@ -25,6 +25,14 @@ export default function ComercialSection({ active, dateRange, funil }: Props) {
 
   return (
     <div className="space-y-6 pt-4">
+      <div className="flex justify-end mb-2">
+        <a
+          href="/performance"
+          className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+        >
+          Ver metas e planejamento →
+        </a>
+      </div>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <KPICard
           title="Negocios" value={kpis.totalNegocios.toLocaleString("pt-BR")}
@@ -67,6 +75,7 @@ export default function ComercialSection({ active, dateRange, funil }: Props) {
           <HorizontalBarChart
             data={agg.funilPorEtapa.map(item => ({ name: item.name, valor: item.valor }))}
             keys={['valor']}
+            seriesLabels={{ valor: "Valor (R$)" }}
             title=""
             tooltipFormatter={formatBRL}
             colors={[CHART_COLORS[0]]}
@@ -104,6 +113,7 @@ export default function ComercialSection({ active, dateRange, funil }: Props) {
               qtd: item.qtd
             }))}
             keys={['valor']}
+            seriesLabels={{ valor: "Valor Perdido" }}
             title=""
             tooltipFormatter={(value, d) => `${formatBRL(value)} (${d?.qtd ?? 0} negocios)`}
             colors={[NEGATIVE_COLOR]}
@@ -122,6 +132,7 @@ export default function ComercialSection({ active, dateRange, funil }: Props) {
               qtd: item.qtd
             }))}
             keys={['diasMedio']}
+            seriesLabels={{ diasMedio: "Dias (média)" }}
             title=""
             tooltipFormatter={(value, d) => `${formatDias(value)} (${d?.qtd ?? 0} passagens)`}
             colors={[CHART_COLORS[4]]}
@@ -139,6 +150,7 @@ export default function ComercialSection({ active, dateRange, funil }: Props) {
                 <HorizontalBarChart
                   data={agg.evolucaoMensal.map(item => ({ name: item.name, novos: item.novos }))}
                   keys={['novos']}
+                  seriesLabels={{ novos: "Novos negócios" }}
                   title="Novos negocios"
                   tooltipFormatter={(v: number) => v.toLocaleString("pt-BR")}
                   colors={[CHART_COLORS[1]]}
@@ -148,7 +160,7 @@ export default function ComercialSection({ active, dateRange, funil }: Props) {
               <div className="h-1/2">
                 <LineChart
                   data={agg.evolucaoMensal.map(item => ({ x: item.name, y: item.valorCriado }))}
-                  title="Valor negociado"
+                  seriesName="Valor negociado"
                   color={CHART_COLORS[0]}
                   height={130}
                   tooltipFormatter={formatBRL}
@@ -172,6 +184,7 @@ export default function ComercialSection({ active, dateRange, funil }: Props) {
               taxa: item.taxa
             }))}
             keys={['valorGanho']}
+            seriesLabels={{ valorGanho: "Valor Ganho" }}
             title=""
             tooltipFormatter={(value, d) => `${formatBRL(value)} · ${d?.ganhos ?? 0}/${d?.total ?? 0} (${pct((d?.taxa as number) ?? 0)})`}
             colors={CHART_COLORS}

@@ -7,16 +7,29 @@ import { Filters } from "@/types/comercial";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Target, TrendingUp, TrendingDown, AlertTriangle, Trophy, Flame, Zap, Users, MapPin, Presentation, Banknote, Package } from "lucide-react";
+import { ArrowLeft, Target, TrendingUp, AlertTriangle, Flame, Zap, Users, MapPin, Presentation, Banknote } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useMeta } from "@/hooks/useMeta";
 import {
-  BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine
 } from "recharts";
 import { Apresentacao2026 } from "@/components/performance/Apresentacao2026";
 
-const META_ANUAL = 30_000_000;
 const REALIZADO = 6_300_000;
 const MESES_ANO = 12;
+
+interface ClientePotencial { nome: string; acoes: number; valor: number; cidade: string }
+interface RegiaoOportunidade { cidade: string; totalAcoes: number; pipeline: number }
+interface ConsultorMetric { nome: string; valor: number; conversao: number; total: number }
+interface Metrics {
+  realizado: number; pctAtingido: number; gap: number; mesesPassados: number; mesesRestantes: number;
+  mediaAtual: number; mediaNecessaria: number; projecaoAnual: number; noRitmo: boolean;
+  consultores: ConsultorMetric[]; mediaVendas: number;
+  clientesPotencial: ClientePotencial[]; regioesOportunidade: RegiaoOportunidade[]; alertas: string[];
+  evolucao: { mes: string; valor: number }[];
+  totalNegocios: number; ticketMedio: number; taxaConversao: number; ganhos: number; negociosAbertos: number;
+  totalRecebido: number; totalUsado: number; projecaoRecebido: number; pctUsadoSobreVenda: number; pctRecebidoSobreVenda: number;
+}
 
 const fmt = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -31,6 +44,7 @@ const PerformanceComercial = () => {
   const [filters, setFilters] = useState<Filters>(emptyFilters);
   const [activeTab, setActiveTab] = useState<"dashboard" | "apresentacao">("dashboard");
   const { summary: negociosSummary, isLoading: loadingNeg, error: errorNeg } = useNegociosData(filters);
+  const { metaAnual: META_ANUAL } = useMeta(2026);
 
   const isLoading = loadingCRM || loadingNeg;
   const error = errorCRM || errorNeg;
@@ -118,7 +132,7 @@ const PerformanceComercial = () => {
       pctUsadoSobreVenda,
       pctRecebidoSobreVenda,
     };
-  }, [negociosSummary, data, filters]);
+  }, [negociosSummary, data, filters, META_ANUAL]);
 
   if (error) {
     return (
@@ -200,6 +214,13 @@ const PerformanceComercial = () => {
                 ))}
               </SelectContent>
             </Select>
+            <a
+              href="/"
+              className="ml-auto text-xs text-[hsl(215,16%,57%)] hover:text-[hsl(210,40%,96%)] flex items-center gap-1"
+              title="Ver análise de funil e ranking no Dashboard BI"
+            >
+              Ver análise completa no BI →
+            </a>
           </div>
         )}
       </div>
@@ -227,34 +248,6 @@ const PerformanceComercial = () => {
           <MetricCard label="Média Atual de Vendas" value={fmt(metrics.mediaAtual)} status={metrics.noRitmo ? "ok" : "danger"} />
           <MetricCard label="Diferença" value={fmt(metrics.mediaAtual - (META_ANUAL / MESES_ANO))} status={metrics.noRitmo ? "ok" : "danger"} sub={metrics.noRitmo ? "No ritmo ✅" : "Abaixo do necessário ⚠️"} />
         </div>
-
-        {/* Section 3: Cenário Atual */}
-        <SectionTitle icon={<TrendingUp />} title="CENÁRIO ATUAL" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <SmallCard label="Total Negociado" value={fmt(metrics.realizado)} />
-          <SmallCard label="Negócios Fechados" value={String(metrics.ganhos)} />
-          <SmallCard label="Ticket Médio" value={fmt(metrics.ticketMedio)} />
-          <SmallCard label="Conversão" value={fmtPct(metrics.taxaConversao)} />
-        </div>
-        {metrics.evolucao.length > 0 && (
-          <div className="bg-[hsl(222,47%,9%)] border border-[hsl(217,33%,17%)] rounded-lg p-5">
-            <h4 className="text-sm font-semibold text-[hsl(215,16%,57%)] mb-4">Evolução Mensal de Vendas</h4>
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={metrics.evolucao}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(217,33%,17%)" />
-                <XAxis dataKey="mes" tick={{ fill: "hsl(215,16%,57%)", fontSize: 12 }} />
-                <YAxis tick={{ fill: "hsl(215,16%,57%)", fontSize: 12 }} tickFormatter={(v) => `${(v / 1e6).toFixed(1)}M`} />
-                <Tooltip formatter={(v: number) => fmt(v)} contentStyle={{ background: "hsl(222,47%,9%)", border: "1px solid hsl(217,33%,17%)", borderRadius: 8, color: "hsl(210,40%,96%)" }} />
-                <ReferenceLine y={META_ANUAL / MESES_ANO} stroke="hsl(0,84%,60%)" strokeDasharray="5 5" label={{ value: "Meta/mês", fill: "hsl(0,84%,60%)", fontSize: 11 }} />
-                <Bar dataKey="valor" radius={[4, 4, 0, 0]}>
-                  {metrics.evolucao.map((e, i) => (
-                    <Cell key={i} fill={e.valor >= META_ANUAL / MESES_ANO ? "hsl(152,69%,40%)" : "hsl(0,84%,60%)"} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        )}
 
         {/* Section 4: Pressão do Resultado */}
         <SectionTitle icon={<AlertTriangle />} title="PRESSÃO DO RESULTADO" />
@@ -319,13 +312,6 @@ const PerformanceComercial = () => {
           </div>
         </div>
 
-        {/* Section 5: Ranking */}
-        <SectionTitle icon={<Trophy />} title="RANKING DE CONSULTORES" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <RankingTable title="Por Volume de Vendas" data={[...metrics.consultores].sort((a, b) => b.valor - a.valor)} metric="valor" mediaVendas={metrics.mediaVendas} />
-          <RankingTable title="Por Conversão" data={[...metrics.consultores].sort((a, b) => b.conversao - a.conversao)} metric="conversao" mediaVendas={metrics.mediaVendas} />
-        </div>
-
         {/* Section 6: Oportunidades */}
         <SectionTitle icon={<Target />} title="OPORTUNIDADES ESCONDIDAS" />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -380,7 +366,7 @@ const PerformanceComercial = () => {
         {/* Section 8: Mensagem Estratégica */}
         <SectionTitle icon={<Flame />} title="MENSAGEM ESTRATÉGICA" />
         <div className="bg-gradient-to-br from-[hsl(222,47%,9%)] to-[hsl(217,33%,12%)] border border-[hsl(217,33%,20%)] rounded-lg p-6">
-          <StrategicMessage metrics={metrics} />
+          <StrategicMessage metrics={metrics} metaAnual={META_ANUAL} />
         </div>
 
         {/* Section 9: Plano de Ação */}
@@ -416,15 +402,6 @@ function MetricCard({ label, value, status, sub }: { label: string; value: strin
   );
 }
 
-function SmallCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="bg-[hsl(222,47%,9%)] border border-[hsl(217,33%,17%)] rounded-lg p-4">
-      <p className="text-xs text-[hsl(215,16%,57%)] mb-1">{label}</p>
-      <p className="text-xl font-bold">{value}</p>
-    </div>
-  );
-}
-
 function SectionTitle({ icon, title }: { icon: React.ReactNode; title: string }) {
   return (
     <div className="flex items-center gap-2 pt-2">
@@ -435,34 +412,7 @@ function SectionTitle({ icon, title }: { icon: React.ReactNode; title: string })
   );
 }
 
-function RankingTable({ title, data, metric, mediaVendas }: { title: string; data: any[]; metric: "valor" | "conversao"; mediaVendas: number }) {
-  return (
-    <div className="bg-[hsl(222,47%,9%)] border border-[hsl(217,33%,17%)] rounded-lg p-5">
-      <h4 className="text-sm font-semibold text-[hsl(215,16%,57%)] mb-3">{title}</h4>
-      <div className="space-y-2 max-h-72 overflow-auto scrollbar-thin">
-        {data.map((c, i) => {
-          const isTop = i < 3;
-          const abaixo = metric === "valor" ? c.valor < mediaVendas : c.conversao < 10;
-          return (
-            <div key={c.nome} className={`flex items-center gap-3 p-2 rounded ${isTop ? "bg-[hsl(152,69%,10%)] border border-[hsl(152,69%,25%)]" : abaixo ? "bg-[hsl(0,84%,8%)] border border-[hsl(0,84%,20%)]" : "bg-[hsl(217,33%,12%)]"}`}>
-              <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${isTop ? "bg-[hsl(152,69%,40%)] text-[hsl(222,47%,6%)]" : "bg-[hsl(217,33%,17%)] text-[hsl(215,16%,57%)]"}`}>
-                {i + 1}
-              </span>
-              <span className="flex-1 text-sm font-medium truncate">{c.nome}</span>
-              <span className="text-sm font-bold whitespace-nowrap">
-                {metric === "valor" ? fmt(c.valor) : `${c.conversao}%`}
-              </span>
-              {isTop && <Trophy className="h-4 w-4 text-[hsl(38,92%,50%)]" />}
-              {abaixo && !isTop && <TrendingDown className="h-4 w-4 text-[hsl(0,84%,60%)]" />}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function StrategicMessage({ metrics }: { metrics: any }) {
+function StrategicMessage({ metrics, metaAnual }: { metrics: Metrics; metaAnual: number }) {
   const gap = metrics.gap;
   const mesesRestantes = metrics.mesesRestantes;
   const pct = metrics.pctAtingido;
@@ -474,10 +424,10 @@ function StrategicMessage({ metrics }: { metrics: any }) {
         ⚠️ ATENÇÃO, TIME COMERCIAL
       </p>
       <p>
-        Estamos com <strong>{fmtPct(pct)}</strong> da meta anual realizada. Faltam <strong>{fmt(gap)}</strong> para atingir os R$ 30 milhões.
+        Estamos com <strong>{fmtPct(pct)}</strong> da meta anual realizada. Faltam <strong>{fmt(gap)}</strong> para atingir a meta.
       </p>
       <p>
-        No ritmo atual, a projeção de fechamento é de <strong>{fmt(proj)}</strong> — {proj >= META_ANUAL
+        No ritmo atual, a projeção de fechamento é de <strong>{fmt(proj)}</strong> — {proj >= metaAnual
           ? <span className="text-[hsl(152,69%,40%)] font-bold">estamos no caminho certo.</span>
           : <span className="text-[hsl(0,84%,60%)] font-bold">NÃO atingiremos a meta.</span>
         }
@@ -499,7 +449,7 @@ function StrategicMessage({ metrics }: { metrics: any }) {
   );
 }
 
-function ActionPlan({ metrics }: { metrics: any }) {
+function ActionPlan({ metrics }: { metrics: Metrics }) {
   const actions = [
     {
       titulo: "Revisar todos os negócios em aberto",
