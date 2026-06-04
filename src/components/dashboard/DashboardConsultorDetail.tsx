@@ -4,10 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ChevronDown, ChevronUp, Sparkles, Loader2 } from "lucide-react";
-import {
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip,
-  ResponsiveContainer, CartesianGrid, Legend, PieChart, Pie, Cell,
-} from "recharts";
+import { LineChart, BarChart, PieChart } from "@/components/bi/charts";
+import type { PieChartData } from "@/components/bi/charts";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -16,11 +14,6 @@ interface Props {
   registros: Registro[];
   onBack: () => void;
 }
-
-const COLORS = [
-  "hsl(217, 91%, 60%)", "hsl(152, 69%, 40%)", "hsl(38, 92%, 50%)",
-  "hsl(280, 68%, 60%)", "hsl(0, 84%, 60%)", "hsl(199, 89%, 48%)",
-];
 
 const formatCurrency = (v: number) =>
   v >= 1e6 ? `R$ ${(v / 1e6).toFixed(1)}M` : v >= 1e3 ? `R$ ${(v / 1e3).toFixed(0)}K` : `R$ ${v.toFixed(0)}`;
@@ -138,17 +131,13 @@ export const DashboardConsultorDetail = ({ vendedor: v, registros, onBack }: Pro
             <CardTitle className="text-sm font-semibold">Evolução Mensal</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={v.evolucao}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="YearMonth" tick={{ fontSize: 9 }} />
-                <YAxis tick={{ fontSize: 10 }} />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="acoes" stroke={COLORS[0]} name="Ações" strokeWidth={2} />
-                <Line type="monotone" dataKey="visitas" stroke={COLORS[1]} name="Visitas" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
+            <LineChart
+              series={[
+                { name: "Ações", data: v.evolucao.map((d) => ({ x: d.YearMonth, y: d.acoes })) },
+                { name: "Visitas", data: v.evolucao.map((d) => ({ x: d.YearMonth, y: d.visitas })) },
+              ]}
+              height={250}
+            />
           </CardContent>
         </Card>
 
@@ -158,18 +147,11 @@ export const DashboardConsultorDetail = ({ vendedor: v, registros, onBack }: Pro
             <CardTitle className="text-sm font-semibold">Tipos de Ação</CardTitle>
           </CardHeader>
           <CardContent className="flex justify-center">
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie data={tiposAcao} dataKey="value" nameKey="name" cx="50%" cy="50%"
-                  outerRadius={80} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  labelLine={false} fontSize={9}>
-                  {tiposAcao.map((_, i) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            <PieChart
+              data={tiposAcao.map((t): PieChartData => ({ id: t.name, name: t.name, value: t.value }))}
+              height={250}
+              enableLabels
+            />
           </CardContent>
         </Card>
       </div>

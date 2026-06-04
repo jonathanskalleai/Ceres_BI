@@ -3,9 +3,7 @@ import { DadosComerciais, Filters } from "@/types/comercial";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquareText, ThumbsUp, ThumbsDown, Package, Search } from "lucide-react";
-import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell,
-} from "recharts";
+import { BarChart } from "@/components/bi/charts";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { filterRegistros } from "@/lib/filterUtils";
@@ -37,10 +35,10 @@ const PRODUCT_KEYWORDS = [
 
 const COLORS_POS = "hsl(152, 69%, 40%)";
 const COLORS_NEG = "hsl(0, 84%, 60%)";
-const CHART_COLORS = [
-  "hsl(217, 91%, 60%)", "hsl(152, 69%, 40%)", "hsl(38, 92%, 50%)",
-  "hsl(280, 68%, 60%)", "hsl(0, 84%, 60%)", "hsl(199, 89%, 48%)",
-  "hsl(330, 80%, 55%)", "hsl(45, 93%, 47%)",
+const INSIGHT_CHART_COLORS = [
+  "#3b82f6", "#26a503", "#f59e0b",
+  "#a855f7", "#ef4444", "#0ea5e9",
+  "#ec4899", "#eab308",
 ];
 
 function countKeywords(text: string, keywords: string[]): Record<string, number> {
@@ -160,19 +158,14 @@ export const DashboardInsights = ({ data, filters }: Props) => {
         </CardHeader>
         <CardContent>
           <div className="grid lg:grid-cols-2 gap-6">
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={products.slice(0, 10)} layout="vertical" margin={{ left: 90 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis type="number" tick={{ fontSize: 10 }} />
-                <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={85} />
-                <Tooltip />
-                <Bar dataKey="value" name="Menções" radius={[0, 4, 4, 0]}>
-                  {products.slice(0, 10).map((_, i) => (
-                    <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <BarChart
+              data={products.slice(0, 10).map((p) => ({ name: p.name, value: p.value }))}
+              layout="horizontal"
+              keys={["value"]}
+              height={280}
+              itemColors={INSIGHT_CHART_COLORS}
+              seriesLabels={{ value: "Menções" }}
+            />
             <div className="space-y-2">
               <p className="text-xs font-semibold text-muted-foreground uppercase mb-2">Ranking de Produtos</p>
               {products.slice(0, 10).map((p, i) => (
@@ -201,15 +194,14 @@ export const DashboardInsights = ({ data, filters }: Props) => {
           <CardContent>
             {positiveWords.length > 0 ? (
               <>
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={positiveWords.slice(0, 8)} layout="vertical" margin={{ left: 80 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis type="number" tick={{ fontSize: 10 }} />
-                    <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={75} />
-                    <Tooltip />
-                    <Bar dataKey="value" fill={COLORS_POS} name="Ocorrências" radius={[0, 4, 4, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                <BarChart
+                  data={positiveWords.slice(0, 8).map((w) => ({ name: w.name, value: w.value }))}
+                  layout="horizontal"
+                  keys={["value"]}
+                  height={220}
+                  colors={[COLORS_POS]}
+                  seriesLabels={{ value: "Ocorrências" }}
+                />
                 <div className="flex flex-wrap gap-1.5 mt-3">
                   {positiveWords.map((w) => (
                     <Badge key={w.name} className="bg-success/10 text-success border-success/30 text-[10px]">
@@ -234,15 +226,14 @@ export const DashboardInsights = ({ data, filters }: Props) => {
           <CardContent>
             {negativeWords.length > 0 ? (
               <>
-                <ResponsiveContainer width="100%" height={220}>
-                  <BarChart data={negativeWords.slice(0, 8)} layout="vertical" margin={{ left: 80 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis type="number" tick={{ fontSize: 10 }} />
-                    <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={75} />
-                    <Tooltip />
-                    <Bar dataKey="value" fill={COLORS_NEG} name="Ocorrências" radius={[0, 4, 4, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                <BarChart
+                  data={negativeWords.slice(0, 8).map((w) => ({ name: w.name, value: w.value }))}
+                  layout="horizontal"
+                  keys={["value"]}
+                  height={220}
+                  colors={[COLORS_NEG]}
+                  seriesLabels={{ value: "Ocorrências" }}
+                />
                 <div className="flex flex-wrap gap-1.5 mt-3">
                   {negativeWords.map((w) => (
                     <Badge key={w.name} className="bg-destructive/10 text-destructive border-destructive/30 text-[10px]">
@@ -265,16 +256,15 @@ export const DashboardInsights = ({ data, filters }: Props) => {
             <CardTitle className="text-sm font-semibold">Sentimento por Consultor</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={consultorSentiment} margin={{ left: 10 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="vendedor" tick={{ fontSize: 9 }} interval={0} />
-                <YAxis tick={{ fontSize: 10 }} />
-                <Tooltip />
-                <Bar dataKey="pos" name="Positivas" fill={COLORS_POS} stackId="a" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="neg" name="Negativas" fill={COLORS_NEG} stackId="a" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <BarChart
+              data={consultorSentiment.map((s) => ({ name: s.vendedor, pos: s.pos, neg: s.neg }))}
+              layout="vertical"
+              keys={["pos", "neg"]}
+              colors={[COLORS_POS, COLORS_NEG]}
+              groupMode="stacked"
+              height={280}
+              seriesLabels={{ pos: "Positivas", neg: "Negativas" }}
+            />
           </CardContent>
         </Card>
       )}

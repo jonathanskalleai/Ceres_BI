@@ -11,10 +11,8 @@ import {
   Lightbulb, RefreshCw, BarChart3, Loader2, ChevronDown,
   Wallet, ArrowDownUp, Percent,
 } from "lucide-react";
-import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  LineChart, Line, CartesianGrid, Legend, PieChart, Pie, Cell, ComposedChart, Area,
-} from "recharts";
+import { BarChart, LineChart, PieChart, ComboChart } from "@/components/bi/charts";
+import type { PieChartData } from "@/components/bi/charts";
 import { Filters, DadosComerciais } from "@/types/comercial";
 import { useNegociosData, NegociosSummary } from "@/hooks/useNegociosData";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,10 +23,6 @@ interface Props {
   crmData: DadosComerciais;
 }
 
-const COLORS = [
-  "hsl(217, 91%, 60%)", "hsl(152, 69%, 40%)", "hsl(38, 92%, 50%)",
-  "hsl(280, 68%, 60%)", "hsl(0, 84%, 60%)", "hsl(199, 89%, 48%)",
-];
 
 const fmtCurrency = (v: number) => {
   const n = isFinite(v) ? v : 0;
@@ -350,19 +344,14 @@ export const DashboardNegociosMensais = ({ filters, crmData }: Props) => {
             <CardTitle className="text-sm font-semibold">Evolução Mensal de Negócios</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={280}>
-              <ComposedChart data={summary.evolucaoMensal}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="mes" tick={{ fontSize: 10 }} />
-                <YAxis yAxisId="left" tick={{ fontSize: 10 }} />
-                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10 }} tickFormatter={(v) => fmtCurrencyShort(v)} />
-                <Tooltip formatter={(v: number, name: string) => name === "valor" ? fmtCurrency(v) : v} />
-                <Legend />
-                <Bar yAxisId="left" dataKey="total" fill={COLORS[0]} name="Negócios" radius={[4, 4, 0, 0]} />
-                <Bar yAxisId="left" dataKey="ganhos" fill={COLORS[1]} name="Ganhos" radius={[4, 4, 0, 0]} />
-                <Line yAxisId="right" type="monotone" dataKey="valor" stroke={COLORS[2]} name="Valor" strokeWidth={2} />
-              </ComposedChart>
-            </ResponsiveContainer>
+            <ComboChart
+              data={summary.evolucaoMensal.map((d) => ({ name: d.mes, total: d.total, ganhos: d.ganhos, valor: d.valor }))}
+              barKeys={["total", "ganhos"]}
+              lineKey="valor"
+              seriesLabels={{ total: "Negócios", ganhos: "Ganhos", valor: "Valor" }}
+              height={280}
+              tooltipFormatter={(v, key) => key === "valor" ? fmtCurrency(v) : v.toString()}
+            />
           </CardContent>
         </Card>
 
@@ -372,16 +361,14 @@ export const DashboardNegociosMensais = ({ filters, crmData }: Props) => {
             <CardTitle className="text-sm font-semibold">Ranking Consultores por Negócios</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={summary.porConsultor.slice(0, 10)} layout="vertical" margin={{ left: 70 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={(v) => fmtCurrencyShort(v)} />
-                <YAxis type="category" dataKey="nome" tick={{ fontSize: 9 }} width={65}
-                  tickFormatter={(v: string) => v.split(" ").slice(-1)[0]} />
-                <Tooltip formatter={(v: number) => fmtCurrency(v)} />
-                <Bar dataKey="valor" fill={COLORS[0]} radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <BarChart
+              data={summary.porConsultor.slice(0, 10).map((c) => ({ name: c.nome.split(" ").slice(-1)[0], valor: c.valor }))}
+              layout="horizontal"
+              keys={["valor"]}
+              height={280}
+              tooltipFormatter={(v) => fmtCurrency(v)}
+              seriesLabels={{ valor: "Valor" }}
+            />
           </CardContent>
         </Card>
       </div>
@@ -394,15 +381,12 @@ export const DashboardNegociosMensais = ({ filters, crmData }: Props) => {
             <CardTitle className="text-sm font-semibold">Status dos Negócios</CardTitle>
           </CardHeader>
           <CardContent className="flex justify-center">
-            <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie data={conclusaoData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} fontSize={10}>
-                  {conclusaoData.map((_, i) => <Cell key={i} fill={[COLORS[1], COLORS[0], COLORS[4]][i]} />)}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            <PieChart
+              data={conclusaoData.map((d): PieChartData => ({ id: d.name, name: d.name, value: d.value }))}
+              height={220}
+              enableLabels
+              colors={["#26a503", "#3b82f6", "#ef4444"]}
+            />
           </CardContent>
         </Card>
 
@@ -412,15 +396,13 @@ export const DashboardNegociosMensais = ({ filters, crmData }: Props) => {
             <CardTitle className="text-sm font-semibold">Regiões por Volume de Negócios</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={summary.porRegiao.slice(0, 10)}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="regiao" tick={{ fontSize: 8 }} interval={0} height={60} />
-                <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => fmtCurrencyShort(v)} />
-                <Tooltip formatter={(v: number) => fmtCurrency(v)} />
-                <Bar dataKey="valor" fill={COLORS[3]} radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <BarChart
+              data={summary.porRegiao.slice(0, 10).map((r) => ({ name: r.regiao, valor: r.valor }))}
+              layout="vertical"
+              keys={["valor"]}
+              height={220}
+              tooltipFormatter={(v) => fmtCurrency(v)}
+            />
           </CardContent>
         </Card>
       </div>
@@ -431,18 +413,13 @@ export const DashboardNegociosMensais = ({ filters, crmData }: Props) => {
           <CardTitle className="text-sm font-semibold">Comparativo: Visitas CRM vs Negócios Fechados</CardTitle>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={crossRef} margin={{ left: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="nome" tick={{ fontSize: 10 }} />
-              <YAxis tick={{ fontSize: 10 }} />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="visitas" fill={COLORS[0]} name="Visitas (CRM)" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="negocios" fill={COLORS[2]} name="Negócios" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="ganhos" fill={COLORS[1]} name="Ganhos" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <BarChart
+            data={crossRef.map((c) => ({ name: c.nome, visitas: c.visitas, negocios: c.negocios, ganhos: c.ganhos }))}
+            layout="vertical"
+            keys={["visitas", "negocios", "ganhos"]}
+            height={300}
+            seriesLabels={{ visitas: "Visitas (CRM)", negocios: "Negócios", ganhos: "Ganhos" }}
+          />
         </CardContent>
       </Card>
 
@@ -452,17 +429,13 @@ export const DashboardNegociosMensais = ({ filters, crmData }: Props) => {
           <CardTitle className="text-sm font-semibold">Relação Tipo de Ação vs Fechamento (CRM)</CardTitle>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={acaoVsFechamento} layout="vertical" margin={{ left: 100 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis type="number" tick={{ fontSize: 10 }} />
-              <YAxis type="category" dataKey="tipo" tick={{ fontSize: 9 }} width={95} />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="acoes" fill={COLORS[0]} name="Ações" radius={[0, 4, 4, 0]} />
-              <Bar dataKey="fechamentos" fill={COLORS[1]} name="Com Negócio" radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <BarChart
+            data={acaoVsFechamento.map((a) => ({ name: a.tipo, acoes: a.acoes, fechamentos: a.fechamentos }))}
+            layout="horizontal"
+            keys={["acoes", "fechamentos"]}
+            height={250}
+            seriesLabels={{ acoes: "Ações", fechamentos: "Com Negócio" }}
+          />
         </CardContent>
       </Card>
 

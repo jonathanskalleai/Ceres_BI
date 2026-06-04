@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { DadosComerciais } from "@/types/comercial";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { BarChart } from "@/components/bi/charts";
 import { Badge } from "@/components/ui/badge";
 import { Filters } from "@/types/comercial";
 import { filterRegistros, hasActiveFilters } from "@/lib/filterUtils";
@@ -51,15 +51,13 @@ export const DashboardRegioes = ({ data, filters }: Props) => {
           <CardTitle className="text-sm font-semibold">Pipeline por Região</CardTitle>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={regioes.slice(0, 20)} layout="vertical" margin={{ left: 100 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={(v) => `${(v / 1e6).toFixed(0)}M`} />
-              <YAxis type="category" dataKey="cidade" tick={{ fontSize: 10 }} width={95} />
-              <Tooltip formatter={(v: number) => formatCurrency(v)} />
-              <Bar dataKey="pipeline" fill="hsl(217, 91%, 60%)" radius={[0, 4, 4, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <BarChart
+            data={regioes.slice(0, 20).map((r) => ({ name: r.cidade, pipeline: r.pipeline }))}
+            layout="horizontal"
+            keys={["pipeline"]}
+            height={400}
+            tooltipFormatter={(v) => formatCurrency(v)}
+          />
         </CardContent>
       </Card>
 

@@ -6,9 +6,7 @@ import {
   ChevronLeft, ChevronRight, Maximize, Minimize, Trophy, Target,
   TrendingUp, Users, MapPin, Handshake, Zap, Rocket, BarChart3, Banknote
 } from "lucide-react";
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
-} from "recharts";
+import { BarChart } from "@/components/bi/charts";
 
 const META = 30_000_000;
 
@@ -263,19 +261,16 @@ export function Apresentacao2026({ crmData, negData }: Props) {
       <SlideLayout title="EVOLUÇÃO MENSAL 2026" subtitle="Trajetória de vendas mês a mês — somente 2026" icon={<TrendingUp />}>
         <div className="mt-6 px-4 h-[380px] anim-fade-up" style={{ animationDelay: "0.2s" }}>
           {neg2026.evolucao.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={neg2026.evolucao}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(217,33%,17%)" />
-                <XAxis dataKey="mes" tick={{ fill: "hsl(215,16%,57%)", fontSize: 14 }} />
-                <YAxis tick={{ fill: "hsl(215,16%,57%)", fontSize: 14 }} tickFormatter={(v) => `${(v / 1e6).toFixed(1)}M`} />
-                <Tooltip formatter={(v: number) => fmt(v)} contentStyle={{ background: "hsl(222,47%,9%)", border: "1px solid hsl(217,33%,17%)", borderRadius: 8, color: "hsl(210,40%,96%)" }} />
-                <Bar dataKey="valor" radius={[6, 6, 0, 0]}>
-                  {neg2026.evolucao.map((e, i) => (
-                    <Cell key={i} fill={e.valor >= META / 12 ? "hsl(152,69%,40%)" : "hsl(217,91%,60%)"} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <BarChart
+              data={neg2026.evolucao.map((e) => ({ name: e.mes, valor: e.valor }))}
+              layout="vertical"
+              keys={["valor"]}
+              height={380}
+              itemColors={neg2026.evolucao.map((e) =>
+                e.valor >= META / 12 ? "hsl(152,69%,40%)" : "hsl(217,91%,60%)"
+              )}
+              tooltipFormatter={(v) => fmt(v)}
+            />
           ) : (
             <div className="flex items-center justify-center h-full text-[hsl(215,16%,57%)]">
               <p className="text-lg">Dados de evolução mensal ainda não disponíveis para 2026</p>

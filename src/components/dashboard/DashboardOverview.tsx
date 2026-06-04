@@ -2,10 +2,8 @@ import { useMemo } from "react";
 import { DadosComerciais } from "@/types/comercial";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, MapPin, TrendingUp, Eye, DollarSign, BarChart3 } from "lucide-react";
-import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  LineChart, Line, PieChart, Pie, Cell, CartesianGrid, Legend,
-} from "recharts";
+import { BarChart, LineChart, PieChart } from "@/components/bi/charts";
+import type { PieChartData } from "@/components/bi/charts";
 import { Filters } from "@/types/comercial";
 import { filterRegistros, filterEvolucao, hasActiveFilters } from "@/lib/filterUtils";
 
@@ -15,11 +13,6 @@ interface Props {
   onSelectConsultor: (nome: string) => void;
   totalRegistrosBase?: number;
 }
-
-const CHART_COLORS = [
-  "hsl(217, 91%, 60%)", "hsl(152, 69%, 40%)", "hsl(38, 92%, 50%)",
-  "hsl(280, 68%, 60%)", "hsl(0, 84%, 60%)", "hsl(199, 89%, 48%)",
-];
 
 const formatCurrency = (v: number) =>
   v >= 1e6 ? `R$ ${(v / 1e6).toFixed(1)}M` : `R$ ${(v / 1e3).toFixed(0)}K`;
@@ -139,17 +132,13 @@ export const DashboardOverview = ({ data, filters, onSelectConsultor, totalRegis
             <CardTitle className="text-sm font-semibold">Evolução Mensal</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={evolucaoFiltered}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="YearMonth" tick={{ fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 10 }} />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="acoes" stroke={CHART_COLORS[0]} name="Ações" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="visitas" stroke={CHART_COLORS[1]} name="Visitas" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
+            <LineChart
+              series={[
+                { name: "Ações", data: evolucaoFiltered.map((d) => ({ x: d.YearMonth, y: d.acoes })) },
+                { name: "Visitas", data: evolucaoFiltered.map((d) => ({ x: d.YearMonth, y: d.visitas })) },
+              ]}
+              height={280}
+            />
           </CardContent>
         </Card>
 
@@ -158,16 +147,14 @@ export const DashboardOverview = ({ data, filters, onSelectConsultor, totalRegis
             <CardTitle className="text-sm font-semibold">Top 10 Consultores — Ações Concluídas</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={topConsultores} layout="vertical" margin={{ left: 60 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis type="number" tick={{ fontSize: 10 }} />
-                <YAxis type="category" dataKey="nome" tick={{ fontSize: 10 }} width={55} />
-                <Tooltip formatter={(v: number) => `${v} ações`} />
-                <Bar dataKey="acoes" fill={CHART_COLORS[1]} radius={[0, 4, 4, 0]} cursor="pointer"
-                  onClick={(d) => onSelectConsultor(d.full)} />
-              </BarChart>
-            </ResponsiveContainer>
+            <BarChart
+              data={topConsultores.map((c) => ({ name: c.nome, acoes: c.acoes, full: c.full }))}
+              layout="horizontal"
+              keys={["acoes"]}
+              height={280}
+              tooltipFormatter={(v) => `${v} ações`}
+              onBarClick={(datum) => onSelectConsultor(String(datum.full))}
+            />
           </CardContent>
         </Card>
 
@@ -176,18 +163,11 @@ export const DashboardOverview = ({ data, filters, onSelectConsultor, totalRegis
             <CardTitle className="text-sm font-semibold">Tipos de Contato</CardTitle>
           </CardHeader>
           <CardContent className="flex justify-center">
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie data={tiposContato} dataKey="value" nameKey="name" cx="50%" cy="50%"
-                  outerRadius={90} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  labelLine={false} fontSize={10}>
-                  {tiposContato.map((_, i) => (
-                    <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            <PieChart
+              data={tiposContato.map((t): PieChartData => ({ id: t.name, name: t.name, value: t.value }))}
+              height={250}
+              enableLabels
+            />
           </CardContent>
         </Card>
 
@@ -196,15 +176,12 @@ export const DashboardOverview = ({ data, filters, onSelectConsultor, totalRegis
             <CardTitle className="text-sm font-semibold">Tipos de Ação</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={tiposAcao} layout="vertical" margin={{ left: 80 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis type="number" tick={{ fontSize: 10 }} />
-                <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={75} />
-                <Tooltip />
-                <Bar dataKey="value" fill={CHART_COLORS[1]} radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <BarChart
+              data={tiposAcao.map((t) => ({ name: t.name, value: t.value }))}
+              layout="horizontal"
+              keys={["value"]}
+              height={250}
+            />
           </CardContent>
         </Card>
       </div>
@@ -214,15 +191,13 @@ export const DashboardOverview = ({ data, filters, onSelectConsultor, totalRegis
           <CardTitle className="text-sm font-semibold">Top Regiões por Ações Concluídas</CardTitle>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={regioesChart}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="cidade" tick={{ fontSize: 9 }} textAnchor="end" height={80} interval={0} />
-              <YAxis tick={{ fontSize: 10 }} />
-              <Tooltip formatter={(v: number) => `${v} ações`} />
-              <Bar dataKey="acoes" fill={CHART_COLORS[0]} radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <BarChart
+            data={regioesChart.map((r) => ({ name: r.cidade, acoes: r.acoes }))}
+            layout="vertical"
+            keys={["acoes"]}
+            height={300}
+            tooltipFormatter={(v) => `${v} ações`}
+          />
         </CardContent>
       </Card>
     </div>

@@ -10,9 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Target, TrendingUp, AlertTriangle, Flame, Zap, Users, MapPin, Presentation, Banknote } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useMeta } from "@/hooks/useMeta";
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
-} from "recharts";
+import { BarChart } from "@/components/bi/charts";
 import { Apresentacao2026 } from "@/components/performance/Apresentacao2026";
 
 const REALIZADO = 6_300_000;
@@ -280,27 +278,26 @@ const PerformanceComercial = () => {
           </div>
           <div className="bg-[hsl(222,47%,9%)] border border-[hsl(217,33%,17%)] rounded-lg p-6">
             <p className="text-[hsl(215,16%,57%)] text-sm mb-3">Comparativo</p>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={[
+            <BarChart
+              data={[
                 { name: "Meta", valor: META_ANUAL },
                 { name: "Projeção Venda", valor: metrics.projecaoAnual },
                 { name: "Proj. Recebido", valor: metrics.projecaoRecebido },
                 { name: "Realizado", valor: metrics.realizado },
                 { name: "Recebido Total", valor: metrics.totalRecebido },
-              ]} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(217,33%,17%)" />
-                <XAxis type="number" tick={{ fill: "hsl(215,16%,57%)", fontSize: 11 }} tickFormatter={(v) => `${(v / 1e6).toFixed(0)}M`} />
-                <YAxis type="category" dataKey="name" tick={{ fill: "hsl(210,40%,96%)", fontSize: 11, fontWeight: 600 }} width={100} />
-                <Tooltip formatter={(v: number) => fmt(v)} contentStyle={{ background: "hsl(222,47%,9%)", border: "1px solid hsl(217,33%,17%)", borderRadius: 8, color: "hsl(210,40%,96%)" }} />
-                <Bar dataKey="valor" radius={[0, 4, 4, 0]}>
-                  <Cell fill="hsl(217,91%,60%)" />
-                  <Cell fill={metrics.projecaoAnual >= META_ANUAL ? "hsl(152,69%,40%)" : "hsl(38,92%,50%)"} />
-                  <Cell fill="hsl(38,92%,50%)" />
-                  <Cell fill="hsl(152,69%,40%)" />
-                  <Cell fill="hsl(38,72%,45%)" />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+              ]}
+              layout="horizontal"
+              keys={["valor"]}
+              height={220}
+              itemColors={[
+                "hsl(217,91%,60%)",
+                metrics.projecaoAnual >= META_ANUAL ? "hsl(152,69%,40%)" : "hsl(38,92%,50%)",
+                "hsl(38,92%,50%)",
+                "hsl(152,69%,40%)",
+                "hsl(38,72%,45%)",
+              ]}
+              tooltipFormatter={(v) => fmt(v)}
+            />
           </div>
         </div>
 

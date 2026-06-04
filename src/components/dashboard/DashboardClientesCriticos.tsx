@@ -3,9 +3,7 @@ import { DadosComerciais, Filters, Registro } from "@/types/comercial";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Phone, Mail, MapPin, Clock, TrendingDown, Target, Users } from "lucide-react";
-import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell,
-} from "recharts";
+import { BarChart } from "@/components/bi/charts";
 
 interface Props {
   data: DadosComerciais;
@@ -124,7 +122,7 @@ export const DashboardClientesCriticos = ({ data, filters }: Props) => {
     return Object.entries(f).map(([name, value]) => ({ name, value }));
   }, [criticos]);
 
-  const COLORS = ["hsl(38, 92%, 50%)", "hsl(25, 95%, 53%)", "hsl(0, 84%, 60%)", "hsl(0, 72%, 45%)"];
+  const FAIXA_COLORS = ["hsl(38, 92%, 50%)", "hsl(25, 95%, 53%)", "hsl(0, 84%, 60%)", "hsl(0, 72%, 45%)"];
 
   return (
     <div className="p-6 space-y-6">
@@ -177,19 +175,13 @@ export const DashboardClientesCriticos = ({ data, filters }: Props) => {
             <CardTitle className="text-sm font-semibold">Distribuição por Faixa de Inatividade</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={faixas}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 10 }} />
-                <Tooltip />
-                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                  {faixas.map((_, i) => (
-                    <Cell key={i} fill={COLORS[i]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <BarChart
+              data={faixas.map((f) => ({ name: f.name, value: f.value }))}
+              layout="vertical"
+              keys={["value"]}
+              height={220}
+              itemColors={FAIXA_COLORS}
+            />
           </CardContent>
         </Card>
 
@@ -198,15 +190,13 @@ export const DashboardClientesCriticos = ({ data, filters }: Props) => {
             <CardTitle className="text-sm font-semibold">Clientes Críticos por Consultor</CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={porVendedor} layout="vertical" margin={{ left: 70 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis type="number" tick={{ fontSize: 10 }} />
-                <YAxis type="category" dataKey="vendedor" tick={{ fontSize: 10 }} width={65} />
-                <Tooltip />
-                <Bar dataKey="count" fill="hsl(0, 84%, 60%)" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <BarChart
+              data={porVendedor.map((v) => ({ name: v.vendedor, count: v.count }))}
+              layout="horizontal"
+              keys={["count"]}
+              height={220}
+              colors={["hsl(0, 84%, 60%)"]}
+            />
           </CardContent>
         </Card>
       </div>
