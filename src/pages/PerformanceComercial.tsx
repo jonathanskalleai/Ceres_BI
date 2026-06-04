@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useComercialData } from "@/hooks/useComercialData";
-import { useNegociosData, NegocioRow } from "@/hooks/useNegociosData";
+import { useNegociosData } from "@/hooks/useNegociosData";
 import { isAdminUser } from "@/lib/adminUsers";
 import { filterRegistros } from "@/lib/filterUtils";
 import { Filters } from "@/types/comercial";
@@ -11,7 +11,7 @@ import { ArrowLeft, Target, TrendingUp, AlertTriangle, Flame, Zap, Users, MapPin
 import { useNavigate } from "react-router-dom";
 import { useMeta } from "@/hooks/useMeta";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
 } from "recharts";
 import { Apresentacao2026 } from "@/components/performance/Apresentacao2026";
 
@@ -20,14 +20,11 @@ const MESES_ANO = 12;
 
 interface ClientePotencial { nome: string; acoes: number; valor: number; cidade: string }
 interface RegiaoOportunidade { cidade: string; totalAcoes: number; pipeline: number }
-interface ConsultorMetric { nome: string; valor: number; conversao: number; total: number }
 interface Metrics {
   realizado: number; pctAtingido: number; gap: number; mesesPassados: number; mesesRestantes: number;
   mediaAtual: number; mediaNecessaria: number; projecaoAnual: number; noRitmo: boolean;
-  consultores: ConsultorMetric[]; mediaVendas: number;
   clientesPotencial: ClientePotencial[]; regioesOportunidade: RegiaoOportunidade[]; alertas: string[];
-  evolucao: { mes: string; valor: number }[];
-  totalNegocios: number; ticketMedio: number; taxaConversao: number; ganhos: number; negociosAbertos: number;
+  taxaConversao: number; negociosAbertos: number;
   totalRecebido: number; totalUsado: number; projecaoRecebido: number; pctUsadoSobreVenda: number; pctRecebidoSobreVenda: number;
 }
 
@@ -70,9 +67,8 @@ const PerformanceComercial = () => {
     const pctUsadoSobreVenda = realizado > 0 ? (totalUsado / realizado) * 100 : 0;
     const pctRecebidoSobreVenda = realizado > 0 ? (totalRecebido / realizado) * 100 : 0;
 
-    // Filter commercial consultores
+    // Consultores filtrados (usados no cálculo de alertas)
     const consultores = (negociosSummary.porConsultor || []).filter(c => !isAdminUser(c.nome));
-    const mediaVendas = consultores.length > 0 ? consultores.reduce((s, c) => s + c.valor, 0) / consultores.length : 0;
 
     // Registros filtrados
     const regs = data ? filterRegistros(data.registrosRecentes, filters) : [];
@@ -119,12 +115,8 @@ const PerformanceComercial = () => {
     return {
       realizado, pctAtingido, gap, mesesPassados, mesesRestantes,
       mediaAtual, mediaNecessaria, projecaoAnual, noRitmo,
-      consultores, mediaVendas, clientesPotencial, regioesOportunidade, alertas,
-      evolucao: negociosSummary.evolucaoMensal,
-      totalNegocios: negociosSummary.totalNegocios,
-      ticketMedio: negociosSummary.ticketMedio,
+      clientesPotencial, regioesOportunidade, alertas,
       taxaConversao: negociosSummary.taxaConversao,
-      ganhos: negociosSummary.ganhos,
       negociosAbertos: negociosSummary.emAndamento,
       totalRecebido,
       totalUsado,

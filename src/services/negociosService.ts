@@ -1,106 +1,106 @@
-import { fetchAllPages } from "./sqlServerApi";
+import { supabase } from "@/integrations/supabase/client";
 import type { NegocioRow } from "@/hooks/useNegociosData";
 
-interface NegocioSqlRow {
-  EMP_Cidade: string;
-  EMP_UF: string;
-  NGO_Numero: string;
-  NGO_VlrTotalNegociado: number | null;
-  NGO_Etapa: string;
-  NGO_Conclusao: string;
-  NGO_MotivoGanho: string;
-  NGO_DataCadastro: string | null;
-  CLI_Nome: string;
-  CLI_Cidade: string;
-  NGO_Vendedores: string;
-  PRD_CondicaoProduto: string;
-  USA_Valor: number | null;
-  NGO_ObsNegocio: string;
+interface MirrorNegocio {
+  ngo_numero: string;
+  ngo_conclusao: string | null;
+  ngo_etapa: string | null;
+  ngo_funil: string | null;
+  ngo_vlr_total: number | null;
+  ngo_forma_entrada: string | null;
+  ngo_motivo_perda: string | null;
+  ngo_motivo_ganho: string | null;
+  ngo_ciclo_vendas: number | null;
+  ngo_qtd_acoes: number | null;
+  ngo_probabilidade: number | null;
+  ngo_vendedores: string | null;
+  ngo_data_cadastro: string | null;
+  ngo_data_fechamento: string | null;
+  cli_nome: string | null;
+  cli_cidade: string | null;
+  emp_cidade: string | null;
+  emp_uf: string | null;
+  prd_condicao_produto: string | null;
+  usa_valor: number | null;
+  ngo_obs_negocio: string | null;
 }
 
-interface PedidoSqlRow {
-  NGO_Numero: string;
-  PDO_SituacaoPedido: string;
-  PDO_VlrPedido: number | null;
-  PDO_ObsPedido: string;
-  PDO_CidadeUFEntrega: string;
-  PDO_Vendedor: string;
-  PDO_VlrRecursoProprio: number | null;
+interface MirrorPedido {
+  ngo_numero: string;
+  pdo_situacao: string | null;
+  pdo_vlr_pedido: number | null;
+  pdo_vlr_financiado: number | null;
+  pdo_vlr_recurso_proprio: number | null;
+  pdo_cidade_uf_entrega: string | null;
+  pdo_vendedor: string | null;
+  pdo_dth_pedido: string | null;
 }
 
-interface UsuarioRow {
-  USR_CodUsuario: string;
-  USR_nomeUsuario: string;
-  USR_idUsuario: number;
+interface MirrorUsuario {
+  usr_cod_usuario: string | null;
+  usr_id_usuario: string | null;
+  usr_nome_usuario: string | null;
 }
-
-const NEGOCIOS_COLUMNS = [
-  "EMP_Cidade", "EMP_UF", "NGO_Numero", "NGO_VlrTotalNegociado",
-  "NGO_Etapa", "NGO_Conclusao", "NGO_MotivoGanho", "NGO_DataCadastro",
-  "CLI_Nome", "CLI_Cidade", "NGO_Vendedores", "PRD_CondicaoProduto",
-  "USA_Valor", "NGO_ObsNegocio",
-];
-
-const PEDIDOS_COLUMNS = [
-  "NGO_Numero", "PDO_SituacaoPedido", "PDO_VlrPedido",
-  "PDO_ObsPedido", "PDO_CidadeUFEntrega", "PDO_Vendedor", "PDO_VlrRecursoProprio",
-];
-
-const USUARIOS_COLUMNS = ["USR_CodUsuario", "USR_nomeUsuario", "USR_idUsuario"];
-
-let usuariosCache: Map<string, string> | null = null;
 
 async function getUsuariosMap(): Promise<Map<string, string>> {
-  if (usuariosCache) return usuariosCache;
-  const usuarios = await fetchAllPages<UsuarioRow>("VW_Ceres_Usuario", USUARIOS_COLUMNS);
+  const { data, error } = await supabase
+    .schema("mirror")
+    .from("usuarios")
+    .select("usr_cod_usuario,usr_id_usuario,usr_nome_usuario");
+  if (error) throw new Error(error.message);
   const map = new Map<string, string>();
-  for (const u of usuarios) {
-    if (u.USR_CodUsuario) {
-      map.set(String(u.USR_CodUsuario), u.USR_nomeUsuario);
-    }
-    map.set(String(u.USR_idUsuario), u.USR_nomeUsuario);
+  for (const u of (data ?? []) as MirrorUsuario[]) {
+    const nome = u.usr_nome_usuario?.trim();
+    if (!nome) continue;
+    if (u.usr_cod_usuario != null) map.set(String(u.usr_cod_usuario).trim(), nome);
+    if (u.usr_id_usuario != null) map.set(String(u.usr_id_usuario).trim(), nome);
   }
-  usuariosCache = map;
   return map;
 }
 
 export async function fetchNegociosMensais(): Promise<NegocioRow[]> {
-  const [negocios, pedidos, usuariosMap] = await Promise.all([
-    fetchAllPages<NegocioSqlRow>("VW_Ceres_CRM_Negocios", NEGOCIOS_COLUMNS),
-    fetchAllPages<PedidoSqlRow>("VW_Ceres_CRM_Pedidos", PEDIDOS_COLUMNS),
+  const [negociosRes, pedidosRes, usuariosMap] = await Promise.all([
+    supabase.schema("mirror").from("crm_negocios").select("*"),
+    supabase.schema("mirror").from("crm_pedidos").select("*"),
     getUsuariosMap(),
   ]);
 
-  const pedidoMap = new Map<string, PedidoSqlRow>();
+  if (negociosRes.error) throw new Error(negociosRes.error.message);
+  if (pedidosRes.error) throw new Error(pedidosRes.error.message);
+
+  const negocios = (negociosRes.data ?? []) as MirrorNegocio[];
+  const pedidos = (pedidosRes.data ?? []) as MirrorPedido[];
+
+  const pedidoMap = new Map<string, MirrorPedido>();
   for (const p of pedidos) {
-    if (p.NGO_Numero) {
-      pedidoMap.set(p.NGO_Numero, p);
+    if (p.ngo_numero) {
+      pedidoMap.set(p.ngo_numero, p);
     }
   }
 
   return negocios.map((n) => {
-    const pedido = pedidoMap.get(n.NGO_Numero);
-    const vendedorNome = usuariosMap.get(String(n.NGO_Vendedores)) || "";
-    const valorPedido = pedido?.PDO_VlrPedido || n.NGO_VlrTotalNegociado || 0;
-    const recebido = pedido?.PDO_VlrRecursoProprio || 0;
+    const pedido = pedidoMap.get(n.ngo_numero);
+    const vendedorNome = usuariosMap.get(String(n.ngo_vendedores ?? "").trim()) || "";
+    const valorPedido = pedido?.pdo_vlr_pedido ?? n.ngo_vlr_total ?? 0;
+    const recebido = pedido?.pdo_vlr_recurso_proprio ?? 0;
 
     return {
-      tipo: n.PRD_CondicaoProduto || "",
+      tipo: n.prd_condicao_produto || "",
       recebido: Number(recebido) || 0,
-      unidade: `${n.EMP_Cidade || ""}/${n.EMP_UF || ""}`,
-      cliente: n.CLI_Nome || "",
-      consultor: vendedorNome || pedido?.PDO_Vendedor || "",
+      unidade: pedido?.pdo_cidade_uf_entrega || `${n.emp_cidade || ""}/${n.emp_uf || ""}`,
+      cliente: n.cli_nome || "",
+      consultor: vendedorNome || pedido?.pdo_vendedor || "",
       valor_pedido: Number(valorPedido) || 0,
-      pdo_situacao_pedido: pedido?.PDO_SituacaoPedido || "",
-      ngo_etapa: n.NGO_Etapa || "",
-      ngo_conclusao: n.NGO_Conclusao || "",
-      ngo_motivo_ganho: n.NGO_MotivoGanho || "",
-      pdo_dth_abertura: n.NGO_DataCadastro?.slice(0, 10) || "",
-      pdo_cidade_entrega: pedido?.PDO_CidadeUFEntrega || n.CLI_Cidade || "",
-      pdo_obs_pedido: pedido?.PDO_ObsPedido || n.NGO_ObsNegocio || "",
-      cod_consultor: String(n.NGO_Vendedores || ""),
-      pdo_vlr_recurso_proprio: Number(pedido?.PDO_VlrRecursoProprio) || 0,
-      usado: Number(n.USA_Valor) || 0,
+      pdo_situacao_pedido: pedido?.pdo_situacao || "",
+      ngo_etapa: n.ngo_etapa || "",
+      ngo_conclusao: n.ngo_conclusao || "",
+      ngo_motivo_ganho: n.ngo_motivo_ganho || "",
+      pdo_dth_abertura: n.ngo_data_cadastro?.slice(0, 10) || "",
+      pdo_cidade_entrega: pedido?.pdo_cidade_uf_entrega || n.cli_cidade || "",
+      pdo_obs_pedido: n.ngo_obs_negocio || "",
+      cod_consultor: String(n.ngo_vendedores || ""),
+      pdo_vlr_recurso_proprio: Number(pedido?.pdo_vlr_recurso_proprio) || 0,
+      usado: Number(n.usa_valor) || 0,
     };
   });
 }
