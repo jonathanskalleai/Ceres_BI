@@ -10,6 +10,7 @@ import type {
 } from "@/types/comercial";
 import { isAdminUser } from "@/lib/adminUsers";
 import { fetchRegistrosComerciais } from "@/services/registrosService";
+import { fetchPipelineByVendedor, type VendedorPipeline } from "@/services/pipelineByVendedorService";
 
 function yearMonth(dt: string): string {
   if (!dt) return "";
@@ -18,7 +19,7 @@ function yearMonth(dt: string): string {
   return "";
 }
 
-function aggregate(registros: Registro[]): DadosComerciais {
+function aggregate(registros: Registro[], pipelineMap?: Map<string, VendedorPipeline>): DadosComerciais {
   // KPIs
   const clienteSet = new Set<string>();
   const vendedorSet = new Set<string>();
@@ -140,21 +141,23 @@ function aggregate(registros: Registro[]): DadosComerciais {
     }
   }
 
+  // KPI totalPipeline: use real negocios data if available
+  const realTotalPipeline = pipelineMap
+    ? Array.from(pipelineMap.values()).reduce((sum, v) => sum + v.pipeline, 0)
+    : totalPipeline;
+
   const kpis: KPIs = {
     totalRegistros: registros.length,
     totalClientes: clienteSet.size,
     totalConsultores: vendedorSet.size,
-    totalPipeline,
+    totalPipeline: realTotalPipeline,
     totalVisitas,
     totalCidades: cidadeSet.size,
   };
 
   const vendedores: Vendedor[] = Array.from(vMap.entries()).map(([nome, v]) => {
-    const negocios = new Set<string>();
-    // Count distinct negocio from registros for this vendedor
-    for (const r of registros) {
-      if (r.vendedor === nome && r.negocioValor > 0) negocios.add(r.cliente + "|" + r.negocioEtapa);
-    }
+    // Pipeline/negocios/conversao reais a partir de crm_negocios (se disponivel)
+    const pData = pipelineMap?.get(nome);
 
     const evolucao: EvolucaoMensal[] = Array.from(v.evolMap.entries())
       .map(([ym, e]) => ({ YearMonth: ym, acoes: e.acoes, visitas: e.visitas, negocioValor: e.negocioValor, clientes: e.clientes.size }))
@@ -162,14 +165,13 @@ function aggregate(registros: Registro[]): DadosComerciais {
 
     const topClientes = Array.from(v.clienteMap.entries())
       .map(([nome, c]) => ({ nome, cidade: c.cidade, acoes: c.acoes, visitas: c.visitas, negocioValor: c.negocioValor, diasSemContato: c.diasSemContato }))
-      .sort((a, b) => b.negocioValor - a.negocioValor)
+      .sort((a, b) => b.acoes - a.acoes)
       .slice(0, 10);
 
     const regioes = Array.from(v.regiaoMap.entries())
       .map(([cidade, rg]) => ({ cidade, acoes: rg.acoes, valor: rg.valor, clientes: rg.clientes.size }))
-      .sort((a, b) => b.valor - a.valor);
+      .sort((a, b) => b.acoes - a.acoes);
 
-    const convPct = v.acoes > 0 ? Math.round((negocios.size / v.acoes) * 100) : 0;
     const crmQ = v.acoes > 0 ? Math.round((v.obsCount / v.acoes) * 100) : 0;
 
     return {
@@ -177,9 +179,9 @@ function aggregate(registros: Registro[]): DadosComerciais {
       totalAcoes: v.acoes,
       visitas: v.visitas,
       clientes: v.clientes.size,
-      pipeline: v.pipeline,
-      negocios: negocios.size,
-      conversao: convPct,
+      pipeline: pData?.pipeline ?? 0,
+      negocios: pData?.negocios ?? 0,
+      conversao: pData?.conversao ?? 0,
       crmQuality: crmQ,
       evolucao,
       topClientes,
@@ -198,7 +200,7 @@ function aggregate(registros: Registro[]): DadosComerciais {
       lat: rg.coordCount > 0 ? rg.latSum / rg.coordCount : undefined,
       lng: rg.coordCount > 0 ? rg.lngSum / rg.coordCount : undefined,
     }))
-    .sort((a, b) => b.pipeline - a.pipeline);
+    .sort((a, b) => b.totalAcoes - a.totalAcoes);
 
   const evolucaoGlobal: EvolucaoMensal[] = Array.from(gEvol.entries())
     .map(([ym, e]) => ({ YearMonth: ym, acoes: e.acoes, visitas: e.visitas, negocioValor: e.negocioValor, clientes: e.clientes.size }))
@@ -223,31 +225,38 @@ function aggregate(registros: Registro[]): DadosComerciais {
 export function useComercialData() {
   const {
     data: rawRegistros,
-    isLoading,
+    isLoading: loadingRegistros,
     error: queryError,
     dataUpdatedAt,
   } = useQuery({
     queryKey: ["registros-comerciais"],
     queryFn: fetchRegistrosComerciais,
-    // Antes: staleTime 60s + refetchInterval 60s -> rebaixava a view INTEIRA do
-    // SQL Server a cada minuto (lentidao/jank). Agora 5 min de cache; atualizacao
-    // manual continua via botao "Atualizar Dados" (invalidateQueries).
     staleTime: 5 * 60_000,
   });
 
+  const {
+    data: pipelineMap,
+    isLoading: loadingPipeline,
+  } = useQuery({
+    queryKey: ["pipeline-by-vendedor"],
+    queryFn: fetchPipelineByVendedor,
+    staleTime: 5 * 60_000,
+  });
+
+  const isLoading = loadingRegistros || loadingPipeline;
   const error = queryError ? (queryError as Error).message : null;
   const lastUpdated = dataUpdatedAt ? new Date(dataUpdatedAt).toISOString() : null;
 
   const data = useMemo(() => {
     if (!rawRegistros) return null;
     const commercialRegistros = rawRegistros.filter((r) => !isAdminUser(r.vendedor));
-    return aggregate(commercialRegistros);
-  }, [rawRegistros]);
+    return aggregate(commercialRegistros, pipelineMap ?? undefined);
+  }, [rawRegistros, pipelineMap]);
 
   const allData = useMemo(() => {
     if (!rawRegistros) return null;
-    return aggregate(rawRegistros);
-  }, [rawRegistros]);
+    return aggregate(rawRegistros, pipelineMap ?? undefined);
+  }, [rawRegistros, pipelineMap]);
 
   return { data, allData, isLoading, error, lastUpdated };
 }
