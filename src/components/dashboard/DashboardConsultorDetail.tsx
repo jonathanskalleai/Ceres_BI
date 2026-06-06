@@ -8,6 +8,7 @@ import { LineChart, BarChart, PieChart } from "@/components/bi/charts";
 import type { PieChartData } from "@/components/bi/charts";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { formatMonthYear } from "@/lib/dateUtils";
 
 interface Props {
   vendedor: Vendedor;
@@ -133,8 +134,8 @@ export const DashboardConsultorDetail = ({ vendedor: v, registros, onBack }: Pro
           <CardContent>
             <LineChart
               series={[
-                { name: "Ações", data: v.evolucao.map((d) => ({ x: d.YearMonth, y: d.acoes })) },
-                { name: "Visitas", data: v.evolucao.map((d) => ({ x: d.YearMonth, y: d.visitas })) },
+                { name: "Ações", data: v.evolucao.map((d) => ({ x: formatMonthYear(d.YearMonth), y: d.acoes })) },
+                { name: "Visitas", data: v.evolucao.map((d) => ({ x: formatMonthYear(d.YearMonth), y: d.visitas })) },
               ]}
               height={250}
             />
@@ -304,15 +305,13 @@ export const DashboardConsultorDetail = ({ vendedor: v, registros, onBack }: Pro
           <CardTitle className="text-sm font-semibold">Regiões de Atuação</CardTitle>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={v.regioes} layout="vertical" margin={{ left: 80 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis type="number" tick={{ fontSize: 10 }} />
-              <YAxis type="category" dataKey="cidade" tick={{ fontSize: 10 }} width={75} />
-              <Tooltip formatter={(val: number) => `${val} ações`} />
-              <Bar dataKey="acoes" fill={COLORS[0]} radius={[0, 4, 4, 0]} name="Ações" />
-            </BarChart>
-          </ResponsiveContainer>
+          <BarChart
+            data={v.regioes.map((r) => ({ name: r.cidade, acoes: r.acoes }))}
+            layout="vertical"
+            keys={["acoes"]}
+            height={200}
+            tooltipFormatter={(val) => `${val} ações`}
+          />
         </CardContent>
       </Card>
     </div>
