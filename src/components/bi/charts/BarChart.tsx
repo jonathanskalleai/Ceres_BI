@@ -1,15 +1,9 @@
-import { useMemo } from "react";
-import ReactEChartsCore from "echarts-for-react/lib/core";
-import type { EChartsOption } from "echarts";
-import echarts from "@/lib/echartsCore";
-import {
-  CHART_COLORS,
-  tooltipRow,
-  baseAnimation,
-  formatCompact,
-} from "@/lib/chartTheme";
-import { useChartTheme } from "@/hooks/useChartTheme";
+import { useRef, useState, useCallback } from "react";
 import { ChartFrame } from "./ChartFrame";
+import { SvgBarH } from "./primitives/SvgBarH";
+import { SvgBarV } from "./primitives/SvgBarV";
+import { useContainerWidth } from "./primitives/useContainerWidth";
+import { VOUX_COLORS, VOUX_PALETTE, fmtCompact } from "./primitives/svgGeometry";
 
 export interface BarChartData {
   name: string;
@@ -24,7 +18,7 @@ export interface BarChartProps {
   /** Cor individual por dataIndex — sobrescreve `colors` quando definido */
   itemColors?: string[];
   title?: string;
-  /** Labels amigáveis para cada key (ex: { value: "Clientes" }) — sobrescreve defaults */
+  /** Labels amigáveis para cada key */
   seriesLabels?: Record<string, string>;
   height?: number;
   loading?: boolean;
@@ -33,143 +27,57 @@ export interface BarChartProps {
   onBarClick?: (datum: BarChartData, index: number) => void;
 }
 
-const SERIES_LABELS: Record<string, string> = {
-  ganhos: "Ganhos",
-  perdidos: "Perdidos",
-  andamento: "Em andamento",
-  valor: "Valor",
-  valorGanho: "Valor Ganho",
-  value: "Quantidade",
-  novos: "Novos",
-  diasMedio: "Dias (média)",
-  faturamento: "Faturamento",
-  atendimento: "Atendimento",
-  deslocamento: "Deslocamento",
-  ocioso: "Ocioso",
-  acoes: "Ações",
-};
-
-const LABEL_THRESHOLD_H = 20;
-const LABEL_THRESHOLD_V = 12;
-
-function buildOption(
-  data: BarChartData[],
-  keys: string[],
-  layout: "horizontal" | "vertical",
-  groupMode: "grouped" | "stacked",
-  colors: readonly string[],
-  tooltip: EChartsOption["tooltip"],
-  categoryAxis: ReturnType<typeof import("@/lib/chartTheme").buildCategoryAxis>,
-  valueAxis: ReturnType<typeof import("@/lib/chartTheme").buildValueAxis>,
-  labelColor: string,
-  legendColor: string,
-  seriesLabels?: Record<string, string>,
-  tooltipFormatter?: (value: number, datum?: BarChartData) => string,
-  itemColors?: string[],
-): EChartsOption {
-  const isHorizontal = layout === "horizontal";
-  const categories = data.map((d) => String(d.name));
-  const showLabels = isHorizontal
-    ? data.length <= LABEL_THRESHOLD_H
-    : data.length <= LABEL_THRESHOLD_V;
-
-  const series = keys.map((key, i) => {
-    const seriesColor = colors[i % colors.length];
-    // When itemColors is provided, each bar gets its own color by dataIndex
-    const itemStyleData = itemColors
-      ? data.map((d, idx) => ({
-          value: Number(d[key] ?? 0),
-          itemStyle: {
-            color: itemColors[idx % itemColors.length],
-            borderRadius: isHorizontal ? [0, 3, 3, 0] : [3, 3, 0, 0],
-          },
-        }))
-      : data.map((d) => Number(d[key] ?? 0));
-
-    return {
-      name: seriesLabels?.[key] ?? SERIES_LABELS[key] ?? key,
-      type: "bar" as const,
-      stack: groupMode === "stacked" ? "total" : undefined,
-      data: itemStyleData,
-      barMaxWidth: 24,
-      itemStyle: itemColors
-        ? undefined
-        : {
-            color: seriesColor,
-            borderRadius: isHorizontal ? [0, 3, 3, 0] : [3, 3, 0, 0],
-          },
-      label: {
-        show: showLabels,
-        position: isHorizontal ? "right" as const : "top" as const,
-        fontSize: 12,
-        color: labelColor,
-        formatter: (params: { value: number }) => formatCompact(params.value),
-        overflow: "truncate" as const,
-        ellipsis: "...",
-      },
-    };
-  });
-
-  const catAxis = {
-    ...categoryAxis,
-    data: categories,
-    inverse: isHorizontal,
-    axisLabel: {
-      ...categoryAxis.axisLabel,
-      rotation: !isHorizontal && categories.length > 6 ? 30 : 0,
-    },
-  };
-  const valAxis = {
-    ...valueAxis,
-    axisLabel: { ...valueAxis.axisLabel, formatter: formatCompact },
-  };
-
-  return {
-    ...baseAnimation,
-    grid: { top: 40, right: 20, bottom: 12, left: 12, containLabel: true },
-    legend: {
-      show: true,
-      top: 4,
-      right: 12,
-      textStyle: { color: legendColor, fontSize: 12 },
-      icon: "circle",
-      itemWidth: 8,
-      itemHeight: 8,
-      itemGap: 16,
-    },
-    barCategoryGap: "35%",
-    barGap: "30%",
-    labelLayout: { hideOverlap: true },
-    tooltip: {
-      ...tooltip,
-      trigger: "item",
-      formatter: (params) => {
-        const p = Array.isArray(params) ? params[0] : params;
-        const idx = (p as { dataIndex: number }).dataIndex;
-        const datum = data[idx];
-        const value = Number((p as { value: number }).value);
-        const formatted = tooltipFormatter
-          ? tooltipFormatter(value, datum)
-          : value.toLocaleString("pt-BR");
-        return tooltipRow(
-          String((p as { name: string }).name),
-          String((p as { seriesName?: string }).seriesName ?? ""),
-          String((p as { color: string }).color),
-          formatted,
-        );
-      },
-    },
-    xAxis: isHorizontal ? valAxis : catAxis,
-    yAxis: isHorizontal ? catAxis : valAxis,
-    series,
-  };
+// ── Tooltip ────────────────────────────────────────────────────────────────────
+interface TooltipState {
+  visible: boolean;
+  x: number;
+  y: number;
+  content: string;
 }
 
+function Tooltip({ state }: { state: TooltipState }) {
+  if (!state.visible) return null;
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: state.x + 12,
+        top: state.y - 8,
+        background: "rgba(17,16,13,0.96)",
+        border: "1px solid rgba(212,184,150,0.15)",
+        backdropFilter: "blur(10px)",
+        WebkitBackdropFilter: "blur(10px)",
+        padding: "8px 12px",
+        borderRadius: 10,
+        fontFamily: "var(--voux-font-mono)",
+        fontSize: 11,
+        color: VOUX_COLORS.ink,
+        pointerEvents: "none",
+        zIndex: 50,
+        whiteSpace: "nowrap",
+      }}
+      dangerouslySetInnerHTML={{ __html: state.content }}
+    />
+  );
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+function resolveColor(
+  keyIndex: number,
+  dataIndex: number,
+  colors: readonly string[],
+  itemColors?: string[],
+): string {
+  if (itemColors) return itemColors[dataIndex % itemColors.length];
+  return colors[keyIndex % colors.length];
+}
+
+// ── Main component ─────────────────────────────────────────────────────────────
 export default function BarChart({
   data,
   layout = "vertical",
   keys,
-  colors = CHART_COLORS,
+  colors = VOUX_PALETTE,
   itemColors,
   seriesLabels,
   height,
@@ -178,38 +86,202 @@ export default function BarChart({
   groupMode = "grouped",
   onBarClick,
 }: BarChartProps) {
-  const { tooltip, categoryAxis, valueAxis, vars } = useChartTheme();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const width = useContainerWidth(containerRef as React.RefObject<HTMLElement>);
 
-  const option = useMemo(
-    () => buildOption(data, keys, layout, groupMode, colors, tooltip, categoryAxis, valueAxis, vars.axisText, vars.legendText, seriesLabels, tooltipFormatter, itemColors),
-    [data, keys, layout, groupMode, colors, tooltip, categoryAxis, valueAxis, vars.axisText, vars.legendText, seriesLabels, tooltipFormatter, itemColors],
+  const [tooltip, setTooltip] = useState<TooltipState>({
+    visible: false,
+    x: 0,
+    y: 0,
+    content: "",
+  });
+
+  const fmt = useCallback(
+    (v: number, datum?: BarChartData) =>
+      tooltipFormatter ? tooltipFormatter(v, datum) : v.toLocaleString("pt-BR"),
+    [tooltipFormatter],
   );
 
-  const onEvents = useMemo(() => {
-    if (!onBarClick) return undefined;
-    return {
-      click: (params: { dataIndex: number }) => {
-        const datum = data[params.dataIndex];
-        if (datum) onBarClick(datum, params.dataIndex);
-      },
-    };
-  }, [onBarClick, data]);
+  const isEmpty = data.length === 0;
 
+  // ── Horizontal layout ───────────────────────────────────────────────────────
+  if (layout === "horizontal") {
+    return (
+      <ChartFrame loading={loading} isEmpty={isEmpty} height={height}>
+        <div ref={containerRef} style={{ width: "100%", position: "relative" }}>
+          {keys.map((key, ki) => {
+            const color = resolveColor(ki, 0, colors, itemColors);
+            const seriesData = data.map((d, di) => ({
+              label: String(d.name),
+              value: Number(d[key] ?? 0),
+              _datum: d,
+              _idx: di,
+            }));
+            const globalMax =
+              groupMode === "stacked"
+                ? Math.max(
+                    ...data.map((d) =>
+                      keys.reduce((s, k) => s + Number(d[k] ?? 0), 0),
+                    ),
+                    1,
+                  )
+                : undefined;
+            return (
+              <div key={key} style={{ marginBottom: keys.length > 1 ? 12 : 0 }}>
+                {keys.length > 1 && (
+                  <div
+                    style={{
+                      fontFamily: "var(--voux-font-mono)",
+                      fontSize: 10,
+                      color: VOUX_COLORS.inkMuted,
+                      letterSpacing: "0.10em",
+                      marginBottom: 4,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                  >
+                    <span
+                      style={{
+                        display: "inline-block",
+                        width: 8,
+                        height: 8,
+                        borderRadius: "50%",
+                        backgroundColor: itemColors ? colors[0] : color,
+                      }}
+                    />
+                    {seriesLabels?.[key] ?? key}
+                  </div>
+                )}
+                <SvgBarH
+                  width={width}
+                  data={seriesData.map((sd, di) => ({
+                    label: sd.label,
+                    value: sd.value,
+                  }))}
+                  color={itemColors ? resolveColor(ki, 0, colors, itemColors) : color}
+                  valueFormatter={(v) => fmt(v)}
+                  max={globalMax}
+                />
+              </div>
+            );
+          })}
+          <Tooltip state={tooltip} />
+        </div>
+      </ChartFrame>
+    );
+  }
+
+  // ── Vertical layout ─────────────────────────────────────────────────────────
+  const labels = data.map((d) => String(d.name));
+  const chartH = height ?? 220;
+
+  if (groupMode === "stacked") {
+    // Stacked: render as grouped SvgBarV sections stacked (simplified for v1)
+    // Each key becomes its own row of bars rendered below each other
+    return (
+      <ChartFrame loading={loading} isEmpty={isEmpty} height={height}>
+        <div ref={containerRef} style={{ width: "100%", position: "relative" }}>
+          {keys.map((key, ki) => {
+            const color = resolveColor(ki, 0, colors, itemColors);
+            const values = data.map((d) => Number(d[key] ?? 0));
+            return (
+              <div key={key}>
+                {keys.length > 1 && (
+                  <div
+                    style={{
+                      fontFamily: "var(--voux-font-mono)",
+                      fontSize: 10,
+                      color: VOUX_COLORS.inkMuted,
+                      letterSpacing: "0.10em",
+                      marginBottom: 4,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                    }}
+                  >
+                    <span
+                      style={{
+                        display: "inline-block",
+                        width: 8,
+                        height: 8,
+                        borderRadius: "50%",
+                        backgroundColor: color,
+                      }}
+                    />
+                    {seriesLabels?.[key] ?? key}
+                  </div>
+                )}
+                <SvgBarV
+                  width={width}
+                  height={Math.round(chartH / Math.max(keys.length, 1))}
+                  labels={ki === keys.length - 1 ? labels : labels.map(() => "")}
+                  values={values}
+                  color={color}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </ChartFrame>
+    );
+  }
+
+  // Grouped / single-key vertical
   return (
-    <ChartFrame loading={loading} isEmpty={!data.length} height={height}>
-      <ReactEChartsCore
-        echarts={echarts}
-        option={option}
-        style={{ height: "100%", width: "100%" }}
-        notMerge
-        lazyUpdate
-        opts={{ renderer: "canvas" }}
-        onEvents={onEvents}
-      />
+    <ChartFrame loading={loading} isEmpty={isEmpty} height={height}>
+      <div ref={containerRef} style={{ width: "100%", position: "relative" }}>
+        {keys.map((key, ki) => {
+          const color = resolveColor(ki, 0, colors, itemColors);
+          const values = data.map((d, di) =>
+            itemColors
+              ? Number(d[key] ?? 0)
+              : Number(d[key] ?? 0),
+          );
+          return (
+            <div key={key}>
+              {keys.length > 1 && (
+                <div
+                  style={{
+                    fontFamily: "var(--voux-font-mono)",
+                    fontSize: 10,
+                    color: VOUX_COLORS.inkMuted,
+                    letterSpacing: "0.10em",
+                    marginBottom: 4,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  <span
+                    style={{
+                      display: "inline-block",
+                      width: 8,
+                      height: 8,
+                      borderRadius: "50%",
+                      backgroundColor: color,
+                    }}
+                  />
+                  {seriesLabels?.[key] ?? key}
+                </div>
+              )}
+              <SvgBarV
+                width={width}
+                height={Math.round(chartH / Math.max(keys.length, 1))}
+                labels={ki === keys.length - 1 ? labels : labels.map(() => "")}
+                values={values}
+                color={color}
+              />
+            </div>
+          );
+        })}
+        <Tooltip state={tooltip} />
+      </div>
     </ChartFrame>
   );
 }
 
+// ── Convenience wrappers (maintain existing API) ───────────────────────────────
 export function VerticalBarChart(
   props: Omit<BarChartProps, "layout" | "groupMode">,
 ) {
