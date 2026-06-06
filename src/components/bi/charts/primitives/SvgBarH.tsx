@@ -9,6 +9,9 @@ export interface SvgBarHProps {
   max?: number;
   labelW?: number;
   rowH?: number;
+  onBarEnter?: (dataIndex: number, x: number, y: number, label: string, value: number) => void;
+  onBarLeave?: () => void;
+  onBarClick?: (dataIndex: number) => void;
 }
 
 /**
@@ -23,6 +26,9 @@ export function SvgBarH({
   max: maxProp,
   labelW = 130,
   rowH = 26,
+  onBarEnter,
+  onBarLeave,
+  onBarClick,
 }: SvgBarHProps) {
   const gap = 8;
   const padTop = 4;
@@ -119,6 +125,10 @@ export function SvgBarH({
               height={6}
               rx={3}
               fill={`url(#${gradIds[i]})`}
+              onMouseEnter={(e) => onBarEnter?.(i, e.clientX, e.clientY, d.label, d.value)}
+              onMouseLeave={onBarLeave}
+              onClick={() => onBarClick?.(i)}
+              style={{ cursor: onBarClick ? "pointer" : "default" }}
             />
 
             {/* value */}

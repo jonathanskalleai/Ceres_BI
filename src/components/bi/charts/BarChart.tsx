@@ -40,9 +40,9 @@ function Tooltip({ state }: { state: TooltipState }) {
   return (
     <div
       style={{
-        position: "absolute",
-        left: state.x + 12,
-        top: state.y - 8,
+        position: "fixed",
+        left: state.x + 14,
+        top: state.y - 10,
         background: "rgba(17,16,13,0.96)",
         border: "1px solid rgba(212,184,150,0.15)",
         backdropFilter: "blur(10px)",
@@ -53,7 +53,7 @@ function Tooltip({ state }: { state: TooltipState }) {
         fontSize: 11,
         color: VOUX_COLORS.ink,
         pointerEvents: "none",
-        zIndex: 50,
+        zIndex: 9999,
         whiteSpace: "nowrap",
       }}
       dangerouslySetInnerHTML={{ __html: state.content }}
@@ -155,13 +155,26 @@ export default function BarChart({
                 )}
                 <SvgBarH
                   width={width}
-                  data={seriesData.map((sd, di) => ({
+                  data={seriesData.map((sd) => ({
                     label: sd.label,
                     value: sd.value,
                   }))}
                   color={itemColors ? resolveColor(ki, 0, colors, itemColors) : color}
                   valueFormatter={(v) => fmt(v)}
                   max={globalMax}
+                  onBarEnter={(di, x, y, label, value) => {
+                    const datum = data[di];
+                    const formatted = fmt(value, datum);
+                    const keyLabel = seriesLabels?.[key] ?? key;
+                    setTooltip({
+                      visible: true,
+                      x,
+                      y,
+                      content: `<div style="font-size:10px;color:${VOUX_COLORS.inkMuted};margin-bottom:3px;text-transform:uppercase;letter-spacing:0.1em">${keyLabel}</div><div style="font-size:13px;color:${VOUX_COLORS.ink}"><strong>${label}</strong>: ${formatted}</div>`,
+                    });
+                  }}
+                  onBarLeave={() => setTooltip((t) => ({ ...t, visible: false }))}
+                  onBarClick={onBarClick ? (di) => onBarClick(data[di], di) : undefined}
                 />
               </div>
             );
@@ -218,6 +231,19 @@ export default function BarChart({
                   labels={ki === keys.length - 1 ? labels : labels.map(() => "")}
                   values={values}
                   color={color}
+                  onBarEnter={(di, x, y, label, value) => {
+                    const datum = data[di];
+                    const formatted = fmt(value, datum);
+                    const keyLabel = seriesLabels?.[key] ?? key;
+                    setTooltip({
+                      visible: true,
+                      x,
+                      y,
+                      content: `<div style="font-size:10px;color:${VOUX_COLORS.inkMuted};margin-bottom:3px;text-transform:uppercase;letter-spacing:0.1em">${keyLabel}</div><div style="font-size:13px;color:${VOUX_COLORS.ink}"><strong>${label}</strong>: ${formatted}</div>`,
+                    });
+                  }}
+                  onBarLeave={() => setTooltip((t) => ({ ...t, visible: false }))}
+                  onBarClick={onBarClick ? (di) => onBarClick(data[di], di) : undefined}
                 />
               </div>
             );
@@ -233,11 +259,7 @@ export default function BarChart({
       <div ref={containerRef} style={{ width: "100%", position: "relative" }}>
         {keys.map((key, ki) => {
           const color = resolveColor(ki, 0, colors, itemColors);
-          const values = data.map((d, di) =>
-            itemColors
-              ? Number(d[key] ?? 0)
-              : Number(d[key] ?? 0),
-          );
+          const values = data.map((d) => Number(d[key] ?? 0));
           return (
             <div key={key}>
               {keys.length > 1 && (
@@ -271,6 +293,19 @@ export default function BarChart({
                 labels={ki === keys.length - 1 ? labels : labels.map(() => "")}
                 values={values}
                 color={color}
+                onBarEnter={(di, x, y, label, value) => {
+                  const datum = data[di];
+                  const formatted = fmt(value, datum);
+                  const keyLabel = seriesLabels?.[key] ?? key;
+                  setTooltip({
+                    visible: true,
+                    x,
+                    y,
+                    content: `<div style="font-size:10px;color:${VOUX_COLORS.inkMuted};margin-bottom:3px;text-transform:uppercase;letter-spacing:0.1em">${keyLabel}</div><div style="font-size:13px;color:${VOUX_COLORS.ink}"><strong>${label}</strong>: ${formatted}</div>`,
+                  });
+                }}
+                onBarLeave={() => setTooltip((t) => ({ ...t, visible: false }))}
+                onBarClick={onBarClick ? (di) => onBarClick(data[di], di) : undefined}
               />
             </div>
           );

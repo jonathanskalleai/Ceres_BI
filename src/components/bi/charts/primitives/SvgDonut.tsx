@@ -15,6 +15,8 @@ export interface SvgDonutProps {
   centerValue?: string;
   /** Called with a value to produce the legend text */
   fmt?: (v: number) => string;
+  onSegmentEnter?: (segIndex: number, x: number, y: number) => void;
+  onSegmentLeave?: () => void;
 }
 
 function arcPath(
@@ -49,6 +51,8 @@ export function SvgDonut({
   centerLabel,
   centerValue,
   fmt = fmtCompact,
+  onSegmentEnter,
+  onSegmentLeave,
 }: SvgDonutProps) {
   if (width === 0) return null;
 
@@ -82,6 +86,9 @@ export function SvgDonut({
             d={seg.path}
             fill={seg.color}
             opacity={0.92}
+            onMouseEnter={(e) => onSegmentEnter?.(i, e.clientX, e.clientY)}
+            onMouseLeave={onSegmentLeave}
+            style={{ cursor: "pointer" }}
           />
         ))}
 

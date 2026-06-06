@@ -1,8 +1,8 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { ChartFrame } from "./ChartFrame";
 import { SvgLine } from "./primitives/SvgLine";
 import { useContainerWidth } from "./primitives/useContainerWidth";
-import { VOUX_PALETTE } from "./primitives/svgGeometry";
+import { VOUX_PALETTE, fmtCompact } from "./primitives/svgGeometry";
 
 export interface LineChartData {
   x: string | number;
@@ -29,6 +29,13 @@ export interface LineChartProps {
   tooltipFormatter?: (value: number) => string;
 }
 
+interface TooltipState {
+  visible: boolean;
+  x: number;
+  y: number;
+  content: string;
+}
+
 export default function LineChart({
   data = [],
   series,
@@ -40,6 +47,9 @@ export default function LineChart({
 }: LineChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const width = useContainerWidth(containerRef as React.RefObject<HTMLElement>);
+
+  const [tooltip, setTooltip] = useState<TooltipState>({ visible: false, x: 0, y: 0, content: "" });
+  const [hoveredIdx, setHoveredIdx] = useState<number | undefined>(undefined);
 
   const chartH = height ?? 280;
 
@@ -88,9 +98,55 @@ export default function LineChart({
             series={svgSeries}
             points
             yFmt={tooltipFormatter}
+            hoveredIdx={hoveredIdx}
+            onHover={(idx, x, y) => {
+              setHoveredIdx(idx);
+              const label = labels[idx];
+              const rows = svgSeries
+                .map((s, si) => {
+                  const v = s.values[idx];
+                  if (v == null) return "";
+                  const c = s.color ?? VOUX_PALETTE[si % VOUX_PALETTE.length];
+                  const formatted = tooltipFormatter ? tooltipFormatter(v) : fmtCompact(v);
+                  return `<div style="display:flex;align-items:center;gap:6px;margin-top:3px"><span style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0;display:inline-block"></span><span style="color:#b3ab9c;font-size:11px">${s.name}: <strong style="color:#ece5d4">${formatted}</strong></span></div>`;
+                })
+                .join("");
+              setTooltip({
+                visible: true,
+                x,
+                y,
+                content: `<div style="font-size:10px;color:#6b6253;letter-spacing:0.08em;margin-bottom:4px">${label}</div>${rows}`,
+              });
+            }}
+            onLeave={() => {
+              setTooltip((t) => ({ ...t, visible: false }));
+              setHoveredIdx(undefined);
+            }}
           />
         )}
       </div>
+      {tooltip.visible && (
+        <div
+          style={{
+            position: "fixed",
+            left: tooltip.x + 14,
+            top: tooltip.y - 10,
+            background: "rgba(17,16,13,0.96)",
+            border: "1px solid rgba(212,184,150,0.15)",
+            backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
+            padding: "8px 12px",
+            borderRadius: 10,
+            fontFamily: "var(--voux-font-mono)",
+            fontSize: 11,
+            color: "#ece5d4",
+            pointerEvents: "none",
+            zIndex: 9999,
+            whiteSpace: "nowrap",
+          }}
+          dangerouslySetInnerHTML={{ __html: tooltip.content }}
+        />
+      )}
     </ChartFrame>
   );
 }

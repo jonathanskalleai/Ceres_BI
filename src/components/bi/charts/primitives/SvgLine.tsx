@@ -14,6 +14,9 @@ export interface SvgLineProps {
   series: SvgLineSeries[];
   points?: boolean;
   yFmt?: (v: number) => string;
+  onHover?: (labelIndex: number, x: number, y: number) => void;
+  onLeave?: () => void;
+  hoveredIdx?: number;
 }
 
 /**
@@ -27,6 +30,9 @@ export function SvgLine({
   series,
   points = true,
   yFmt = fmtCompact,
+  onHover,
+  onLeave,
+  hoveredIdx,
 }: SvgLineProps) {
   if (width === 0 || series.length === 0) return null;
 
@@ -60,6 +66,15 @@ export function SvgLine({
       width={width}
       height={height}
       aria-hidden="true"
+      onMouseMove={(e) => {
+        if (!onHover) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const idx = Math.round(((mouseX - padL) / plotW) * (n - 1));
+        const clampedIdx = Math.max(0, Math.min(n - 1, idx));
+        onHover(clampedIdx, e.clientX, e.clientY);
+      }}
+      onMouseLeave={onLeave}
     >
       <defs>
         {series[0] && (
@@ -121,6 +136,19 @@ export function SvgLine({
           {lbl}
         </text>
       ))}
+
+      {/* Crosshair */}
+      {hoveredIdx != null && (
+        <line
+          x1={xPos(hoveredIdx)}
+          x2={xPos(hoveredIdx)}
+          y1={padT}
+          y2={padT + plotH}
+          stroke="rgba(214,207,193,0.15)"
+          strokeWidth={1}
+          strokeDasharray="3 3"
+        />
+      )}
 
       {/* Series */}
       {series.map((s, sIdx) => {

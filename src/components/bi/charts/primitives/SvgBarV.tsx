@@ -9,6 +9,9 @@ export interface SvgBarVProps {
   color?: string;
   dataLabels?: boolean;
   fmt?: (v: number) => string;
+  onBarEnter?: (dataIndex: number, x: number, y: number, label: string, value: number) => void;
+  onBarLeave?: () => void;
+  onBarClick?: (dataIndex: number) => void;
 }
 
 /**
@@ -23,6 +26,9 @@ export function SvgBarV({
   color = VOUX_COLORS.accent,
   dataLabels = false,
   fmt = fmtCompact,
+  onBarEnter,
+  onBarLeave,
+  onBarClick,
 }: SvgBarVProps) {
   const padL = 32;
   const padR = 16;
@@ -110,6 +116,10 @@ export function SvgBarV({
               height={0}
               rx={3}
               fill={`url(#${gradIds[i]})`}
+              onMouseEnter={(e) => onBarEnter?.(i, e.clientX, e.clientY, labels[i] ?? "", v)}
+              onMouseLeave={onBarLeave}
+              onClick={() => onBarClick?.(i)}
+              style={{ cursor: onBarClick ? "pointer" : "default" }}
             />
 
             {/* optional data label */}

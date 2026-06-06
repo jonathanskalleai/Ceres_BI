@@ -33,13 +33,26 @@ export const VOUX_PALETTE = [
 
 // ── Tick generation ───────────────────────────────────────────────────────────
 /**
- * Returns `count+1` evenly spaced tick values between [min, max].
- * Always includes 0 when min <= 0 <= max.
+ * Returns nicely rounded tick values between [min, max].
+ * Rounds step to nearest "nice" power-of-10 multiple so labels like
+ * 89_061 become 100_000, giving clean axis annotations.
  */
 export function niceTicks(min: number, max: number, count = 4): number[] {
   if (max === min) max = min + 1;
-  const step = (max - min) / count;
-  return Array.from({ length: count + 1 }, (_, i) => min + i * step);
+  const rawStep = (max - min) / count;
+  // Round step up to nearest "nice" power-of-10 multiple
+  const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
+  const niceMults = [1, 2, 2.5, 5, 10];
+  const niceStep =
+    magnitude * (niceMults.find((m) => m * magnitude >= rawStep) ?? 10);
+  // Align min to step boundary
+  const niceMin = Math.floor(min / niceStep) * niceStep;
+  const niceMax = Math.ceil(max / niceStep) * niceStep;
+  const ticks: number[] = [];
+  for (let t = niceMin; t <= niceMax + niceStep * 0.001; t += niceStep) {
+    ticks.push(Math.round(t * 1e9) / 1e9); // avoid float drift
+  }
+  return ticks;
 }
 
 // ── Number formatter ─────────────────────────────────────────────────────────
