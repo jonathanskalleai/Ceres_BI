@@ -13,6 +13,7 @@ import { DashboardMapa } from "@/components/dashboard/DashboardMapa";
 import { DashboardNegociosMensais } from "@/components/dashboard/DashboardNegociosMensais";
 import { DashboardAdministrativo } from "@/components/dashboard/DashboardAdministrativo";
 import { DashboardViewExplorer } from "@/components/dashboard/DashboardViewExplorer";
+import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
 import DashboardBIReal from "@/pages/DashboardBIReal";
 import { useComercialData } from "@/hooks/useComercialData";
 import { useQueryClient } from "@tanstack/react-query";
@@ -60,6 +61,11 @@ const Dashboard = () => {
     toast({ title: "Dados atualizados", description: "Todos os indicadores foram recalculados." });
   };
 
+  const cidades = useMemo(() => {
+    if (!data) return [];
+    return Array.from(new Set(data.registrosRecentes.map((r) => r.cidade).filter(Boolean))).sort();
+  }, [data]);
+
   const tiposAcao = useMemo(() => (data ? Object.keys(data.tiposAcao).sort() : []), [data]);
   const anos = useMemo(() => {
     if (!data) return [];
@@ -104,16 +110,21 @@ const Dashboard = () => {
           setCurrentView(view as View);
           if (view !== "consultor-detail") setSelectedVendedor("");
         }}
-        filters={filters}
-        onFiltersChange={setFilters}
-        vendedores={data?.listaVendedores ?? []}
-        cidades={data?.listaCidades ?? []}
-        tiposAcao={tiposAcao}
-        anos={anos}
         lastUpdated={lastUpdated}
       />
       <main className="flex-1 overflow-auto">
-        <div className="flex justify-end p-3 pb-0">
+        <div className="flex items-center justify-between p-3 pb-0">
+          {data && currentView !== "view-explorer" && currentView !== "dashboard-bi" ? (
+            <DashboardFilters
+              filters={filters}
+              onFiltersChange={setFilters}
+              anos={anos}
+              vendedores={data.vendedores}
+              cidades={cidades}
+            />
+          ) : (
+            <div />
+          )}
           <Button
             variant="outline"
             size="sm"
