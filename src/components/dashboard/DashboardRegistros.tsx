@@ -49,6 +49,7 @@ export const DashboardRegistros = ({ data, filters }: Props) => {
         <div>
           <h2 className="text-2xl font-bold text-foreground">Registros</h2>
           <p className="text-sm text-muted-foreground">Últimos 500 registros — editável ({filtered.length} filtrados)</p>
+          <p className="text-xs text-muted-foreground">Dados de ações comerciais do CRM (campo Atividade Executada)</p>
         </div>
         <div className="relative w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
