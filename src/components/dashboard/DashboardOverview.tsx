@@ -3,6 +3,7 @@ import { DadosComerciais } from "@/types/comercial";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, MapPin, TrendingUp, Eye, DollarSign, BarChart3 } from "lucide-react";
 import { BarChart, LineChart, PieChart } from "@/components/bi/charts";
+import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import type { PieChartData } from "@/components/bi/charts";
 import { Filters } from "@/types/comercial";
 import { filterRegistros, filterEvolucao, hasActiveFilters } from "@/lib/filterUtils";
@@ -130,7 +131,7 @@ export const DashboardOverview = ({ data, filters, onSelectConsultor, totalRegis
       <div className="grid lg:grid-cols-2 gap-6">
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Evolução Mensal</CardTitle>
+            <CardTitle className="text-sm font-semibold">Evolução Mensal <InfoTooltip text="Por data de conclusão da ação" /></CardTitle>
           </CardHeader>
           <CardContent>
             <LineChart

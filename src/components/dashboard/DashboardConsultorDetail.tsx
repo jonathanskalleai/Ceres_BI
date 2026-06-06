@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, ChevronDown, ChevronUp, Sparkles, Loader2 } from "lucide-react";
 import { LineChart, BarChart, PieChart } from "@/components/bi/charts";
 import type { PieChartData } from "@/components/bi/charts";
+import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatMonthYear } from "@/lib/dateUtils";
@@ -129,7 +130,7 @@ export const DashboardConsultorDetail = ({ vendedor: v, registros, onBack }: Pro
         {/* Evolução */}
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Evolução Mensal</CardTitle>
+            <CardTitle className="text-sm font-semibold">Evolução Mensal <InfoTooltip text="Por data de conclusão da ação" /></CardTitle>
           </CardHeader>
           <CardContent>
             <LineChart

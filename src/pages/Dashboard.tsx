@@ -113,8 +113,8 @@ const Dashboard = () => {
         lastUpdated={lastUpdated}
       />
       <main className="flex-1 overflow-auto">
-        <div className="flex items-center justify-between p-3 pb-0">
-          {data && currentView !== "view-explorer" && currentView !== "dashboard-bi" ? (
+        <div className="flex items-center justify-end gap-3 p-3 pb-0">
+          {data && currentView !== "view-explorer" && currentView !== "dashboard-bi" && (
             <DashboardFilters
               filters={filters}
               onFiltersChange={setFilters}
@@ -122,8 +122,6 @@ const Dashboard = () => {
               vendedores={data.vendedores}
               cidades={cidades}
             />
-          ) : (
-            <div />
           )}
           <Button
             variant="outline"

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { BarChart, LineChart, PieChart, ComboChart } from "@/components/bi/charts";
 import type { PieChartData } from "@/components/bi/charts";
+import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import { Filters, DadosComerciais } from "@/types/comercial";
 import { useNegociosData, NegociosSummary } from "@/hooks/useNegociosData";
 import { supabase } from "@/integrations/supabase/client";
@@ -343,7 +344,7 @@ export const DashboardNegociosMensais = ({ filters, crmData }: Props) => {
         {/* Evolução Mensal */}
         <Card className="border-0 shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Evolução Mensal de Negócios</CardTitle>
+            <CardTitle className="text-sm font-semibold">Evolução Mensal de Negócios <InfoTooltip text="Por data de cadastro do negócio" /></CardTitle>
           </CardHeader>
           <CardContent>
             <ComboChart

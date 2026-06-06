@@ -142,6 +142,7 @@ export default function ComercialSection({ active, dateRange, funil }: Props) {
         <ChartCard
           title="Evolucao Mensal de Negocios"
           description="Novos negocios criados e valor negociado por mes"
+          infoTooltip="Por data de cadastro do negócio"
           loading={isLoading}
         >
           <div className="h-full">

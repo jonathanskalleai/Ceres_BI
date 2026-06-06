@@ -2,10 +2,12 @@ import type { ReactNode } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { InfoTooltip } from "@/components/ui/InfoTooltip";
 
 interface ChartCardProps {
   title: string;
   description?: string;
+  infoTooltip?: string;
   height?: number;
   loading?: boolean;
   className?: string;
@@ -20,6 +22,7 @@ interface ChartCardProps {
 export function ChartCard({
   title,
   description,
+  infoTooltip,
   height = 280,
   loading = false,
   className,
@@ -28,14 +31,16 @@ export function ChartCard({
   return (
     <Card
       className={cn(
-        "border-white/40 bg-white/55 shadow-lg backdrop-blur-xl",
-        "dark:border-white/10 dark:bg-white/[0.04]",
-        "rounded-2xl transition-shadow hover:shadow-xl",
+        "border-border/50 bg-card/80 backdrop-blur-sm shadow-sm",
+        "rounded-2xl transition-shadow hover:shadow-md",
         className,
       )}
     >
       <CardHeader>
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <CardTitle className="text-sm font-medium">
+          {title}
+          {infoTooltip && <InfoTooltip text={infoTooltip} />}
+        </CardTitle>
         {description && (
           <CardDescription className="text-xs">{description}</CardDescription>
         )}

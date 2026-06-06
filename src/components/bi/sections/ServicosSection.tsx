@@ -46,7 +46,7 @@ export default function ServicosSection({ active, dateRange }: Props) {
           />
         </ChartCard>
 
-        <ChartCard title="Evolucao Mensal de Aberturas" description="Numero de OS abertas por mes" loading={isLoading}>
+        <ChartCard title="Evolucao Mensal de Aberturas" description="Numero de OS abertas por mes" infoTooltip="Por data de abertura da OS" loading={isLoading}>
           <VerticalBarChart
             data={agg.evolucaoAberturas.map(item => ({ name: formatMonthYear(item.name), value: item.value }))}
             keys={['value']}
