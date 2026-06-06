@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { VOUX_COLORS, fmtCompact } from "./svgGeometry";
 
 export interface SvgBarHProps {
@@ -37,6 +37,14 @@ export function SvgBarH({
   const barRefs = useRef<(SVGRectElement | null)[]>([]);
   const valRefs = useRef<(SVGTextElement | null)[]>([]);
 
+  // Unique per-instance ID — must be declared before any early return (Rules of Hooks).
+  // Prevents gradient ID collisions when multiple SvgBarH components render simultaneously.
+  const instanceId = useRef(Math.random().toString(36).slice(2, 8));
+  const gradIds = useMemo(
+    () => data.map((_, i) => `svgbarh-${instanceId.current}-${i}`),
+    [data],
+  );
+
   useEffect(() => {
     if (width === 0) return;
     const frame = requestAnimationFrame(() => {
@@ -57,10 +65,6 @@ export function SvgBarH({
   }, [width, data, max, barMaxW, barX]);
 
   if (width === 0) return null;
-
-  // Gradient IDs: stable per component instance, scoped by data.length + index
-  // Using a stable prefix avoids cross-render ID collisions.
-  const gradIds = data.map((_, i) => `svgbarh-${width}-${i}`);
 
   return (
     <svg
