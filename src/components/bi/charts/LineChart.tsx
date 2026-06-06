@@ -131,10 +131,10 @@ function buildMultiSeriesOption(
   legendColor: string,
   tooltipFormatter?: (value: number) => string,
 ): EChartsOption {
-  // Collect all unique x values for the category axis
+  // Collect all unique x values for the category axis (preserve insertion order — data arrives pre-sorted chronologically from hooks)
   const xSet = new Set<string>();
   for (const s of seriesItems) for (const d of s.data) xSet.add(String(d.x));
-  const categories = Array.from(xSet).sort();
+  const categories = Array.from(xSet);
 
   return {
     ...baseAnimation,

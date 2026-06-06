@@ -7,9 +7,11 @@ interface InfoTooltipProps {
 
 export function InfoTooltip({ text }: InfoTooltipProps) {
   return (
-    <Tooltip>
+    <Tooltip delayDuration={200}>
       <TooltipTrigger asChild>
-        <Info className="h-3.5 w-3.5 text-muted-foreground inline-block ml-1 cursor-help" />
+        <span className="inline-flex items-center ml-1 cursor-help" tabIndex={0}>
+          <Info className="h-3.5 w-3.5 text-muted-foreground" />
+        </span>
       </TooltipTrigger>
       <TooltipContent side="top" className="max-w-xs text-xs">
         {text}
