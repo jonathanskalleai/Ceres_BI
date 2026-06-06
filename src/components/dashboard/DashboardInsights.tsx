@@ -7,6 +7,7 @@ import { BarChart } from "@/components/bi/charts";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { filterRegistros } from "@/lib/filterUtils";
+import { formatDateBR } from "@/lib/dateUtils";
 
 interface Props {
   data: DadosComerciais;
@@ -62,7 +63,11 @@ export const DashboardInsights = ({ data, filters }: Props) => {
 
   const filtered = useMemo(() => filterRegistros(data.registrosRecentes, filters), [data, filters]);
   const allObs = useMemo(() => filtered.map((r) => r.obs || "").join(" "), [filtered]);
-  const obsWithContent = useMemo(() => filtered.filter((r) => r.obs && r.obs.length > 10), [filtered]);
+  const obsWithContent = useMemo(
+    () => filtered.filter((r) => r.obs && r.obs.length > 10)
+      .sort((a, b) => (b.dtConclusao || "").localeCompare(a.dtConclusao || "")),
+    [filtered],
+  );
 
   const positiveWords = useMemo(() => {
     const counts = countKeywords(allObs, POSITIVE_KEYWORDS);
@@ -117,6 +122,9 @@ export const DashboardInsights = ({ data, filters }: Props) => {
         </h2>
         <p className="text-sm text-muted-foreground">
           Análise de sentimento, produtos de interesse e histórico de observações ({filtered.length} registros)
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Análise de sentimento baseada no campo 'Atividade Executada' das ações do CRM
         </p>
       </div>
 
@@ -297,7 +305,7 @@ export const DashboardInsights = ({ data, filters }: Props) => {
               return (
                 <div key={i} className={`p-3 rounded-lg border ${hasNeg ? "border-destructive/30 bg-destructive/5" : hasPos ? "border-success/30 bg-success/5" : "border-border/50 bg-muted/20"}`}>
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <span className="text-[10px] font-mono text-muted-foreground">{r.dtConclusao}</span>
+                    <span className="text-[10px] font-mono text-muted-foreground">{formatDateBR(r.dtConclusao)}</span>
                     <Badge variant="outline" className="text-[9px]">{r.vendedor.split(" ").slice(-1)[0]}</Badge>
                     <Badge variant="outline" className="text-[9px]">{r.tipoAcao || "—"}</Badge>
                     <span className="text-[10px] text-muted-foreground">{r.cliente}</span>

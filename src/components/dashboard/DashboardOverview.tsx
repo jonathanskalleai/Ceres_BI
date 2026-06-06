@@ -6,6 +6,7 @@ import { BarChart, LineChart, PieChart } from "@/components/bi/charts";
 import type { PieChartData } from "@/components/bi/charts";
 import { Filters } from "@/types/comercial";
 import { filterRegistros, filterEvolucao, hasActiveFilters } from "@/lib/filterUtils";
+import { formatMonthYear } from "@/lib/dateUtils";
 
 interface Props {
   data: DadosComerciais;
@@ -134,8 +135,8 @@ export const DashboardOverview = ({ data, filters, onSelectConsultor, totalRegis
           <CardContent>
             <LineChart
               series={[
-                { name: "Ações", data: evolucaoFiltered.map((d) => ({ x: d.YearMonth, y: d.acoes })) },
-                { name: "Visitas", data: evolucaoFiltered.map((d) => ({ x: d.YearMonth, y: d.visitas })) },
+                { name: "Ações", data: evolucaoFiltered.map((d) => ({ x: formatMonthYear(d.YearMonth), y: d.acoes })) },
+                { name: "Visitas", data: evolucaoFiltered.map((d) => ({ x: formatMonthYear(d.YearMonth), y: d.visitas })) },
               ]}
               height={280}
             />
@@ -186,20 +187,22 @@ export const DashboardOverview = ({ data, filters, onSelectConsultor, totalRegis
         </Card>
       </div>
 
-      <Card className="border-0 shadow-sm">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold">Top Regiões por Ações Concluídas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <BarChart
-            data={regioesChart.map((r) => ({ name: r.cidade, acoes: r.acoes }))}
-            layout="vertical"
-            keys={["acoes"]}
-            height={300}
-            tooltipFormatter={(v) => `${v} ações`}
-          />
-        </CardContent>
-      </Card>
+      <div className={regioesChart.length <= 6 ? "grid lg:grid-cols-2 gap-6" : ""}>
+        <Card className="border-0 shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-semibold">Top Regiões por Ações Concluídas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <BarChart
+              data={regioesChart.map((r) => ({ name: r.cidade, acoes: r.acoes }))}
+              layout="vertical"
+              keys={["acoes"]}
+              height={Math.min(regioesChart.length * 45 + 40, 300)}
+              tooltipFormatter={(v) => `${v} ações`}
+            />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

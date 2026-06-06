@@ -5,7 +5,7 @@ import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { HorizontalBarChart, VerticalBarChart, PieChartWithLabels } from "@/components/bi/charts";
 import { CHART_COLORS } from "@/lib/chartTheme";
-import { formatDias } from "@/lib/dateUtils";
+import { formatDias, formatMonthYear } from "@/lib/dateUtils";
 
 interface Props {
   active: boolean;
@@ -40,6 +40,7 @@ export default function ServicosSection({ active, dateRange }: Props) {
           <VerticalBarChart
             data={agg.faixasResolucao.map(item => ({ name: item.name, value: item.value }))}
             keys={['value']}
+            seriesLabels={{ value: "OS" }}
             title=""
             colors={[CHART_COLORS[0]]}
           />
@@ -47,8 +48,9 @@ export default function ServicosSection({ active, dateRange }: Props) {
 
         <ChartCard title="Evolucao Mensal de Aberturas" description="Numero de OS abertas por mes" loading={isLoading}>
           <VerticalBarChart
-            data={agg.evolucaoAberturas.map(item => ({ name: item.name, value: item.value }))}
+            data={agg.evolucaoAberturas.map(item => ({ name: formatMonthYear(item.name), value: item.value }))}
             keys={['value']}
+            seriesLabels={{ value: "OS Abertas" }}
             title=""
             colors={[CHART_COLORS[1]]}
           />
@@ -58,6 +60,7 @@ export default function ServicosSection({ active, dateRange }: Props) {
           <HorizontalBarChart
             data={agg.situacaoOcorrencias.map(item => ({ name: item.name, value: item.value }))}
             keys={['value']}
+            seriesLabels={{ value: "Ocorrências" }}
             title=""
             colors={[CHART_COLORS[2]]}
           />
@@ -67,6 +70,7 @@ export default function ServicosSection({ active, dateRange }: Props) {
           <HorizontalBarChart
             data={agg.motivosPausa.map(item => ({ name: item.name, value: item.value }))}
             keys={['value']}
+            seriesLabels={{ value: "Pausas" }}
             title=""
             colors={[CHART_COLORS[5]]}
           />
@@ -76,6 +80,7 @@ export default function ServicosSection({ active, dateRange }: Props) {
           <HorizontalBarChart
             data={agg.causasAtendimento.map(item => ({ name: item.name, value: item.value }))}
             keys={['value']}
+            seriesLabels={{ value: "Chamados" }}
             title=""
             colors={[CHART_COLORS[3]]}
           />

@@ -17,6 +17,7 @@ import { Filters, DadosComerciais } from "@/types/comercial";
 import { useNegociosData, NegociosSummary } from "@/hooks/useNegociosData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { formatMonthYear } from "@/lib/dateUtils";
 
 interface Props {
   filters: Filters;
@@ -332,6 +333,7 @@ export const DashboardNegociosMensais = ({ filters, crmData }: Props) => {
                 <p className="text-sm text-muted-foreground">{alerta.descricao}</p>
               </div>
             ))}
+            <p className="text-xs text-muted-foreground mt-2">Calculado a partir dos negócios do período (VW_Ceres_Negocios_Mensais)</p>
           </CardContent>
         </Card>
       )}
@@ -345,7 +347,7 @@ export const DashboardNegociosMensais = ({ filters, crmData }: Props) => {
           </CardHeader>
           <CardContent>
             <ComboChart
-              data={summary.evolucaoMensal.map((d) => ({ name: d.mes, total: d.total, ganhos: d.ganhos, valor: d.valor }))}
+              data={summary.evolucaoMensal.map((d) => ({ name: formatMonthYear(d.mes), total: d.total, ganhos: d.ganhos, valor: d.valor }))}
               barKeys={["total", "ganhos"]}
               lineKey="valor"
               seriesLabels={{ total: "Negócios", ganhos: "Ganhos", valor: "Valor" }}

@@ -43,3 +43,22 @@ export function daysBetween(startIso: string | null, endIso: string | null): num
   if (isNaN(a) || isNaN(b)) return null;
   return (b - a) / 86_400_000;
 }
+
+const MESES_ABREV = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+
+/** "2024-08" → "ago/2024". Retorna string original se formato inválido. */
+export function formatMonthYear(ym: string): string {
+  if (!ym) return "";
+  const [year, month] = ym.split("-");
+  const idx = parseInt(month, 10) - 1;
+  if (idx < 0 || idx > 11 || !year) return ym;
+  return `${MESES_ABREV[idx]}/${year}`;
+}
+
+/** "2024-03-15" → "15/03/2024". Retorna "—" se vazio. */
+export function formatDateBR(d: string): string {
+  if (!d) return "—";
+  const parts = d.split("-");
+  if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  return d;
+}

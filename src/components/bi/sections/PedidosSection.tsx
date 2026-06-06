@@ -6,7 +6,7 @@ import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { HorizontalBarChart, PieChartWithLabels, LineChart } from "@/components/bi/charts";
 import { CHART_COLORS, POSITIVE_COLOR } from "@/lib/chartTheme";
-import { formatBRL, formatBRLShort } from "@/lib/dateUtils";
+import { formatBRL, formatBRLShort, formatMonthYear } from "@/lib/dateUtils";
 
 interface Props {
   active: boolean;
@@ -39,8 +39,9 @@ export default function PedidosSection({ active, dateRange }: Props) {
             <div className="grid grid-cols-1 gap-4 h-full">
               <div className="h-1/2">
                 <HorizontalBarChart
-                  data={agg.evolucaoMensal.map(item => ({ name: item.name, faturamento: item.faturamento }))}
+                  data={agg.evolucaoMensal.map(item => ({ name: formatMonthYear(item.name), faturamento: item.faturamento }))}
                   keys={['faturamento']}
+                  seriesLabels={{ faturamento: "Faturamento" }}
                   title="Faturamento"
                   tooltipFormatter={formatBRL}
                   colors={[CHART_COLORS[0]]}
@@ -49,8 +50,8 @@ export default function PedidosSection({ active, dateRange }: Props) {
               </div>
               <div className="h-1/2">
                 <LineChart
-                  data={agg.evolucaoMensal.map(item => ({ x: item.name, y: item.qtd }))}
-                  title="Pedidos"
+                  data={agg.evolucaoMensal.map(item => ({ x: formatMonthYear(item.name), y: item.qtd }))}
+                  seriesName="Pedidos"
                   color={CHART_COLORS[1]}
                   height={130}
                   tooltipFormatter={(v: number) => v.toLocaleString("pt-BR")}
@@ -87,6 +88,7 @@ export default function PedidosSection({ active, dateRange }: Props) {
               qtd: item.qtd
             }))}
             keys={['valor']}
+            seriesLabels={{ valor: "Valor (R$)" }}
             title=""
             tooltipFormatter={(value, d) => `${formatBRL(value)} (${d?.qtd ?? 0} pedidos)`}
             colors={[CHART_COLORS[2]]}
@@ -104,6 +106,7 @@ export default function PedidosSection({ active, dateRange }: Props) {
               value: item.value
             }))}
             keys={['value']}
+            seriesLabels={{ value: "Faturamento" }}
             title=""
             tooltipFormatter={formatBRL}
             colors={[CHART_COLORS[1]]}
@@ -121,6 +124,7 @@ export default function PedidosSection({ active, dateRange }: Props) {
               value: item.value
             }))}
             keys={['value']}
+            seriesLabels={{ value: "Faturamento" }}
             title=""
             tooltipFormatter={formatBRL}
             colors={[CHART_COLORS[3]]}
@@ -139,6 +143,7 @@ export default function PedidosSection({ active, dateRange }: Props) {
               qtd: item.qtd
             }))}
             keys={['valor']}
+            seriesLabels={{ valor: "Valor Vendido" }}
             title=""
             tooltipFormatter={(value, d) => `${formatBRL(value)} (${d?.qtd ?? 0} un)`}
             colors={[CHART_COLORS[4]]}

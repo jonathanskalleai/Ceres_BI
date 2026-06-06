@@ -6,9 +6,9 @@ import { useNegociosBI } from "@/hooks/bi/useNegociosBI";
 import { useFunilData } from "@/hooks/bi/useFunilData";
 import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
-import { HorizontalBarChart, LineChart } from "@/components/bi/charts";
+import { HorizontalBarChart, VerticalBarChart, LineChart } from "@/components/bi/charts";
 import { CHART_COLORS, POSITIVE_COLOR, NEGATIVE_COLOR } from "@/lib/chartTheme";
-import { formatBRL, formatBRLShort, formatDias } from "@/lib/dateUtils";
+import { formatBRL, formatBRLShort, formatDias, formatMonthYear } from "@/lib/dateUtils";
 
 interface Props {
   active: boolean;
@@ -147,8 +147,8 @@ export default function ComercialSection({ active, dateRange, funil }: Props) {
           <div className="h-full">
             <div className="grid grid-cols-1 gap-4 h-full">
               <div className="h-1/2">
-                <HorizontalBarChart
-                  data={agg.evolucaoMensal.map(item => ({ name: item.name, novos: item.novos }))}
+                <VerticalBarChart
+                  data={agg.evolucaoMensal.map(item => ({ name: formatMonthYear(item.name), novos: item.novos }))}
                   keys={['novos']}
                   seriesLabels={{ novos: "Novos negócios" }}
                   title="Novos negocios"
@@ -159,7 +159,7 @@ export default function ComercialSection({ active, dateRange, funil }: Props) {
               </div>
               <div className="h-1/2">
                 <LineChart
-                  data={agg.evolucaoMensal.map(item => ({ x: item.name, y: item.valorCriado }))}
+                  data={agg.evolucaoMensal.map(item => ({ x: formatMonthYear(item.name), y: item.valorCriado }))}
                   seriesName="Valor negociado"
                   color={CHART_COLORS[0]}
                   height={130}
