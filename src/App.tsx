@@ -1,16 +1,40 @@
+import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Dashboard from "./pages/Dashboard";
-import PerformanceComercial from "./pages/PerformanceComercial";
-import PipelineModule from "./pages/PipelineModule";
-import PosVendaModule from "./pages/PosVendaModule";
-import Cliente360Module from "./pages/Cliente360Module";
-import ProdutosModule from "./pages/ProdutosModule";
-import DashboardBI from "./pages/DashboardBI";
-import NotFound from "./pages/NotFound.tsx";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { LoginPage } from "@/components/auth/LoginPage";
+import { AppShell } from "@/components/layout/AppShell";
+import { ComercialDataProvider } from "@/contexts/ComercialDataContext";
+import NotFound from "./pages/NotFound";
+
+// CRM pages (thin wrappers — eager since they're tiny)
+import CrmOverview from "./pages/crm/CrmOverview";
+import CrmConsultores from "./pages/crm/CrmConsultores";
+import CrmConsultorDetail from "./pages/crm/CrmConsultorDetail";
+import CrmRegioes from "./pages/crm/CrmRegioes";
+import CrmRegistros from "./pages/crm/CrmRegistros";
+import CrmCriticos from "./pages/crm/CrmCriticos";
+import CrmMapa from "./pages/crm/CrmMapa";
+import CrmInsights from "./pages/crm/CrmInsights";
+import CrmNegocios from "./pages/crm/CrmNegocios";
+import CrmAdministrativo from "./pages/crm/CrmAdministrativo";
+
+// BI pages (lazy — heavy chart sections)
+const BiComercial = lazy(() => import("./pages/bi/BiComercial"));
+const BiPedidos = lazy(() => import("./pages/bi/BiPedidos"));
+const BiProdutos = lazy(() => import("./pages/bi/BiProdutos"));
+const BiServicos = lazy(() => import("./pages/bi/BiServicos"));
+const BiOperacional = lazy(() => import("./pages/bi/BiOperacional"));
+const BiAdmin = lazy(() => import("./pages/bi/BiAdmin"));
+const BiAcoes = lazy(() => import("./pages/bi/BiAcoes"));
+
+// Tools pages
+const ToolsExplorer = lazy(() => import("./pages/tools/ToolsExplorer"));
+const ToolsPerformance = lazy(() => import("./pages/tools/ToolsPerformance"));
 
 // Cache global: dados de BI/SQL Server não são realtime. Sem isso (staleTime:0
 // padrão) toda troca de aba/remontagem refazia o fetch inteiro — causa da lentidão.
@@ -25,25 +49,83 @@ const queryClient = new QueryClient({
   },
 });
 
+function LazySuspense({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center h-64">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-champagne-400 border-t-transparent" />
+        </div>
+      }
+    >
+      {children}
+    </Suspense>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/bi" element={<DashboardBI />} />
-          <Route path="/performance" element={<PerformanceComercial />} />
-          <Route path="/pipeline" element={<PipelineModule />} />
-          <Route path="/pos-venda" element={<PosVendaModule />} />
-          <Route path="/cliente360" element={<Cliente360Module />} />
-          <Route path="/produtos" element={<ProdutosModule />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            {/* Public route */}
+            <Route path="/login" element={<LoginPage />} />
+
+            {/* Protected routes — all wrapped by AppShell */}
+            <Route
+              element={
+                <ProtectedRoute>
+                  <AppShell />
+                </ProtectedRoute>
+              }
+            >
+              {/* Root redirect */}
+              <Route index element={<Navigate to="/crm/overview" replace />} />
+
+              {/* CRM — wrapped by ComercialDataProvider */}
+              <Route path="crm" element={<ComercialDataProvider />}>
+                <Route path="overview" element={<CrmOverview />} />
+                <Route path="consultores" element={<CrmConsultores />} />
+                <Route path="consultores/:vendedor" element={<CrmConsultorDetail />} />
+                <Route path="regioes" element={<CrmRegioes />} />
+                <Route path="registros" element={<CrmRegistros />} />
+                <Route path="criticos" element={<CrmCriticos />} />
+                <Route path="mapa" element={<CrmMapa />} />
+                <Route path="insights" element={<CrmInsights />} />
+                <Route path="negocios" element={<CrmNegocios />} />
+                <Route path="administrativo" element={<CrmAdministrativo />} />
+              </Route>
+
+              {/* BI */}
+              <Route path="bi/comercial" element={<LazySuspense><BiComercial /></LazySuspense>} />
+              <Route path="bi/pedidos" element={<LazySuspense><BiPedidos /></LazySuspense>} />
+              <Route path="bi/produtos" element={<LazySuspense><BiProdutos /></LazySuspense>} />
+              <Route path="bi/servicos" element={<LazySuspense><BiServicos /></LazySuspense>} />
+              <Route path="bi/operacional" element={<LazySuspense><BiOperacional /></LazySuspense>} />
+              <Route path="bi/admin" element={<LazySuspense><BiAdmin /></LazySuspense>} />
+              <Route path="bi/acoes" element={<LazySuspense><BiAcoes /></LazySuspense>} />
+
+              {/* Tools */}
+              <Route path="tools/explorer" element={<LazySuspense><ToolsExplorer /></LazySuspense>} />
+              <Route path="tools/performance" element={<LazySuspense><ToolsPerformance /></LazySuspense>} />
+
+              {/* Admin placeholders */}
+              <Route path="admin/users" element={<div className="p-8 text-[#8a8273]">Em breve</div>} />
+              <Route path="admin/profile" element={<div className="p-8 text-[#8a8273]">Em breve</div>} />
+
+              {/* Legacy redirects */}
+              <Route path="bi" element={<Navigate to="/bi/comercial" replace />} />
+              <Route path="performance" element={<Navigate to="/tools/performance" replace />} />
+
+              <Route path="*" element={<NotFound />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
