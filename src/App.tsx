@@ -36,6 +36,10 @@ const BiAcoes = lazy(() => import("./pages/bi/BiAcoes"));
 const ToolsExplorer = lazy(() => import("./pages/tools/ToolsExplorer"));
 const ToolsPerformance = lazy(() => import("./pages/tools/ToolsPerformance"));
 
+// Admin pages
+const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
+const AdminProfile = lazy(() => import("./pages/admin/AdminProfile"));
+
 // Cache global: dados de BI/SQL Server não são realtime. Sem isso (staleTime:0
 // padrão) toda troca de aba/remontagem refazia o fetch inteiro — causa da lentidão.
 const queryClient = new QueryClient({
@@ -112,9 +116,9 @@ const App = () => (
               <Route path="tools/explorer" element={<LazySuspense><ToolsExplorer /></LazySuspense>} />
               <Route path="tools/performance" element={<LazySuspense><ToolsPerformance /></LazySuspense>} />
 
-              {/* Admin placeholders */}
-              <Route path="admin/users" element={<div className="p-8 text-[#8a8273]">Em breve</div>} />
-              <Route path="admin/profile" element={<div className="p-8 text-[#8a8273]">Em breve</div>} />
+              {/* Admin */}
+              <Route path="admin/users" element={<LazySuspense><AdminUsers /></LazySuspense>} />
+              <Route path="admin/profile" element={<LazySuspense><AdminProfile /></LazySuspense>} />
 
               {/* Legacy redirects */}
               <Route path="bi" element={<Navigate to="/bi/comercial" replace />} />
