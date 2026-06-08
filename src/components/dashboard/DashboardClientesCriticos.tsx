@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import { DadosComerciais, Filters, Registro } from "@/types/comercial";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Phone, Mail, MapPin, Clock, TrendingDown, Target, Users } from "lucide-react";
+import { AlertTriangle, Target } from "lucide-react";
 import { BarChart } from "@/components/bi/charts";
+import { ChartCard } from "@/components/bi/ChartCard";
+import { ClienteCriticoCard } from "@/components/dashboard/ClienteCriticoCard";
 
 interface Props {
   data: DadosComerciais;
@@ -24,43 +24,66 @@ interface ClienteCritico {
   historico: Registro[];
 }
 
+interface SugestaoAcao {
+  acao: string;
+  argumentacao: string;
+  prioridade: "CRÍTICA" | "ALTA" | "MÉDIA";
+  borderColor: string;
+}
+
+const CARD_BASE =
+  "relative overflow-hidden rounded-[20px] p-[22px_24px] bg-gradient-to-b from-[#18160f] to-[#11100d] border border-[rgba(214,207,193,0.08)] shadow-[0_2px_8px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,250,230,0.03)]";
+
+const MONO: React.CSSProperties = {
+  fontFamily: "var(--voux-font-mono, 'JetBrains Mono', monospace)",
+};
+
 const formatCurrency = (v: number) =>
   v >= 1e6 ? `R$ ${(v / 1e6).toFixed(1)}M` : v >= 1e3 ? `R$ ${(v / 1e3).toFixed(0)}K` : `R$ ${v.toFixed(0)}`;
 
-const getSugestaoAcao = (c: ClienteCritico): { acao: string; argumentacao: string; prioridade: string } => {
+const getSugestaoAcao = (c: ClienteCritico): SugestaoAcao => {
   if (c.diasSemContato > 180 && c.pipeline > 500000) {
     return {
       acao: "Visita presencial urgente + proposta atualizada",
-      argumentacao: "Resgatar relacionamento com proposta de condições especiais. Mencionar novidades em equipamentos desde o último contato.",
-      prioridade: "🔴 Crítica",
+      argumentacao:
+        "Resgatar relacionamento com proposta de condições especiais. Mencionar novidades em equipamentos desde o último contato.",
+      prioridade: "CRÍTICA",
+      borderColor: "#f87171",
     };
   }
   if (c.diasSemContato > 180) {
     return {
       acao: "Ligação de reativação + envio de catálogo atualizado",
-      argumentacao: "Abordagem consultiva perguntando sobre a safra atual e necessidades futuras. Oferecer demonstração sem compromisso.",
-      prioridade: "🟠 Alta",
+      argumentacao:
+        "Abordagem consultiva perguntando sobre a safra atual e necessidades futuras. Oferecer demonstração sem compromisso.",
+      prioridade: "ALTA",
+      borderColor: "#fb923c",
     };
   }
   if (c.pipeline > 500000) {
     return {
       acao: "Contato telefônico + agendamento de visita técnica",
-      argumentacao: "Reforçar valor do equipamento com ROI projetado. Oferecer condições de financiamento facilitado.",
-      prioridade: "🟡 Média-Alta",
+      argumentacao:
+        "Reforçar valor do equipamento com ROI projetado. Oferecer condições de financiamento facilitado.",
+      prioridade: "ALTA",
+      borderColor: "#fb923c",
     };
   }
   return {
     acao: "Contato por WhatsApp/e-mail + follow-up em 7 dias",
-    argumentacao: "Manter relacionamento ativo. Compartilhar case de sucesso de cliente similar na região.",
-    prioridade: "🟡 Média",
+    argumentacao:
+      "Manter relacionamento ativo. Compartilhar case de sucesso de cliente similar na região.",
+    prioridade: "MÉDIA",
+    borderColor: "#c8b99a",
   };
 };
+
+const FAIXA_COLORS = ["#c8b99a", "#fb923c", "#f87171", "#dc2626"];
 
 export const DashboardClientesCriticos = ({ data, filters }: Props) => {
   const criticos = useMemo(() => {
     const clienteMap = new Map<string, ClienteCritico>();
 
-    // Build from vendedores' topClientes
     for (const v of data.vendedores) {
       if (filters.vendedor && v.nome !== filters.vendedor) continue;
       for (const c of v.topClientes) {
@@ -68,7 +91,6 @@ export const DashboardClientesCriticos = ({ data, filters }: Props) => {
         if (filters.cidade && c.cidade !== filters.cidade) continue;
         const key = `${c.nome}|${v.nome}`;
         if (!clienteMap.has(key)) {
-          // Find history in registrosRecentes
           const historico = data.registrosRecentes.filter(
             (r) => r.cliente === c.nome && r.vendedor === v.nome
           );
@@ -92,21 +114,20 @@ export const DashboardClientesCriticos = ({ data, filters }: Props) => {
 
     let result = Array.from(clienteMap.values());
 
-    // Filter by tipoAcao if set
     if (filters.tipoAcao) {
       result = result.filter((c) => c.historico.some((r) => r.tipoAcao === filters.tipoAcao));
     }
 
-    // Sort by pipeline desc, then diasSemContato desc
     return result.sort((a, b) => b.pipeline - a.pipeline || b.diasSemContato - a.diasSemContato);
   }, [data, filters]);
 
   const totalPipelineEmRisco = criticos.reduce((sum, c) => sum + c.pipeline, 0);
+
   const porVendedor = useMemo(() => {
     const map = new Map<string, number>();
     for (const c of criticos) map.set(c.vendedor, (map.get(c.vendedor) || 0) + 1);
     return Array.from(map.entries())
-      .map(([vendedor, count]) => ({ vendedor: vendedor.split(" ").slice(-1)[0], count, full: vendedor }))
+      .map(([vendedor, count]) => ({ vendedor: vendedor.split(" ").slice(-1)[0], count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 15);
   }, [criticos]);
@@ -122,187 +143,119 @@ export const DashboardClientesCriticos = ({ data, filters }: Props) => {
     return Object.entries(f).map(([name, value]) => ({ name, value }));
   }, [criticos]);
 
-  const FAIXA_COLORS = ["hsl(38, 92%, 50%)", "hsl(25, 95%, 53%)", "hsl(0, 84%, 60%)", "hsl(0, 72%, 45%)"];
+  const mediaDias =
+    criticos.length > 0
+      ? Math.round(criticos.reduce((s, c) => s + c.diasSemContato, 0) / criticos.length)
+      : 0;
+  const acima180 = criticos.filter((c) => c.diasSemContato > 180).length;
 
   return (
     <div className="p-6 space-y-6">
+      {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-          <AlertTriangle className="h-6 w-6 text-destructive" />
+        <p className="text-[10px] tracking-[0.22em] uppercase text-[#8a8273] mb-1" style={MONO}>
+          — CLIENTES EM RISCO
+        </p>
+        <h2 className="text-2xl font-bold text-[#ece5d4] flex items-center gap-2">
+          <AlertTriangle className="h-5 w-5 text-[#c8b99a]" />
           Clientes em Estado Crítico
         </h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-[11px] text-[#8a8273] mt-1" style={MONO}>
           Clientes sem contato há mais de 90 dias — ações recomendadas e histórico
         </p>
       </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="border-0 shadow-sm border-l-4 border-l-destructive">
-          <CardContent className="p-4">
-            <p className="text-3xl font-bold text-destructive">{criticos.length}</p>
-            <p className="text-xs text-muted-foreground">Clientes Críticos</p>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-sm border-l-4 border-l-warning">
-          <CardContent className="p-4">
-            <p className="text-3xl font-bold text-warning">{formatCurrency(totalPipelineEmRisco)}</p>
-            <p className="text-xs text-muted-foreground">Pipeline em Risco</p>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-sm border-l-4 border-l-primary">
-          <CardContent className="p-4">
-            <p className="text-3xl font-bold text-primary">
-              {criticos.length > 0 ? Math.round(criticos.reduce((s, c) => s + c.diasSemContato, 0) / criticos.length) : 0}
-            </p>
-            <p className="text-xs text-muted-foreground">Média Dias s/ Contato</p>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-sm border-l-4 border-l-accent">
-          <CardContent className="p-4">
-            <p className="text-3xl font-bold text-accent">
-              {criticos.filter((c) => c.diasSemContato > 180).length}
-            </p>
-            <p className="text-xs text-muted-foreground">Acima de 180 dias</p>
-          </CardContent>
-        </Card>
+        <div className={CARD_BASE} style={{ borderLeft: "3px solid #f87171" }}>
+          <p className="text-[10px] tracking-[0.22em] uppercase text-[#8a8273] mb-3" style={MONO}>
+            CLIENTES CRÍTICOS
+          </p>
+          <p className="text-[28px] font-bold leading-none tracking-[-0.02em] text-[#f87171]">
+            {criticos.length}
+          </p>
+          <p className="text-[11px] text-[#8a8273] mt-2" style={MONO}>
+            sem contato &gt;90 dias
+          </p>
+        </div>
+
+        <div className={CARD_BASE} style={{ borderLeft: "3px solid #fb923c" }}>
+          <p className="text-[10px] tracking-[0.22em] uppercase text-[#8a8273] mb-3" style={MONO}>
+            PIPELINE EM RISCO
+          </p>
+          <p className="text-[28px] font-bold leading-none tracking-[-0.02em] text-[#fb923c]">
+            {formatCurrency(totalPipelineEmRisco)}
+          </p>
+          <p className="text-[11px] text-[#8a8273] mt-2" style={MONO}>
+            valor total em aberto
+          </p>
+        </div>
+
+        <div className={CARD_BASE} style={{ borderLeft: "3px solid #c8b99a" }}>
+          <p className="text-[10px] tracking-[0.22em] uppercase text-[#8a8273] mb-3" style={MONO}>
+            MÉDIA DIAS S/ CONTATO
+          </p>
+          <p className="text-[28px] font-bold leading-none tracking-[-0.02em] text-[#ece5d4]">
+            {mediaDias}
+          </p>
+          <p className="text-[11px] text-[#8a8273] mt-2" style={MONO}>
+            dias em média
+          </p>
+        </div>
+
+        <div className={CARD_BASE} style={{ borderLeft: "3px solid #f87171" }}>
+          <p className="text-[10px] tracking-[0.22em] uppercase text-[#8a8273] mb-3" style={MONO}>
+            ACIMA DE 180 DIAS
+          </p>
+          <p className="text-[28px] font-bold leading-none tracking-[-0.02em] text-[#f87171]">
+            {acima180}
+          </p>
+          <p className="text-[11px] text-[#8a8273] mt-2" style={MONO}>
+            clientes críticos
+          </p>
+        </div>
       </div>
 
       {/* Charts */}
       <div className="grid lg:grid-cols-2 gap-6">
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Distribuição por Faixa de Inatividade</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <BarChart
-              data={faixas.map((f) => ({ name: f.name, value: f.value }))}
-              layout="vertical"
-              keys={["value"]}
-              height={220}
-              itemColors={FAIXA_COLORS}
-            />
-          </CardContent>
-        </Card>
+        <ChartCard title="Distribuição por Faixa de Inatividade" label="INATIVIDADE" height={220}>
+          <BarChart
+            data={faixas.map((f) => ({ name: f.name, value: f.value }))}
+            layout="vertical"
+            keys={["value"]}
+            height={220}
+            itemColors={FAIXA_COLORS}
+          />
+        </ChartCard>
 
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Clientes Críticos por Consultor</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <BarChart
-              data={porVendedor.map((v) => ({ name: v.vendedor, count: v.count }))}
-              layout="horizontal"
-              keys={["count"]}
-              height={220}
-              colors={["hsl(0, 84%, 60%)"]}
-            />
-          </CardContent>
-        </Card>
+        <ChartCard title="Clientes Críticos por Consultor" label="POR CONSULTOR" height={220}>
+          <BarChart
+            data={porVendedor.map((v) => ({ name: v.vendedor, count: v.count }))}
+            layout="horizontal"
+            keys={["count"]}
+            height={220}
+            colors={["#f87171"]}
+          />
+        </ChartCard>
       </div>
 
       {/* Critical Clients List */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-          <Target className="h-5 w-5 text-destructive" />
+        <h3 className="text-lg font-semibold text-[#ece5d4] flex items-center gap-2">
+          <Target className="h-5 w-5 text-[#c8b99a]" />
           Plano de Ação por Cliente ({criticos.length})
         </h3>
 
-        {criticos.slice(0, 50).map((c) => {
-          const sugestao = getSugestaoAcao(c);
-          return (
-            <Card key={`${c.nome}|${c.vendedor}`} className="border-0 shadow-sm hover:shadow-md transition-shadow">
-              <CardContent className="p-5">
-                <div className="flex flex-col lg:flex-row lg:items-start gap-4">
-                  {/* Client Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <h4 className="font-semibold text-sm truncate">{c.nome}</h4>
-                      <Badge variant="destructive" className="text-[10px] shrink-0">
-                        {c.diasSemContato} dias
-                      </Badge>
-                      <span className="text-xs">{sugestao.prioridade}</span>
-                    </div>
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3 flex-wrap">
-                      <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{c.cidade}</span>
-                      <span className="flex items-center gap-1"><Users className="h-3 w-3" />{c.vendedor.split(" ").slice(-1)[0]}</span>
-                      <span className="flex items-center gap-1"><Clock className="h-3 w-3" />Último: {c.ultimaData}</span>
-                    </div>
-
-                    {/* Stats */}
-                    <div className="grid grid-cols-4 gap-3 mb-3">
-                      <div className="text-center p-2 rounded bg-muted/50">
-                        <p className="text-sm font-bold text-warning">{formatCurrency(c.pipeline)}</p>
-                        <p className="text-[10px] text-muted-foreground">Pipeline</p>
-                      </div>
-                      <div className="text-center p-2 rounded bg-muted/50">
-                        <p className="text-sm font-bold text-primary">{c.totalAcoes}</p>
-                        <p className="text-[10px] text-muted-foreground">Ações</p>
-                      </div>
-                      <div className="text-center p-2 rounded bg-muted/50">
-                        <p className="text-sm font-bold text-accent">{c.visitas}</p>
-                        <p className="text-[10px] text-muted-foreground">Visitas</p>
-                      </div>
-                      <div className="text-center p-2 rounded bg-muted/50">
-                        <p className="text-sm font-bold">{c.ultimoTipoAcao}</p>
-                        <p className="text-[10px] text-muted-foreground">Última Ação</p>
-                      </div>
-                    </div>
-
-                    {/* Last observation */}
-                    <div className="bg-muted/30 rounded p-2 mb-3">
-                      <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1">Última Observação</p>
-                      <p className="text-xs text-foreground line-clamp-2">{c.ultimaObs}</p>
-                    </div>
-
-                    {/* History */}
-                    {c.historico.length > 0 && (
-                      <div className="mb-3">
-                        <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1">
-                          Histórico ({Math.min(c.historico.length, 5)} últimos registros)
-                        </p>
-                        <div className="space-y-1">
-                          {c.historico.slice(0, 5).map((h, i) => (
-                            <div key={i} className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                              <span className="font-mono shrink-0">{h.dtConclusao}</span>
-                              <Badge variant="outline" className="text-[9px] shrink-0">{h.tipoAcao}</Badge>
-                              <span className="truncate">{h.obs || "—"}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Action Recommendation */}
-                  <div className="lg:w-72 shrink-0 bg-destructive/5 border border-destructive/20 rounded-lg p-4">
-                    <p className="text-xs font-bold text-destructive uppercase mb-2 flex items-center gap-1">
-                      <TrendingDown className="h-3 w-3" /> Ação Recomendada
-                    </p>
-                    <div className="space-y-2">
-                      <div>
-                        <p className="text-[10px] font-semibold text-muted-foreground">O QUE FAZER</p>
-                        <p className="text-xs text-foreground">{sugestao.acao}</p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-semibold text-muted-foreground">ARGUMENTAÇÃO</p>
-                        <p className="text-xs text-foreground">{sugestao.argumentacao}</p>
-                      </div>
-                      <div className="flex gap-2 pt-1">
-                        <Badge variant="outline" className="text-[9px]"><Phone className="h-2.5 w-2.5 mr-1" />Ligar</Badge>
-                        <Badge variant="outline" className="text-[9px]"><Mail className="h-2.5 w-2.5 mr-1" />E-mail</Badge>
-                        <Badge variant="outline" className="text-[9px]"><MapPin className="h-2.5 w-2.5 mr-1" />Visita</Badge>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+        {criticos.slice(0, 50).map((c) => (
+          <ClienteCriticoCard
+            key={`${c.nome}|${c.vendedor}`}
+            c={c}
+            sugestao={getSugestaoAcao(c)}
+          />
+        ))}
 
         {criticos.length > 50 && (
-          <p className="text-xs text-center text-muted-foreground">
+          <p className="text-[11px] text-center text-[#8a8273]" style={MONO}>
             Mostrando 50 de {criticos.length} clientes críticos
           </p>
         )}
