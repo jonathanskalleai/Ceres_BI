@@ -9,6 +9,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { LoginPage } from "@/components/auth/LoginPage";
 import { AppShell } from "@/components/layout/AppShell";
 import { ComercialDataProvider } from "@/contexts/ComercialDataContext";
+import BiLayout from "./components/bi/BiLayout";
 import NotFound from "./pages/NotFound";
 
 // CRM pages (thin wrappers — eager since they're tiny)
@@ -103,25 +104,29 @@ const App = () => (
                 <Route path="administrativo" element={<CrmAdministrativo />} />
               </Route>
 
-              {/* BI */}
-              <Route path="bi/comercial" element={<LazySuspense><BiComercial /></LazySuspense>} />
-              <Route path="bi/pedidos" element={<LazySuspense><BiPedidos /></LazySuspense>} />
-              <Route path="bi/produtos" element={<LazySuspense><BiProdutos /></LazySuspense>} />
-              <Route path="bi/servicos" element={<LazySuspense><BiServicos /></LazySuspense>} />
-              <Route path="bi/operacional" element={<LazySuspense><BiOperacional /></LazySuspense>} />
-              <Route path="bi/admin" element={<LazySuspense><BiAdmin /></LazySuspense>} />
-              <Route path="bi/acoes" element={<LazySuspense><BiAcoes /></LazySuspense>} />
+              {/* BI — wrapped by BiLayout (shared filter context + topbar portal) */}
+              <Route path="bi" element={<BiLayout />}>
+                <Route index element={<Navigate to="comercial" replace />} />
+                <Route path="comercial" element={<LazySuspense><BiComercial /></LazySuspense>} />
+                <Route path="pedidos" element={<LazySuspense><BiPedidos /></LazySuspense>} />
+                <Route path="produtos" element={<LazySuspense><BiProdutos /></LazySuspense>} />
+                <Route path="servicos" element={<LazySuspense><BiServicos /></LazySuspense>} />
+                <Route path="operacional" element={<LazySuspense><BiOperacional /></LazySuspense>} />
+                <Route path="admin" element={<LazySuspense><BiAdmin /></LazySuspense>} />
+                <Route path="acoes" element={<LazySuspense><BiAcoes /></LazySuspense>} />
+              </Route>
 
-              {/* Tools */}
-              <Route path="tools/explorer" element={<LazySuspense><ToolsExplorer /></LazySuspense>} />
-              <Route path="tools/performance" element={<LazySuspense><ToolsPerformance /></LazySuspense>} />
+              {/* Tools — same filter layout */}
+              <Route path="tools" element={<BiLayout />}>
+                <Route path="explorer" element={<LazySuspense><ToolsExplorer /></LazySuspense>} />
+                <Route path="performance" element={<LazySuspense><ToolsPerformance /></LazySuspense>} />
+              </Route>
 
               {/* Admin */}
               <Route path="admin/users" element={<LazySuspense><AdminUsers /></LazySuspense>} />
               <Route path="admin/profile" element={<LazySuspense><AdminProfile /></LazySuspense>} />
 
               {/* Legacy redirects */}
-              <Route path="bi" element={<Navigate to="/bi/comercial" replace />} />
               <Route path="performance" element={<Navigate to="/tools/performance" replace />} />
 
               <Route path="*" element={<NotFound />} />
