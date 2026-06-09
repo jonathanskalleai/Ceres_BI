@@ -48,6 +48,8 @@ export interface RegiaoSummary {
 }
 
 export interface Registro {
+  numero?: string;        // ACO_CodigoAcao — visible action number
+  idAcao?: string;        // ACO_IdAcao — unique identifier (dedup key)
   cliente: string;
   cidade: string;
   vendedor: string;
@@ -59,6 +61,12 @@ export interface Registro {
   obs: string;
   lat?: number;
   lng?: number;
+  status?: string;        // ACO_Status (Concluída, Pendente, etc.)
+  acaoValida?: string;    // ACO_AcaoValida (Sim/Não)
+  dtAbertura?: string;    // ACO_DthAbertura
+  uf?: string;            // EMP_UF
+  contato?: string;       // ACO_Contato
+  nroNegocio?: string;    // NGO_NroNegocio
 }
 
 export interface KPIs {
@@ -71,12 +79,11 @@ export interface KPIs {
 }
 
 export interface Filters {
-  vendedor: string;
+  dateRange?: { from: string; to: string }; // ISO date strings (YYYY-MM-DD)
   cidade: string;
-  periodo: string;
-  ano: string;
-  mes: string;
   tipoAcao: string;
+  categoria: string;
+  funil: string;
 }
 
 export interface DadosComerciais {

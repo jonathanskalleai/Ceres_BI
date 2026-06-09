@@ -27,7 +27,9 @@ export const DashboardRegistros = ({ data, filters }: Props) => {
       const s = search.toLowerCase();
       result = result.filter((r) =>
         r.cliente.toLowerCase().includes(s) || r.vendedor.toLowerCase().includes(s) ||
-        r.cidade.toLowerCase().includes(s) || (r.obs || "").toLowerCase().includes(s)
+        r.cidade.toLowerCase().includes(s) || (r.obs || "").toLowerCase().includes(s) ||
+        (r.numero || "").toLowerCase().includes(s) ||
+        (r.status || "").toLowerCase().includes(s)
       );
     }
     return result;
@@ -64,6 +66,7 @@ export const DashboardRegistros = ({ data, filters }: Props) => {
               <TableHeader>
                 <TableRow className="bg-muted/50">
                   <TableHead className="text-xs w-8"></TableHead>
+                  <TableHead className="text-xs">Nr Ação</TableHead>
                   <TableHead className="text-xs">Data</TableHead>
                   <TableHead className="text-xs">Cliente</TableHead>
                   <TableHead className="text-xs">Cidade</TableHead>
@@ -72,6 +75,7 @@ export const DashboardRegistros = ({ data, filters }: Props) => {
                   <TableHead className="text-xs">Ação</TableHead>
                   <TableHead className="text-xs">Valor</TableHead>
                   <TableHead className="text-xs">Etapa</TableHead>
+                  <TableHead className="text-xs">Status</TableHead>
                   <TableHead className="text-xs max-w-[200px]">Observação</TableHead>
                 </TableRow>
               </TableHeader>
@@ -88,6 +92,7 @@ export const DashboardRegistros = ({ data, filters }: Props) => {
                         <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => startEdit(i)}><Edit2 className="h-3 w-3 text-muted-foreground" /></Button>
                       )}
                     </TableCell>
+                    <TableCell className="text-xs whitespace-nowrap text-muted-foreground">{r.numero || "-"}</TableCell>
                     <TableCell className="text-xs whitespace-nowrap">{r.dtConclusao}</TableCell>
                     <TableCell className="text-xs">
                       {editingIdx === i ? (
@@ -102,6 +107,7 @@ export const DashboardRegistros = ({ data, filters }: Props) => {
                     <TableCell className="text-xs">{r.tipoAcao}</TableCell>
                     <TableCell className="text-xs">{formatCurrency(r.negocioValor)}</TableCell>
                     <TableCell className="text-xs">{r.negocioEtapa || "-"}</TableCell>
+                    <TableCell className="text-xs">{r.status || "-"}</TableCell>
                     <TableCell className="text-xs max-w-[200px]">
                       {editingIdx === i ? (
                         <Input className="h-6 text-xs" value={editValues.obs || ""} onChange={(e) => setEditValues({ ...editValues, obs: e.target.value })} />
