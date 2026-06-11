@@ -26,6 +26,7 @@ import CrmAdministrativo from "./pages/crm/CrmAdministrativo";
 
 // BI pages (lazy — heavy chart sections)
 const BiComercial = lazy(() => import("./pages/bi/BiComercial"));
+const BiPainel = lazy(() => import("./pages/bi/BiPainel"));
 const BiPedidos = lazy(() => import("./pages/bi/BiPedidos"));
 const BiProdutos = lazy(() => import("./pages/bi/BiProdutos"));
 const BiServicos = lazy(() => import("./pages/bi/BiServicos"));
@@ -106,7 +107,8 @@ const App = () => (
 
               {/* BI — wrapped by BiLayout (shared filter context + topbar portal) */}
               <Route path="bi" element={<BiLayout />}>
-                <Route index element={<Navigate to="comercial" replace />} />
+                <Route index element={<Navigate to="painel" replace />} />
+                <Route path="painel" element={<LazySuspense><BiPainel /></LazySuspense>} />
                 <Route path="comercial" element={<LazySuspense><BiComercial /></LazySuspense>} />
                 <Route path="pedidos" element={<LazySuspense><BiPedidos /></LazySuspense>} />
                 <Route path="produtos" element={<LazySuspense><BiProdutos /></LazySuspense>} />

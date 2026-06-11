@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, MapPin, Table2, AlertTriangle, MessageSquareText,
-  Map, Handshake, ClipboardList, Zap, Database, BarChart3, Settings,
+  Map as MapIcon, Handshake, ClipboardList, Zap, Database, BarChart3, Settings,
   Sun, Moon, TrendingUp, Package, Wrench, Activity, ChevronDown, ChevronRight,
   LogOut, User,
 } from 'lucide-react';
@@ -24,6 +24,7 @@ const MODULE_ROUTES: Record<string, string> = {
   'crm.insights': '/crm/insights',
   'crm.negocios': '/crm/negocios',
   'crm.administrativo': '/crm/administrativo',
+  'bi.painel': '/bi/painel',
   'bi.comercial': '/bi/comercial',
   'bi.pedidos': '/bi/pedidos',
   'bi.produtos': '/bi/produtos',
@@ -45,7 +46,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Table2,
   AlertTriangle,
   MessageSquareText,
-  Map,
+  Map: MapIcon,
   Handshake,
   ClipboardList,
   Zap,
