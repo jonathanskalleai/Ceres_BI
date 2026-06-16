@@ -1,4 +1,6 @@
 import { Filters } from "@/types/comercial";
+import { type DateRange } from "react-day-picker";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 import {
   Select,
   SelectContent,
@@ -8,83 +10,86 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
+import { hasActiveFilters } from "@/lib/filterUtils";
+import { type CategoriaFilter, FUNIL_ALL, getFunilOptions } from "@/lib/categoriaFunil";
 
 interface DashboardFiltersProps {
   filters: Filters;
   onFiltersChange: (filters: Filters) => void;
-  anos: string[];
-  vendedores: { nome: string }[];
   cidades: string[];
+  tiposAcao: string[];
+  categorias: { value: CategoriaFilter; label: string }[];
 }
-
-const MESES = [
-  { value: "01", label: "Janeiro" },
-  { value: "02", label: "Fevereiro" },
-  { value: "03", label: "Marco" },
-  { value: "04", label: "Abril" },
-  { value: "05", label: "Maio" },
-  { value: "06", label: "Junho" },
-  { value: "07", label: "Julho" },
-  { value: "08", label: "Agosto" },
-  { value: "09", label: "Setembro" },
-  { value: "10", label: "Outubro" },
-  { value: "11", label: "Novembro" },
-  { value: "12", label: "Dezembro" },
-];
 
 export function DashboardFilters({
   filters,
   onFiltersChange,
-  anos,
-  vendedores,
   cidades,
+  tiposAcao,
+  categorias,
 }: DashboardFiltersProps) {
-  const updateFilter = (key: keyof Filters, value: string) => {
-    onFiltersChange({ ...filters, [key]: value === "__all__" ? "" : value });
+  const dateRangeValue: DateRange | undefined = filters.dateRange
+    ? {
+        from: new Date(filters.dateRange.from + "T12:00:00"),
+        to: new Date(filters.dateRange.to + "T12:00:00"),
+      }
+    : undefined;
+
+  const handleDateChange = (range: DateRange | undefined) => {
+    onFiltersChange({
+      ...filters,
+      dateRange: range?.from
+        ? {
+            from: range.from.toISOString().slice(0, 10),
+            to: range.to?.toISOString().slice(0, 10) ?? range.from.toISOString().slice(0, 10),
+          }
+        : undefined,
+    });
   };
 
-  const hasActiveFilter = Object.values(filters).some((v) => v !== "");
+  const updateFilter = (key: keyof Omit<Filters, "dateRange">, value: string) => {
+    const newFilters = { ...filters, [key]: value === "__all__" ? "" : value };
+    // When categoria changes, reset funil
+    if (key === "categoria") {
+      newFilters.funil = "";
+    }
+    onFiltersChange(newFilters);
+  };
+
+  const clearAll = () => {
+    onFiltersChange({ cidade: "", tipoAcao: "", categoria: "", funil: "", dateRange: undefined });
+  };
+
+  const funilOptions = getFunilOptions((filters.categoria || "__all__") as CategoriaFilter);
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      <Select value={filters.ano || "__all__"} onValueChange={(v) => updateFilter("ano", v)}>
-        <SelectTrigger className="h-8 w-[100px] text-xs">
-          <SelectValue placeholder="Ano" />
+      <DateRangePicker value={dateRangeValue} onChange={handleDateChange} />
+
+      <Select value={filters.categoria || "__all__"} onValueChange={(v) => updateFilter("categoria", v)}>
+        <SelectTrigger className="h-7 w-[160px] text-[11px]" style={{ backgroundColor: "var(--voux-card-from)", borderColor: "var(--voux-card-border)", color: "var(--voux-text-primary)" }}>
+          <SelectValue placeholder="Categoria" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="__all__">Todos anos</SelectItem>
-          {anos.map((a) => (
-            <SelectItem key={a} value={a}>{a}</SelectItem>
+          {categorias.map((opt) => (
+            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
           ))}
         </SelectContent>
       </Select>
 
-      <Select value={filters.mes || "__all__"} onValueChange={(v) => updateFilter("mes", v)}>
-        <SelectTrigger className="h-8 w-[120px] text-xs">
-          <SelectValue placeholder="Mes" />
+      <Select value={filters.funil || FUNIL_ALL} onValueChange={(v) => updateFilter("funil", v)}>
+        <SelectTrigger className="h-7 w-[160px] text-[11px]" style={{ backgroundColor: "var(--voux-card-from)", borderColor: "var(--voux-card-border)", color: "var(--voux-text-primary)" }}>
+          <SelectValue placeholder="Funil" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="__all__">Todos meses</SelectItem>
-          {MESES.map((m) => (
-            <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      <Select value={filters.vendedor || "__all__"} onValueChange={(v) => updateFilter("vendedor", v)}>
-        <SelectTrigger className="h-8 w-[140px] text-xs">
-          <SelectValue placeholder="Consultor" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="__all__">Todos consultores</SelectItem>
-          {vendedores.map((v) => (
-            <SelectItem key={v.nome} value={v.nome}>{v.nome}</SelectItem>
+          {funilOptions.map((opt) => (
+            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
           ))}
         </SelectContent>
       </Select>
 
       <Select value={filters.cidade || "__all__"} onValueChange={(v) => updateFilter("cidade", v)}>
-        <SelectTrigger className="h-8 w-[130px] text-xs">
+        <SelectTrigger className="h-7 w-[120px] text-[11px]" style={{ backgroundColor: "var(--voux-card-from)", borderColor: "var(--voux-card-border)", color: "var(--voux-text-primary)" }}>
           <SelectValue placeholder="Cidade" />
         </SelectTrigger>
         <SelectContent>
@@ -95,14 +100,26 @@ export function DashboardFilters({
         </SelectContent>
       </Select>
 
-      {hasActiveFilter && (
+      <Select value={filters.tipoAcao || "__all__"} onValueChange={(v) => updateFilter("tipoAcao", v)}>
+        <SelectTrigger className="h-7 w-[120px] text-[11px]" style={{ backgroundColor: "var(--voux-card-from)", borderColor: "var(--voux-card-border)", color: "var(--voux-text-primary)" }}>
+          <SelectValue placeholder="Tipo Acao" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="__all__">Todos tipos</SelectItem>
+          {tiposAcao.map((t) => (
+            <SelectItem key={t} value={t}>{t}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      {hasActiveFilters(filters) && (
         <Button
           variant="ghost"
           size="sm"
-          className="h-8 px-2 text-xs text-muted-foreground"
-          onClick={() => onFiltersChange({ vendedor: "", cidade: "", periodo: "", ano: "", mes: "", tipoAcao: "" })}
+          className="h-7 px-2 text-[11px] text-muted-foreground"
+          onClick={clearAll}
         >
-          <X className="h-3.5 w-3.5 mr-1" />
+          <X className="h-3 w-3 mr-1" />
           Limpar
         </Button>
       )}

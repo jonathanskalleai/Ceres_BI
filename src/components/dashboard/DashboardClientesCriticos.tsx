@@ -32,7 +32,7 @@ interface SugestaoAcao {
 }
 
 const CARD_BASE =
-  "relative overflow-hidden rounded-[20px] p-[22px_24px] bg-gradient-to-b from-[#18160f] to-[#11100d] border border-[rgba(214,207,193,0.08)] shadow-[0_2px_8px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,250,230,0.03)]";
+  "relative overflow-hidden rounded-[20px] p-[22px_24px] border";
 
 const MONO: React.CSSProperties = {
   fontFamily: "var(--voux-font-mono, 'JetBrains Mono', monospace)",
@@ -48,7 +48,7 @@ const getSugestaoAcao = (c: ClienteCritico): SugestaoAcao => {
       argumentacao:
         "Resgatar relacionamento com proposta de condições especiais. Mencionar novidades em equipamentos desde o último contato.",
       prioridade: "CRÍTICA",
-      borderColor: "#f87171",
+      borderColor: "var(--voux-danger)",
     };
   }
   if (c.diasSemContato > 180) {
@@ -57,7 +57,7 @@ const getSugestaoAcao = (c: ClienteCritico): SugestaoAcao => {
       argumentacao:
         "Abordagem consultiva perguntando sobre a safra atual e necessidades futuras. Oferecer demonstração sem compromisso.",
       prioridade: "ALTA",
-      borderColor: "#fb923c",
+      borderColor: "var(--voux-warning)",
     };
   }
   if (c.pipeline > 500000) {
@@ -66,7 +66,7 @@ const getSugestaoAcao = (c: ClienteCritico): SugestaoAcao => {
       argumentacao:
         "Reforçar valor do equipamento com ROI projetado. Oferecer condições de financiamento facilitado.",
       prioridade: "ALTA",
-      borderColor: "#fb923c",
+      borderColor: "var(--voux-warning)",
     };
   }
   return {
@@ -74,11 +74,11 @@ const getSugestaoAcao = (c: ClienteCritico): SugestaoAcao => {
     argumentacao:
       "Manter relacionamento ativo. Compartilhar case de sucesso de cliente similar na região.",
     prioridade: "MÉDIA",
-    borderColor: "#c8b99a",
+    borderColor: "var(--voux-accent)",
   };
 };
 
-const FAIXA_COLORS = ["#c8b99a", "#fb923c", "#f87171", "#dc2626"];
+const FAIXA_COLORS = ["var(--voux-accent)", "var(--voux-warning)", "var(--voux-danger)", "#dc2626"];
 
 export const DashboardClientesCriticos = ({ data, filters }: Props) => {
   const criticos = useMemo(() => {
@@ -152,11 +152,19 @@ export const DashboardClientesCriticos = ({ data, filters }: Props) => {
     <div className="p-6 space-y-6">
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className={CARD_BASE} style={{ borderLeft: "3px solid #f87171" }}>
+        <div
+          className={CARD_BASE}
+          style={{
+            background: "linear-gradient(to bottom, var(--voux-card-from), var(--voux-card-to))",
+            borderColor: "var(--voux-card-border)",
+            boxShadow: "var(--voux-card-shadow)",
+            borderLeft: "3px solid var(--voux-danger)",
+          }}
+        >
           <p className="text-[10px] tracking-[0.22em] uppercase mb-3" style={{ ...MONO, color: "var(--voux-text-faint)" }}>
             CLIENTES CRÍTICOS
           </p>
-          <p className="text-[28px] font-bold leading-none tracking-[-0.02em] text-[#f87171]">
+          <p className="text-[28px] font-bold leading-none tracking-[-0.02em]" style={{ color: "var(--voux-danger)" }}>
             {criticos.length}
           </p>
           <p className="text-[11px] mt-2" style={{ ...MONO, color: "var(--voux-text-faint)" }}>
@@ -164,11 +172,19 @@ export const DashboardClientesCriticos = ({ data, filters }: Props) => {
           </p>
         </div>
 
-        <div className={CARD_BASE} style={{ borderLeft: "3px solid #fb923c" }}>
+        <div
+          className={CARD_BASE}
+          style={{
+            background: "linear-gradient(to bottom, var(--voux-card-from), var(--voux-card-to))",
+            borderColor: "var(--voux-card-border)",
+            boxShadow: "var(--voux-card-shadow)",
+            borderLeft: "3px solid var(--voux-warning)",
+          }}
+        >
           <p className="text-[10px] tracking-[0.22em] uppercase mb-3" style={{ ...MONO, color: "var(--voux-text-faint)" }}>
             PIPELINE EM RISCO
           </p>
-          <p className="text-[28px] font-bold leading-none tracking-[-0.02em] text-[#fb923c]">
+          <p className="text-[28px] font-bold leading-none tracking-[-0.02em]" style={{ color: "var(--voux-warning)" }}>
             {formatCurrency(totalPipelineEmRisco)}
           </p>
           <p className="text-[11px] mt-2" style={{ ...MONO, color: "var(--voux-text-faint)" }}>
@@ -176,7 +192,15 @@ export const DashboardClientesCriticos = ({ data, filters }: Props) => {
           </p>
         </div>
 
-        <div className={CARD_BASE} style={{ borderLeft: "3px solid #c8b99a" }}>
+        <div
+          className={CARD_BASE}
+          style={{
+            background: "linear-gradient(to bottom, var(--voux-card-from), var(--voux-card-to))",
+            borderColor: "var(--voux-card-border)",
+            boxShadow: "var(--voux-card-shadow)",
+            borderLeft: "3px solid var(--voux-accent)",
+          }}
+        >
           <p className="text-[10px] tracking-[0.22em] uppercase mb-3" style={{ ...MONO, color: "var(--voux-text-faint)" }}>
             MÉDIA DIAS S/ CONTATO
           </p>
@@ -188,11 +212,19 @@ export const DashboardClientesCriticos = ({ data, filters }: Props) => {
           </p>
         </div>
 
-        <div className={CARD_BASE} style={{ borderLeft: "3px solid #f87171" }}>
+        <div
+          className={CARD_BASE}
+          style={{
+            background: "linear-gradient(to bottom, var(--voux-card-from), var(--voux-card-to))",
+            borderColor: "var(--voux-card-border)",
+            boxShadow: "var(--voux-card-shadow)",
+            borderLeft: "3px solid var(--voux-danger)",
+          }}
+        >
           <p className="text-[10px] tracking-[0.22em] uppercase mb-3" style={{ ...MONO, color: "var(--voux-text-faint)" }}>
             ACIMA DE 180 DIAS
           </p>
-          <p className="text-[28px] font-bold leading-none tracking-[-0.02em] text-[#f87171]">
+          <p className="text-[28px] font-bold leading-none tracking-[-0.02em]" style={{ color: "var(--voux-danger)" }}>
             {acima180}
           </p>
           <p className="text-[11px] mt-2" style={{ ...MONO, color: "var(--voux-text-faint)" }}>

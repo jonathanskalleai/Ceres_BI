@@ -1,5 +1,5 @@
 import { createPortal } from "react-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +16,7 @@ import {
   CATEGORIA_OPTIONS,
   getFunilOptions,
 } from "@/lib/categoriaFunil";
+import { useComercialData } from "@/hooks/useComercialData";
 
 /**
  * Renders BI filters inside the AppShell topbar via React Portal.
@@ -29,6 +30,10 @@ export function BiTopbarPortal() {
     setCategoria,
     funil,
     setFunil,
+    vendedor,
+    setVendedor,
+    cidade,
+    setCidade,
     resetFilters,
     hasActiveFilter,
   } = useNegociosFilter();
@@ -42,6 +47,18 @@ export function BiTopbarPortal() {
 
   const funilOptions = getFunilOptions(categoria);
 
+  // Derive vendedor/cidade options from data
+  const { allData } = useComercialData(categoria, funil);
+  const vendedorOptions = useMemo(() => {
+    if (!allData) return [];
+    return allData.listaVendedores;
+  }, [allData]);
+
+  const cidadeOptions = useMemo(() => {
+    if (!allData) return [];
+    return allData.listaCidades;
+  }, [allData]);
+
   if (!container) return null;
 
   return createPortal(
@@ -52,7 +69,7 @@ export function BiTopbarPortal() {
         value={categoria}
         onValueChange={(v) => setCategoria(v as CategoriaFilter)}
       >
-        <SelectTrigger className="h-7 w-[160px] text-[11px] bg-[#1a1916] border-[rgba(214,207,193,0.12)] text-[#e8e2d9]">
+        <SelectTrigger className="h-7 w-[160px] text-[11px] bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]">
           <SelectValue placeholder="Categoria" />
         </SelectTrigger>
         <SelectContent>
@@ -65,7 +82,7 @@ export function BiTopbarPortal() {
       </Select>
 
       <Select value={funil} onValueChange={setFunil}>
-        <SelectTrigger className="h-7 w-[160px] text-[11px] bg-[#1a1916] border-[rgba(214,207,193,0.12)] text-[#e8e2d9]">
+        <SelectTrigger className="h-7 w-[160px] text-[11px] bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]">
           <SelectValue placeholder="Funil" />
         </SelectTrigger>
         <SelectContent>
@@ -77,12 +94,36 @@ export function BiTopbarPortal() {
         </SelectContent>
       </Select>
 
+      <Select value={vendedor || "__all__"} onValueChange={(v) => setVendedor(v === "__all__" ? "" : v)}>
+        <SelectTrigger className="h-7 w-[150px] text-[11px] bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]">
+          <SelectValue placeholder="Vendedor" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="__all__">Todos vendedores</SelectItem>
+          {vendedorOptions.map((v) => (
+            <SelectItem key={v} value={v}>{v}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select value={cidade || "__all__"} onValueChange={(v) => setCidade(v === "__all__" ? "" : v)}>
+        <SelectTrigger className="h-7 w-[150px] text-[11px] bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]">
+          <SelectValue placeholder="Cidade" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="__all__">Todas cidades</SelectItem>
+          {cidadeOptions.map((c) => (
+            <SelectItem key={c} value={c}>{c}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
       {hasActiveFilter && (
         <Button
           variant="ghost"
           size="sm"
           onClick={resetFilters}
-          className="h-7 px-2 text-[11px] text-[#b3ab9c] hover:text-[#e8e2d9]"
+          className="h-7 px-2 text-[11px] text-[var(--voux-text-muted)] hover:text-[var(--voux-text-primary)]"
         >
           <X className="h-3 w-3 mr-1" />
           Limpar

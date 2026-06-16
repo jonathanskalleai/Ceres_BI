@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { DashboardViewExplorer } from "@/components/dashboard/DashboardViewExplorer";
 import { useSyncStatus } from "@/hooks/bi/useSyncStatus";
+import { type CategoriaFilter, CATEGORIA_ALL, CATEGORIA_OPTIONS, FUNIL_ALL, getFunilOptions } from "@/lib/categoriaFunil";
 
 const ComercialSection = lazy(() => import("@/components/bi/sections/ComercialSection"));
 const PedidosSection = lazy(() => import("@/components/bi/sections/PedidosSection"));
@@ -14,6 +15,7 @@ const ProdutosSection = lazy(() => import("@/components/bi/sections/ProdutosSect
 const ServicosSection = lazy(() => import("@/components/bi/sections/ServicosSection"));
 const OperacionalSection = lazy(() => import("@/components/bi/sections/OperacionalSection"));
 const AdminSection = lazy(() => import("@/components/bi/sections/AdminSection"));
+const AcoesSection = lazy(() => import("@/components/bi/sections/AcoesSection"));
 
 const TABS = [
   { value: "comercial", label: "Comercial" },
@@ -22,6 +24,7 @@ const TABS = [
   { value: "servicos", label: "Servicos" },
   { value: "operacional", label: "Operacional" },
   { value: "admin", label: "Admin" },
+  { value: "acoes", label: "Acoes" },
   { value: "explorer", label: "Explorer" },
 ] as const;
 
@@ -53,60 +56,83 @@ function SectionFallback() {
   );
 }
 
-const FUNIS = [
-  { value: "__all__", label: "Todos os funis" },
-  { value: "VENDAS", label: "Vendas" },
-  { value: "Vendas AP", label: "Vendas AP" },
-  { value: "ADM", label: "ADM" },
-  { value: "Adm AP", label: "Adm AP" },
-  { value: "BANCOS", label: "Bancos" },
-  { value: "Logistica AP", label: "Logística AP" },
-  { value: "MARKETING", label: "Marketing" },
-  { value: "OFICINA", label: "Oficina" },
-  { value: "REPASSE DE MAQUINA", label: "Repasse de Máquina" },
-] as const;
-
 const DashboardBIReal = () => {
   const [activeTab, setActiveTab] = useState<TabValue>("comercial");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
-  const [funil, setFunil] = useState<string>("__all__");
+  const [categoria, setCategoria] = useState<CategoriaFilter>(CATEGORIA_ALL);
+  const [funil, setFunil] = useState<string>(FUNIL_ALL);
   const { lastSyncAt, isStale } = useSyncStatus();
+
+  const funilOptions = getFunilOptions(categoria);
+
+  const handleCategoriaChange = (v: string) => {
+    setCategoria(v as CategoriaFilter);
+    setFunil(FUNIL_ALL); // reset funil when categoria changes
+  };
 
   const syncLabel = lastSyncAt
     ? `Atualizado ha ${formatMinutesAgo(lastSyncAt)}`
     : "Sync indisponivel";
 
   return (
-    <div className="relative p-6 space-y-4">
-      {/* Fundo ambiente — radiais suaves para o efeito glass (blur) refratar */}
+    <div className="relative p-8 space-y-5">
+      {/* Ambient radials — VOUX */}
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
-        <div className="absolute -top-24 -left-16 h-72 w-72 rounded-full bg-amber-400/20 blur-3xl" />
-        <div className="absolute top-1/3 right-0 h-80 w-80 rounded-full bg-blue-500/15 blur-3xl" />
-        <div className="absolute bottom-0 left-1/3 h-72 w-72 rounded-full bg-violet-500/15 blur-3xl" />
+        <div className="absolute -top-20 -left-10 h-80 w-80 rounded-full blur-3xl"
+          style={{ background: "rgba(212,184,150,0.04)" }} />
+        <div className="absolute top-1/2 right-0 h-96 w-96 rounded-full blur-3xl"
+          style={{ background: "rgba(142,163,184,0.03)" }} />
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard BI</h1>
-          <p className="text-sm text-muted-foreground">
-            Analise completa de todas as views do SQL Server
+          <div
+            className="text-[9px] tracking-[0.28em] uppercase text-[var(--voux-text-muted)] mb-2"
+            style={{ fontFamily: "var(--voux-font-mono)" }}
+          >
+            BI ANALYTICS
+          </div>
+          <h2
+            className="text-[24px] leading-none tracking-[-0.012em] text-[var(--voux-text-primary)]"
+            style={{ fontFamily: "var(--voux-font-display)", margin: 0 }}
+          >
+            Dashboard <em style={{ color: "var(--voux-accent)", fontStyle: "normal" }}>BI</em>
+          </h2>
+          <p
+            className="text-[11px] text-[var(--voux-text-muted)] mt-2"
+            style={{ fontFamily: "var(--voux-font-mono)", letterSpacing: "0.04em" }}
+          >
+            Análise completa — SQL Server
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <DateRangePicker value={dateRange} onChange={setDateRange} />
+          <Select value={categoria} onValueChange={handleCategoriaChange}>
+            <SelectTrigger className="w-[180px] h-9 text-sm border-[var(--voux-card-border)] bg-transparent text-[var(--voux-text-muted)]">
+              <SelectValue placeholder="Categoria" />
+            </SelectTrigger>
+            <SelectContent>
+              {CATEGORIA_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Select value={funil} onValueChange={setFunil}>
-            <SelectTrigger className="w-[180px] h-9 text-sm">
+            <SelectTrigger className="w-[180px] h-9 text-sm border-[var(--voux-card-border)] bg-transparent text-[var(--voux-text-muted)]">
               <SelectValue placeholder="Funil" />
             </SelectTrigger>
             <SelectContent>
-              {FUNIS.map((f) => (
-                <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>
+              {funilOptions.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
           <Badge
             variant={isStale ? "destructive" : "secondary"}
-            className={isStale ? "bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-100" : ""}
+            className={isStale
+              ? "bg-[rgba(201,117,101,0.12)] text-[#c97565] border-[rgba(201,117,101,0.2)]"
+              : "bg-[rgba(122,155,111,0.12)] text-[#7a9b6f] border-[rgba(122,155,111,0.2)]"}
+            style={{ fontFamily: "var(--voux-font-mono)", fontSize: 9, letterSpacing: "0.1em" }}
           >
             {syncLabel}
           </Badge>
@@ -124,7 +150,7 @@ const DashboardBIReal = () => {
 
         <TabsContent value="comercial">
           <Suspense fallback={<SectionFallback />}>
-            <ComercialSection active={activeTab === "comercial"} dateRange={dateRange} funil={funil} />
+            <ComercialSection active={activeTab === "comercial"} dateRange={dateRange} categoria={categoria} funil={funil} />
           </Suspense>
         </TabsContent>
 
@@ -155,6 +181,12 @@ const DashboardBIReal = () => {
         <TabsContent value="admin">
           <Suspense fallback={<SectionFallback />}>
             <AdminSection active={activeTab === "admin"} dateRange={dateRange} />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="acoes">
+          <Suspense fallback={<SectionFallback />}>
+            <AcoesSection active={activeTab === "acoes"} dateRange={dateRange} />
           </Suspense>
         </TabsContent>
 

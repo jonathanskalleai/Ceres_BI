@@ -7,7 +7,7 @@ import { Filters } from "@/types/comercial";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Target, TrendingUp, AlertTriangle, Flame, Zap, Users, MapPin, Presentation, Banknote } from "lucide-react";
+import { ArrowLeft, Target, TrendingUp, AlertTriangle, Flame, Zap, MapPin, Presentation, Banknote } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useMeta } from "@/hooks/useMeta";
 import { BarChart } from "@/components/bi/charts";
@@ -31,7 +31,7 @@ const fmt = (v: number) =>
 
 const fmtPct = (v: number) => `${v.toFixed(1)}%`;
 
-const emptyFilters: Filters = { vendedor: "", cidade: "", periodo: "", ano: "2026", mes: "", tipoAcao: "" };
+const emptyFilters: Filters = { cidade: "", tipoAcao: "", categoria: "", dateRange: undefined };
 
 const PerformanceComercial = () => {
   const navigate = useNavigate();
@@ -180,18 +180,6 @@ const PerformanceComercial = () => {
         </div>
         {activeTab === "dashboard" && (
           <div className="flex items-center gap-3">
-            <Select value={filters.vendedor || "all"} onValueChange={(v) => setFilters(f => ({ ...f, vendedor: v === "all" ? "" : v }))}>
-              <SelectTrigger className="w-48 bg-[hsl(217,33%,17%)] border-[hsl(217,33%,20%)] text-[hsl(210,40%,96%)]">
-                <Users className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="Consultor" />
-              </SelectTrigger>
-              <SelectContent className="bg-[hsl(222,47%,9%)] border-[hsl(217,33%,17%)]">
-                <SelectItem value="all">Todos Consultores</SelectItem>
-                {(data?.listaVendedores || []).filter(v => !isAdminUser(v)).sort().map(v => (
-                  <SelectItem key={v} value={v}>{v}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
             <Select value={filters.cidade || "all"} onValueChange={(v) => setFilters(f => ({ ...f, cidade: v === "all" ? "" : v }))}>
               <SelectTrigger className="w-44 bg-[hsl(217,33%,17%)] border-[hsl(217,33%,20%)] text-[hsl(210,40%,96%)]">
                 <MapPin className="h-4 w-4 mr-2" />
@@ -371,22 +359,33 @@ const PerformanceComercial = () => {
 
 function BigCard({ label, value, icon, color, sub, large }: { label: string; value: string; icon: React.ReactNode; color: string; sub?: string; large?: boolean }) {
   return (
-    <div className="bg-[hsl(222,47%,9%)] border border-[hsl(217,33%,17%)] rounded-lg p-5 flex flex-col">
-      <div className="flex items-center gap-2 mb-2" style={{ color }}>{icon}<span className="text-xs font-bold tracking-widest uppercase">{label}</span></div>
-      <p className={`font-black ${large ? "text-5xl" : "text-3xl"}`} style={{ color }}>{value}</p>
-      {sub && <p className="text-xs text-[hsl(215,16%,57%)] mt-1">{sub}</p>}
+    <div
+      className="relative overflow-hidden rounded-[20px] p-[22px_24px] bg-gradient-to-b from-[var(--voux-card-from)] to-[var(--voux-card-to)] border border-[var(--voux-card-border)] shadow-[var(--voux-card-shadow)]"
+      style={{ borderLeftColor: color, borderLeftWidth: 3 }}
+    >
+      <div className="flex items-center justify-between mb-4">
+        <span className="font-mono text-[10px] tracking-[0.22em] uppercase text-[var(--voux-text-faint)]">{label}</span>
+        <span className="opacity-40 text-[var(--voux-text-faint)] [&>svg]:h-3.5 [&>svg]:w-3.5">{icon}</span>
+      </div>
+      <p className={`font-bold leading-none tracking-[-0.02em] mb-1 ${large ? "text-[36px]" : "text-[28px]"}`} style={{ color }}>{value}</p>
+      {sub && <p className="font-mono text-[11px] text-[var(--voux-text-faint)] mt-2">{sub}</p>}
     </div>
   );
 }
 
 function MetricCard({ label, value, status, sub }: { label: string; value: string; status: "ok" | "danger" | "neutral"; sub?: string }) {
-  const borderColor = status === "ok" ? "hsl(152,69%,25%)" : status === "danger" ? "hsl(0,84%,25%)" : "hsl(217,33%,17%)";
-  const textColor = status === "ok" ? "hsl(152,69%,40%)" : status === "danger" ? "hsl(0,84%,60%)" : "hsl(210,40%,96%)";
+  const accentColor = status === "ok" ? "hsl(152,69%,40%)" : status === "danger" ? "hsl(0,84%,60%)" : undefined;
+  const leftBorder = status === "ok" ? "hsl(152,69%,40%)" : status === "danger" ? "hsl(0,84%,60%)" : undefined;
   return (
-    <div className="bg-[hsl(222,47%,9%)] rounded-lg p-5" style={{ border: `1px solid ${borderColor}` }}>
-      <p className="text-xs font-semibold text-[hsl(215,16%,57%)] mb-1 uppercase tracking-wide">{label}</p>
-      <p className="text-2xl font-black" style={{ color: textColor }}>{value}</p>
-      {sub && <p className="text-xs mt-1" style={{ color: textColor }}>{sub}</p>}
+    <div
+      className="relative overflow-hidden rounded-[20px] p-[22px_24px] bg-gradient-to-b from-[var(--voux-card-from)] to-[var(--voux-card-to)] border border-[var(--voux-card-border)] shadow-[var(--voux-card-shadow)]"
+      style={leftBorder ? { borderLeftColor: leftBorder, borderLeftWidth: 3 } : undefined}
+    >
+      <div className="mb-4">
+        <span className="font-mono text-[10px] tracking-[0.22em] uppercase text-[var(--voux-text-faint)]">{label}</span>
+      </div>
+      <p className="text-[28px] font-bold leading-none tracking-[-0.02em] mb-1" style={{ color: accentColor || "var(--voux-text-primary)" }}>{value}</p>
+      {sub && <p className="font-mono text-[11px] text-[var(--voux-text-faint)] mt-2">{sub}</p>}
     </div>
   );
 }

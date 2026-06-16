@@ -102,6 +102,23 @@ const Dashboard = () => {
     );
   }
 
+  /* resolve section/title for topbar breadcrumb */
+  const topbarMeta: Record<string, { section: string; title: string }> = {
+    overview:         { section: "COMERCIAL CRM", title: "Visão Geral" },
+    consultores:      { section: "COMERCIAL CRM", title: "Consultores" },
+    regioes:          { section: "COMERCIAL CRM", title: "Regiões" },
+    registros:        { section: "COMERCIAL CRM", title: "Registros" },
+    criticos:         { section: "COMERCIAL CRM", title: "Clientes Críticos" },
+    mapa:             { section: "COMERCIAL CRM", title: "Mapa de Ações" },
+    insights:         { section: "COMERCIAL CRM", title: "Observações" },
+    "negocios-mensais": { section: "COMERCIAL CRM", title: "Negócios Mensais" },
+    administrativo:   { section: "COMERCIAL CRM", title: "Administrativo" },
+    "dashboard-bi":   { section: "BI ANALYTICS",  title: "Dashboard BI" },
+    "view-explorer":  { section: "FERRAMENTAS",   title: "Explorador de Views" },
+    "consultor-detail":{ section: "COMERCIAL CRM", title: "Detalhe Consultor" },
+  };
+  const meta = topbarMeta[currentView] || { section: "CERES BI", title: currentView };
+
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <DashboardSidebar
@@ -112,28 +129,56 @@ const Dashboard = () => {
         }}
         lastUpdated={lastUpdated}
       />
-      <main className="flex-1 overflow-auto">
-        <div className="flex items-center justify-end gap-3 p-3 pb-0">
-          {data && currentView !== "view-explorer" && currentView !== "dashboard-bi" && (
-            <DashboardFilters
-              filters={filters}
-              onFiltersChange={setFilters}
-              anos={anos}
-              vendedores={data.vendedores}
-              cidades={cidades}
-            />
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSync}
-            disabled={isRefreshing}
-            className="gap-2 text-xs"
-          >
-            {isRefreshing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-            {isRefreshing ? "Atualizando..." : "Atualizar Dados"}
-          </Button>
-        </div>
+      <main className="flex-1 overflow-auto flex flex-col">
+        {/* VOUX Topbar */}
+        <header
+          className="flex items-center justify-between gap-5 px-10 py-5 border-b shrink-0"
+          style={{
+            borderColor: "var(--voux-card-border)",
+            background: "rgba(10,9,7,0.7)",
+            backdropFilter: "blur(12px)",
+            position: "sticky",
+            top: 0,
+            zIndex: 20,
+          }}
+        >
+          <div className="flex flex-col gap-1">
+            <div
+              className="text-[10px] tracking-[0.22em] uppercase text-[var(--voux-text-muted)]"
+              style={{ fontFamily: "var(--voux-font-mono)" }}
+            >
+              Ceres BI <span className="text-[var(--voux-text-muted)] mx-2">·</span> {meta.section}
+            </div>
+            <h1
+              className="text-[22px] leading-none tracking-[-0.012em] text-[var(--voux-text-primary)]"
+              style={{ fontFamily: "var(--voux-font-display)", margin: 0 }}
+            >
+              {meta.title}
+            </h1>
+          </div>
+          <div className="flex items-center gap-3 flex-shrink-0">
+            {data && currentView !== "view-explorer" && currentView !== "dashboard-bi" && (
+              <DashboardFilters
+                filters={filters}
+                onFiltersChange={setFilters}
+                anos={anos}
+                vendedores={data.vendedores}
+                cidades={cidades}
+              />
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSync}
+              disabled={isRefreshing}
+              className="gap-2 text-xs border-[var(--voux-card-border)] text-[var(--voux-text-faint)] hover:text-[var(--voux-text-primary)] hover:border-[var(--voux-border-hover)] bg-transparent"
+            >
+              {isRefreshing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+              {isRefreshing ? "Atualizando..." : "Atualizar"}
+            </Button>
+          </div>
+        </header>
+        <div className="flex-1 overflow-auto">
         {/* Views com dados próprios — renderizam na hora, sem esperar a base comercial */}
         {currentView === "view-explorer" && <DashboardViewExplorer />}
         {currentView === "dashboard-bi" && <DashboardBIReal />}
@@ -146,7 +191,7 @@ const Dashboard = () => {
             <>
               {currentView === "overview" && (
                 <DashboardOverview
-                  data={data}
+                  data={allData ?? data}
                   filters={filters}
                   onSelectConsultor={handleSelectConsultor}
                   totalRegistrosBase={allData?.kpis.totalRegistros}
@@ -156,22 +201,22 @@ const Dashboard = () => {
                 <DashboardConsultores data={data} filters={filters} onSelectConsultor={handleSelectConsultor} />
               )}
               {currentView === "regioes" && (
-                <DashboardRegioes data={data} filters={filters} />
+                <DashboardRegioes data={allData ?? data} filters={filters} />
               )}
               {currentView === "registros" && (
-                <DashboardRegistros data={data} filters={filters} />
+                <DashboardRegistros data={allData ?? data} filters={filters} />
               )}
               {currentView === "criticos" && (
                 <DashboardClientesCriticos data={data} filters={filters} />
               )}
               {currentView === "insights" && (
-                <DashboardInsights data={data} filters={filters} />
+                <DashboardInsights data={allData ?? data} filters={filters} />
               )}
               {currentView === "mapa" && (
-                <DashboardMapa data={data} filters={filters} />
+                <DashboardMapa data={allData ?? data} filters={filters} />
               )}
               {currentView === "negocios-mensais" && (
-                <DashboardNegociosMensais filters={filters} crmData={data} />
+                <DashboardNegociosMensais filters={filters} crmData={allData ?? data} />
               )}
               {currentView === "administrativo" && allData && (
                 <DashboardAdministrativo data={allData} filters={filters} />
@@ -186,6 +231,7 @@ const Dashboard = () => {
             </>
           )
         )}
+        </div>
       </main>
     </div>
   );

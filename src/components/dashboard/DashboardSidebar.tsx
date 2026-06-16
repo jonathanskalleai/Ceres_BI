@@ -1,22 +1,17 @@
 import { useState } from "react";
-import { LayoutDashboard, Users, MapPin, Table2, Filter, X, AlertTriangle, MessageSquareText, Map, Handshake, ClipboardList, Zap, PanelLeftClose, PanelLeft, Database, BarChart3, ListFilter, Wrench, UserCircle, Package, Settings, ChevronDown, ChevronRight } from "lucide-react";
+import {
+  LayoutDashboard, Users, MapPin, Table2, AlertTriangle, MessageSquareText,
+  Map, Handshake, ClipboardList, Zap, Database, BarChart3, Settings,
+  Sun, Moon, TrendingUp, Package, Wrench, Activity, ChevronDown, ChevronRight,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Filters } from "@/types/comercial";
+import { useTheme } from "@/hooks/useTheme";
 
 interface Props {
   currentView: string;
   onNavigate: (view: string) => void;
-  filters: Filters;
-  onFiltersChange: (f: Filters) => void;
-  vendedores: string[];
-  cidades: string[];
-  tiposAcao: string[];
-  anos: string[];
   lastUpdated?: string | null;
 }
 
@@ -24,6 +19,7 @@ interface NavItem {
   id: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
+  num: string;
   isRoute?: boolean;
   routePath?: string;
 }
@@ -31,317 +27,267 @@ interface NavItem {
 interface NavGroup {
   id: string;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
   items: NavItem[];
-  route?: string;
-  placeholder?: boolean;
 }
 
 const NAV_GROUPS: NavGroup[] = [
   {
     id: "comercial",
-    label: "COMERCIAL",
-    icon: BarChart3,
+    label: "COMERCIAL CRM",
     items: [
-      { id: "overview", label: "Visão Geral", icon: LayoutDashboard },
-      { id: "consultores", label: "Consultores", icon: Users },
-      { id: "regioes", label: "Regiões", icon: MapPin },
-      { id: "registros", label: "Registros", icon: Table2 },
-      { id: "criticos", label: "Clientes Críticos", icon: AlertTriangle },
-      { id: "mapa", label: "Mapa de Ações", icon: Map },
-      { id: "insights", label: "Análise Observações", icon: MessageSquareText },
-      { id: "negocios-mensais", label: "Negócios Mensais", icon: Handshake },
-      { id: "administrativo", label: "Ações Administrativas", icon: ClipboardList },
-    ],
-  },
-  {
-    id: "pipeline",
-    label: "PIPELINE",
-    icon: ListFilter,
-    route: "/pipeline",
-    placeholder: true,
-    items: [],
-  },
-  {
-    id: "pos-venda",
-    label: "PÓS-VENDA",
-    icon: Wrench,
-    route: "/pos-venda",
-    placeholder: true,
-    items: [],
-  },
-  {
-    id: "clientes",
-    label: "CLIENTES",
-    icon: UserCircle,
-    route: "/cliente360",
-    placeholder: true,
-    items: [],
-  },
-  {
-    id: "produtos",
-    label: "PRODUTOS",
-    icon: Package,
-    route: "/produtos",
-    placeholder: true,
-    items: [],
-  },
-  {
-    id: "ferramentas",
-    label: "FERRAMENTAS",
-    icon: Settings,
-    items: [
-      { id: "view-explorer", label: "Explorador de Views", icon: Database },
-      { id: "performance", label: "Performance 2026", icon: Zap, isRoute: true, routePath: "/performance" },
+      { id: "overview",         label: "Visão Geral",          icon: LayoutDashboard,   num: "01" },
+      { id: "consultores",      label: "Consultores",           icon: Users,             num: "02" },
+      { id: "regioes",          label: "Regiões",               icon: MapPin,            num: "03" },
+      { id: "registros",        label: "Registros",             icon: Table2,            num: "04" },
+      { id: "criticos",         label: "Clientes Críticos",     icon: AlertTriangle,     num: "05" },
+      { id: "mapa",             label: "Mapa de Ações",         icon: Map,               num: "06" },
+      { id: "insights",         label: "Observações",           icon: MessageSquareText, num: "07" },
+      { id: "negocios-mensais", label: "Negócios",              icon: Handshake,         num: "08" },
+      { id: "administrativo",   label: "Administrativo",        icon: ClipboardList,     num: "09" },
     ],
   },
   {
     id: "bi",
-    label: "BI",
-    icon: BarChart3,
+    label: "BI ANALYTICS",
     items: [
-      { id: "dashboard-bi", label: "Dashboard BI", icon: Database },
+      { id: "dashboard-bi", label: "Dashboard BI", icon: BarChart3, num: "10" },
+    ],
+  },
+  {
+    id: "ferramentas",
+    label: "FERRAMENTAS",
+    items: [
+      { id: "view-explorer", label: "Explorador de Views",  icon: Database, num: "11" },
+      { id: "performance",   label: "Performance 2026",     icon: Zap, num: "12", isRoute: true, routePath: "/performance" },
     ],
   },
 ];
 
-const MESES = [
-  { value: "01", label: "Janeiro" }, { value: "02", label: "Fevereiro" },
-  { value: "03", label: "Março" }, { value: "04", label: "Abril" },
-  { value: "05", label: "Maio" }, { value: "06", label: "Junho" },
-  { value: "07", label: "Julho" }, { value: "08", label: "Agosto" },
-  { value: "09", label: "Setembro" }, { value: "10", label: "Outubro" },
-  { value: "11", label: "Novembro" }, { value: "12", label: "Dezembro" },
-];
+/* Sidebar link — VOUX style */
+function SidebarLink({
+  item,
+  active,
+  collapsed,
+  onClick,
+}: {
+  item: NavItem;
+  active: boolean;
+  collapsed: boolean;
+  onClick: () => void;
+}) {
+  const Icon = item.icon;
+  const inner = (
+    <button
+      onClick={onClick}
+      className={cn(
+        "w-full flex items-center gap-3 px-[10px] py-[9px] rounded-[8px] text-[13px] transition-all",
+        "hover:bg-[var(--voux-card-border)] hover:text-[var(--voux-text-primary)]",
+        active
+          ? "bg-[var(--voux-card-border)] text-[var(--voux-accent)]"
+          : "text-[var(--voux-text-muted)]",
+        collapsed && "justify-center px-[10px]",
+      )}
+      style={{ transitionDuration: "120ms" }}
+    >
+      <Icon
+        className={cn(
+          "flex-shrink-0",
+          active ? "opacity-100" : "opacity-60",
+          collapsed ? "h-[18px] w-[18px]" : "h-4 w-4",
+        )}
+      />
+      {!collapsed && (
+        <>
+          <span className="flex-1 text-left leading-none">{item.label}</span>
+          <span
+            className={cn(
+              "text-[9px] tracking-[0.18em]",
+              active ? "text-[var(--voux-accent)]" : "text-[var(--voux-text-muted)]",
+            )}
+            style={{ fontFamily: "var(--voux-font-mono)" }}
+          >
+            {item.num}
+          </span>
+        </>
+      )}
+    </button>
+  );
 
-const emptyFilters: Filters = { vendedor: "", cidade: "", periodo: "", ano: "", mes: "", tipoAcao: "" };
+  if (collapsed) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{inner}</TooltipTrigger>
+        <TooltipContent side="right" className="bg-[var(--voux-skeleton)] text-[var(--voux-text-primary)] border-[var(--voux-card-border)]">
+          {item.label}
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+  return inner;
+}
 
-export const DashboardSidebar = ({ currentView, onNavigate, filters, onFiltersChange, vendedores, cidades, tiposAcao, anos, lastUpdated }: Props) => {
+export const DashboardSidebar = ({ currentView, onNavigate, lastUpdated }: Props) => {
   const navigate = useNavigate();
+  const { isDark, toggle: toggleTheme } = useTheme();
   const [collapsed, setCollapsed] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     comercial: true,
-    ferramentas: true,
+    bi: true,
+    ferramentas: false,
   });
-  const hasFilters = Object.values(filters).some(Boolean);
 
-  const set = (key: keyof Filters, v: string) =>
-    onFiltersChange({ ...filters, [key]: v === "all" ? "" : v });
-
-  const toggleGroup = (groupId: string) => {
-    setExpandedGroups((prev) => ({ ...prev, [groupId]: !prev[groupId] }));
+  const toggleGroup = (id: string) => {
+    setExpandedGroups((p) => ({ ...p, [id]: !p[id] }));
   };
 
   const handleItemClick = (item: NavItem) => {
-    if (item.isRoute && item.routePath) {
-      navigate(item.routePath);
-    } else {
-      onNavigate(item.id);
-    }
+    if (item.isRoute && item.routePath) navigate(item.routePath);
+    else onNavigate(item.id);
   };
 
   return (
     <TooltipProvider delayDuration={0}>
-      <aside className={cn(
-        "shrink-0 bg-sidebar text-sidebar-foreground flex flex-col border-r border-sidebar-border transition-[width] duration-200 ease-linear",
-        collapsed ? "w-[3.5rem]" : "w-64"
-      )}>
-        <div className={cn("border-b border-sidebar-border", collapsed ? "p-2" : "p-5")}>
-          <div className="flex items-center justify-between">
-            {!collapsed && (
-              <div className="min-w-0">
-                <h1 className="text-lg font-bold tracking-tight text-sidebar-primary-foreground truncate">
-                  Ceres Equipamentos
-                </h1>
-                <p className="text-xs text-sidebar-foreground/60 mt-1">Painel Comercial</p>
-                {lastUpdated && (
-                  <p className="text-[10px] text-sidebar-foreground/50 mt-1">
-                    Última atualização: {new Date(lastUpdated).toLocaleDateString("pt-BR")} às {new Date(lastUpdated).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                  </p>
-                )}
-              </div>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 shrink-0 text-sidebar-foreground/70 hover:text-sidebar-foreground"
-              onClick={() => setCollapsed((c) => !c)}
-            >
-              {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-            </Button>
+      <aside
+        className={cn(
+          "shrink-0 flex flex-col border-r transition-[width] duration-200",
+          "bg-gradient-to-b from-[var(--voux-card-to)] to-[var(--voux-card-to)]",
+          "border-[var(--voux-card-border)]",
+          collapsed ? "w-[56px]" : "w-[252px]",
+        )}
+        style={{ height: "100vh", position: "sticky", top: 0, overflowY: "auto" }}
+      >
+        {/* Brand */}
+        <div
+          className={cn(
+            "flex items-center gap-3 border-b border-[var(--voux-card-border)]",
+            collapsed ? "p-3 justify-center" : "p-5 px-[22px]",
+          )}
+        >
+          {/* Logo mark */}
+          <div
+            className="flex-shrink-0 w-9 h-9 rounded-[10px] flex items-center justify-center text-[20px] italic text-[var(--voux-card-to)] font-bold"
+            style={{
+              background: "linear-gradient(135deg, var(--voux-accent), #927142)",
+              boxShadow: "0 0 24px rgba(212,184,150,0.18), 0 0 1px rgba(212,184,150,0.5)",
+              fontFamily: "var(--voux-font-display)",
+            }}
+          >
+            C
           </div>
-        </div>
-
-        <ScrollArea className="flex-1">
-          <nav className={cn("space-y-1", collapsed ? "p-1.5" : "p-3")}>
-            {NAV_GROUPS.map((group) => {
-              const isExpanded = expandedGroups[group.id] ?? false;
-              const GroupIcon = group.icon;
-
-              if (collapsed) {
-                return (
-                  <Tooltip key={group.id}>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={() => group.route ? navigate(group.route) : toggleGroup(group.id)}
-                        className="w-full flex items-center justify-center p-2.5 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors"
-                      >
-                        <GroupIcon className="h-4 w-4 shrink-0" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">{group.label}</TooltipContent>
-                  </Tooltip>
-                );
-              }
-
-              if (group.route) {
-                return (
-                  <div key={group.id} className="pt-2">
-                    <button
-                      onClick={() => navigate(group.route!)}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground transition-colors"
-                    >
-                      <GroupIcon className="h-3.5 w-3.5 shrink-0" />
-                      <span className="text-xs font-semibold uppercase tracking-wider">{group.label}</span>
-                      {group.placeholder && (
-                        <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded bg-sidebar-accent text-sidebar-foreground/50">
-                          Em breve
-                        </span>
-                      )}
-                    </button>
-                  </div>
-                );
-              }
-
-              return (
-                <div key={group.id} className="pt-2">
-                  <button
-                    onClick={() => toggleGroup(group.id)}
-                    className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors"
-                  >
-                    <GroupIcon className="h-3.5 w-3.5 shrink-0" />
-                    <span className="text-xs font-semibold uppercase tracking-wider">{group.label}</span>
-                    <span className="ml-auto">
-                      {isExpanded
-                        ? <ChevronDown className="h-3 w-3" />
-                        : <ChevronRight className="h-3 w-3" />
-                      }
-                    </span>
-                  </button>
-                  {isExpanded && (
-                    <div className="mt-1 space-y-0.5">
-                      {group.items.map((item) => (
-                        <button
-                          key={item.id}
-                          onClick={() => handleItemClick(item)}
-                          className={cn(
-                            "w-full flex items-center gap-3 pl-7 pr-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                            currentView === item.id
-                              ? "bg-sidebar-accent text-sidebar-primary"
-                              : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
-                            item.isRoute && "border border-sidebar-primary/30 bg-sidebar-accent/30 text-sidebar-primary"
-                          )}
-                        >
-                          <item.icon className="h-4 w-4 shrink-0" />
-                          {item.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </nav>
-        </ScrollArea>
-
-        {!collapsed && (
-          <ScrollArea className="max-h-[45vh]">
-            <div className="p-4 border-t border-sidebar-border">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50 flex items-center gap-1.5">
-                  <Filter className="h-3 w-3" /> Filtros
-                </span>
-                {hasFilters && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-5 px-1 text-sidebar-foreground/50 hover:text-sidebar-foreground"
-                    onClick={() => onFiltersChange(emptyFilters)}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                )}
+          {!collapsed && (
+            <div className="min-w-0 flex-1">
+              <div
+                className="text-[18px] text-[var(--voux-text-primary)] leading-none tracking-[-0.01em]"
+                style={{ fontFamily: "var(--voux-font-display)" }}
+              >
+                Ceres <em className="not-italic" style={{ color: "var(--voux-accent)" }}>BI</em>
               </div>
-              <div className="space-y-2">
-                <Select value={filters.ano} onValueChange={(v) => set("ano", v)}>
-                  <SelectTrigger className="h-8 text-xs bg-sidebar-accent border-sidebar-border text-sidebar-foreground">
-                    <SelectValue placeholder="Ano" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os anos</SelectItem>
-                    {anos.map((a) => (
-                      <SelectItem key={a} value={a}>{a}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Select value={filters.mes} onValueChange={(v) => set("mes", v)}>
-                  <SelectTrigger className="h-8 text-xs bg-sidebar-accent border-sidebar-border text-sidebar-foreground">
-                    <SelectValue placeholder="Mês" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os meses</SelectItem>
-                    {MESES.map((m) => (
-                      <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                <Select value={filters.vendedor} onValueChange={(v) => set("vendedor", v)}>
-                  <SelectTrigger className="h-8 text-xs bg-sidebar-accent border-sidebar-border text-sidebar-foreground">
-                    <SelectValue placeholder="Consultor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <ScrollArea className="h-48">
-                      {vendedores.map((v) => (
-                        <SelectItem key={v} value={v}>{v}</SelectItem>
-                      ))}
-                    </ScrollArea>
-                  </SelectContent>
-                </Select>
-
-                <Select value={filters.cidade} onValueChange={(v) => set("cidade", v)}>
-                  <SelectTrigger className="h-8 text-xs bg-sidebar-accent border-sidebar-border text-sidebar-foreground">
-                    <SelectValue placeholder="Cidade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas</SelectItem>
-                    <ScrollArea className="h-48">
-                      {cidades.map((c) => (
-                        <SelectItem key={c} value={c}>{c}</SelectItem>
-                      ))}
-                    </ScrollArea>
-                  </SelectContent>
-                </Select>
-
-                <Select value={filters.tipoAcao} onValueChange={(v) => set("tipoAcao", v)}>
-                  <SelectTrigger className="h-8 text-xs bg-sidebar-accent border-sidebar-border text-sidebar-foreground">
-                    <SelectValue placeholder="Tipo de Ação" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas as ações</SelectItem>
-                    <ScrollArea className="h-48">
-                      {tiposAcao.map((t) => (
-                        <SelectItem key={t} value={t}>{t}</SelectItem>
-                      ))}
-                    </ScrollArea>
-                  </SelectContent>
-                </Select>
+              <div
+                className="text-[9px] tracking-[0.26em] uppercase text-[var(--voux-text-muted)] mt-1"
+                style={{ fontFamily: "var(--voux-font-mono)" }}
+              >
+                Business Intelligence
               </div>
             </div>
-          </ScrollArea>
-        )}
+          )}
+          {!collapsed && (
+            <button
+              onClick={() => setCollapsed(true)}
+              className="opacity-30 hover:opacity-60 transition-opacity text-[var(--voux-text-primary)]"
+            >
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M10 3L5 8l5 5" />
+              </svg>
+            </button>
+          )}
+          {collapsed && (
+            <button
+              onClick={() => setCollapsed(false)}
+              className="opacity-30 hover:opacity-60 transition-opacity text-[var(--voux-text-primary)] mt-1"
+            >
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M6 3l5 5-5 5" />
+              </svg>
+            </button>
+          )}
+        </div>
+
+        {/* Nav */}
+        <nav className={cn("flex-1 py-4", collapsed ? "px-2" : "px-3")}>
+          {NAV_GROUPS.map((group) => {
+            const isExpanded = expandedGroups[group.id] ?? false;
+            return (
+              <div key={group.id} className="mb-5">
+                {/* Group label */}
+                {!collapsed && (
+                  <button
+                    onClick={() => toggleGroup(group.id)}
+                    className="w-full flex items-center gap-2 px-[10px] mb-2"
+                  >
+                    <span
+                      className="text-[9px] tracking-[0.26em] uppercase text-[var(--voux-text-muted)] flex-1 text-left"
+                      style={{ fontFamily: "var(--voux-font-mono)" }}
+                    >
+                      {group.label}
+                    </span>
+                    <span className="text-[var(--voux-text-muted)] opacity-60">
+                      {isExpanded
+                        ? <ChevronDown className="h-3 w-3" />
+                        : <ChevronRight className="h-3 w-3" />}
+                    </span>
+                  </button>
+                )}
+                {/* Divider line when collapsed */}
+                {collapsed && (
+                  <div className="h-px bg-[var(--voux-card-border)] mb-2" />
+                )}
+                {/* Items */}
+                {(isExpanded || collapsed) && (
+                  <div className="space-y-[2px]">
+                    {group.items.map((item) => (
+                      <SidebarLink
+                        key={item.id}
+                        item={item}
+                        active={currentView === item.id}
+                        collapsed={collapsed}
+                        onClick={() => handleItemClick(item)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </nav>
+
+        {/* Footer */}
+        <div
+          className={cn(
+            "border-t border-[var(--voux-card-border)]",
+            collapsed ? "p-2 flex flex-col items-center gap-2" : "p-4",
+          )}
+        >
+          {!collapsed && lastUpdated && (
+            <p
+              className="text-[9px] tracking-[0.12em] text-[var(--voux-text-muted)] mb-2 px-[10px]"
+              style={{ fontFamily: "var(--voux-font-mono)" }}
+            >
+              Sync: {new Date(lastUpdated).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+            </p>
+          )}
+          <button
+            onClick={toggleTheme}
+            className={cn(
+              "flex items-center gap-2 rounded-lg text-[var(--voux-text-faint)] hover:text-[var(--voux-text-primary)] transition-colors",
+              collapsed ? "p-2" : "w-full px-[10px] py-2 text-[12px]",
+            )}
+          >
+            {isDark
+              ? <Sun className="h-4 w-4 flex-shrink-0" />
+              : <Moon className="h-4 w-4 flex-shrink-0" />}
+            {!collapsed && <span>{isDark ? "Modo claro" : "Modo escuro"}</span>}
+          </button>
+        </div>
       </aside>
     </TooltipProvider>
   );

@@ -120,10 +120,10 @@ function SidebarLink({
       onClick={onClick}
       className={cn(
         'w-full flex items-center gap-3 px-[10px] py-[9px] rounded-[8px] text-[13px] transition-all',
-        'hover:bg-[rgba(214,207,193,0.03)] hover:text-[#ece5d4]',
+        'hover:bg-[var(--voux-card-border)] hover:text-[var(--voux-text-primary)]',
         active
-          ? 'bg-[rgba(212,184,150,0.06)] text-[#d4b896]'
-          : 'text-[#b3ab9c]',
+          ? 'bg-[var(--voux-card-border)] text-[var(--voux-accent)]'
+          : 'text-[var(--voux-text-muted)]',
         collapsed && 'justify-center px-[10px]',
       )}
       style={{ transitionDuration: '120ms' }}
@@ -141,7 +141,7 @@ function SidebarLink({
           <span
             className={cn(
               'text-[9px] tracking-[0.18em]',
-              active ? 'text-[#d4b896]' : 'text-[#6b6253]',
+              active ? 'text-[var(--voux-accent)]' : 'text-[var(--voux-text-muted)]',
             )}
             style={{ fontFamily: 'var(--voux-font-mono)' }}
           >
@@ -156,7 +156,7 @@ function SidebarLink({
     return (
       <Tooltip>
         <TooltipTrigger asChild>{inner}</TooltipTrigger>
-        <TooltipContent side="right" className="bg-[#2a2620] text-[#ece5d4] border-[rgba(214,207,193,0.1)]">
+        <TooltipContent side="right" className="bg-[var(--voux-skeleton)] text-[var(--voux-text-primary)] border-[var(--voux-card-border)]">
           {item.label}
         </TooltipContent>
       </Tooltip>
@@ -198,8 +198,8 @@ export function AppSidebar() {
       <aside
         className={cn(
           'shrink-0 flex flex-col border-r transition-[width] duration-200',
-          'bg-gradient-to-b from-[#11100d] to-[#0a0907]',
-          'border-[rgba(214,207,193,0.06)]',
+          'bg-gradient-to-b from-[var(--voux-card-to)] to-[var(--voux-card-to)]',
+          'border-[var(--voux-card-border)]',
           collapsed ? 'w-[56px]' : 'w-[252px]',
         )}
         style={{ height: '100vh', position: 'sticky', top: 0, overflowY: 'auto' }}
@@ -207,14 +207,14 @@ export function AppSidebar() {
         {/* Brand */}
         <div
           className={cn(
-            'flex items-center gap-3 border-b border-[rgba(214,207,193,0.06)]',
+            'flex items-center gap-3 border-b border-[var(--voux-card-border)]',
             collapsed ? 'p-3 justify-center' : 'p-5 px-[22px]',
           )}
         >
           <div
-            className="flex-shrink-0 w-9 h-9 rounded-[10px] flex items-center justify-center text-[20px] italic text-[#050403] font-bold"
+            className="flex-shrink-0 w-9 h-9 rounded-[10px] flex items-center justify-center text-[20px] italic text-[var(--voux-card-to)] font-bold"
             style={{
-              background: 'linear-gradient(135deg, #d4b896, #927142)',
+              background: 'linear-gradient(135deg, var(--voux-accent), #927142)',
               boxShadow: '0 0 24px rgba(212,184,150,0.18), 0 0 1px rgba(212,184,150,0.5)',
               fontFamily: 'var(--voux-font-display)',
             }}
@@ -224,13 +224,13 @@ export function AppSidebar() {
           {!collapsed && (
             <div className="min-w-0 flex-1">
               <div
-                className="text-[18px] text-[#ece5d4] leading-none tracking-[-0.01em]"
+                className="text-[18px] text-[var(--voux-text-primary)] leading-none tracking-[-0.01em]"
                 style={{ fontFamily: 'var(--voux-font-display)' }}
               >
-                Ceres <em className="not-italic" style={{ color: '#d4b896' }}>BI</em>
+                Ceres <em className="not-italic" style={{ color: 'var(--voux-accent)' }}>BI</em>
               </div>
               <div
-                className="text-[9px] tracking-[0.26em] uppercase text-[#6b6253] mt-1"
+                className="text-[9px] tracking-[0.26em] uppercase text-[var(--voux-text-muted)] mt-1"
                 style={{ fontFamily: 'var(--voux-font-mono)' }}
               >
                 Business Intelligence
@@ -240,7 +240,7 @@ export function AppSidebar() {
           {!collapsed && (
             <button
               onClick={() => setCollapsed(true)}
-              className="opacity-30 hover:opacity-60 transition-opacity text-[#ece5d4]"
+              className="opacity-30 hover:opacity-60 transition-opacity text-[var(--voux-text-primary)]"
               aria-label="Recolher sidebar"
             >
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -251,7 +251,7 @@ export function AppSidebar() {
           {collapsed && (
             <button
               onClick={() => setCollapsed(false)}
-              className="opacity-30 hover:opacity-60 transition-opacity text-[#ece5d4] mt-1"
+              className="opacity-30 hover:opacity-60 transition-opacity text-[var(--voux-text-primary)] mt-1"
               aria-label="Expandir sidebar"
             >
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -266,7 +266,7 @@ export function AppSidebar() {
           {isLoading ? (
             <div className="space-y-2 px-2">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-7 rounded bg-[rgba(214,207,193,0.04)] animate-pulse" />
+                <div key={i} className="h-7 rounded bg-[var(--voux-card-border)] animate-pulse" />
               ))}
             </div>
           ) : (
@@ -280,12 +280,12 @@ export function AppSidebar() {
                       className="w-full flex items-center gap-2 px-[10px] mb-2"
                     >
                       <span
-                        className="text-[9px] tracking-[0.26em] uppercase text-[#524a3e] flex-1 text-left"
+                        className="text-[9px] tracking-[0.26em] uppercase text-[var(--voux-text-muted)] flex-1 text-left"
                         style={{ fontFamily: 'var(--voux-font-mono)' }}
                       >
                         {group.label}
                       </span>
-                      <span className="text-[#524a3e] opacity-60">
+                      <span className="text-[var(--voux-text-muted)] opacity-60">
                         {isExpanded
                           ? <ChevronDown className="h-3 w-3" />
                           : <ChevronRight className="h-3 w-3" />}
@@ -293,7 +293,7 @@ export function AppSidebar() {
                     </button>
                   )}
                   {collapsed && (
-                    <div className="h-px bg-[rgba(214,207,193,0.06)] mb-2" />
+                    <div className="h-px bg-[var(--voux-card-border)] mb-2" />
                   )}
                   {(isExpanded || collapsed) && (
                     <div className="space-y-[2px]">
@@ -317,22 +317,22 @@ export function AppSidebar() {
         {/* Footer — user info + theme toggle */}
         <div
           className={cn(
-            'border-t border-[rgba(214,207,193,0.06)]',
+            'border-t border-[var(--voux-card-border)]',
             collapsed ? 'p-2 flex flex-col items-center gap-2' : 'p-4 space-y-3',
           )}
         >
           {/* User info */}
           {profile && !collapsed && (
             <div className="flex items-center gap-2 px-[10px]">
-              <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[rgba(212,184,150,0.12)] flex items-center justify-center">
+              <div className="flex-shrink-0 w-7 h-7 rounded-full bg-[var(--voux-card-border)] flex items-center justify-center">
                 <span
-                  className="text-[10px] font-semibold text-[#d4b896]"
+                  className="text-[10px] font-semibold text-[var(--voux-accent)]"
                   style={{ fontFamily: 'var(--voux-font-mono)' }}
                 >
                   {profile.full_name?.charAt(0)?.toUpperCase() || 'U'}
                 </span>
               </div>
-              <span className="text-[12px] text-[#b3ab9c] truncate flex-1">
+              <span className="text-[12px] text-[var(--voux-text-muted)] truncate flex-1">
                 {profile.full_name || 'Utilizador'}
               </span>
             </div>
@@ -342,7 +342,7 @@ export function AppSidebar() {
           <button
             onClick={toggleTheme}
             className={cn(
-              'flex items-center gap-2 rounded-lg text-[#8a8273] hover:text-[#ece5d4] transition-colors',
+              'flex items-center gap-2 rounded-lg text-[var(--voux-text-faint)] hover:text-[var(--voux-text-primary)] transition-colors',
               collapsed ? 'p-2' : 'w-full px-[10px] py-2 text-[12px]',
             )}
           >
@@ -356,7 +356,7 @@ export function AppSidebar() {
           <button
             onClick={signOut}
             className={cn(
-              'flex items-center gap-2 rounded-lg text-[#8a8273] hover:text-[#c97565] transition-colors',
+              'flex items-center gap-2 rounded-lg text-[var(--voux-text-faint)] hover:text-[var(--voux-danger)] transition-colors',
               collapsed ? 'p-2' : 'w-full px-[10px] py-2 text-[12px]',
             )}
             aria-label="Sair"

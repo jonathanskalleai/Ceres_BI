@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { DadosComerciais, Filters, RegiaoSummary, Registro } from "@/types/comercial";
-import { MapPin, Eye, Users } from "lucide-react";
+import { MapPin, Eye, Users, Maximize2, Minimize2, X } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Popup, Tooltip as LTooltip } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -34,7 +34,7 @@ interface ClientePoint {
 type MapView = "clientes" | "regioes";
 
 const CARD_BASE =
-  "relative overflow-hidden rounded-[20px] p-[22px_24px] bg-gradient-to-b from-[#18160f] to-[#11100d] border border-[rgba(214,207,193,0.08)] shadow-[0_2px_8px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,250,230,0.03)]";
+  "relative overflow-hidden rounded-[20px] p-[22px_24px] bg-gradient-to-b from-[var(--voux-card-from)] to-[var(--voux-card-to)] border border-[var(--voux-card-border)] shadow-[var(--voux-card-shadow)]";
 
 const MONO: React.CSSProperties = {
   fontFamily: "var(--voux-font-mono, 'JetBrains Mono', monospace)",
@@ -45,20 +45,27 @@ const formatCurrency = (v: number) =>
 
 const createPinIcon = (color: string): L.DivIcon =>
   L.divIcon({
-    html: `<svg width="22" height="30" viewBox="0 0 22 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M11 0C4.925 0 0 4.925 0 11C0 19.25 11 30 11 30C11 30 22 19.25 22 11C22 4.925 17.075 0 11 0Z" fill="${color}" fill-opacity="0.88"/>
-      <circle cx="11" cy="11" r="4.5" fill="rgba(255,255,255,0.9)"/>
+    html: `<svg width="18" height="42" viewBox="0 0 18 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Ball head -->
+      <circle cx="9" cy="9" r="8.5" fill="${color}"/>
+      <!-- Glossy highlight -->
+      <circle cx="6.5" cy="5.5" r="3" fill="rgba(255,255,255,0.38)"/>
+      <circle cx="5.5" cy="4.5" r="1.2" fill="rgba(255,255,255,0.55)"/>
+      <!-- Thin metallic stem -->
+      <line x1="9" y1="17" x2="9" y2="42" stroke="rgba(180,170,160,0.85)" stroke-width="1.5" stroke-linecap="round"/>
     </svg>`,
     className: "",
-    iconSize: [22, 30],
-    iconAnchor: [11, 30],
-    popupAnchor: [0, -30],
-    tooltipAnchor: [0, -30],
+    iconSize: [18, 42],
+    iconAnchor: [9, 42],
+    popupAnchor: [0, -42],
+    tooltipAnchor: [0, -42],
   });
 
 export const DashboardMapa = ({ data, filters }: Props) => {
   const [_selectedRegion, setSelectedRegion] = useState<MapRegion | null>(null);
   const [mapView, setMapView] = useState<MapView>("clientes");
+  const [fullscreen, setFullscreen] = useState(false);
+  const toggleFullscreen = useCallback(() => setFullscreen((v) => !v), []);
 
   const regions = useMemo(() => {
     let regioes = data.regioes.filter((r: RegiaoSummary) => {
@@ -102,15 +109,10 @@ export const DashboardMapa = ({ data, filters }: Props) => {
 
   const registroPoints = useMemo(() => {
     let regs = data.registrosRecentes.filter((r: Registro) => r.lat && r.lng);
-    if (filters.vendedor) regs = regs.filter((r) => r.vendedor === filters.vendedor);
+    if (filters.dateRange?.from) regs = regs.filter((r) => r.dtConclusao && r.dtConclusao >= filters.dateRange!.from);
+    if (filters.dateRange?.to) regs = regs.filter((r) => r.dtConclusao && r.dtConclusao <= filters.dateRange!.to);
     if (filters.cidade) regs = regs.filter((r) => r.cidade === filters.cidade);
     if (filters.tipoAcao) regs = regs.filter((r) => r.tipoAcao === filters.tipoAcao);
-    if (filters.ano) regs = regs.filter((r) => r.dtConclusao?.includes(filters.ano));
-    if (filters.mes)
-      regs = regs.filter((r) => {
-        const parts = r.dtConclusao?.split(/[-/]/);
-        return parts && parts.length >= 2 && parts[1] === filters.mes;
-      });
     return regs;
   }, [data, filters]);
 
@@ -167,25 +169,13 @@ export const DashboardMapa = ({ data, filters }: Props) => {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
+      {/* View switcher + subtitle */}
       <div className="flex items-center justify-between">
-        <div>
-          <p
-            className="text-[10px] tracking-[0.22em] uppercase text-[#8a8273] mb-1"
-            style={MONO}
-          >
-            — MAPA COMERCIAL
-          </p>
-          <h2 className="text-2xl font-bold text-[#ece5d4] flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-[#c8b99a]" />
-            Mapa de Ações Comerciais
-          </h2>
-          <p className="text-[11px] text-[#8a8273] mt-1" style={MONO}>
-            {mapView === "clientes"
-              ? `${clientePoints.length} clientes mapeados`
-              : `${regions.length} regiões, ${registroPoints.length} registros`}
-          </p>
-        </div>
+        <p className="text-[11px] text-[var(--voux-text-faint)]" style={MONO}>
+          {mapView === "clientes"
+            ? `${clientePoints.length} clientes mapeados`
+            : `${regions.length} regiões, ${registroPoints.length} registros`}
+        </p>
 
         {/* Tab switcher */}
         <div className="flex gap-2">
@@ -201,9 +191,9 @@ export const DashboardMapa = ({ data, filters }: Props) => {
                 className="flex items-center gap-1.5 text-[10px] tracking-[0.18em] uppercase px-3.5 py-2 rounded-full transition-colors"
                 style={{
                   ...MONO,
-                  backgroundColor: active ? "#c8b99a" : "transparent",
-                  color: active ? "#11100d" : "#8a8273",
-                  border: active ? "1px solid #c8b99a" : "1px solid rgba(138,130,115,0.35)",
+                  backgroundColor: active ? "var(--voux-accent)" : "transparent",
+                  color: active ? "var(--voux-card-to)" : "var(--voux-text-faint)",
+                  border: active ? "1px solid var(--voux-accent)" : "1px solid var(--voux-border-hover)",
                   fontWeight: active ? 600 : 400,
                 }}
               >
@@ -218,38 +208,38 @@ export const DashboardMapa = ({ data, filters }: Props) => {
       {/* KPIs */}
       {mapView === "clientes" ? (
         <div className="grid grid-cols-3 gap-4">
-          <div className={CARD_BASE} style={{ borderLeft: "3px solid #c8b99a" }}>
-            <p className="text-[10px] tracking-[0.22em] uppercase text-[#8a8273] mb-3" style={MONO}>
+          <div className={CARD_BASE} style={{ borderLeft: "3px solid var(--voux-accent)" }}>
+            <p className="text-[10px] tracking-[0.22em] uppercase text-[var(--voux-text-faint)] mb-3" style={MONO}>
               CLIENTES MAPEADOS
             </p>
-            <p className="text-[28px] font-bold leading-none tracking-[-0.02em] text-[#c8b99a]">
+            <p className="text-[28px] font-bold leading-none tracking-[-0.02em] text-[var(--voux-accent)]">
               {clientePoints.length}
             </p>
-            <p className="text-[11px] text-[#8a8273] mt-2" style={MONO}>
+            <p className="text-[11px] text-[var(--voux-text-faint)] mt-2" style={MONO}>
               com coordenadas GPS
             </p>
           </div>
 
-          <div className={CARD_BASE} style={{ borderLeft: "3px solid #ece5d4" }}>
-            <p className="text-[10px] tracking-[0.22em] uppercase text-[#8a8273] mb-3" style={MONO}>
+          <div className={CARD_BASE} style={{ borderLeft: "3px solid var(--voux-text-primary)" }}>
+            <p className="text-[10px] tracking-[0.22em] uppercase text-[var(--voux-text-faint)] mb-3" style={MONO}>
               TOTAL DE AÇÕES
             </p>
-            <p className="text-[28px] font-bold leading-none tracking-[-0.02em] text-[#ece5d4]">
+            <p className="text-[28px] font-bold leading-none tracking-[-0.02em] text-[var(--voux-text-primary)]">
               {clientePoints.reduce((s, c) => s + c.totalAcoes, 0)}
             </p>
-            <p className="text-[11px] text-[#8a8273] mt-2" style={MONO}>
+            <p className="text-[11px] text-[var(--voux-text-faint)] mt-2" style={MONO}>
               registros no período
             </p>
           </div>
 
           <div className={CARD_BASE} style={{ borderLeft: "3px solid #22c55e" }}>
-            <p className="text-[10px] tracking-[0.22em] uppercase text-[#8a8273] mb-3" style={MONO}>
+            <p className="text-[10px] tracking-[0.22em] uppercase text-[var(--voux-text-faint)] mb-3" style={MONO}>
               CIDADES COBERTAS
             </p>
             <p className="text-[28px] font-bold leading-none tracking-[-0.02em] text-[#22c55e]">
               {new Set(clientePoints.map((c) => c.cidade)).size}
             </p>
-            <p className="text-[11px] text-[#8a8273] mt-2" style={MONO}>
+            <p className="text-[11px] text-[var(--voux-text-faint)] mt-2" style={MONO}>
               municípios atendidos
             </p>
           </div>
@@ -257,130 +247,217 @@ export const DashboardMapa = ({ data, filters }: Props) => {
       ) : (
         <div className="grid grid-cols-3 gap-4">
           <div className={CARD_BASE} style={{ borderLeft: "3px solid #22c55e" }}>
-            <p className="text-[10px] tracking-[0.22em] uppercase text-[#8a8273] mb-3" style={MONO}>
+            <p className="text-[10px] tracking-[0.22em] uppercase text-[var(--voux-text-faint)] mb-3" style={MONO}>
               ALTA ATIVIDADE
             </p>
             <p className="text-[28px] font-bold leading-none tracking-[-0.02em] text-[#22c55e]">
               {alta.length}
             </p>
-            <p className="text-[11px] text-[#8a8273] mt-2" style={MONO}>
+            <p className="text-[11px] text-[var(--voux-text-faint)] mt-2" style={MONO}>
               regiões — verde no mapa
             </p>
           </div>
 
           <div className={CARD_BASE} style={{ borderLeft: "3px solid #eab308" }}>
-            <p className="text-[10px] tracking-[0.22em] uppercase text-[#8a8273] mb-3" style={MONO}>
+            <p className="text-[10px] tracking-[0.22em] uppercase text-[var(--voux-text-faint)] mb-3" style={MONO}>
               MÉDIA ATIVIDADE
             </p>
             <p className="text-[28px] font-bold leading-none tracking-[-0.02em] text-[#eab308]">
               {media.length}
             </p>
-            <p className="text-[11px] text-[#8a8273] mt-2" style={MONO}>
+            <p className="text-[11px] text-[var(--voux-text-faint)] mt-2" style={MONO}>
               regiões — amarelo no mapa
             </p>
           </div>
 
           <div className={CARD_BASE} style={{ borderLeft: "3px solid #ef4444" }}>
-            <p className="text-[10px] tracking-[0.22em] uppercase text-[#8a8273] mb-3" style={MONO}>
+            <p className="text-[10px] tracking-[0.22em] uppercase text-[var(--voux-text-faint)] mb-3" style={MONO}>
               BAIXA ATIVIDADE
             </p>
             <p className="text-[28px] font-bold leading-none tracking-[-0.02em] text-[#ef4444]">
               {baixa.length}
             </p>
-            <p className="text-[11px] text-[#8a8273] mt-2" style={MONO}>
+            <p className="text-[11px] text-[var(--voux-text-faint)] mt-2" style={MONO}>
               regiões — vermelho no mapa
             </p>
           </div>
         </div>
       )}
 
-      {/* Map */}
-      <div
-        className="overflow-hidden rounded-[20px] border border-[rgba(214,207,193,0.08)] shadow-[0_2px_8px_rgba(0,0,0,0.45)]"
-        style={{ height: 520 }}
-      >
-        <MapContainer center={center} zoom={7} style={{ height: "100%", width: "100%" }} scrollWheelZoom>
+      {/* Map wrapper — inline */}
+      <div className="relative overflow-hidden rounded-[20px] border border-[var(--voux-card-border)] shadow-[var(--voux-card-shadow)]" style={{ height: 520 }}>
+        <MapContainer key={`inline-${mapView}`} center={center} zoom={7} style={{ height: "100%", width: "100%" }} scrollWheelZoom>
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          {mapView === "clientes" &&
-            clientePoints.map((c) => (
-              <Marker
-                key={c.cliente}
-                position={[c.lat, c.lng]}
-                icon={createPinIcon("#c8b99a")}
-              >
-                <LTooltip direction="top" offset={[0, -30]}>
-                  <div className="text-xs">
-                    <strong>{c.cliente}</strong>
-                    <br />
-                    {c.cidade} · {c.totalAcoes} ações
-                  </div>
-                </LTooltip>
-                <Popup>
-                  <div className="text-xs space-y-1 min-w-[180px]">
-                    <p className="font-bold text-sm">{c.cliente}</p>
-                    <p>
-                      Cidade: <strong>{c.cidade}</strong>
-                    </p>
-                    <p>
-                      Total ações: <strong>{c.totalAcoes}</strong>
-                    </p>
-                    <p>
-                      Última visita: <strong>{c.ultimaAcao || "—"}</strong>
-                    </p>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
-          {mapView === "regioes" &&
-            regions.map((r) => (
-              <Marker
-                key={r.cidade}
-                position={[r.lat, r.lng]}
-                icon={createPinIcon(r.color)}
-                eventHandlers={{ click: () => setSelectedRegion(r) }}
-              >
-                <LTooltip direction="top" offset={[0, -30]}>
-                  <div className="text-xs">
-                    <strong>{r.cidade}</strong>
-                    <br />
-                    {r.totalAcoes} ações · {r.clientes} clientes
-                  </div>
-                </LTooltip>
-                <Popup>
-                  <div className="text-xs space-y-1 min-w-[180px]">
-                    <p className="font-bold text-sm">{r.cidade}</p>
-                    <p>
-                      Ações: <strong>{r.totalAcoes}</strong>
-                    </p>
-                    <p>
-                      Clientes: <strong>{r.clientes}</strong>
-                    </p>
-                    <p>
-                      Pipeline: <strong>{formatCurrency(r.pipeline)}</strong>
-                    </p>
-                    <p>
-                      Visitas: <strong>{r.visitas}</strong>
-                    </p>
-                    <p>
-                      Nível:{" "}
-                      <span style={{ color: r.color, fontWeight: 700 }}>{r.level}</span>
-                    </p>
-                  </div>
-                </Popup>
-              </Marker>
-            ))}
+          {mapView === "clientes" && clientePoints.map((c) => (
+            <Marker key={c.cliente} position={[c.lat, c.lng]} icon={createPinIcon("#c8b99a")}>
+              <LTooltip direction="top" offset={[0, -42]}>
+                <div className="text-xs"><strong>{c.cliente}</strong><br />{c.cidade} · {c.totalAcoes} ações</div>
+              </LTooltip>
+              <Popup>
+                <div className="text-xs space-y-1 min-w-[180px]">
+                  <p className="font-bold text-sm">{c.cliente}</p>
+                  <p>Cidade: <strong>{c.cidade}</strong></p>
+                  <p>Total ações: <strong>{c.totalAcoes}</strong></p>
+                  <p>Última visita: <strong>{c.ultimaAcao || "—"}</strong></p>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+          {mapView === "regioes" && regions.map((r) => (
+            <Marker key={r.cidade} position={[r.lat, r.lng]} icon={createPinIcon(r.color)} eventHandlers={{ click: () => setSelectedRegion(r) }}>
+              <LTooltip direction="top" offset={[0, -42]}>
+                <div className="text-xs"><strong>{r.cidade}</strong><br />{r.totalAcoes} ações · {r.clientes} clientes</div>
+              </LTooltip>
+              <Popup>
+                <div className="text-xs space-y-1 min-w-[180px]">
+                  <p className="font-bold text-sm">{r.cidade}</p>
+                  <p>Ações: <strong>{r.totalAcoes}</strong></p>
+                  <p>Clientes: <strong>{r.clientes}</strong></p>
+                  <p>Pipeline: <strong>{formatCurrency(r.pipeline)}</strong></p>
+                  <p>Visitas: <strong>{r.visitas}</strong></p>
+                  <p>Nível: <span style={{ color: r.color, fontWeight: 700 }}>{r.level}</span></p>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
         </MapContainer>
+
+        {/* Fullscreen toggle button */}
+        <button
+          type="button"
+          onClick={toggleFullscreen}
+          title="Tela cheia"
+          className="absolute top-3 right-3 z-[1000] flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors"
+          style={{
+            background: "rgba(17,16,13,0.82)",
+            border: "1px solid var(--voux-border-hover)",
+            color: "var(--voux-accent)",
+            backdropFilter: "blur(6px)",
+            ...MONO,
+            fontSize: 10,
+            letterSpacing: "0.14em",
+          }}
+        >
+          <Maximize2 className="h-3 w-3" />
+          TELA CHEIA
+        </button>
       </div>
+
+      {/* Fullscreen overlay */}
+      {fullscreen && (
+        <div
+          className="fixed inset-0 z-[9999] flex flex-col"
+          style={{ background: "var(--voux-card-to)" }}
+        >
+          {/* Overlay header */}
+          <div
+            className="flex items-center justify-between px-5 py-3 shrink-0"
+            style={{ borderBottom: "1px solid var(--voux-card-border)" }}
+          >
+            <div className="flex items-center gap-3">
+              <MapPin className="h-4 w-4 text-[var(--voux-accent)]" />
+              <span className="text-[var(--voux-text-primary)] font-semibold text-sm">Mapa de Ações Comerciais</span>
+              <span className="text-[var(--voux-text-faint)] text-[10px]" style={MONO}>
+                {mapView === "clientes" ? `${clientePoints.length} clientes` : `${regions.length} regiões`}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              {/* Tab switcher in fullscreen */}
+              {(["clientes", "regioes"] as const).map((view) => {
+                const active = mapView === view;
+                const Icon = view === "clientes" ? Users : MapPin;
+                return (
+                  <button
+                    key={view}
+                    type="button"
+                    onClick={() => setMapView(view)}
+                    className="flex items-center gap-1.5 text-[10px] tracking-[0.18em] uppercase px-3 py-1.5 rounded-full transition-colors"
+                    style={{
+                      ...MONO,
+                      backgroundColor: active ? "var(--voux-accent)" : "transparent",
+                      color: active ? "var(--voux-card-to)" : "var(--voux-text-faint)",
+                      border: active ? "1px solid var(--voux-accent)" : "1px solid var(--voux-border-hover)",
+                      fontWeight: active ? 600 : 400,
+                    }}
+                  >
+                    <Icon className="h-3 w-3" />
+                    {view === "clientes" ? "Clientes" : "Regiões"}
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                onClick={toggleFullscreen}
+                title="Fechar tela cheia"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full ml-2 transition-colors"
+                style={{
+                  ...MONO,
+                  background: "rgba(248,113,113,0.1)",
+                  border: "1px solid rgba(248,113,113,0.3)",
+                  color: "var(--voux-danger)",
+                  fontSize: 10,
+                  letterSpacing: "0.14em",
+                }}
+              >
+                <X className="h-3 w-3" />
+                FECHAR
+              </button>
+            </div>
+          </div>
+
+          {/* Full-height map */}
+          <div className="flex-1 relative">
+            <MapContainer key={`fs-${mapView}`} center={center} zoom={7} style={{ height: "100%", width: "100%" }} scrollWheelZoom>
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              {mapView === "clientes" && clientePoints.map((c) => (
+                <Marker key={c.cliente} position={[c.lat, c.lng]} icon={createPinIcon("#c8b99a")}>
+                  <LTooltip direction="top" offset={[0, -42]}>
+                    <div className="text-xs"><strong>{c.cliente}</strong><br />{c.cidade} · {c.totalAcoes} ações</div>
+                  </LTooltip>
+                  <Popup>
+                    <div className="text-xs space-y-1 min-w-[180px]">
+                      <p className="font-bold text-sm">{c.cliente}</p>
+                      <p>Cidade: <strong>{c.cidade}</strong></p>
+                      <p>Total ações: <strong>{c.totalAcoes}</strong></p>
+                      <p>Última visita: <strong>{c.ultimaAcao || "—"}</strong></p>
+                    </div>
+                  </Popup>
+                </Marker>
+              ))}
+              {mapView === "regioes" && regions.map((r) => (
+                <Marker key={r.cidade} position={[r.lat, r.lng]} icon={createPinIcon(r.color)} eventHandlers={{ click: () => setSelectedRegion(r) }}>
+                  <LTooltip direction="top" offset={[0, -42]}>
+                    <div className="text-xs"><strong>{r.cidade}</strong><br />{r.totalAcoes} ações · {r.clientes} clientes</div>
+                  </LTooltip>
+                  <Popup>
+                    <div className="text-xs space-y-1 min-w-[180px]">
+                      <p className="font-bold text-sm">{r.cidade}</p>
+                      <p>Ações: <strong>{r.totalAcoes}</strong></p>
+                      <p>Clientes: <strong>{r.clientes}</strong></p>
+                      <p>Pipeline: <strong>{formatCurrency(r.pipeline)}</strong></p>
+                      <p>Visitas: <strong>{r.visitas}</strong></p>
+                      <p>Nível: <span style={{ color: r.color, fontWeight: 700 }}>{r.level}</span></p>
+                    </div>
+                  </Popup>
+                </Marker>
+              ))}
+            </MapContainer>
+          </div>
+        </div>
+      )}
 
       {/* Details Table */}
       <div className={CARD_BASE}>
         <div className="flex items-center gap-2 mb-4">
-          <Eye className="h-4 w-4 text-[#c8b99a]" />
+          <Eye className="h-4 w-4 text-[var(--voux-accent)]" />
           <p
-            className="text-[10px] tracking-[0.22em] uppercase text-[#8a8273]"
+            className="text-[10px] tracking-[0.22em] uppercase text-[var(--voux-text-faint)]"
             style={MONO}
           >
             {mapView === "clientes" ? "CLIENTES MAPEADOS" : "DETALHAMENTO POR REGIÃO"}
@@ -391,11 +468,11 @@ export const DashboardMapa = ({ data, filters }: Props) => {
           {mapView === "clientes" ? (
             <table className="w-full text-sm">
               <thead>
-                <tr style={{ borderBottom: "1px solid rgba(214,207,193,0.08)" }}>
+                <tr style={{ borderBottom: "1px solid var(--voux-card-border)" }}>
                   {["Cliente", "Cidade", "Ações", "Última Visita"].map((h, i) => (
                     <th
                       key={h}
-                      className="py-2 text-[10px] tracking-[0.18em] uppercase text-[#8a8273] font-normal"
+                      className="py-2 text-[10px] tracking-[0.18em] uppercase text-[var(--voux-text-faint)] font-normal"
                       style={{ ...MONO, textAlign: i === 2 ? "center" : i === 3 ? "right" : "left" }}
                     >
                       {h}
@@ -409,15 +486,15 @@ export const DashboardMapa = ({ data, filters }: Props) => {
                   .map((c) => (
                     <tr
                       key={c.cliente}
-                      style={{ borderBottom: "1px solid rgba(214,207,193,0.05)" }}
+                      style={{ borderBottom: "1px solid var(--voux-card-border)" }}
                       className="hover:bg-[rgba(255,250,230,0.02)] transition-colors"
                     >
-                      <td className="py-2 text-xs font-medium text-[#ece5d4]">{c.cliente}</td>
-                      <td className="py-2 text-xs text-[#8a8273]">{c.cidade}</td>
-                      <td className="py-2 text-xs text-center font-semibold text-[#c8b99a]" style={MONO}>
+                      <td className="py-2 text-xs font-medium text-[var(--voux-text-primary)]">{c.cliente}</td>
+                      <td className="py-2 text-xs text-[var(--voux-text-faint)]">{c.cidade}</td>
+                      <td className="py-2 text-xs text-center font-semibold text-[var(--voux-accent)]" style={MONO}>
                         {c.totalAcoes}
                       </td>
-                      <td className="py-2 text-xs text-right text-[#8a8273]" style={MONO}>
+                      <td className="py-2 text-xs text-right text-[var(--voux-text-faint)]" style={MONO}>
                         {c.ultimaAcao || "—"}
                       </td>
                     </tr>
@@ -427,11 +504,11 @@ export const DashboardMapa = ({ data, filters }: Props) => {
           ) : (
             <table className="w-full text-sm">
               <thead>
-                <tr style={{ borderBottom: "1px solid rgba(214,207,193,0.08)" }}>
+                <tr style={{ borderBottom: "1px solid var(--voux-card-border)" }}>
                   {["Cidade", "Nível", "Ações", "Clientes", "Visitas", "Pipeline"].map((h, i) => (
                     <th
                       key={h}
-                      className="py-2 text-[10px] tracking-[0.18em] uppercase text-[#8a8273] font-normal"
+                      className="py-2 text-[10px] tracking-[0.18em] uppercase text-[var(--voux-text-faint)] font-normal"
                       style={{
                         ...MONO,
                         textAlign: i === 0 ? "left" : i === 5 ? "right" : "center",
@@ -448,10 +525,10 @@ export const DashboardMapa = ({ data, filters }: Props) => {
                   .map((r) => (
                     <tr
                       key={r.cidade}
-                      style={{ borderBottom: "1px solid rgba(214,207,193,0.05)" }}
+                      style={{ borderBottom: "1px solid var(--voux-card-border)" }}
                       className="hover:bg-[rgba(255,250,230,0.02)] transition-colors"
                     >
-                      <td className="py-2 text-xs font-medium text-[#ece5d4]">{r.cidade}</td>
+                      <td className="py-2 text-xs font-medium text-[var(--voux-text-primary)]">{r.cidade}</td>
                       <td className="py-2 text-center">
                         <span
                           className="text-[9px] tracking-[0.14em] uppercase px-2 py-0.5 rounded-full"
@@ -466,19 +543,19 @@ export const DashboardMapa = ({ data, filters }: Props) => {
                         </span>
                       </td>
                       <td
-                        className="py-2 text-xs text-center font-semibold text-[#ece5d4]"
+                        className="py-2 text-xs text-center font-semibold text-[var(--voux-text-primary)]"
                         style={MONO}
                       >
                         {r.totalAcoes}
                       </td>
-                      <td className="py-2 text-xs text-center text-[#8a8273]" style={MONO}>
+                      <td className="py-2 text-xs text-center text-[var(--voux-text-faint)]" style={MONO}>
                         {r.clientes}
                       </td>
-                      <td className="py-2 text-xs text-center text-[#8a8273]" style={MONO}>
+                      <td className="py-2 text-xs text-center text-[var(--voux-text-faint)]" style={MONO}>
                         {r.visitas}
                       </td>
                       <td
-                        className="py-2 text-xs text-right font-semibold text-[#c8b99a]"
+                        className="py-2 text-xs text-right font-semibold text-[var(--voux-accent)]"
                         style={MONO}
                       >
                         {formatCurrency(r.pipeline)}

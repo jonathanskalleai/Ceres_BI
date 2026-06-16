@@ -1,13 +1,12 @@
 import { useMemo, useState } from "react";
-import { DadosComerciais, Registro } from "@/types/comercial";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { DadosComerciais } from "@/types/comercial";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Trophy, Sparkles } from "lucide-react";
+import { ArrowRight, Trophy, Sparkles, TrendingUp, Users, DollarSign } from "lucide-react";
 import { Filters } from "@/types/comercial";
 import { filterRegistros, hasActiveFilters } from "@/lib/filterUtils";
 import { ConsultorReportSheet } from "./ConsultorReportSheet";
 import { RankingClientesNovos } from "./RankingClientesNovos";
+import { cn } from "@/lib/utils";
 
 interface Props {
   data: DadosComerciais;
@@ -18,11 +17,28 @@ interface Props {
 const formatCurrency = (v: number) =>
   v >= 1e6 ? `R$ ${(v / 1e6).toFixed(1)}M` : `R$ ${(v / 1e3).toFixed(0)}K`;
 
-const crmBadge = (q: number) => {
-  if (q >= 70) return <Badge className="bg-success text-success-foreground text-[10px]">A</Badge>;
-  if (q >= 50) return <Badge className="bg-warning text-warning-foreground text-[10px]">B</Badge>;
-  return <Badge variant="destructive" className="text-[10px]">{q >= 30 ? "C" : "D"}</Badge>;
-};
+const CARD_BASE =
+  "relative overflow-hidden rounded-[20px] p-[22px_24px] border";
+
+function CrmBadge({ q }: { q: number }) {
+  const grade = q >= 70 ? "A" : q >= 50 ? "B" : q >= 30 ? "C" : "D";
+  const colors: Record<string, string> = {
+    A: "border-[#4ade80] text-[#4ade80]",
+    B: "border-[#facc15] text-[#facc15]",
+    C: "border-[var(--voux-warning)] text-[var(--voux-warning)]",
+    D: "border-[var(--voux-danger)] text-[var(--voux-danger)]",
+  };
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center justify-center w-5 h-5 rounded-full border font-mono text-[10px] font-bold",
+        colors[grade],
+      )}
+    >
+      {grade}
+    </span>
+  );
+}
 
 export const DashboardConsultores = ({ data, filters, onSelectConsultor }: Props) => {
   const isFiltered = hasActiveFilters(filters);
@@ -68,21 +84,26 @@ export const DashboardConsultores = ({ data, filters, onSelectConsultor }: Props
   })).sort((a, b) => b.score - a.score), [vendedores, maxVals]);
 
   const top5 = scored.slice(0, 5);
-  const medals = ["🥇", "🥈", "🥉", "4º", "5º"];
+  const rankLabel = ["01", "02", "03", "04", "05"];
 
   return (
     <div className="p-6 space-y-6">
+      {/* Action bar */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Consultores</h2>
-          <p className="text-sm text-muted-foreground">
-            Performance e ranking da equipe comercial
-            {isFiltered && <span className="ml-2 text-primary font-medium">({vendedores.length} consultores filtrados)</span>}
-          </p>
+          {isFiltered && (
+            <p className="text-xs font-mono" style={{ color: "var(--voux-text-faint)" }}>
+              {vendedores.length} consultores filtrados
+            </p>
+          )}
         </div>
         <Button
           onClick={() => setSheetOpen(true)}
-          className="bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-md hover:shadow-lg transition-all"
+          className="rounded-full shadow-md font-semibold text-sm px-5"
+          style={{
+            backgroundColor: "var(--voux-accent)",
+            color: "var(--voux-card-to)",
+          }}
         >
           <Sparkles className="h-4 w-4 mr-2" />
           Insights de IA
@@ -91,60 +112,112 @@ export const DashboardConsultores = ({ data, filters, onSelectConsultor }: Props
 
       <ConsultorReportSheet open={sheetOpen} onOpenChange={setSheetOpen} data={data} />
 
+      {/* Top 5 ranking */}
       {top5.length > 0 && (
-        <Card className="border-0 shadow-sm bg-gradient-to-r from-primary/5 to-accent/5">
-          <CardContent className="p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <Trophy className="h-5 w-5 text-warning" />
-              <h3 className="font-bold text-foreground">Ranking Top 5</h3>
-            </div>
-            <div className={`grid gap-3`} style={{ gridTemplateColumns: `repeat(${Math.min(top5.length, 5)}, 1fr)` }}>
-              {top5.map((v, i) => (
-                <button key={v.nome} onClick={() => onSelectConsultor(v.nome)}
-                  className="p-3 rounded-lg bg-card text-left hover:shadow-md transition-shadow">
-                  <span className="text-2xl">{medals[i]}</span>
-                  <p className="font-semibold text-sm mt-1 truncate">{v.nome.split(" ").slice(-1)[0]}</p>
-                  <p className="text-xs text-muted-foreground">{v.score.toFixed(0)} pts</p>
-                  <p className="text-xs text-muted-foreground mt-1">{formatCurrency(v.pipeline)}</p>
-                </button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Trophy className="h-3.5 w-3.5" style={{ color: "var(--voux-accent)" }} />
+            <span className="font-mono text-[10px] tracking-[0.22em] uppercase" style={{ color: "var(--voux-text-faint)" }}>
+              Ranking Top 5
+            </span>
+          </div>
+          <div
+            className="grid gap-4"
+            style={{ gridTemplateColumns: `repeat(${Math.min(top5.length, 5)}, 1fr)` }}
+          >
+            {top5.map((v, i) => (
+              <button
+                key={v.nome}
+                onClick={() => onSelectConsultor(v.nome)}
+                className={cn(CARD_BASE, "text-left transition-colors")}
+                style={{
+                  background: "linear-gradient(to bottom, var(--voux-card-from), var(--voux-card-to))",
+                  borderColor: "var(--voux-card-border)",
+                  boxShadow: "var(--voux-card-shadow)",
+                  borderLeftColor: "var(--voux-accent)",
+                  borderLeftWidth: 3,
+                }}
+              >
+                {/* Eyebrow */}
+                <div className="flex items-center justify-between mb-4">
+                  <span className="font-mono text-[10px] tracking-[0.22em]" style={{ color: "var(--voux-accent)" }}>
+                    {rankLabel[i]} ·
+                  </span>
+                  <Trophy className="h-3 w-3 opacity-30" style={{ color: "var(--voux-text-faint)" }} />
+                </div>
+                {/* Nome */}
+                <p className="text-[22px] font-bold leading-none tracking-[-0.02em] mb-2" style={{ color: "var(--voux-text-primary)" }}>
+                  {v.nome.split(" ").slice(-1)[0]}
+                </p>
+                {/* Hint */}
+                <p className="font-mono text-[11px]" style={{ color: "var(--voux-text-faint)" }}>
+                  {v.score.toFixed(0)} pts · {formatCurrency(v.pipeline)}
+                </p>
+              </button>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Ranking de Abertura de Clientes */}
-      <RankingClientesNovos data={data} registros={isFiltered ? filterRegistros(data.registrosRecentes, filters) : data.registrosRecentes} filters={filters} />
+      <RankingClientesNovos
+        data={data}
+        registros={isFiltered ? filterRegistros(data.registrosRecentes, filters) : data.registrosRecentes}
+        filters={filters}
+      />
 
+      {/* Cards de consultores */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         {scored.map((v) => (
-          <Card key={v.nome} className="border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer group"
-            onClick={() => onSelectConsultor(v.nome)}>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="font-semibold text-sm truncate flex-1">{v.nome}</h4>
-                {crmBadge(v.crmQuality)}
-              </div>
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div>
-                  <p className="text-lg font-bold text-primary">{v.totalAcoes}</p>
-                  <p className="text-[10px] text-muted-foreground">Ações</p>
+          <div
+            key={v.nome}
+            className={cn(CARD_BASE, "cursor-pointer group transition-colors")}
+            style={{
+              background: "linear-gradient(to bottom, var(--voux-card-from), var(--voux-card-to))",
+              borderColor: "var(--voux-card-border)",
+              boxShadow: "var(--voux-card-shadow)",
+            }}
+            onClick={() => onSelectConsultor(v.nome)}
+          >
+            {/* Nome + badge */}
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="font-semibold text-sm truncate flex-1" style={{ color: "var(--voux-text-primary)" }}>{v.nome}</h4>
+              <CrmBadge q={v.crmQuality} />
+            </div>
+
+            {/* Métricas */}
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <div className="flex items-center gap-1 mb-1">
+                  <TrendingUp className="h-3 w-3" style={{ color: "var(--voux-text-faint)" }} />
+                  <span className="font-mono text-[9px] tracking-[0.14em] uppercase" style={{ color: "var(--voux-text-faint)" }}>Ações</span>
                 </div>
-                <div>
-                  <p className="text-lg font-bold text-accent">{v.conversao}%</p>
-                  <p className="text-[10px] text-muted-foreground">Conversão</p>
-                </div>
-                <div>
-                  <p className="text-lg font-bold text-warning">{formatCurrency(v.pipeline)}</p>
-                  <p className="text-[10px] text-muted-foreground">Pipeline</p>
-                </div>
+                <p className="text-[22px] font-bold leading-none" style={{ color: "var(--voux-accent)" }}>{v.totalAcoes}</p>
               </div>
-              <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                <span>{v.clientes} clientes · {v.visitas} visitas</span>
-                <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-transform" />
+              <div>
+                <div className="flex items-center gap-1 mb-1">
+                  <Users className="h-3 w-3" style={{ color: "var(--voux-text-faint)" }} />
+                  <span className="font-mono text-[9px] tracking-[0.14em] uppercase" style={{ color: "var(--voux-text-faint)" }}>Conv.</span>
+                </div>
+                <p className="text-[22px] font-bold leading-none" style={{ color: "var(--voux-text-primary)" }}>{v.conversao}%</p>
               </div>
-            </CardContent>
-          </Card>
+              <div>
+                <div className="flex items-center gap-1 mb-1">
+                  <DollarSign className="h-3 w-3" style={{ color: "var(--voux-text-faint)" }} />
+                  <span className="font-mono text-[9px] tracking-[0.14em] uppercase" style={{ color: "var(--voux-text-faint)" }}>Pipeline</span>
+                </div>
+                <p className="text-[18px] font-bold leading-none" style={{ color: "var(--voux-text-primary)" }}>{formatCurrency(v.pipeline)}</p>
+              </div>
+            </div>
+
+            {/* Rodapé */}
+            <div className="mt-4 flex items-center justify-between">
+              <span className="font-mono text-[10px]" style={{ color: "var(--voux-text-faint)" }}>
+                {v.clientes} clientes · {v.visitas} visitas
+              </span>
+              <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-all" style={{ color: "var(--voux-text-faint)" }} />
+            </div>
+          </div>
         ))}
       </div>
     </div>
