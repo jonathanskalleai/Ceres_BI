@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { DadosComerciais, Filters, Registro } from "@/types/comercial";
-import { AlertTriangle, Target } from "lucide-react";
+import { Target } from "lucide-react";
 import { BarChart } from "@/components/bi/charts";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { ClienteCriticoCard } from "@/components/dashboard/ClienteCriticoCard";
@@ -85,7 +85,6 @@ export const DashboardClientesCriticos = ({ data, filters }: Props) => {
     const clienteMap = new Map<string, ClienteCritico>();
 
     for (const v of data.vendedores) {
-      if (filters.vendedor && v.nome !== filters.vendedor) continue;
       for (const c of v.topClientes) {
         if (c.diasSemContato < 90) continue;
         if (filters.cidade && c.cidade !== filters.cidade) continue;
@@ -151,66 +150,52 @@ export const DashboardClientesCriticos = ({ data, filters }: Props) => {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
-      <div>
-        <p className="text-[10px] tracking-[0.22em] uppercase text-[#8a8273] mb-1" style={MONO}>
-          — CLIENTES EM RISCO
-        </p>
-        <h2 className="text-2xl font-bold text-[#ece5d4] flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5 text-[#c8b99a]" />
-          Clientes em Estado Crítico
-        </h2>
-        <p className="text-[11px] text-[#8a8273] mt-1" style={MONO}>
-          Clientes sem contato há mais de 90 dias — ações recomendadas e histórico
-        </p>
-      </div>
-
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className={CARD_BASE} style={{ borderLeft: "3px solid #f87171" }}>
-          <p className="text-[10px] tracking-[0.22em] uppercase text-[#8a8273] mb-3" style={MONO}>
+          <p className="text-[10px] tracking-[0.22em] uppercase mb-3" style={{ ...MONO, color: "var(--voux-text-faint)" }}>
             CLIENTES CRÍTICOS
           </p>
           <p className="text-[28px] font-bold leading-none tracking-[-0.02em] text-[#f87171]">
             {criticos.length}
           </p>
-          <p className="text-[11px] text-[#8a8273] mt-2" style={MONO}>
+          <p className="text-[11px] mt-2" style={{ ...MONO, color: "var(--voux-text-faint)" }}>
             sem contato &gt;90 dias
           </p>
         </div>
 
         <div className={CARD_BASE} style={{ borderLeft: "3px solid #fb923c" }}>
-          <p className="text-[10px] tracking-[0.22em] uppercase text-[#8a8273] mb-3" style={MONO}>
+          <p className="text-[10px] tracking-[0.22em] uppercase mb-3" style={{ ...MONO, color: "var(--voux-text-faint)" }}>
             PIPELINE EM RISCO
           </p>
           <p className="text-[28px] font-bold leading-none tracking-[-0.02em] text-[#fb923c]">
             {formatCurrency(totalPipelineEmRisco)}
           </p>
-          <p className="text-[11px] text-[#8a8273] mt-2" style={MONO}>
+          <p className="text-[11px] mt-2" style={{ ...MONO, color: "var(--voux-text-faint)" }}>
             valor total em aberto
           </p>
         </div>
 
         <div className={CARD_BASE} style={{ borderLeft: "3px solid #c8b99a" }}>
-          <p className="text-[10px] tracking-[0.22em] uppercase text-[#8a8273] mb-3" style={MONO}>
+          <p className="text-[10px] tracking-[0.22em] uppercase mb-3" style={{ ...MONO, color: "var(--voux-text-faint)" }}>
             MÉDIA DIAS S/ CONTATO
           </p>
-          <p className="text-[28px] font-bold leading-none tracking-[-0.02em] text-[#ece5d4]">
+          <p className="text-[28px] font-bold leading-none tracking-[-0.02em]" style={{ color: "var(--voux-text-primary)" }}>
             {mediaDias}
           </p>
-          <p className="text-[11px] text-[#8a8273] mt-2" style={MONO}>
+          <p className="text-[11px] mt-2" style={{ ...MONO, color: "var(--voux-text-faint)" }}>
             dias em média
           </p>
         </div>
 
         <div className={CARD_BASE} style={{ borderLeft: "3px solid #f87171" }}>
-          <p className="text-[10px] tracking-[0.22em] uppercase text-[#8a8273] mb-3" style={MONO}>
+          <p className="text-[10px] tracking-[0.22em] uppercase mb-3" style={{ ...MONO, color: "var(--voux-text-faint)" }}>
             ACIMA DE 180 DIAS
           </p>
           <p className="text-[28px] font-bold leading-none tracking-[-0.02em] text-[#f87171]">
             {acima180}
           </p>
-          <p className="text-[11px] text-[#8a8273] mt-2" style={MONO}>
+          <p className="text-[11px] mt-2" style={{ ...MONO, color: "var(--voux-text-faint)" }}>
             clientes críticos
           </p>
         </div>
@@ -234,15 +219,15 @@ export const DashboardClientesCriticos = ({ data, filters }: Props) => {
             layout="horizontal"
             keys={["count"]}
             height={220}
-            colors={["#f87171"]}
+            colors={["#c97565"]}
           />
         </ChartCard>
       </div>
 
       {/* Critical Clients List */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-[#ece5d4] flex items-center gap-2">
-          <Target className="h-5 w-5 text-[#c8b99a]" />
+        <h3 className="text-lg font-semibold flex items-center gap-2" style={{ color: "var(--voux-text-primary)" }}>
+          <Target className="h-5 w-5" style={{ color: "var(--voux-accent)" }} />
           Plano de Ação por Cliente ({criticos.length})
         </h3>
 
@@ -255,7 +240,7 @@ export const DashboardClientesCriticos = ({ data, filters }: Props) => {
         ))}
 
         {criticos.length > 50 && (
-          <p className="text-[11px] text-center text-[#8a8273]" style={MONO}>
+          <p className="text-[11px] text-center" style={{ ...MONO, color: "var(--voux-text-faint)" }}>
             Mostrando 50 de {criticos.length} clientes críticos
           </p>
         )}

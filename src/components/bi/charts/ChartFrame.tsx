@@ -50,7 +50,7 @@ export function ChartFrame({
   }
 
   return (
-    <div className="w-full" style={{ ...style, overflowX: "auto", overflowY: "auto", minWidth: 0 }}>
+    <div className="w-full" style={{ ...style, overflowX: "auto", overflowY: "hidden", minWidth: 0 }}>
       {children}
     </div>
   );

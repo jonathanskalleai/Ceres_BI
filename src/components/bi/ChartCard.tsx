@@ -67,7 +67,7 @@ export function ChartCard({
         {loading ? (
           <Skeleton className="w-full rounded-xl" style={{ height, background: "var(--voux-skeleton)" }} />
         ) : (
-          <div style={{ minHeight: height }} className="w-full">
+          <div style={{ height }} className="w-full">
             {children}
           </div>
         )}
