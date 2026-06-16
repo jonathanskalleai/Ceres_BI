@@ -6,6 +6,8 @@ export interface SvgBarHProps {
   data: { label: string; value: number }[];
   color?: string;
   valueFormatter?: (v: number) => string;
+  /** Show value label to the right of each bar (default true). Skips zero values. */
+  showValues?: boolean;
   max?: number;
   labelW?: number;
   rowH?: number;
@@ -23,13 +25,16 @@ export function SvgBarH({
   data,
   color = VOUX_COLORS.accent,
   valueFormatter = fmtCompact,
+  showValues = true,
   max: maxProp,
-  labelW = 130,
+  labelW: labelWProp = 130,
   rowH = 26,
   onBarEnter,
   onBarLeave,
   onBarClick,
 }: SvgBarHProps) {
+  const labelW = Math.min(labelWProp, Math.max(80, width * 0.28));
+  const isNarrow = width < 400;
   const gap = 8;
   const padTop = 4;
   const valueW = 60;
@@ -82,7 +87,7 @@ export function SvgBarH({
       <defs>
         {gradIds.map((gid, i) => (
           <linearGradient key={gid} id={gid} x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor={color} stopOpacity={0.5} />
+            <stop offset="0%" stopColor={color} stopOpacity={0.75} />
             <stop offset="100%" stopColor={color} stopOpacity={1} />
           </linearGradient>
         ))}
@@ -103,7 +108,7 @@ export function SvgBarH({
               fontSize={12}
               fill={VOUX_COLORS.inkSoft}
             >
-              {d.label}
+              {isNarrow && d.label.length > 12 ? `${d.label.substring(0, 12)}…` : d.label}
             </text>
 
             {/* track */}
@@ -132,17 +137,19 @@ export function SvgBarH({
             />
 
             {/* value */}
-            <text
-              ref={(el) => { valRefs.current[i] = el; }}
-              x={barX + 8}
-              y={y + rowH / 2 + 4}
-              fontFamily="var(--voux-font-mono)"
-              fontSize={11}
-              fill={VOUX_COLORS.ink}
-              letterSpacing="0.02em"
-            >
-              {valueFormatter(d.value)}
-            </text>
+            {showValues && d.value !== 0 && (
+              <text
+                ref={(el) => { valRefs.current[i] = el; }}
+                x={barX + 8}
+                y={y + rowH / 2 + 4}
+                fontFamily="var(--voux-font-mono)"
+                fontSize={10}
+                fill="var(--voux-text-faint)"
+                letterSpacing="0.02em"
+              >
+                {valueFormatter(d.value)}
+              </text>
+            )}
           </g>
         );
       })}

@@ -7,7 +7,10 @@ export interface SvgBarVProps {
   labels: string[];
   values: number[];
   color?: string;
+  /** @deprecated Use showValues instead */
   dataLabels?: boolean;
+  /** Show value above each bar (default true). Skips zero values. */
+  showValues?: boolean;
   fmt?: (v: number) => string;
   onBarEnter?: (dataIndex: number, x: number, y: number, label: string, value: number) => void;
   onBarLeave?: () => void;
@@ -25,6 +28,7 @@ export function SvgBarV({
   values,
   color = VOUX_COLORS.accent,
   dataLabels = false,
+  showValues = true,
   fmt = fmtCompact,
   onBarEnter,
   onBarLeave,
@@ -38,7 +42,12 @@ export function SvgBarV({
   const plotH = height - padT - padB;
   const max = Math.max(...values, 1) * 1.15;
   const bandW = values.length > 0 ? plotW / values.length : plotW;
-  const barW = Math.min(40, bandW * 0.55);
+  const barW = Math.max(16, Math.min(40, bandW * 0.55));
+  const isNarrow = width < 400;
+  const skipAltLabels = isNarrow && values.length > 8;
+
+  // Merge legacy prop with new prop
+  const shouldShowValues = showValues || dataLabels;
 
   const barRefs = useRef<(SVGRectElement | null)[]>([]);
   const labelRefs = useRef<(SVGTextElement | null)[]>([]);
@@ -65,14 +74,14 @@ export function SvgBarV({
           rect.setAttribute("height", String(bh));
         }
         const lbl = labelRefs.current[i];
-        if (lbl && dataLabels) {
+        if (lbl && shouldShowValues) {
           lbl.setAttribute("y", String(by - 8));
-          lbl.style.opacity = "1";
+          lbl.style.opacity = v === 0 ? "0" : "1";
         }
       });
     });
     return () => cancelAnimationFrame(frame);
-  }, [width, values, max, plotH, padT, dataLabels]);
+  }, [width, values, max, plotH, padT, shouldShowValues]);
 
   if (width === 0) return null;
 
@@ -87,7 +96,7 @@ export function SvgBarV({
         {gradIds.map((gid, i) => (
           <linearGradient key={gid} id={gid} x1="0" y1="0" x2="0" y2="1">
             <stop key={`${gid}-s0`} offset="0%" stopColor={color} stopOpacity={1} />
-            <stop key={`${gid}-s1`} offset="100%" stopColor={color} stopOpacity={0.6} />
+            <stop key={`${gid}-s1`} offset="100%" stopColor={color} stopOpacity={0.8} />
           </linearGradient>
         ))}
       </defs>
@@ -123,15 +132,15 @@ export function SvgBarV({
             />
 
             {/* optional data label */}
-            {dataLabels && (
+            {shouldShowValues && v !== 0 && (
               <text
                 ref={(el) => { labelRefs.current[i] = el; }}
                 x={bx + barW / 2}
                 y={padT + plotH - 8}
                 textAnchor="middle"
                 fontFamily="var(--voux-font-mono)"
-                fontSize={10}
-                fill={VOUX_COLORS.ink}
+                fontSize={9}
+                fill="var(--voux-text-faint)"
                 letterSpacing="0.02em"
                 style={{ opacity: 0 }}
               >
@@ -140,17 +149,19 @@ export function SvgBarV({
             )}
 
             {/* x label */}
-            <text
-              x={bx + barW / 2}
-              y={padT + plotH + 18}
-              textAnchor="middle"
-              fontFamily="var(--voux-font-mono)"
-              fontSize={10}
-              fill={VOUX_COLORS.inkMuted}
-              letterSpacing="0.08em"
-            >
-              {labels[i]}
-            </text>
+            {(!skipAltLabels || i % 2 === 0) && (
+              <text
+                x={bx + barW / 2}
+                y={padT + plotH + 18}
+                textAnchor="middle"
+                fontFamily="var(--voux-font-mono)"
+                fontSize={10}
+                fill={VOUX_COLORS.inkMuted}
+                letterSpacing="0.08em"
+              >
+                {labels[i]}
+              </text>
+            )}
           </g>
         );
       })}

@@ -1,29 +1,58 @@
 import type { EChartsOption } from "echarts";
 
 /**
- * Tema central dos gráficos do BI (ECharts). Define a paleta, os gradientes
- * (estética glass/transparência), o tooltip "vidro" e helpers de formatação.
- * Substitui o antigo nivoTheme.ts.
+ * Tema central dos graficos do BI (ECharts). Define a paleta, os gradientes
+ * (estetica glass/transparencia), o tooltip "vidro" e helpers de formatacao.
+ * Suporta dark/light mode via getChartThemeVars().
  */
 
-// Paleta moderna — mantém a semântica do sistema antigo (1º dourado, 2º azul,
-// 3º verde...) para não quebrar os `CHART_COLORS[i]` espalhados nas seções.
+// VOUX palette — champagne/ink editorial
 export const CHART_COLORS = [
-  "#f0b429", // dourado
-  "#3b82f6", // azul
-  "#10b981", // verde esmeralda
-  "#f97316", // laranja
-  "#8b5cf6", // roxo
-  "#ef4444", // vermelho
-  "#06b6d4", // ciano
-  "#ec4899", // rosa
+  "#d4b896", // champagne-400 (primary accent)
+  "#7a9b6f", // success (muted green)
+  "#d4a05a", // warning (amber)
+  "#8ea3b8", // info (steel blue)
+  "#c97565", // danger (muted red)
+  "#b8945a", // champagne-500
+  "#6b8273", // muted sage
+  "#a89080", // warm muted
 ] as const;
 
-export const POSITIVE_COLOR = "#10b981";
-export const NEGATIVE_COLOR = "#ef4444";
+export const ACCENT_COLOR = "#d4b896";
+export const POSITIVE_COLOR = "#7a9b6f";
+export const NEGATIVE_COLOR = "#c97565";
 
-const AXIS_TEXT = "#64748b";
-const GRID_LINE = "rgba(100, 116, 139, 0.18)";
+// ----- Dark/Light theme vars for charts -----
+
+export interface ChartThemeVars {
+  axisText: string;
+  gridLine: string;
+  tooltipBg: string;
+  tooltipBorder: string;
+  tooltipText: string;
+  legendText: string;
+}
+
+export function getChartThemeVars(isDark: boolean): ChartThemeVars {
+  if (isDark) {
+    return {
+      axisText: "#b3ab9c",       // ink-200
+      gridLine: "rgba(214, 207, 193, 0.07)",
+      tooltipBg: "rgba(17, 16, 13, 0.96)",  // ink-900
+      tooltipBorder: "rgba(212, 184, 150, 0.15)",
+      tooltipText: "#ece5d4",    // ink-50
+      legendText: "#b3ab9c",
+    };
+  }
+  return {
+    axisText: "#524a3e",         // ink-500
+    gridLine: "rgba(82, 74, 62, 0.1)",
+    tooltipBg: "rgba(10, 9, 7, 0.92)",
+    tooltipBorder: "rgba(212, 184, 150, 0.2)",
+    tooltipText: "#ece5d4",
+    legendText: "#524a3e",
+  };
+}
 
 /** Converte hex (#rrggbb) em rgba com alpha. */
 export function withAlpha(hex: string, alpha: number): string {
@@ -34,12 +63,12 @@ export function withAlpha(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-/** Gradiente linear translúcido para preenchimento de barra/área. */
+/** Gradiente linear translucido para preenchimento de barra/area. */
 export function gradientFill(
   color: string,
   direction: "vertical" | "horizontal" = "vertical",
-  from = 0.95,
-  to = 0.35,
+  from = 1.0,
+  to = 1.0,
 ) {
   const coords =
     direction === "vertical"
@@ -55,7 +84,7 @@ export function gradientFill(
   };
 }
 
-/** Formata números grandes de forma compacta (1.2 mil, 3,4 mi) p/ não cortar eixo. */
+/** Formata numeros grandes de forma compacta (1.2 mil, 3,4 mi). */
 export function formatCompact(value: number): string {
   return new Intl.NumberFormat("pt-BR", {
     notation: "compact",
@@ -63,18 +92,25 @@ export function formatCompact(value: number): string {
   }).format(value);
 }
 
-/** Tooltip "vidro" — fundo escuro translúcido + blur. */
-export const glassTooltip: EChartsOption["tooltip"] = {
-  backgroundColor: "rgba(15, 23, 42, 0.92)",
-  borderColor: "rgba(255, 255, 255, 0.12)",
-  borderWidth: 1,
-  padding: [8, 12],
-  textStyle: { color: "#f1f5f9", fontSize: 12 },
-  extraCssText:
-    "backdrop-filter: blur(10px); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.35);",
-};
+/** Tooltip "vidro" — usa vars do tema. */
+export function buildGlassTooltip(vars: ChartThemeVars): EChartsOption["tooltip"] {
+  return {
+    backgroundColor: vars.tooltipBg,
+    borderColor: vars.tooltipBorder,
+    borderWidth: 1,
+    padding: [8, 12],
+    textStyle: { color: vars.tooltipText, fontSize: 12 },
+    extraCssText:
+      "backdrop-filter: blur(10px); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.35);",
+  };
+}
 
-/** HTML interno do tooltip com bolinha de cor — estilo consistente entre charts. */
+/** Tooltip estático (light mode default) para backward compat. */
+export const glassTooltip: EChartsOption["tooltip"] = buildGlassTooltip(
+  getChartThemeVars(false),
+);
+
+/** HTML interno do tooltip com bolinha de cor. */
 export function tooltipRow(
   name: string,
   seriesLabel: string,
@@ -82,37 +118,45 @@ export function tooltipRow(
   formattedValue: string,
 ): string {
   return `<div>
-    <div style="font-size:11px;color:#94a3b8;margin-bottom:4px">${name}</div>
+    <div style="font-size:12px;color:var(--voux-text-muted);margin-bottom:4px">${name}</div>
     <div style="display:flex;align-items:center;gap:6px">
       <span style="width:8px;height:8px;border-radius:9999px;background:${color};display:inline-block;flex-shrink:0"></span>
-      <span style="font-size:13px;color:#f1f5f9">${seriesLabel ? `${seriesLabel}: ` : ""}<strong>${formattedValue}</strong></span>
+      <span style="font-size:13px;color:var(--voux-text-primary)">${seriesLabel ? `${seriesLabel}: ` : ""}<strong>${formattedValue}</strong></span>
     </div>
   </div>`;
 }
 
 /** Eixo de categoria minimalista (sem linha de eixo, label suave). */
-export const categoryAxisBase = {
-  type: "category" as const,
-  axisLine: { show: false },
-  axisTick: { show: false },
-  axisLabel: { color: AXIS_TEXT, fontSize: 11 },
-};
+export function buildCategoryAxis(vars: ChartThemeVars) {
+  return {
+    type: "category" as const,
+    axisLine: { show: false },
+    axisTick: { show: false },
+    axisLabel: { color: vars.axisText, fontSize: 12 },
+  };
+}
 
-/** Eixo de valor minimalista (linhas de grade tracejadas bem sutis). */
-export const valueAxisBase = {
-  type: "value" as const,
-  axisLine: { show: false },
-  axisTick: { show: false },
-  axisLabel: { color: AXIS_TEXT, fontSize: 11 },
-  splitLine: {
-    show: true,
-    lineStyle: { color: GRID_LINE, type: "dashed" as const },
-  },
-};
+/** Eixo de valor minimalista (grid lines quase invisíveis). */
+export function buildValueAxis(vars: ChartThemeVars) {
+  return {
+    type: "value" as const,
+    axisLine: { show: false },
+    axisTick: { show: false },
+    axisLabel: { color: vars.axisText, fontSize: 12 },
+    splitLine: {
+      show: true,
+      lineStyle: { color: vars.gridLine, type: "solid" as const },
+    },
+  };
+}
 
-/** Opções base de animação compartilhadas. */
+// Static defaults for backward compat (light mode)
+export const categoryAxisBase = buildCategoryAxis(getChartThemeVars(false));
+export const valueAxisBase = buildValueAxis(getChartThemeVars(false));
+
+/** Opcoes base de animacao compartilhadas. */
 export const baseAnimation = {
   animation: true,
-  animationDuration: 600,
-  animationEasing: "cubicOut" as const,
+  animationDuration: 450,
+  animationEasing: "quartOut" as const,
 };

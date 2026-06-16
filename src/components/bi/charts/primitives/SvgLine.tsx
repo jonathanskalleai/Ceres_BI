@@ -13,6 +13,8 @@ export interface SvgLineProps {
   labels: string[];
   series: SvgLineSeries[];
   points?: boolean;
+  /** Show values directly on chart points (default true) */
+  showValues?: boolean;
   yFmt?: (v: number) => string;
   onHover?: (labelIndex: number, x: number, y: number) => void;
   onLeave?: () => void;
@@ -29,6 +31,7 @@ export function SvgLine({
   labels,
   series,
   points = true,
+  showValues = true,
   yFmt = fmtCompact,
   onHover,
   onLeave,
@@ -82,7 +85,7 @@ export function SvgLine({
             <stop
               offset="0%"
               stopColor={series[0].color ?? VOUX_PALETTE[0]}
-              stopOpacity={0.18}
+              stopOpacity={0.30}
             />
             <stop
               offset="100%"
@@ -122,20 +125,25 @@ export function SvgLine({
       })}
 
       {/* X labels */}
-      {labels.map((lbl, i) => (
-        <text
-          key={i}
-          x={xPos(i)}
-          y={height - padB + 18}
-          textAnchor="middle"
-          fontFamily="var(--voux-font-mono)"
-          fontSize={10}
-          fill={VOUX_COLORS.inkMuted}
-          letterSpacing="0.08em"
-        >
-          {lbl}
-        </text>
-      ))}
+      {labels.map((lbl, i) => {
+        // Thin labels: when narrow (<400px) and >6 points show every 3rd; else >12 show every 3rd
+        const step = (width < 400 && n > 6) ? 3 : (n > 12 ? 3 : 1);
+        if (step > 1 && i % step !== 0 && i !== n - 1) return null;
+        return (
+          <text
+            key={i}
+            x={xPos(i)}
+            y={height - padB + 18}
+            textAnchor="middle"
+            fontFamily="var(--voux-font-mono)"
+            fontSize={10}
+            fill={VOUX_COLORS.inkMuted}
+            letterSpacing="0.08em"
+          >
+            {lbl}
+          </text>
+        );
+      })}
 
       {/* Crosshair */}
       {hoveredIdx != null && (
@@ -144,7 +152,7 @@ export function SvgLine({
           x2={xPos(hoveredIdx)}
           y1={padT}
           y2={padT + plotH}
-          stroke="rgba(214,207,193,0.15)"
+          stroke="var(--voux-grid-line)"
           strokeWidth={1}
           strokeDasharray="3 3"
         />
@@ -204,6 +212,39 @@ export function SvgLine({
                   strokeWidth={1.5}
                 />
               ))}
+            {/* Value labels on points */}
+            {showValues && (() => {
+              // For many points, show only first, last, and max to avoid overlap
+              let indicesToShow: Set<number>;
+              if (validPairs.length > 8) {
+                const maxPair = validPairs.reduce((best, p) => p.v > best.v ? p : best, validPairs[0]);
+                indicesToShow = new Set([
+                  validPairs[0].i,
+                  validPairs[validPairs.length - 1].i,
+                  maxPair.i,
+                ]);
+              } else {
+                indicesToShow = new Set(validPairs.map(p => p.i));
+              }
+              const offsetY = sIdx === 0 ? -10 : 14;
+              return validPairs
+                .filter(({ v, i }) => v !== 0 && indicesToShow.has(i))
+                .map(({ v, i }) => (
+                  <text
+                    key={`val-${sIdx}-${i}`}
+                    x={xPos(i)}
+                    y={yPos(v) + offsetY}
+                    textAnchor="middle"
+                    fontFamily="var(--voux-font-mono)"
+                    fontSize={9}
+                    fill={s.color ?? VOUX_PALETTE[sIdx % VOUX_PALETTE.length]}
+                    opacity={0.8}
+                    letterSpacing="0.02em"
+                  >
+                    {yFmt(v)}
+                  </text>
+                ));
+            })()}
           </g>
         );
       })}

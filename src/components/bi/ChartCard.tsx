@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
@@ -12,13 +11,9 @@ interface ChartCardProps {
   loading?: boolean;
   className?: string;
   children: ReactNode;
+  label?: string;
 }
 
-/**
- * Card "vidro" (glassmorphism) que envolve os gráficos do BI: fundo translúcido
- * + blur + borda sutil. O conteúdo recebe uma altura fixa e os gráficos ECharts
- * preenchem 100% dessa área (eles já são responsivos — não usar ResponsiveContainer).
- */
 export function ChartCard({
   title,
   description,
@@ -27,33 +22,56 @@ export function ChartCard({
   loading = false,
   className,
   children,
+  label,
 }: ChartCardProps) {
   return (
-    <Card
-      className={cn(
-        "border-border/50 bg-card/80 backdrop-blur-sm shadow-sm",
-        "rounded-2xl transition-shadow hover:shadow-md",
-        className,
-      )}
+    <div
+      className={cn("rounded-[16px] overflow-hidden", className)}
+      style={{
+        background: `linear-gradient(to bottom, var(--voux-card-from), var(--voux-card-to))`,
+        border: `1px solid var(--voux-card-border)`,
+        boxShadow: `var(--voux-card-shadow)`,
+      }}
     >
-      <CardHeader>
-        <CardTitle className="text-sm font-medium">
-          {title}
-          {infoTooltip && <InfoTooltip text={infoTooltip} />}
-        </CardTitle>
-        {description && (
-          <CardDescription className="text-xs">{description}</CardDescription>
-        )}
-      </CardHeader>
-      <CardContent>
+      {/* Card header */}
+      <div className="flex items-start justify-between p-5 pb-3">
+        <div className="flex flex-col gap-1 min-w-0">
+          {label && (
+            <span
+              className="text-[9px] tracking-[0.28em] uppercase"
+              style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-muted)" }}
+            >
+              {label}
+            </span>
+          )}
+          <h3
+            className="text-[15px] font-medium leading-snug tracking-[-0.01em]"
+            style={{ fontFamily: "var(--voux-font-sans)", color: "var(--voux-text-heading)" }}
+          >
+            {title}
+            {infoTooltip && <InfoTooltip text={infoTooltip} />}
+          </h3>
+          {description && (
+            <p
+              className="text-[11px]"
+              style={{ fontFamily: "var(--voux-font-mono)", letterSpacing: "0.02em", color: "var(--voux-text-faint)" }}
+            >
+              {description}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="px-5 pb-5">
         {loading ? (
-          <Skeleton style={{ height }} className="w-full rounded-xl" />
+          <Skeleton className="w-full rounded-xl" style={{ height, background: "var(--voux-skeleton)" }} />
         ) : (
-          <div style={{ height }} className="w-full">
+          <div style={{ minHeight: height }} className="w-full">
             {children}
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
