@@ -1,0 +1,416 @@
+{
+  "view": "VW_Ceres_AtividadeExtra",
+  "total": 52,
+  "error": null,
+  "columns": [
+    {
+      "name": "OSE_idOSOCr",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "OSE_idOS",
+      "types": [
+        "null"
+      ]
+    },
+    {
+      "name": "OS_nrOS",
+      "types": [
+        "null"
+      ]
+    },
+    {
+      "name": "OSE_idOcorrencia",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "OSE_dscOcorrencia",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "OSE_idUsuario",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "OSE_dthOcorrencia",
+      "types": [
+        "datetime"
+      ]
+    },
+    {
+      "name": "OSE_observacao",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "OSE_Latitude",
+      "types": [
+        "decimal",
+        "null"
+      ]
+    },
+    {
+      "name": "OSE_Longitude",
+      "types": [
+        "decimal",
+        "null"
+      ]
+    },
+    {
+      "name": "OS_KM",
+      "types": [
+        "null"
+      ]
+    },
+    {
+      "name": "OSE_idAgenda",
+      "types": [
+        "null"
+      ]
+    },
+    {
+      "name": "OSE_idSituacaoOcorrencia",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "OCE_idAtividadeExtra",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "OCE_dscAtividadeExtra",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "OSE_dscSituacaoOcorrencia",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "OSE_idTipoOrigem",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "OSE_dthOriginal",
+      "types": [
+        "null"
+      ]
+    },
+    {
+      "name": "OSE_idMotivoPausa",
+      "types": [
+        "null"
+      ]
+    },
+    {
+      "name": "OSE_dscMotivoPausa",
+      "types": [
+        "null"
+      ]
+    },
+    {
+      "name": "USR_nomeUsuario",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "USR_codUsuario",
+      "types": [
+        "int-str",
+        "null"
+      ]
+    },
+    {
+      "name": "EMP_CodFilial",
+      "types": [
+        "int-str"
+      ]
+    },
+    {
+      "name": "dthRegistro",
+      "types": [
+        "datetime"
+      ]
+    }
+  ],
+  "sample": [
+    {
+      "OSE_idOSOCr": 300736,
+      "OSE_idOS": null,
+      "OS_nrOS": null,
+      "OSE_idOcorrencia": 1,
+      "OSE_dscOcorrencia": "Início",
+      "OSE_idUsuario": 17236,
+      "OSE_dthOcorrencia": "2024-08-19T16:41:24.000Z",
+      "OSE_observacao": "ATIVIDADE EXTRA S/ OS",
+      "OSE_Latitude": -26.258482,
+      "OSE_Longitude": -52.769604,
+      "OS_KM": null,
+      "OSE_idAgenda": null,
+      "OSE_idSituacaoOcorrencia": 1,
+      "OCE_idAtividadeExtra": 973,
+      "OCE_dscAtividadeExtra": "Manutenção e Conservação Veículo Frota",
+      "OSE_dscSituacaoOcorrencia": "Atendimento iniciado",
+      "OSE_idTipoOrigem": 2,
+      "OSE_dthOriginal": null,
+      "OSE_idMotivoPausa": null,
+      "OSE_dscMotivoPausa": null,
+      "USR_nomeUsuario": "ALEXANDRE VINICIO BADIA",
+      "USR_codUsuario": "15",
+      "EMP_CodFilial": "1",
+      "dthRegistro": "2026-06-19T13:19:36.203Z"
+    },
+    {
+      "OSE_idOSOCr": 308716,
+      "OSE_idOS": null,
+      "OS_nrOS": null,
+      "OSE_idOcorrencia": 1,
+      "OSE_dscOcorrencia": "Início",
+      "OSE_idUsuario": 17238,
+      "OSE_dthOcorrencia": "2024-09-04T08:39:34.000Z",
+      "OSE_observacao": "ATIVIDADE EXTRA S/ OS",
+      "OSE_Latitude": null,
+      "OSE_Longitude": null,
+      "OS_KM": null,
+      "OSE_idAgenda": null,
+      "OSE_idSituacaoOcorrencia": 1,
+      "OCE_idAtividadeExtra": 973,
+      "OCE_dscAtividadeExtra": "Manutenção e Conservação Veículo Frota",
+      "OSE_dscSituacaoOcorrencia": "Atendimento iniciado",
+      "OSE_idTipoOrigem": 2,
+      "OSE_dthOriginal": null,
+      "OSE_idMotivoPausa": null,
+      "OSE_dscMotivoPausa": null,
+      "USR_nomeUsuario": "RUAN GABRIEL TIBES",
+      "USR_codUsuario": "44",
+      "EMP_CodFilial": "1",
+      "dthRegistro": "2026-06-19T13:19:36.203Z"
+    },
+    {
+      "OSE_idOSOCr": 326849,
+      "OSE_idOS": null,
+      "OS_nrOS": null,
+      "OSE_idOcorrencia": 1,
+      "OSE_dscOcorrencia": "Início",
+      "OSE_idUsuario": 17242,
+      "OSE_dthOcorrencia": "2024-10-14T14:30:11.000Z",
+      "OSE_observacao": "ATIVIDADE EXTRA S/ OS",
+      "OSE_Latitude": -26.881292,
+      "OSE_Longitude": -52.377712,
+      "OS_KM": null,
+      "OSE_idAgenda": null,
+      "OSE_idSituacaoOcorrencia": 1,
+      "OCE_idAtividadeExtra": 973,
+      "OCE_dscAtividadeExtra": "Manutenção e Conservação Veículo Frota",
+      "OSE_dscSituacaoOcorrencia": "Atendimento iniciado",
+      "OSE_idTipoOrigem": 2,
+      "OSE_dthOriginal": null,
+      "OSE_idMotivoPausa": null,
+      "OSE_dscMotivoPausa": null,
+      "USR_nomeUsuario": "GIAN FABRICIO SEVERO DA SILVA",
+      "USR_codUsuario": "13",
+      "EMP_CodFilial": "2",
+      "dthRegistro": "2026-06-19T13:19:36.203Z"
+    },
+    {
+      "OSE_idOSOCr": 332230,
+      "OSE_idOS": null,
+      "OS_nrOS": null,
+      "OSE_idOcorrencia": 1,
+      "OSE_dscOcorrencia": "Início",
+      "OSE_idUsuario": 17242,
+      "OSE_dthOcorrencia": "2024-10-25T09:02:40.000Z",
+      "OSE_observacao": "ATIVIDADE EXTRA S/ OS",
+      "OSE_Latitude": -26.880121,
+      "OSE_Longitude": -52.378105,
+      "OS_KM": null,
+      "OSE_idAgenda": null,
+      "OSE_idSituacaoOcorrencia": 1,
+      "OCE_idAtividadeExtra": 973,
+      "OCE_dscAtividadeExtra": "Manutenção e Conservação Veículo Frota",
+      "OSE_dscSituacaoOcorrencia": "Atendimento iniciado",
+      "OSE_idTipoOrigem": 2,
+      "OSE_dthOriginal": null,
+      "OSE_idMotivoPausa": null,
+      "OSE_dscMotivoPausa": null,
+      "USR_nomeUsuario": "GIAN FABRICIO SEVERO DA SILVA",
+      "USR_codUsuario": "13",
+      "EMP_CodFilial": "2",
+      "dthRegistro": "2026-06-19T13:19:36.203Z"
+    },
+    {
+      "OSE_idOSOCr": 300724,
+      "OSE_idOS": null,
+      "OS_nrOS": null,
+      "OSE_idOcorrencia": 1,
+      "OSE_dscOcorrencia": "Início",
+      "OSE_idUsuario": 17314,
+      "OSE_dthOcorrencia": "2024-08-19T16:40:52.000Z",
+      "OSE_observacao": "ATIVIDADE EXTRA S/ OS",
+      "OSE_Latitude": null,
+      "OSE_Longitude": null,
+      "OS_KM": null,
+      "OSE_idAgenda": null,
+      "OSE_idSituacaoOcorrencia": 1,
+      "OCE_idAtividadeExtra": 974,
+      "OCE_dscAtividadeExtra": "Organização de Oficina",
+      "OSE_dscSituacaoOcorrencia": "Atendimento iniciado",
+      "OSE_idTipoOrigem": 2,
+      "OSE_dthOriginal": null,
+      "OSE_idMotivoPausa": null,
+      "OSE_dscMotivoPausa": null,
+      "USR_nomeUsuario": "Treinamento Gustavo",
+      "USR_codUsuario": null,
+      "EMP_CodFilial": "1",
+      "dthRegistro": "2026-06-19T13:19:36.203Z"
+    },
+    {
+      "OSE_idOSOCr": 300724,
+      "OSE_idOS": null,
+      "OS_nrOS": null,
+      "OSE_idOcorrencia": 1,
+      "OSE_dscOcorrencia": "Início",
+      "OSE_idUsuario": 17314,
+      "OSE_dthOcorrencia": "2024-08-19T16:40:52.000Z",
+      "OSE_observacao": "ATIVIDADE EXTRA S/ OS",
+      "OSE_Latitude": null,
+      "OSE_Longitude": null,
+      "OS_KM": null,
+      "OSE_idAgenda": null,
+      "OSE_idSituacaoOcorrencia": 1,
+      "OCE_idAtividadeExtra": 974,
+      "OCE_dscAtividadeExtra": "Organização de Oficina",
+      "OSE_dscSituacaoOcorrencia": "Atendimento iniciado",
+      "OSE_idTipoOrigem": 2,
+      "OSE_dthOriginal": null,
+      "OSE_idMotivoPausa": null,
+      "OSE_dscMotivoPausa": null,
+      "USR_nomeUsuario": "Treinamento Gustavo",
+      "USR_codUsuario": null,
+      "EMP_CodFilial": "2",
+      "dthRegistro": "2026-06-19T13:19:36.203Z"
+    },
+    {
+      "OSE_idOSOCr": 300724,
+      "OSE_idOS": null,
+      "OS_nrOS": null,
+      "OSE_idOcorrencia": 1,
+      "OSE_dscOcorrencia": "Início",
+      "OSE_idUsuario": 17314,
+      "OSE_dthOcorrencia": "2024-08-19T16:40:52.000Z",
+      "OSE_observacao": "ATIVIDADE EXTRA S/ OS",
+      "OSE_Latitude": null,
+      "OSE_Longitude": null,
+      "OS_KM": null,
+      "OSE_idAgenda": null,
+      "OSE_idSituacaoOcorrencia": 1,
+      "OCE_idAtividadeExtra": 974,
+      "OCE_dscAtividadeExtra": "Organização de Oficina",
+      "OSE_dscSituacaoOcorrencia": "Atendimento iniciado",
+      "OSE_idTipoOrigem": 2,
+      "OSE_dthOriginal": null,
+      "OSE_idMotivoPausa": null,
+      "OSE_dscMotivoPausa": null,
+      "USR_nomeUsuario": "Treinamento Gustavo",
+      "USR_codUsuario": null,
+      "EMP_CodFilial": "3",
+      "dthRegistro": "2026-06-19T13:19:36.203Z"
+    },
+    {
+      "OSE_idOSOCr": 300724,
+      "OSE_idOS": null,
+      "OS_nrOS": null,
+      "OSE_idOcorrencia": 1,
+      "OSE_dscOcorrencia": "Início",
+      "OSE_idUsuario": 17314,
+      "OSE_dthOcorrencia": "2024-08-19T16:40:52.000Z",
+      "OSE_observacao": "ATIVIDADE EXTRA S/ OS",
+      "OSE_Latitude": null,
+      "OSE_Longitude": null,
+      "OS_KM": null,
+      "OSE_idAgenda": null,
+      "OSE_idSituacaoOcorrencia": 1,
+      "OCE_idAtividadeExtra": 974,
+      "OCE_dscAtividadeExtra": "Organização de Oficina",
+      "OSE_dscSituacaoOcorrencia": "Atendimento iniciado",
+      "OSE_idTipoOrigem": 2,
+      "OSE_dthOriginal": null,
+      "OSE_idMotivoPausa": null,
+      "OSE_dscMotivoPausa": null,
+      "USR_nomeUsuario": "Treinamento Gustavo",
+      "USR_codUsuario": null,
+      "EMP_CodFilial": "4",
+      "dthRegistro": "2026-06-19T13:19:36.203Z"
+    },
+    {
+      "OSE_idOSOCr": 320640,
+      "OSE_idOS": null,
+      "OS_nrOS": null,
+      "OSE_idOcorrencia": 1,
+      "OSE_dscOcorrencia": "Início",
+      "OSE_idUsuario": 17242,
+      "OSE_dthOcorrencia": "2024-10-01T08:26:35.000Z",
+      "OSE_observacao": "ATIVIDADE EXTRA S/ OS",
+      "OSE_Latitude": -26.879112,
+      "OSE_Longitude": -52.366825,
+      "OS_KM": null,
+      "OSE_idAgenda": null,
+      "OSE_idSituacaoOcorrencia": 1,
+      "OCE_idAtividadeExtra": 974,
+      "OCE_dscAtividadeExtra": "Organização de Oficina",
+      "OSE_dscSituacaoOcorrencia": "Atendimento iniciado",
+      "OSE_idTipoOrigem": 2,
+      "OSE_dthOriginal": null,
+      "OSE_idMotivoPausa": null,
+      "OSE_dscMotivoPausa": null,
+      "USR_nomeUsuario": "GIAN FABRICIO SEVERO DA SILVA",
+      "USR_codUsuario": "13",
+      "EMP_CodFilial": "2",
+      "dthRegistro": "2026-06-19T13:19:36.203Z"
+    },
+    {
+      "OSE_idOSOCr": 300730,
+      "OSE_idOS": null,
+      "OS_nrOS": null,
+      "OSE_idOcorrencia": 1,
+      "OSE_dscOcorrencia": "Início",
+      "OSE_idUsuario": 17235,
+      "OSE_dthOcorrencia": "2024-08-19T16:41:05.000Z",
+      "OSE_observacao": "ATIVIDADE EXTRA S/ OS",
+      "OSE_Latitude": -26.881004,
+      "OSE_Longitude": -52.37793,
+      "OS_KM": null,
+      "OSE_idAgenda": null,
+      "OSE_idSituacaoOcorrencia": 1,
+      "OCE_idAtividadeExtra": 974,
+      "OCE_dscAtividadeExtra": "Organização de Oficina",
+      "OSE_dscSituacaoOcorrencia": "Atendimento iniciado",
+      "OSE_idTipoOrigem": 2,
+      "OSE_dthOriginal": null,
+      "OSE_idMotivoPausa": null,
+      "OSE_dscMotivoPausa": null,
+      "USR_nomeUsuario": "JEAN TREVISAN",
+      "USR_codUsuario": "14",
+      "EMP_CodFilial": "1",
+      "dthRegistro": "2026-06-19T13:19:36.203Z"
+    }
+  ]
+}

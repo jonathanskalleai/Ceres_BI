@@ -1,0 +1,549 @@
+{
+  "view": "VW_Ceres_CRM_Acoes",
+  "total": 28999,
+  "error": null,
+  "columns": [
+    {
+      "name": "EMP_CodFilial",
+      "types": [
+        "int-str"
+      ]
+    },
+    {
+      "name": "EMP_CNPJ",
+      "types": [
+        "int-str"
+      ]
+    },
+    {
+      "name": "EMP_Nome",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "EMP_Cidade",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "EMP_UF",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "CLI_Nome",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "CLI_CNPJ_CPF",
+      "types": [
+        "int-str"
+      ]
+    },
+    {
+      "name": "CLI_CodigoCliente",
+      "types": [
+        "int-str"
+      ]
+    },
+    {
+      "name": "CLI_IdCliente",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "ACO_IdAcao",
+      "types": [
+        "int-str",
+        "string"
+      ]
+    },
+    {
+      "name": "ACO_CodigoAcao",
+      "types": [
+        "string",
+        "int-str"
+      ]
+    },
+    {
+      "name": "ACO_TipoContato",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "ACO_TipoAcao",
+      "types": [
+        "string",
+        "null"
+      ]
+    },
+    {
+      "name": "USR_IdUsuario",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "USR_CodigoUsuario",
+      "types": [
+        "int-str"
+      ]
+    },
+    {
+      "name": "ACO_Vendedor",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "ACO_DthAgendaInicio",
+      "types": [
+        "datetime"
+      ]
+    },
+    {
+      "name": "ACO_DthAgendaTermino",
+      "types": [
+        "datetime"
+      ]
+    },
+    {
+      "name": "ACO_AtividadeAserExecutada",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "ACO_AtividadeExecutada",
+      "types": [
+        "string",
+        "null"
+      ]
+    },
+    {
+      "name": "ACO_Status",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "ACO_DthAtualizacao",
+      "types": [
+        "datetime"
+      ]
+    },
+    {
+      "name": "ACO_Lat",
+      "types": [
+        "decimal",
+        "int"
+      ]
+    },
+    {
+      "name": "ACO_Lon",
+      "types": [
+        "decimal",
+        "int"
+      ]
+    },
+    {
+      "name": "ACO_Contato",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "ACO_DthAbertura",
+      "types": [
+        "datetime"
+      ]
+    },
+    {
+      "name": "ACO_DthGeolocalizacao",
+      "types": [
+        "datetime",
+        "string"
+      ]
+    },
+    {
+      "name": "ACO_AcaoValida",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "ACO_AcaoReagendada",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "ACO_DthConclusao",
+      "types": [
+        "datetime",
+        "string"
+      ]
+    },
+    {
+      "name": "NGO_NroNegocio",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "dthRegistro",
+      "types": [
+        "datetime"
+      ]
+    }
+  ],
+  "sample": [
+    {
+      "EMP_CodFilial": "4",
+      "EMP_CNPJ": "23688454000445",
+      "EMP_Nome": "CERES - CANDIOTTO E STORTI EQUIPAMENTOS E MAQUINAS AGRICOLAS LTDA",
+      "EMP_Cidade": "Guarapuava",
+      "EMP_UF": "PR",
+      "CLI_Nome": "RAFAEL RICARDO COLFERAI",
+      "CLI_CNPJ_CPF": "04876785910",
+      "CLI_CodigoCliente": "694",
+      "CLI_IdCliente": 2511969,
+      "ACO_IdAcao": "25071110541113504",
+      "ACO_CodigoAcao": "",
+      "ACO_TipoContato": "Telefonema/Whatsapp",
+      "ACO_TipoAcao": "7 - Pós-Vendas AP",
+      "USR_IdUsuario": 13504,
+      "USR_CodigoUsuario": "52",
+      "ACO_Vendedor": "ELOI BARRETA JUNIOR",
+      "ACO_DthAgendaInicio": "2025-07-11 10:50:00",
+      "ACO_DthAgendaTermino": "2025-07-11 11:20:00",
+      "ACO_AtividadeAserExecutada": "Registro de atividade",
+      "ACO_AtividadeExecutada": "Alteração de mapas de recomendações \nFósforo - MAP e SS\nPotássio - Kcl e Potasil ",
+      "ACO_Status": "Concluída",
+      "ACO_DthAtualizacao": "2025-07-11 11:26:12",
+      "ACO_Lat": -25.375437,
+      "ACO_Lon": -51.47618,
+      "ACO_Contato": "Motoka",
+      "ACO_DthAbertura": "2025-07-11 10:54:11",
+      "ACO_DthGeolocalizacao": "2025-07-11 10:53:01",
+      "ACO_AcaoValida": "Sim",
+      "ACO_AcaoReagendada": "Não",
+      "ACO_DthConclusao": "2025-07-11 10:54:11",
+      "NGO_NroNegocio": "",
+      "dthRegistro": "2026-06-19T13:19:11.860Z"
+    },
+    {
+      "EMP_CodFilial": "4",
+      "EMP_CNPJ": "23688454000445",
+      "EMP_Nome": "CERES - CANDIOTTO E STORTI EQUIPAMENTOS E MAQUINAS AGRICOLAS LTDA",
+      "EMP_Cidade": "Guarapuava",
+      "EMP_UF": "PR",
+      "CLI_Nome": "RAFAEL RICARDO COLFERAI",
+      "CLI_CNPJ_CPF": "04876785910",
+      "CLI_CodigoCliente": "694",
+      "CLI_IdCliente": 2511969,
+      "ACO_IdAcao": "25111016340013504",
+      "ACO_CodigoAcao": "21019",
+      "ACO_TipoContato": "Visita",
+      "ACO_TipoAcao": "7 - Pós-Vendas AP",
+      "USR_IdUsuario": 13504,
+      "USR_CodigoUsuario": "52",
+      "ACO_Vendedor": "ELOI BARRETA JUNIOR",
+      "ACO_DthAgendaInicio": "2025-11-10 16:30:00",
+      "ACO_DthAgendaTermino": "2025-11-10 17:00:00",
+      "ACO_AtividadeAserExecutada": "Registro de atividade",
+      "ACO_AtividadeExecutada": "Em visita ao cliente para acompanhar a colheita de trigo",
+      "ACO_Status": "Concluída",
+      "ACO_DthAtualizacao": "2025-11-17 18:28:50",
+      "ACO_Lat": -25.34207,
+      "ACO_Lon": -51.835556,
+      "ACO_Contato": "Motoka",
+      "ACO_DthAbertura": "2025-11-10 16:34:00",
+      "ACO_DthGeolocalizacao": "2025-11-10 16:28:03",
+      "ACO_AcaoValida": "Sim",
+      "ACO_AcaoReagendada": "Não",
+      "ACO_DthConclusao": "2025-11-10 16:34:00",
+      "NGO_NroNegocio": "",
+      "dthRegistro": "2026-06-19T13:19:11.860Z"
+    },
+    {
+      "EMP_CodFilial": "4",
+      "EMP_CNPJ": "23688454000445",
+      "EMP_Nome": "CERES - CANDIOTTO E STORTI EQUIPAMENTOS E MAQUINAS AGRICOLAS LTDA",
+      "EMP_Cidade": "Guarapuava",
+      "EMP_UF": "PR",
+      "CLI_Nome": "RAFAEL RICARDO COLFERAI",
+      "CLI_CNPJ_CPF": "04876785910",
+      "CLI_CodigoCliente": "694",
+      "CLI_IdCliente": 2511969,
+      "ACO_IdAcao": "25050211444213504",
+      "ACO_CodigoAcao": "15512",
+      "ACO_TipoContato": "Telefonema/Whatsapp",
+      "ACO_TipoAcao": "7 - Pós-Vendas AP",
+      "USR_IdUsuario": 13504,
+      "USR_CodigoUsuario": "52",
+      "ACO_Vendedor": "ELOI BARRETA JUNIOR",
+      "ACO_DthAgendaInicio": "2025-05-02 11:40:00",
+      "ACO_DthAgendaTermino": "2025-05-02 12:10:00",
+      "ACO_AtividadeAserExecutada": "Registro de atividade",
+      "ACO_AtividadeExecutada": "Cliente solicitou mapa de aplicação de KCL\nalteração no mapa para 50% da dose",
+      "ACO_Status": "Concluída",
+      "ACO_DthAtualizacao": "2025-05-02 11:51:55",
+      "ACO_Lat": -25.375399,
+      "ACO_Lon": -51.476204,
+      "ACO_Contato": "Junior Motoka",
+      "ACO_DthAbertura": "2025-05-02 11:44:42",
+      "ACO_DthGeolocalizacao": "2025-05-02 11:43:46",
+      "ACO_AcaoValida": "Sim",
+      "ACO_AcaoReagendada": "Não",
+      "ACO_DthConclusao": "2025-05-02 11:44:42",
+      "NGO_NroNegocio": "",
+      "dthRegistro": "2026-06-19T13:19:11.860Z"
+    },
+    {
+      "EMP_CodFilial": "4",
+      "EMP_CNPJ": "23688454000445",
+      "EMP_Nome": "CERES - CANDIOTTO E STORTI EQUIPAMENTOS E MAQUINAS AGRICOLAS LTDA",
+      "EMP_Cidade": "Guarapuava",
+      "EMP_UF": "PR",
+      "CLI_Nome": "RAFAEL RICARDO COLFERAI",
+      "CLI_CNPJ_CPF": "04876785910",
+      "CLI_CodigoCliente": "694",
+      "CLI_IdCliente": 2511969,
+      "ACO_IdAcao": "25050912594013504",
+      "ACO_CodigoAcao": "15776",
+      "ACO_TipoContato": "Telefonema/Whatsapp",
+      "ACO_TipoAcao": "7 - Pós-Vendas AP",
+      "USR_IdUsuario": 13504,
+      "USR_CodigoUsuario": "52",
+      "ACO_Vendedor": "ELOI BARRETA JUNIOR",
+      "ACO_DthAgendaInicio": "2025-05-09 13:00:00",
+      "ACO_DthAgendaTermino": "2025-05-09 13:30:00",
+      "ACO_AtividadeAserExecutada": "Registro de atividade",
+      "ACO_AtividadeExecutada": "Ajuste dos mapas de aplicação ",
+      "ACO_Status": "Concluída",
+      "ACO_DthAtualizacao": "2025-05-09 13:36:50",
+      "ACO_Lat": -25.375425,
+      "ACO_Lon": -51.476192,
+      "ACO_Contato": "Motoka",
+      "ACO_DthAbertura": "2025-05-09 12:59:40",
+      "ACO_DthGeolocalizacao": "2025-05-09 12:59:16",
+      "ACO_AcaoValida": "Sim",
+      "ACO_AcaoReagendada": "Não",
+      "ACO_DthConclusao": "2025-05-09 12:59:40",
+      "NGO_NroNegocio": "",
+      "dthRegistro": "2026-06-19T13:19:11.860Z"
+    },
+    {
+      "EMP_CodFilial": "4",
+      "EMP_CNPJ": "23688454000445",
+      "EMP_Nome": "CERES - CANDIOTTO E STORTI EQUIPAMENTOS E MAQUINAS AGRICOLAS LTDA",
+      "EMP_Cidade": "Guarapuava",
+      "EMP_UF": "PR",
+      "CLI_Nome": "RAFAEL RICARDO COLFERAI",
+      "CLI_CNPJ_CPF": "04876785910",
+      "CLI_CodigoCliente": "694",
+      "CLI_IdCliente": 2511969,
+      "ACO_IdAcao": "25052615385213504",
+      "ACO_CodigoAcao": "16241",
+      "ACO_TipoContato": "Telefonema/Whatsapp",
+      "ACO_TipoAcao": null,
+      "USR_IdUsuario": 13504,
+      "USR_CodigoUsuario": "52",
+      "ACO_Vendedor": "ELOI BARRETA JUNIOR",
+      "ACO_DthAgendaInicio": "2025-05-30 08:00:00",
+      "ACO_DthAgendaTermino": "2025-05-30 08:30:00",
+      "ACO_AtividadeAserExecutada": "Coleta de solo\nGrid 1 \n50 hectares",
+      "ACO_AtividadeExecutada": "Não conseguimos realizar a coleta devido ao tempo muita chuva",
+      "ACO_Status": "Concluída",
+      "ACO_DthAtualizacao": "2025-06-26 18:47:01",
+      "ACO_Lat": -25.383049,
+      "ACO_Lon": -51.469707,
+      "ACO_Contato": "Motoka",
+      "ACO_DthAbertura": "2025-05-26 15:38:52",
+      "ACO_DthGeolocalizacao": "2025-06-26 16:28:54",
+      "ACO_AcaoValida": "Sim",
+      "ACO_AcaoReagendada": "Não",
+      "ACO_DthConclusao": "2025-06-26 16:29:13",
+      "NGO_NroNegocio": "",
+      "dthRegistro": "2026-06-19T13:19:11.860Z"
+    },
+    {
+      "EMP_CodFilial": "1",
+      "EMP_CNPJ": "23688454000100",
+      "EMP_Nome": "CERES - CANDIOTTO E STORTI EQUIPAMENTOS E MAQUINAS AGRICOLAS LTDA",
+      "EMP_Cidade": "Vitorino",
+      "EMP_UF": "PR",
+      "CLI_Nome": "INACIO ANTONIO PERIN",
+      "CLI_CNPJ_CPF": "04577792923",
+      "CLI_CodigoCliente": "1228",
+      "CLI_IdCliente": 2512486,
+      "ACO_IdAcao": "W2504220604144863504",
+      "ACO_CodigoAcao": "",
+      "ACO_TipoContato": "Visita",
+      "ACO_TipoAcao": null,
+      "USR_IdUsuario": 13504,
+      "USR_CodigoUsuario": "52",
+      "ACO_Vendedor": "ELOI BARRETA JUNIOR",
+      "ACO_DthAgendaInicio": "2025-04-22 07:30:00",
+      "ACO_DthAgendaTermino": "2025-04-22 16:30:00",
+      "ACO_AtividadeAserExecutada": "Entrar em contato com o clinte para acompanhamento ou geração de novas oportunidades",
+      "ACO_AtividadeExecutada": null,
+      "ACO_Status": "Aberta",
+      "ACO_DthAtualizacao": "2025-04-22 06:04:14",
+      "ACO_Lat": 0,
+      "ACO_Lon": 0,
+      "ACO_Contato": "",
+      "ACO_DthAbertura": "2025-04-22 06:04:14",
+      "ACO_DthGeolocalizacao": "",
+      "ACO_AcaoValida": "Sim",
+      "ACO_AcaoReagendada": "Não",
+      "ACO_DthConclusao": "",
+      "NGO_NroNegocio": "",
+      "dthRegistro": "2026-06-19T13:19:11.860Z"
+    },
+    {
+      "EMP_CodFilial": "1",
+      "EMP_CNPJ": "23688454000100",
+      "EMP_Nome": "CERES - CANDIOTTO E STORTI EQUIPAMENTOS E MAQUINAS AGRICOLAS LTDA",
+      "EMP_Cidade": "Vitorino",
+      "EMP_UF": "PR",
+      "CLI_Nome": "VALDOMIRO KORDIAK",
+      "CLI_CNPJ_CPF": "77203747972",
+      "CLI_CodigoCliente": "1349",
+      "CLI_IdCliente": 2512606,
+      "ACO_IdAcao": "W2504230604019193504",
+      "ACO_CodigoAcao": "",
+      "ACO_TipoContato": "Visita",
+      "ACO_TipoAcao": null,
+      "USR_IdUsuario": 13504,
+      "USR_CodigoUsuario": "52",
+      "ACO_Vendedor": "ELOI BARRETA JUNIOR",
+      "ACO_DthAgendaInicio": "2025-04-23 07:30:00",
+      "ACO_DthAgendaTermino": "2025-04-23 16:30:00",
+      "ACO_AtividadeAserExecutada": "Entrar em contato com o clinte para acompanhamento ou geração de novas oportunidades",
+      "ACO_AtividadeExecutada": null,
+      "ACO_Status": "Aberta",
+      "ACO_DthAtualizacao": "2025-04-23 06:04:01",
+      "ACO_Lat": 0,
+      "ACO_Lon": 0,
+      "ACO_Contato": "",
+      "ACO_DthAbertura": "2025-04-23 06:04:01",
+      "ACO_DthGeolocalizacao": "",
+      "ACO_AcaoValida": "Sim",
+      "ACO_AcaoReagendada": "Não",
+      "ACO_DthConclusao": "",
+      "NGO_NroNegocio": "",
+      "dthRegistro": "2026-06-19T13:19:11.860Z"
+    },
+    {
+      "EMP_CodFilial": "1",
+      "EMP_CNPJ": "23688454000100",
+      "EMP_Nome": "CERES - CANDIOTTO E STORTI EQUIPAMENTOS E MAQUINAS AGRICOLAS LTDA",
+      "EMP_Cidade": "Vitorino",
+      "EMP_UF": "PR",
+      "CLI_Nome": "B  CARRIEL DIJKSTRA E CIA LTDA",
+      "CLI_CNPJ_CPF": "08620276000184",
+      "CLI_CodigoCliente": "878",
+      "CLI_IdCliente": 2512138,
+      "ACO_IdAcao": "W2504210603435083504",
+      "ACO_CodigoAcao": "",
+      "ACO_TipoContato": "Visita",
+      "ACO_TipoAcao": null,
+      "USR_IdUsuario": 13504,
+      "USR_CodigoUsuario": "52",
+      "ACO_Vendedor": "ELOI BARRETA JUNIOR",
+      "ACO_DthAgendaInicio": "2025-04-21 07:30:00",
+      "ACO_DthAgendaTermino": "2025-04-21 16:30:00",
+      "ACO_AtividadeAserExecutada": "Entrar em contato com o clinte para acompanhamento ou geração de novas oportunidades",
+      "ACO_AtividadeExecutada": null,
+      "ACO_Status": "Aberta",
+      "ACO_DthAtualizacao": "2025-04-21 06:03:43",
+      "ACO_Lat": 0,
+      "ACO_Lon": 0,
+      "ACO_Contato": "",
+      "ACO_DthAbertura": "2025-04-21 06:03:43",
+      "ACO_DthGeolocalizacao": "",
+      "ACO_AcaoValida": "Sim",
+      "ACO_AcaoReagendada": "Não",
+      "ACO_DthConclusao": "",
+      "NGO_NroNegocio": "",
+      "dthRegistro": "2026-06-19T13:19:11.860Z"
+    },
+    {
+      "EMP_CodFilial": "1",
+      "EMP_CNPJ": "23688454000100",
+      "EMP_Nome": "CERES - CANDIOTTO E STORTI EQUIPAMENTOS E MAQUINAS AGRICOLAS LTDA",
+      "EMP_Cidade": "Vitorino",
+      "EMP_UF": "PR",
+      "CLI_Nome": "TECHNOAGRI COMERCIO DE EQUIPAMENTOS E ELETRONICA AGRICOLA",
+      "CLI_CNPJ_CPF": "12163609000160",
+      "CLI_CodigoCliente": "858",
+      "CLI_IdCliente": 2512118,
+      "ACO_IdAcao": "W2504180604460293504",
+      "ACO_CodigoAcao": "",
+      "ACO_TipoContato": "Visita",
+      "ACO_TipoAcao": null,
+      "USR_IdUsuario": 13504,
+      "USR_CodigoUsuario": "52",
+      "ACO_Vendedor": "ELOI BARRETA JUNIOR",
+      "ACO_DthAgendaInicio": "2025-04-18 07:30:00",
+      "ACO_DthAgendaTermino": "2025-04-18 16:30:00",
+      "ACO_AtividadeAserExecutada": "Entrar em contato com o clinte para acompanhamento ou geração de novas oportunidades",
+      "ACO_AtividadeExecutada": null,
+      "ACO_Status": "Aberta",
+      "ACO_DthAtualizacao": "2025-04-18 06:04:46",
+      "ACO_Lat": 0,
+      "ACO_Lon": 0,
+      "ACO_Contato": "",
+      "ACO_DthAbertura": "2025-04-18 06:04:46",
+      "ACO_DthGeolocalizacao": "",
+      "ACO_AcaoValida": "Sim",
+      "ACO_AcaoReagendada": "Não",
+      "ACO_DthConclusao": "",
+      "NGO_NroNegocio": "",
+      "dthRegistro": "2026-06-19T13:19:11.860Z"
+    },
+    {
+      "EMP_CodFilial": "1",
+      "EMP_CNPJ": "23688454000100",
+      "EMP_Nome": "CERES - CANDIOTTO E STORTI EQUIPAMENTOS E MAQUINAS AGRICOLAS LTDA",
+      "EMP_Cidade": "Vitorino",
+      "EMP_UF": "PR",
+      "CLI_Nome": "GPSAP EQUIPAMENTOS AGRICOLAS LTDA ME",
+      "CLI_CNPJ_CPF": "22297731000183",
+      "CLI_CodigoCliente": "703",
+      "CLI_IdCliente": 2511977,
+      "ACO_IdAcao": "W2506160604126823504",
+      "ACO_CodigoAcao": "",
+      "ACO_TipoContato": "Telefonema/Whatsapp",
+      "ACO_TipoAcao": null,
+      "USR_IdUsuario": 13504,
+      "USR_CodigoUsuario": "52",
+      "ACO_Vendedor": "ELOI BARRETA JUNIOR",
+      "ACO_DthAgendaInicio": "2025-06-16 07:30:00",
+      "ACO_DthAgendaTermino": "2025-06-16 07:40:00",
+      "ACO_AtividadeAserExecutada": "Lembrar de entrar em contato com cliente da carteira para movimentar e prospectar negócios.",
+      "ACO_AtividadeExecutada": null,
+      "ACO_Status": "Aberta",
+      "ACO_DthAtualizacao": "2025-06-16 06:04:12",
+      "ACO_Lat": 0,
+      "ACO_Lon": 0,
+      "ACO_Contato": "",
+      "ACO_DthAbertura": "2025-06-16 06:04:12",
+      "ACO_DthGeolocalizacao": "",
+      "ACO_AcaoValida": "Sim",
+      "ACO_AcaoReagendada": "Não",
+      "ACO_DthConclusao": "",
+      "NGO_NroNegocio": "",
+      "dthRegistro": "2026-06-19T13:19:11.860Z"
+    }
+  ]
+}

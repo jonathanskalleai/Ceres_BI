@@ -1,0 +1,253 @@
+{
+  "view": "VW_Ceres_CRM_FunilEtapa",
+  "total": 62,
+  "error": null,
+  "columns": [
+    {
+      "name": "Funil_idFunil",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "Funil_DscFunil",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "Funil_DataCadastro",
+      "types": [
+        "datetime"
+      ]
+    },
+    {
+      "name": "Funil_status",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "Funil_CodigoIntegracao",
+      "types": [
+        "int-str"
+      ]
+    },
+    {
+      "name": "Funil_NrOrdem",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "Etapa_IdEtapa",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "Etapa_DscEtapa",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "Etapa_ConsideraFunil",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "Etapa_DiasEstagnado",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "Etapa_BloqueioEtapa",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "Etapa_PermitePedido",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "Etapa_NrOrdem",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "Etapa_Transicao",
+      "types": [
+        "string"
+      ]
+    }
+  ],
+  "sample": [
+    {
+      "Funil_idFunil": 584,
+      "Funil_DscFunil": "FUNIL DE VENDAS GESTAO",
+      "Funil_DataCadastro": "2023-01-03T17:51:27.870Z",
+      "Funil_status": 0,
+      "Funil_CodigoIntegracao": "1",
+      "Funil_NrOrdem": 0,
+      "Etapa_IdEtapa": 4767,
+      "Etapa_DscEtapa": "OPORTUNIDADE",
+      "Etapa_ConsideraFunil": 1,
+      "Etapa_DiasEstagnado": 0,
+      "Etapa_BloqueioEtapa": 0,
+      "Etapa_PermitePedido": 0,
+      "Etapa_NrOrdem": 1,
+      "Etapa_Transicao": "Não"
+    },
+    {
+      "Funil_idFunil": 584,
+      "Funil_DscFunil": "FUNIL DE VENDAS GESTAO",
+      "Funil_DataCadastro": "2023-01-03T17:51:27.870Z",
+      "Funil_status": 0,
+      "Funil_CodigoIntegracao": "1",
+      "Funil_NrOrdem": 0,
+      "Etapa_IdEtapa": 4768,
+      "Etapa_DscEtapa": "ORCAMENTO",
+      "Etapa_ConsideraFunil": 1,
+      "Etapa_DiasEstagnado": 0,
+      "Etapa_BloqueioEtapa": 0,
+      "Etapa_PermitePedido": 0,
+      "Etapa_NrOrdem": 2,
+      "Etapa_Transicao": "Não"
+    },
+    {
+      "Funil_idFunil": 584,
+      "Funil_DscFunil": "FUNIL DE VENDAS GESTAO",
+      "Funil_DataCadastro": "2023-01-03T17:51:27.870Z",
+      "Funil_status": 0,
+      "Funil_CodigoIntegracao": "1",
+      "Funil_NrOrdem": 0,
+      "Etapa_IdEtapa": 4769,
+      "Etapa_DscEtapa": "PEDIDO",
+      "Etapa_ConsideraFunil": 1,
+      "Etapa_DiasEstagnado": 0,
+      "Etapa_BloqueioEtapa": 1,
+      "Etapa_PermitePedido": 0,
+      "Etapa_NrOrdem": 3,
+      "Etapa_Transicao": "Não"
+    },
+    {
+      "Funil_idFunil": 584,
+      "Funil_DscFunil": "FUNIL DE VENDAS GESTAO",
+      "Funil_DataCadastro": "2023-01-03T17:51:27.870Z",
+      "Funil_status": 0,
+      "Funil_CodigoIntegracao": "1",
+      "Funil_NrOrdem": 0,
+      "Etapa_IdEtapa": 4770,
+      "Etapa_DscEtapa": "FATURA",
+      "Etapa_ConsideraFunil": 1,
+      "Etapa_DiasEstagnado": 0,
+      "Etapa_BloqueioEtapa": 1,
+      "Etapa_PermitePedido": 0,
+      "Etapa_NrOrdem": 4,
+      "Etapa_Transicao": "Não"
+    },
+    {
+      "Funil_idFunil": 585,
+      "Funil_DscFunil": "VENDAS",
+      "Funil_DataCadastro": "2023-01-20T17:34:00.893Z",
+      "Funil_status": 1,
+      "Funil_CodigoIntegracao": "2",
+      "Funil_NrOrdem": 0,
+      "Etapa_IdEtapa": 4776,
+      "Etapa_DscEtapa": "PEDIDO",
+      "Etapa_ConsideraFunil": 1,
+      "Etapa_DiasEstagnado": 0,
+      "Etapa_BloqueioEtapa": 1,
+      "Etapa_PermitePedido": 0,
+      "Etapa_NrOrdem": 6,
+      "Etapa_Transicao": "Não"
+    },
+    {
+      "Funil_idFunil": 585,
+      "Funil_DscFunil": "VENDAS",
+      "Funil_DataCadastro": "2023-01-20T17:34:00.893Z",
+      "Funil_status": 1,
+      "Funil_CodigoIntegracao": "2",
+      "Funil_NrOrdem": 0,
+      "Etapa_IdEtapa": 4771,
+      "Etapa_DscEtapa": "OPORTUNIDADE",
+      "Etapa_ConsideraFunil": 1,
+      "Etapa_DiasEstagnado": 0,
+      "Etapa_BloqueioEtapa": 0,
+      "Etapa_PermitePedido": 0,
+      "Etapa_NrOrdem": 1,
+      "Etapa_Transicao": "Não"
+    },
+    {
+      "Funil_idFunil": 585,
+      "Funil_DscFunil": "VENDAS",
+      "Funil_DataCadastro": "2023-01-20T17:34:00.893Z",
+      "Funil_status": 1,
+      "Funil_CodigoIntegracao": "2",
+      "Funil_NrOrdem": 0,
+      "Etapa_IdEtapa": 4772,
+      "Etapa_DscEtapa": "COTACAO",
+      "Etapa_ConsideraFunil": 1,
+      "Etapa_DiasEstagnado": 0,
+      "Etapa_BloqueioEtapa": 0,
+      "Etapa_PermitePedido": 0,
+      "Etapa_NrOrdem": 2,
+      "Etapa_Transicao": "Não"
+    },
+    {
+      "Funil_idFunil": 585,
+      "Funil_DscFunil": "VENDAS",
+      "Funil_DataCadastro": "2023-01-20T17:34:00.893Z",
+      "Funil_status": 1,
+      "Funil_CodigoIntegracao": "2",
+      "Funil_NrOrdem": 0,
+      "Etapa_IdEtapa": 4773,
+      "Etapa_DscEtapa": "PROPOSTA AO CLIENTE",
+      "Etapa_ConsideraFunil": 1,
+      "Etapa_DiasEstagnado": 0,
+      "Etapa_BloqueioEtapa": 0,
+      "Etapa_PermitePedido": 1,
+      "Etapa_NrOrdem": 3,
+      "Etapa_Transicao": "Não"
+    },
+    {
+      "Funil_idFunil": 585,
+      "Funil_DscFunil": "VENDAS",
+      "Funil_DataCadastro": "2023-01-20T17:34:00.893Z",
+      "Funil_status": 1,
+      "Funil_CodigoIntegracao": "2",
+      "Funil_NrOrdem": 0,
+      "Etapa_IdEtapa": 4774,
+      "Etapa_DscEtapa": "PEDIDO",
+      "Etapa_ConsideraFunil": 1,
+      "Etapa_DiasEstagnado": 0,
+      "Etapa_BloqueioEtapa": 0,
+      "Etapa_PermitePedido": 1,
+      "Etapa_NrOrdem": 4,
+      "Etapa_Transicao": "Não"
+    },
+    {
+      "Funil_idFunil": 585,
+      "Funil_DscFunil": "VENDAS",
+      "Funil_DataCadastro": "2023-01-20T17:34:00.893Z",
+      "Funil_status": 1,
+      "Funil_CodigoIntegracao": "2",
+      "Funil_NrOrdem": 0,
+      "Etapa_IdEtapa": 4775,
+      "Etapa_DscEtapa": "PEDIDO > ADM VENDAS",
+      "Etapa_ConsideraFunil": 1,
+      "Etapa_DiasEstagnado": 0,
+      "Etapa_BloqueioEtapa": 0,
+      "Etapa_PermitePedido": 0,
+      "Etapa_NrOrdem": 5,
+      "Etapa_Transicao": "Sim"
+    }
+  ]
+}

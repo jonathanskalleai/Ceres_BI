@@ -1,0 +1,142 @@
+{
+  "view": "VW_Ceres_CRM_TAGXPEDIDO",
+  "total": 577,
+  "error": null,
+  "columns": [
+    {
+      "name": "TAGxPED_Codigo",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "TAG_Codigo",
+      "types": [
+        "null"
+      ]
+    },
+    {
+      "name": "TAG_Nome",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "TAG_Descricao",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "PED_Numero",
+      "types": [
+        "string",
+        "int-str"
+      ]
+    },
+    {
+      "name": "PED_CodigoIntegracao",
+      "types": [
+        "int-str"
+      ]
+    },
+    {
+      "name": "dthRegistro",
+      "types": [
+        "datetime"
+      ]
+    }
+  ],
+  "sample": [
+    {
+      "TAGxPED_Codigo": "92A8FD42-25CD-480B-868D-7A8A8BC2CAC2",
+      "TAG_Codigo": null,
+      "TAG_Nome": "AGRICULTURA",
+      "TAG_Descricao": "PEDIDO AGRICULTURA DE PRECISÃO",
+      "PED_Numero": "W26041415531018965",
+      "PED_CodigoIntegracao": "2479",
+      "dthRegistro": "2026-06-19T13:19:23.250Z"
+    },
+    {
+      "TAGxPED_Codigo": "82d5c6e1-1f36-494b-8a1c-17cfaa966a09",
+      "TAG_Codigo": null,
+      "TAG_Nome": "AGRICULTURA",
+      "TAG_Descricao": "PEDIDO AGRICULTURA DE PRECISÃO",
+      "PED_Numero": "2604131108018478971",
+      "PED_CodigoIntegracao": "2474",
+      "dthRegistro": "2026-06-19T13:19:23.250Z"
+    },
+    {
+      "TAGxPED_Codigo": "84581c75-f548-4168-ba95-14ef979e0fce",
+      "TAG_Codigo": null,
+      "TAG_Nome": "AGRICULTURA",
+      "TAG_Descricao": "PEDIDO AGRICULTURA DE PRECISÃO",
+      "PED_Numero": "2603261114081978971",
+      "PED_CodigoIntegracao": "2425",
+      "dthRegistro": "2026-06-19T13:19:23.250Z"
+    },
+    {
+      "TAGxPED_Codigo": "776a782b-643c-4059-8d84-86c9282b408b",
+      "TAG_Codigo": null,
+      "TAG_Nome": "AGRICULTURA",
+      "TAG_Descricao": "PEDIDO AGRICULTURA DE PRECISÃO",
+      "PED_Numero": "2606021246320667027",
+      "PED_CodigoIntegracao": "2600",
+      "dthRegistro": "2026-06-19T13:19:23.250Z"
+    },
+    {
+      "TAGxPED_Codigo": "4e369aa1-0126-4b36-94d7-2f7661b7531b",
+      "TAG_Codigo": null,
+      "TAG_Nome": "AGRICULTURA",
+      "TAG_Descricao": "PEDIDO AGRICULTURA DE PRECISÃO",
+      "PED_Numero": "2604290854048888971",
+      "PED_CodigoIntegracao": "2521",
+      "dthRegistro": "2026-06-19T13:19:23.250Z"
+    },
+    {
+      "TAGxPED_Codigo": "F06A530F-60B4-456B-9818-C39BECF0858F",
+      "TAG_Codigo": null,
+      "TAG_Nome": "AGRICULTURA",
+      "TAG_Descricao": "PEDIDO AGRICULTURA DE PRECISÃO",
+      "PED_Numero": "W25090116303118965",
+      "PED_CodigoIntegracao": "2169",
+      "dthRegistro": "2026-06-19T13:19:23.250Z"
+    },
+    {
+      "TAGxPED_Codigo": "1744D675-81E8-4BED-99A3-C20B59516D74",
+      "TAG_Codigo": null,
+      "TAG_Nome": "AGRICULTURA",
+      "TAG_Descricao": "PEDIDO AGRICULTURA DE PRECISÃO",
+      "PED_Numero": "W25082917045518965",
+      "PED_CodigoIntegracao": "2162",
+      "dthRegistro": "2026-06-19T13:19:23.250Z"
+    },
+    {
+      "TAGxPED_Codigo": "68F181D4-EE1F-422C-B3D3-6D94E9DC694A",
+      "TAG_Codigo": null,
+      "TAG_Nome": "AGRICULTURA",
+      "TAG_Descricao": "PEDIDO AGRICULTURA DE PRECISÃO",
+      "PED_Numero": "W25082917311518965",
+      "PED_CodigoIntegracao": "2163",
+      "dthRegistro": "2026-06-19T13:19:23.250Z"
+    },
+    {
+      "TAGxPED_Codigo": "D70DBE3E-E393-4273-8681-FB50F26CF3CB",
+      "TAG_Codigo": null,
+      "TAG_Nome": "AGRICULTURA",
+      "TAG_Descricao": "PEDIDO AGRICULTURA DE PRECISÃO",
+      "PED_Numero": "W25082916553318965",
+      "PED_CodigoIntegracao": "2161",
+      "dthRegistro": "2026-06-19T13:19:23.250Z"
+    },
+    {
+      "TAGxPED_Codigo": "e38a736d-312f-4dd2-a825-00bef0e15d5c",
+      "TAG_Codigo": null,
+      "TAG_Nome": "AGRICULTURA",
+      "TAG_Descricao": "PEDIDO AGRICULTURA DE PRECISÃO",
+      "PED_Numero": "2605071619583845060",
+      "PED_CodigoIntegracao": "2550",
+      "dthRegistro": "2026-06-19T13:19:23.250Z"
+    }
+  ]
+}

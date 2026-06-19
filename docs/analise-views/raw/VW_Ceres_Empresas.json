@@ -1,0 +1,139 @@
+{
+  "view": "VW_Ceres_Empresas",
+  "total": 4,
+  "error": null,
+  "columns": [
+    {
+      "name": "EMP_idEmpresa",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "EMP_CNPJ_CPF",
+      "types": [
+        "int-str"
+      ]
+    },
+    {
+      "name": "EMP_nome",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "EMP_Telefone",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "EMP_Email",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "EMP_Endereco",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "EMP_EnderecoNro",
+      "types": [
+        "int-str"
+      ]
+    },
+    {
+      "name": "EMP_CEP",
+      "types": [
+        "int-str",
+        "string"
+      ]
+    },
+    {
+      "name": "EMP_Bairro",
+      "types": [
+        "string",
+        "int-str"
+      ]
+    },
+    {
+      "name": "EMP_Cidade",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "EMP_Estado",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "EMP_UF",
+      "types": [
+        "string"
+      ]
+    }
+  ],
+  "sample": [
+    {
+      "EMP_idEmpresa": 84239246,
+      "EMP_CNPJ_CPF": "23688454000100",
+      "EMP_nome": "CERES - CANDIOTTO E STORTI EQUIPAMENTOS E MAQUINAS AGRICOLAS LTDA",
+      "EMP_Telefone": "46 32271043",
+      "EMP_Email": "ceresmaquinas@hotmail.com",
+      "EMP_Endereco": "Rua Francisco Zilio",
+      "EMP_EnderecoNro": "1287",
+      "EMP_CEP": "85520000",
+      "EMP_Bairro": "Industrial",
+      "EMP_Cidade": "Vitorino",
+      "EMP_Estado": "Paraná",
+      "EMP_UF": "PR"
+    },
+    {
+      "EMP_idEmpresa": 84239303,
+      "EMP_CNPJ_CPF": "23688454000283",
+      "EMP_nome": "CERES - CANDIOTTO E STORTI EQUIPAMENTOS E MAQUINAS AGRICOLAS LTDA",
+      "EMP_Telefone": "49 34336532",
+      "EMP_Email": "ceresmaquinas@hotmail.com",
+      "EMP_Endereco": "RUA ROMILDO FERRONATTO",
+      "EMP_EnderecoNro": "0",
+      "EMP_CEP": "",
+      "EMP_Bairro": "0",
+      "EMP_Cidade": "Xanxerê",
+      "EMP_Estado": "Santa Catarina",
+      "EMP_UF": "SC"
+    },
+    {
+      "EMP_idEmpresa": 84239304,
+      "EMP_CNPJ_CPF": "23688454000364",
+      "EMP_nome": "CERES - CANDIOTTO E STORTI EQUIPAMENTOS E MAQUINAS AGRICOLAS LTDA",
+      "EMP_Telefone": "46 32271043",
+      "EMP_Email": "ceresmaquinas@hotmail.com",
+      "EMP_Endereco": "AVENIDA PREFEITO FREDERICO HEYSE",
+      "EMP_EnderecoNro": "0",
+      "EMP_CEP": "",
+      "EMP_Bairro": "0",
+      "EMP_Cidade": "Mafra",
+      "EMP_Estado": "Santa Catarina",
+      "EMP_UF": "SC"
+    },
+    {
+      "EMP_idEmpresa": 84239305,
+      "EMP_CNPJ_CPF": "23688454000445",
+      "EMP_nome": "CERES - CANDIOTTO E STORTI EQUIPAMENTOS E MAQUINAS AGRICOLAS LTDA",
+      "EMP_Telefone": "46 32271043",
+      "EMP_Email": "ceresmaquinas@hotmail.com",
+      "EMP_Endereco": "AVENIDA PREFEITO MOACIR JUIO SILVESTRE",
+      "EMP_EnderecoNro": "0",
+      "EMP_CEP": "",
+      "EMP_Bairro": "0",
+      "EMP_Cidade": "Guarapuava",
+      "EMP_Estado": "Paraná",
+      "EMP_UF": "PR"
+    }
+  ]
+}
