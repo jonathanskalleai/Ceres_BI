@@ -27,7 +27,7 @@ interface MirrorNegocio {
 
 interface MirrorPedido {
   ngo_numero: string;
-  pdo_situacao: string | null;
+  pdo_situacao_pedido: string | null;
   pdo_vlr_pedido: number | null;
   pdo_vlr_financiado: number | null;
   pdo_vlr_recurso_proprio: number | null;
@@ -75,7 +75,7 @@ const MIRROR_NEGOCIOS_COLS = [
 
 const MIRROR_PEDIDOS_COLS = [
   "ngo_numero",
-  "pdo_situacao",
+  "pdo_situacao_pedido",
   "pdo_vlr_pedido",
   "pdo_vlr_financiado",
   "pdo_vlr_recurso_proprio",
@@ -151,7 +151,7 @@ export async function fetchNegociosMensais(
       cliente: n.cli_nome || "",
       consultor: vendedorNome || pedido?.pdo_vendedor || "",
       valor_pedido: Number(valorPedido) || 0,
-      pdo_situacao_pedido: pedido?.pdo_situacao || "",
+      pdo_situacao_pedido: pedido?.pdo_situacao_pedido || "",
       ngo_etapa: n.ngo_etapa || "",
       ngo_conclusao: n.ngo_conclusao || "",
       ngo_motivo_ganho: n.ngo_motivo_ganho || "",

@@ -21,7 +21,7 @@ export interface PedidosBIFetchOptions {
 
 interface MirrorPedidoRow {
   ngo_numero: string;
-  pdo_situacao: string | null;
+  pdo_situacao_pedido: string | null;
   pdo_vlr_pedido: number | null;
   pdo_vlr_financiado: number | null;
   pdo_vlr_recurso_proprio: number | null;
@@ -44,7 +44,7 @@ const PEDIDOS_COLUMNS = [
 
 const MIRROR_PEDIDOS_SELECT = [
   "ngo_numero",
-  "pdo_situacao",
+  "pdo_situacao_pedido",
   "pdo_vlr_pedido",
   "pdo_vlr_financiado",
   "pdo_vlr_recurso_proprio",
@@ -57,7 +57,7 @@ const MIRROR_PEDIDOS_SELECT = [
 function mapMirrorRow(row: MirrorPedidoRow): PedidoRow {
   return {
     NGO_Numero: row.ngo_numero,
-    PDO_SituacaoPedido: row.pdo_situacao ?? "",
+    PDO_SituacaoPedido: row.pdo_situacao_pedido ?? "",
     PDO_VlrPedido: row.pdo_vlr_pedido,
     PDO_VlrFinanciado: row.pdo_vlr_financiado,
     PDO_VlrRecursoProprio: row.pdo_vlr_recurso_proprio,
