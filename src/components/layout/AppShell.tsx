@@ -64,15 +64,15 @@ function AppShellTopbar({ section, title }: AppShellTopbarProps) {
         zIndex: 20,
       }}
     >
-      <div className="flex flex-col gap-1 min-w-0">
+      <div className="flex flex-col gap-1 min-w-0 flex-1">
         <div
-          className="text-[10px] tracking-[0.22em] uppercase truncate"
+          className="text-[10px] tracking-[0.14em] uppercase leading-snug"
           style={{ fontFamily: 'var(--voux-font-mono)', color: 'var(--voux-text-faint)' }}
         >
           Ceres BI <span style={{ color: 'var(--voux-grid-line)' }} className="mx-2">·</span> {section}
         </div>
         <h1
-          className="text-[18px] md:text-[22px] leading-none tracking-[-0.012em] truncate"
+          className="text-[18px] md:text-[22px] leading-tight tracking-[-0.012em]"
           style={{ fontFamily: 'var(--voux-font-display)', margin: 0, color: 'var(--voux-text-heading)' }}
         >
           {title}
