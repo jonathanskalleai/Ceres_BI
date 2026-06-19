@@ -60,10 +60,14 @@ export default function BiPainel() {
   const { kpis: svcKpis, isLoading: svcLoading } = useServicosKPIs(dateRange);
   const { kpis: crossKpis, isLoading: crossLoading } = useCrossKPIs(dateRange, categoria, funil);
 
+  // Cards aparecem todos juntos — sem cascata. Mostra skeleton até a última query terminar.
+  const anyLoading = isLoading || pedLoading || cliLoading || svcLoading || crossLoading;
+
   return (
     <section className="p-8 space-y-2" style={{ background: "var(--voux-bg)" }}>
       {/* PRINCIPAL — grid unico (negocios + valores + faturamento + clientes + servicos) */}
       <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
+
         {/* Negocios */}
         {!isEmpty(kpis.totalNegocios.value) && (
           <KPICard
