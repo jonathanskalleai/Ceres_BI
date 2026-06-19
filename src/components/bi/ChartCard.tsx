@@ -26,13 +26,13 @@ export function ChartCard({
 }: ChartCardProps) {
   return (
     <div
-      className={cn("rounded-[16px] overflow-hidden", className)}
+      className={cn("rounded-2xl overflow-hidden bg-[var(--surface-raised)]", className)}
       style={{
-        background: `linear-gradient(to bottom, var(--voux-card-from), var(--voux-card-to))`,
         border: `1px solid var(--voux-card-border)`,
         boxShadow: `var(--voux-card-shadow)`,
       }}
     >
+
       {/* Card header */}
       <div className="flex items-start justify-between p-5 pb-3">
         <div className="flex flex-col gap-1 min-w-0">
