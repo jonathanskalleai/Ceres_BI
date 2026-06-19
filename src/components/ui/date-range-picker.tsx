@@ -23,6 +23,7 @@ function getPresets(): Preset[] {
   const today = new Date();
   const lastMonth = subMonths(today, 1);
   return [
+    { label: "Mes atual", range: { from: startOfMonth(today), to: endOfMonth(today) } },
     { label: "Mes passado", range: { from: startOfMonth(lastMonth), to: endOfMonth(lastMonth) } },
     { label: "Ultimos 30 dias", range: { from: subMonths(today, 1), to: today } },
     { label: "Ultimos 3 meses", range: { from: subMonths(today, 3), to: today } },

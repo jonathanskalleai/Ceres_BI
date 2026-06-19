@@ -27,13 +27,13 @@ export function SvgBarH({
   valueFormatter = fmtCompact,
   showValues = true,
   max: maxProp,
-  labelW: labelWProp = 130,
+  labelW: labelWProp = 170,
   rowH = 26,
   onBarEnter,
   onBarLeave,
   onBarClick,
 }: SvgBarHProps) {
-  const labelW = Math.min(labelWProp, Math.max(80, width * 0.28));
+  const labelW = Math.min(labelWProp, Math.max(110, width * 0.40));
   const isNarrow = width < 400;
   const gap = 8;
   const padTop = 4;
