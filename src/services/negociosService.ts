@@ -6,7 +6,7 @@ interface MirrorNegocio {
   ngo_conclusao: string | null;
   ngo_etapa: string | null;
   ngo_funil: string | null;
-  ngo_vlr_total: number | null;
+  ngo_vlr_total_negociado: number | null;
   ngo_forma_entrada: string | null;
   ngo_motivo_perda: string | null;
   ngo_motivo_ganho: string | null;
@@ -54,7 +54,7 @@ const MIRROR_NEGOCIOS_COLS = [
   "ngo_conclusao",
   "ngo_etapa",
   "ngo_funil",
-  "ngo_vlr_total",
+  "ngo_vlr_total_negociado",
   "ngo_forma_entrada",
   "ngo_motivo_perda",
   "ngo_motivo_ganho",
@@ -141,7 +141,7 @@ export async function fetchNegociosMensais(
   return negocios.map((n) => {
     const pedido = pedidoMap.get(n.ngo_numero);
     const vendedorNome = usuariosMap.get(String(n.ngo_vendedores ?? "").trim()) || "";
-    const valorPedido = pedido?.pdo_vlr_pedido ?? n.ngo_vlr_total ?? 0;
+    const valorPedido = pedido?.pdo_vlr_pedido ?? n.ngo_vlr_total_negociado ?? 0;
     const recebido = pedido?.pdo_vlr_recurso_proprio ?? 0;
 
     return {
