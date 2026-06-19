@@ -50,29 +50,20 @@ interface AppShellTopbarProps {
   title: string;
 }
 
-function AppShellTopbar({ section, title }: AppShellTopbarProps) {
+function AppShellTopbar({ section: _section, title }: AppShellTopbarProps) {
   return (
     <header
-      className="flex items-center justify-between gap-3 md:gap-5 px-4 sm:px-6 lg:px-10 py-3 md:py-4 lg:py-5 border-b shrink-0"
+      className="flex items-center justify-between gap-3 md:gap-5 px-4 sm:px-6 lg:px-10 py-3 md:py-4 lg:py-5 shrink-0"
       style={{
-        borderColor: 'var(--voux-card-border)',
-        background: 'var(--surface-topbar, var(--voux-tooltip-bg))',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
+        background: 'transparent',
         position: 'sticky',
         top: 0,
         zIndex: 20,
       }}
     >
       <div className="flex flex-col gap-1 min-w-0 flex-1">
-        <div
-          className="text-[10px] tracking-[0.14em] uppercase leading-snug"
-          style={{ fontFamily: 'var(--voux-font-mono)', color: 'var(--voux-text-faint)' }}
-        >
-          Ceres BI <span style={{ color: 'var(--voux-grid-line)' }} className="mx-2">·</span> {section}
-        </div>
         <h1
-          className="text-[18px] md:text-[22px] leading-tight tracking-[-0.012em]"
+          className="text-[20px] md:text-[26px] leading-tight tracking-[-0.012em]"
           style={{ fontFamily: 'var(--voux-font-display)', margin: 0, color: 'var(--voux-text-heading)' }}
         >
           {title}
@@ -82,6 +73,7 @@ function AppShellTopbar({ section, title }: AppShellTopbarProps) {
     </header>
   );
 }
+
 
 
 export function AppShell() {
