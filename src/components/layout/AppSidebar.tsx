@@ -135,19 +135,9 @@ function SidebarLink({
         )}
       />
       {!collapsed && (
-        <>
-          <span className="flex-1 text-left leading-none">{item.label}</span>
-          <span
-            className={cn(
-              'text-[9px] tracking-[0.18em]',
-              active ? 'text-sidebar-primary' : 'text-sidebar-foreground/40',
-            )}
-            style={{ fontFamily: 'var(--voux-font-mono)' }}
-          >
-            {item.num}
-          </span>
-        </>
+        <span className="flex-1 text-left leading-none">{item.label}</span>
       )}
+
     </button>
   );
 
