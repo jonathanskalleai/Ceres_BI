@@ -48,14 +48,16 @@ export function DateRangePicker({ value, onChange }: DateRangePickerProps) {
         <Button
           variant="outline"
           className={cn(
-            "justify-start text-left font-normal min-w-[220px]",
-            !value && "text-muted-foreground",
+            "justify-start text-left font-normal min-w-[220px] h-9 text-sm",
+            "border-[var(--voux-card-border)] bg-transparent text-[var(--voux-text-muted)] hover:bg-[var(--voux-card-border)]/30 hover:text-[var(--voux-text-primary)]",
+            !value && "text-[var(--voux-text-faint)]",
           )}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
           {label}
         </Button>
       </PopoverTrigger>
+
       <PopoverContent className="w-auto p-0" align="start">
         <div className="flex">
           <div className="flex flex-col gap-1 border-r p-3">
