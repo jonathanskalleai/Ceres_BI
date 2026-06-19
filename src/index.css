@@ -3,50 +3,15 @@
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════════════════════
-   VOUX DESIGN SYSTEM — Tokens
-   Editorial Dark · Ceres BI
+   VOUX DESIGN SYSTEM — Ceres BI
+   Camada 1: Primitivos (cores absolutas, NÃO flipam com tema)
+   Camada 2: Tokens semânticos shadcn (--background, --card…)
+   Camada 3: Tokens VOUX semânticos (--voux-text-*, --voux-card-*)
    ═══════════════════════════════════════════════════════════ */
 
-/* ── Theme-aware semantic tokens (light = default, .dark overrides) ── */
+/* ── Camada 1 — Primitivos (sempre fixos) ── */
 :root {
-  --voux-card-from: #ffffff;
-  --voux-card-to: #faf6ef;
-  --voux-card-border: rgba(82,74,62,0.10);
-  --voux-card-shadow: 0 2px 8px rgba(82,74,62,0.06);
-  --voux-text-primary: #1a1714;
-  --voux-text-heading: #1f1c14;
-  --voux-text-muted: #6b6253;
-  --voux-text-faint: #8a8273;
-  --voux-accent: #927142;
-  --voux-skeleton: #ece5d4;
-  --voux-surface: #ffffff;
-  --voux-grid-line: rgba(82,74,62,0.08);
-  --voux-tooltip-bg: rgba(255,255,255,0.96);
-  --voux-tooltip-border: rgba(82,74,62,0.12);
-  --voux-tooltip-text: #1a1714;
-  --voux-tooltip-muted: #8a8273;
-}
-
-.dark {
-  --voux-card-from: #18160f;
-  --voux-card-to: #11100d;
-  --voux-card-border: rgba(214,207,193,0.08);
-  --voux-card-shadow: 0 2px 8px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,250,230,0.03);
-  --voux-text-primary: #ece5d4;
-  --voux-text-heading: #ece5d4;
-  --voux-text-muted: #8a8273;
-  --voux-text-faint: #6b6253;
-  --voux-accent: #d4b896;
-  --voux-skeleton: #2a2620;
-  --voux-surface: #11100d;
-  --voux-grid-line: rgba(214,207,193,0.07);
-  --voux-tooltip-bg: rgba(17,16,13,0.96);
-  --voux-tooltip-border: rgba(212,184,150,0.15);
-  --voux-tooltip-text: #ece5d4;
-  --voux-tooltip-muted: #6b6253;
-}
-
-:root {
+  /* Ink (neutros quentes) */
   --voux-ink-1000: #050403;
   --voux-ink-950:  #0a0907;
   --voux-ink-900:  #11100d;
@@ -62,6 +27,7 @@
   --voux-ink-50:   #ece5d4;
   --voux-ink-0:    #f7f1e3;
 
+  /* Champagne (accent) */
   --voux-champagne-950: #1d160c;
   --voux-champagne-900: #2e2316;
   --voux-champagne-800: #4a3920;
@@ -72,66 +38,94 @@
   --voux-champagne-300: #e0c9aa;
   --voux-champagne-200: #ead7be;
 
-  --voux-success:  #7a9b6f;
-  --voux-warning:  #d4a05a;
-  --voux-danger:   #c97565;
-  --voux-info:     #8ea3b8;
+  /* Status */
+  --voux-success: #7a9b6f;
+  --voux-warning: #d4a05a;
+  --voux-danger:  #c97565;
+  --voux-info:    #8ea3b8;
 
+  /* Tipografia */
   --voux-font-display: "Instrument Serif", Georgia, serif;
   --voux-font-sans:    "Inter", system-ui, sans-serif;
   --voux-font-mono:    "JetBrains Mono", "IBM Plex Mono", monospace;
 
+  /* Timing */
   --voux-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --voux-dur-fast: 120ms;
   --voux-dur-base: 220ms;
 
-  --voux-border-alpha: rgba(214, 207, 193, 0.08);
-  --voux-border-hover: rgba(214, 207, 193, 0.16);
+  /* ── Sidebar tokens FIXOS (sempre dark, em light e dark mode) ── */
+  --sidebar-background:         40 17% 5%;     /* ~#100e0a */
+  --sidebar-foreground:         40 30% 86%;    /* ~#e4dcc8 */
+  --sidebar-primary:            33 40% 71%;    /* champagne-400 */
+  --sidebar-primary-foreground: 30 17% 4%;
+  --sidebar-accent:             36 14% 13%;    /* hover */
+  --sidebar-accent-foreground:  40 44% 88%;
+  --sidebar-border:             36 14% 12%;
+  --sidebar-ring:               33 40% 71%;
+  --sidebar-text-muted:         36 10% 55%;
+  --sidebar-text-faint:         36 8% 42%;
 }
 
 /* ═══════════════════════════════════════════════════════════
-   LIGHT MODE — warm VOUX
+   Camada 2 + 3 — LIGHT MODE (warm editorial off-white)
    ═══════════════════════════════════════════════════════════ */
 @layer base {
   :root {
-    --background:             40 71% 93%;
-    --foreground:             40 17% 3%;
-    --card:                   39 80% 97%;
-    --card-foreground:        40 17% 3%;
-    --popover:                40 71% 93%;
-    --popover-foreground:     40 17% 3%;
-    --primary:                33 38% 42%;
-    --primary-foreground:     40 44% 88%;
-    --secondary:              39 26% 79%;
-    --secondary-foreground:   32 14% 14%;
-    --muted:                  39 26% 79%;
-    --muted-foreground:       33 14% 30%;
-    --accent:                 39 26% 79%;
-    --accent-foreground:      40 17% 3%;
-    --destructive:            9 46% 60%;
-    --destructive-foreground: 40 44% 88%;
-    --border:                 37 11% 66%;
-    --input:                  37 11% 66%;
+    /* shadcn semantic */
+    --background:             40 38% 96%;       /* #faf7f0 off-white quente */
+    --foreground:             40 17% 8%;        /* ink-900 */
+    --card:                   0 0% 100%;        /* branco puro */
+    --card-foreground:        40 17% 8%;
+    --popover:                0 0% 100%;
+    --popover-foreground:     40 17% 8%;
+    --primary:                33 38% 42%;       /* champagne-600 */
+    --primary-foreground:     40 38% 97%;
+    --secondary:              40 22% 92%;
+    --secondary-foreground:   40 17% 14%;
+    --muted:                  40 22% 92%;
+    --muted-foreground:       36 10% 38%;
+    --accent:                 39 50% 90%;
+    --accent-foreground:      40 17% 8%;
+    --destructive:            9 55% 52%;
+    --destructive-foreground: 0 0% 100%;
+    --border:                 36 18% 86%;
+    --input:                  36 18% 86%;
     --ring:                   33 38% 42%;
-    --chart-1: 33 38% 42%;
-    --chart-2: 110 30% 35%;
-    --chart-3: 33 55% 45%;
-    --chart-4: 207 30% 45%;
-    --chart-5: 9 50% 45%;
-    --chart-6: 34 38% 40%;
-    --sidebar-background:         40 17% 3%;
-    --sidebar-foreground:         40 44% 88%;
-    --sidebar-primary:            33 40% 71%;
-    --sidebar-primary-foreground: 30 17% 2%;
-    --sidebar-accent:             32 14% 14%;
-    --sidebar-accent-foreground:  40 44% 88%;
-    --sidebar-border:             32 14% 14%;
-    --sidebar-ring:               33 40% 71%;
+
+    /* Charts — contraste em fundo claro */
+    --chart-1: 33 50% 38%;    /* champagne escuro */
+    --chart-2: 145 30% 32%;   /* verde profundo */
+    --chart-3: 25 65% 45%;    /* terracota */
+    --chart-4: 207 45% 38%;   /* azul aço */
+    --chart-5: 9 55% 48%;     /* vermelho tijolo */
+    --chart-6: 270 25% 45%;   /* roxo poeirento */
+
+    /* VOUX semânticos derivados (light) */
+    --voux-card-from:        #ffffff;
+    --voux-card-to:          #fbf8f1;
+    --voux-card-border:      hsl(36 18% 86%);
+    --voux-card-shadow:      0 1px 3px rgba(82,74,62,0.06), 0 4px 12px rgba(82,74,62,0.04);
+    --voux-text-primary:     #1a1714;
+    --voux-text-heading:     #11100d;
+    --voux-text-muted:       #5c5447;
+    --voux-text-faint:       #8a8273;
+    --voux-accent:           #927142;
+    --voux-skeleton:         #efe9dc;
+    --voux-surface:          #ffffff;
+    --voux-grid-line:        rgba(82,74,62,0.10);
+    --voux-tooltip-bg:       rgba(255,255,255,0.98);
+    --voux-tooltip-border:   rgba(82,74,62,0.14);
+    --voux-tooltip-text:     #1a1714;
+    --voux-tooltip-muted:    #6b6253;
+    --voux-border-alpha:     rgba(82,74,62,0.10);
+    --voux-border-hover:     rgba(82,74,62,0.18);
+
     --radius: 0.75rem;
   }
 
   /* ═══════════════════════════════════════════════════════════
-     DARK MODE — VOUX editorial dark (primary look)
+     DARK MODE — VOUX editorial dark
      ═══════════════════════════════════════════════════════════ */
   .dark {
     --background:             40 17% 3%;
@@ -153,20 +147,33 @@
     --border:                 32 14% 14%;
     --input:                  40 22% 10%;
     --ring:                   33 40% 71%;
+
     --chart-1: 33 40% 71%;
     --chart-2: 110 16% 52%;
     --chart-3: 33 61% 59%;
     --chart-4: 207 19% 64%;
     --chart-5: 9 46% 60%;
     --chart-6: 34 42% 54%;
-    --sidebar-background:         43 13% 6%;
-    --sidebar-foreground:         40 44% 88%;
-    --sidebar-primary:            33 40% 71%;
-    --sidebar-primary-foreground: 30 17% 2%;
-    --sidebar-accent:             32 14% 14%;
-    --sidebar-accent-foreground:  40 44% 88%;
-    --sidebar-border:             32 14% 14%;
-    --sidebar-ring:               33 40% 71%;
+
+    /* VOUX semânticos derivados (dark) */
+    --voux-card-from:        #18160f;
+    --voux-card-to:          #11100d;
+    --voux-card-border:      rgba(214,207,193,0.08);
+    --voux-card-shadow:      0 2px 8px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,250,230,0.03);
+    --voux-text-primary:     #ece5d4;
+    --voux-text-heading:     #ece5d4;
+    --voux-text-muted:       #8a8273;
+    --voux-text-faint:       #6b6253;
+    --voux-accent:           #d4b896;
+    --voux-skeleton:         #2a2620;
+    --voux-surface:          #11100d;
+    --voux-grid-line:        rgba(214,207,193,0.07);
+    --voux-tooltip-bg:       rgba(17,16,13,0.96);
+    --voux-tooltip-border:   rgba(212,184,150,0.15);
+    --voux-tooltip-text:     #ece5d4;
+    --voux-tooltip-muted:    #6b6253;
+    --voux-border-alpha:     rgba(214, 207, 193, 0.08);
+    --voux-border-hover:     rgba(214, 207, 193, 0.16);
   }
 
   * { @apply border-border; }
@@ -190,70 +197,42 @@
   }
 
   ::selection {
-    background: #d4b896;
-    color: #050403;
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
   }
 }
 
 /* ═══════════════════════════════════════════════════════════
-   VOUX COMPONENT OVERRIDES
+   COMPONENT OVERRIDES — theme-aware (sem !important quando dá)
    ═══════════════════════════════════════════════════════════ */
 
-/* Tabs — pill style (light mode base) */
+/* Tabs — pill style (ambos os modos) */
 [role="tablist"] {
-  background: var(--voux-ink-0) !important;
-  border: 1px solid rgba(82,74,62,0.10) !important;
-  border-radius: 999px !important;
-  padding: 3px !important;
+  background: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
+  border-radius: 999px;
+  padding: 3px;
   gap: 2px;
-  height: auto !important;
+  height: auto;
 }
 [role="tab"] {
-  border-radius: 999px !important;
-  font-family: var(--voux-font-mono) !important;
-  font-size: 10px !important;
-  letter-spacing: 0.14em !important;
-  text-transform: uppercase !important;
-  color: var(--voux-ink-500) !important;
-  transition: all var(--voux-dur-fast) var(--voux-ease-out) !important;
-  padding: 6px 14px !important;
-  height: auto !important;
+  border-radius: 999px;
+  font-family: var(--voux-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+  transition: all var(--voux-dur-fast) var(--voux-ease-out);
+  padding: 6px 14px;
+  height: auto;
 }
 [role="tab"][data-state="active"] {
-  background: var(--voux-champagne-600) !important;
-  color: #ffffff !important;
-  box-shadow: none !important;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  box-shadow: none;
 }
 
-/* Tabs — pill style (dark override) */
-.dark [role="tablist"] {
-  background: var(--voux-ink-900) !important;
-  border: 1px solid var(--voux-border-alpha) !important;
-  border-radius: 999px !important;
-  padding: 3px !important;
-  gap: 2px;
-  height: auto !important;
-}
-
-.dark [role="tab"] {
-  border-radius: 999px !important;
-  font-family: var(--voux-font-mono) !important;
-  font-size: 10px !important;
-  letter-spacing: 0.14em !important;
-  text-transform: uppercase !important;
-  color: var(--voux-ink-300) !important;
-  transition: all var(--voux-dur-fast) var(--voux-ease-out) !important;
-  padding: 6px 14px !important;
-  height: auto !important;
-}
-
-.dark [role="tab"][data-state="active"] {
-  background: var(--voux-champagne-400) !important;
-  color: var(--voux-ink-1000) !important;
-  box-shadow: none !important;
-}
-
-/* Badges mono */
+/* Badges mono em dark */
 .dark .inline-flex[class*="rounded-full"] {
   font-family: var(--voux-font-mono);
   font-size: 9px;
@@ -261,25 +240,24 @@
   text-transform: uppercase;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 5px; height: 5px; }
+/* Scrollbar — adapta por tema */
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--voux-ink-600); border-radius: 999px; }
-::-webkit-scrollbar-thumb:hover { background: var(--voux-ink-500); }
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
 
-/* Card shadows in dark mode */
+/* Card shadow só em dark (no light usa box-shadow nativo) */
 .dark .shadow-sm,
 .dark .shadow-md {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 250, 230, 0.03) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 250, 230, 0.03);
 }
 
-/* Instrument Serif utility */
-.font-display {
-  font-family: var(--voux-font-display);
-}
-.font-mono-voux {
-  font-family: var(--voux-font-mono);
-}
-.text-champagne {
-  color: var(--voux-champagne-400);
-}
+/* Utilities */
+.font-display { font-family: var(--voux-font-display); }
+.font-mono-voux { font-family: var(--voux-font-mono); }
+.text-champagne { color: var(--voux-champagne-400); }
