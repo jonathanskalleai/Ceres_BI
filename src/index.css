@@ -121,6 +121,7 @@
     --voux-tooltip-muted:    #b3ab9c;
     --voux-border-alpha:     rgba(82,74,62,0.10);
     --voux-border-hover:     rgba(82,74,62,0.20);
+    --voux-label:            #0a0907;  /* rótulos de cards no light: preto */
 
     /* Hierarquia de superfícies (3 níveis) */
     --surface-base:          hsl(36 24% 91%);
