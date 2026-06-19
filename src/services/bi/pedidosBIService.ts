@@ -14,6 +14,11 @@ export interface PedidoRow {
   PDO_FinanciamentoBanco: string;
 }
 
+export interface PedidosBIFetchOptions {
+  from?: string;
+  to?: string;
+}
+
 interface MirrorPedidoRow {
   ngo_numero: string;
   pdo_situacao: string | null;
@@ -37,6 +42,18 @@ const PEDIDOS_COLUMNS = [
   "PDO_DthPedido",
 ];
 
+const MIRROR_PEDIDOS_SELECT = [
+  "ngo_numero",
+  "pdo_situacao",
+  "pdo_vlr_pedido",
+  "pdo_vlr_financiado",
+  "pdo_vlr_recurso_proprio",
+  "pdo_cidade_uf_entrega",
+  "pdo_vendedor",
+  "pdo_dth_pedido",
+  "pdo_financiamento_banco",
+].join(",");
+
 function mapMirrorRow(row: MirrorPedidoRow): PedidoRow {
   return {
     NGO_Numero: row.ngo_numero,
@@ -51,11 +68,12 @@ function mapMirrorRow(row: MirrorPedidoRow): PedidoRow {
   };
 }
 
-async function fetchFromMirror(): Promise<PedidoRow[]> {
-  const { data, error } = await supabase
-    .schema("mirror")
-    .from("crm_pedidos")
-    .select("*");
+async function fetchFromMirror(options?: PedidosBIFetchOptions): Promise<PedidoRow[]> {
+  let q = supabase.schema("mirror").from("crm_pedidos").select(MIRROR_PEDIDOS_SELECT);
+  if (options?.from) q = q.gte("pdo_dth_pedido", options.from);
+  if (options?.to) q = q.lte("pdo_dth_pedido", `${options.to}T23:59:59.999`);
+  q = q.limit(50000);
+  const { data, error } = await q;
   if (error) throw new Error(error.message);
   return ((data ?? []) as MirrorPedidoRow[]).map(mapMirrorRow);
 }
@@ -64,10 +82,10 @@ async function fetchFromLegacy(): Promise<PedidoRow[]> {
   return await fetchAllPages<PedidoRow>("VW_Ceres_CRM_Pedidos", PEDIDOS_COLUMNS);
 }
 
-export async function fetchPedidosBI(): Promise<PedidoRow[]> {
+export async function fetchPedidosBI(options?: PedidosBIFetchOptions): Promise<PedidoRow[]> {
   if (USE_MIRROR.crm_pedidos) {
     try {
-      return await fetchFromMirror();
+      return await fetchFromMirror(options);
     } catch {
       return await fetchFromLegacy();
     }
