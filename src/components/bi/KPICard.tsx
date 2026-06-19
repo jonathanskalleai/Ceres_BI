@@ -51,11 +51,10 @@ export function KPICard({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-[20px] p-[22px_24px]",
-        "border",
+        "relative overflow-hidden rounded-2xl p-5 md:p-6 transition-colors",
+        "border bg-[var(--surface-raised)]",
       )}
       style={{
-        background: "linear-gradient(to bottom, var(--voux-card-from), var(--voux-card-to))",
         borderColor: "var(--voux-card-border)",
         boxShadow: "var(--voux-card-shadow)",
         ...(accentColor ? { borderLeftColor: accentColor, borderLeftWidth: 3 } : {}),
@@ -68,11 +67,11 @@ export function KPICard({
         <div
           className="absolute top-2 left-2 right-2 z-10 rounded-lg px-3 py-2 text-[11px] leading-tight"
           style={{
-            background: "var(--voux-bg, #0f0f0f)",
-            border: "1px solid var(--voux-card-border)",
-            color: "var(--voux-text-soft)",
+            background: "var(--voux-tooltip-bg)",
+            border: "1px solid var(--voux-tooltip-border)",
+            color: "var(--voux-tooltip-text)",
             fontFamily: "var(--voux-font-mono)",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
           }}
         >
           {formula}
@@ -80,14 +79,24 @@ export function KPICard({
       )}
 
       {/* Eyebrow */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3 md:mb-4 gap-2 min-w-0">
         <span
-          className="text-[10px] tracking-[0.22em] uppercase"
+          className="text-[10px] tracking-[0.22em] uppercase truncate"
           style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-muted)" }}
         >
           {title}
         </span>
-        {Icon && <Icon className="h-3.5 w-3.5 opacity-40" style={{ color: "var(--voux-text-muted)" }} />}
+        {Icon && (
+          <span
+            className="inline-flex h-7 w-7 items-center justify-center rounded-full shrink-0"
+            style={{
+              background: "color-mix(in srgb, var(--voux-accent) 12%, transparent)",
+              color: "var(--voux-accent)",
+            }}
+          >
+            <Icon className="h-3.5 w-3.5" />
+          </span>
+        )}
       </div>
 
       {/* Value */}
@@ -99,8 +108,8 @@ export function KPICard({
       ) : (
         <>
           <div
-            className="text-[28px] font-bold leading-none tracking-[-0.02em] mb-1"
-            style={{ color: accentColor || "var(--voux-text-primary)" }}
+            className="text-2xl md:text-3xl font-semibold leading-none tracking-[-0.02em] mb-1"
+            style={{ color: accentColor || "var(--voux-text-heading)" }}
           >
             {value}
           </div>
@@ -117,3 +126,4 @@ export function KPICard({
     </div>
   );
 }
+

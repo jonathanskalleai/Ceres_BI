@@ -1,87 +1,114 @@
+## Objetivo
 
-# Plano: Reestruturação Visual do Ceres BI
+Refinar a parte visual de TODAS as telas (BI + CRM) com foco em **modo light**, **organização de componentes** e **responsividade**, mantendo o design system editorial (champagne + serif Instrument + mono) já estabelecido na Fase 1.
 
-## Diagnóstico (o que está acontecendo hoje)
-
-O projeto tem **dois sistemas de cor convivendo e brigando**:
-
-1. **Tokens shadcn** (`--background`, `--foreground`, `--sidebar-*`, etc.) — definidos corretamente em `src/index.css` para light e dark, inclusive com `--sidebar-background: 40 17% 3%` (preto-tinta) no modo light.
-2. **Tokens VOUX** (`--voux-card-from`, `--voux-card-to`, `--voux-text-primary`, `--voux-accent`, etc.) — definidos em `:root` como **cores claras** e sobrescritos em `.dark` para cores escuras.
-
-**O problema central:** o `AppSidebar.tsx`, o `AppShellTopbar` e a maioria dos componentes BI usam **apenas os tokens VOUX**, ignorando os tokens shadcn `--sidebar-*`. Resultado:
-
-- No modo dark tudo funciona (foi onde o design foi pensado).
-- No modo light o sidebar fica **bege/creme** (`--voux-card-to: #faf6ef`) em vez de preto, como deveria pelo token shadcn que já existe.
-- Botões ativos, hover e ícones herdam variáveis que flipam junto, perdendo contraste.
-- Há `!important` em `[role="tablist"]` e cards forçando aparência dark mesmo em light.
-
-**Responsividade:** `AppShell` é `flex h-screen` com sidebar fixo de 252px e topbar `px-10 py-5`. Não há breakpoint, drawer mobile nem ajuste de paddings. Em telas <1024px o sidebar consome a largura útil e os charts BI quebram.
-
-**Outros achados menores:**
-- Cores hardcoded inline (`#927142`, `rgba(...)`) em componentes — devem virar tokens.
-- Tooltips e badges com `.dark` override mas sem variante light equivalente.
-- `BiLayout` não tem nenhum container responsivo — herda só o `<Outlet/>`.
+Sem mexer em lógica, hooks, queries ou estrutura de dados — só camada visual/presentation.
 
 ---
 
-## Estratégia de Correção (3 fases)
+## Diagnóstico atual (com base no código + relatos)
 
-### Fase 1 — Reestruturar o token system (fundação)
-Sem mexer em layout. Só limpar a base de cores.
+**Modo light — problemas estruturais:**
+1. Muitos componentes ainda usam `var(--voux-card-from/to)` com gradiente escuro hardcoded → no light fica "lavado" e sem contraste.
+2. KPICard, ChartCard e cards de seção usam `boxShadow: var(--voux-card-shadow)` muito sutil → no light somem visualmente.
+3. Tooltips, badges de status e bordas com `rgba` fixos pensados para fundo escuro → no light viram fantasmas.
+4. Topbar usa `var(--voux-tooltip-bg)` translúcido → no light fica esbranquiçada sem hierarquia.
+5. Cards de dashboard administrativo, consultores e críticos usam `shadow-sm` shadcn padrão (que no light é quase invisível) e `border-0`.
+6. Gráficos (ECharts) recebem cores via `useChartTheme` — precisa validar paleta light.
 
-1. **Separar tokens em 3 camadas claras** no `src/index.css`:
-   - **Camada 1 — Primitivos VOUX** (champanhe, ink) ficam fixos em `:root` (cores absolutas, não flipam).
-   - **Camada 2 — Tokens semânticos shadcn** (`--background`, `--card`, `--foreground`, `--sidebar-*`, `--border`...) — corrigir paleta light e dark.
-   - **Camada 3 — Tokens VOUX semânticos** (`--voux-card-from`, `--voux-text-primary`...) — passar a derivar dos tokens shadcn (ou ser alias), de forma que o modo light tenha valores coerentes.
+**Organização de componentes:**
+1. `DashboardBIReal` empilha header + filtros + tabs com paddings inconsistentes (`p-8` aqui, `p-6` no admin, `p-4` em outros).
+2. KPIs em grid fixo `grid-cols-4` (quebra <1280px).
+3. Cards "por usuário" no Admin têm densidade desigual entre seções.
+4. Topbar do AppShell + Topbar interno de páginas (BiTopbarPortal/CrmTopbarPortal) competem por espaço.
+5. Filtros (DateRange, Selects, Badge sync) ficam apertados no header em larguras médias.
 
-2. **Travar o sidebar como sempre escuro** (decisão sua):
-   - `--sidebar-background` continua escuro em ambos os modos.
-   - Criar tokens dedicados (`--sidebar-text`, `--sidebar-text-muted`, `--sidebar-hover`, `--sidebar-active`) com valores fixos para que o sidebar não dependa do tema.
-   - Refatorar `AppSidebar.tsx` para usar `bg-sidebar text-sidebar-foreground` e os novos tokens — fim das classes `bg-[var(--voux-card-to)]` no sidebar.
-
-3. **Refinar paleta light** com base no champanhe/ink:
-   - Fundo: off-white quente (`#faf7f0`), não bege saturado.
-   - Cards: branco com borda sutil e sombra mínima.
-   - Texto: ink-900 / ink-500 / ink-400 para hierarquia.
-   - Accent: champagne-600 (`#927142`) — bom contraste em branco.
-   - Charts: revisar as 6 cores para terem contraste em fundo claro (as atuais foram pensadas para fundo escuro).
-
-4. **Remover `!important` desnecessários** em `[role="tablist"]`, badges e shadows; transformar em variantes shadcn.
-
-### Fase 2 — Responsividade do shell
-1. **Sidebar mobile**: virar drawer (`<Sheet/>` shadcn) abaixo de `lg` (1024px). Acima, comportamento atual de collapse para 56px.
-2. **Topbar**: paddings responsivos (`px-4 sm:px-6 lg:px-10`), título reduz em telas estreitas, ações vão para overflow `…` em mobile.
-3. **AppShell**: trocar `h-screen` rígido por `min-h-dvh` (corrige iOS), garantir `min-w-0` nos containers para charts não estourarem.
-4. **Cards BI** (`KPICard`, `ChartCard`): grids responsivos `grid-cols-1 sm:grid-cols-2 xl:grid-cols-4`; charts com `ResponsiveContainer` revisado.
-
-### Fase 3 — Passada componente a componente
-Auditar e corrigir, página por página, usando os novos tokens:
-- `BiPainel`, `BiComercial`, `BiPedidos`, `BiProdutos`, `BiServicos`, `BiOperacional`, `BiAdmin`, `BiAcoes`, `BiInteligencia`.
-- Páginas CRM (`CrmOverview`, `CrmConsultores`, etc.).
-- Tabelas, filtros (`CrmFiltersBar`), tooltips, modais.
-
-Cada página: validar light + dark + breakpoints sm/md/lg/xl. Sem mexer em lógica de dados / hooks / queries.
+**Responsividade:**
+1. Sidebar 252px fixo sem mobile drawer.
+2. Sem breakpoints `sm/md/lg` em grids de KPI e charts.
+3. Tabs do BI (`flex flex-wrap`) funciona mas overflow visual feio.
+4. Topbar `px-10 py-5` sem reduzir em telas pequenas.
 
 ---
 
-## Antes de começar — 3 decisões que você precisa tomar
+## Plano de execução
 
-1. **Sidebar sempre dark, em ambos os modos?** Você falou que sim — confirmar. (Alternativa: sidebar acompanha tema mas com uma paleta light decente.)
-2. **Direção visual do modo light**: prefere
-   - (a) **warm editorial** — off-white quente + champanhe, mantém alma VOUX, ou
-   - (b) **clean BI** — branco neutro + cinza-azulado + accent champanhe, mais "ferramenta de trabalho", ou
-   - (c) eu gero 2-3 propostas visuais (mood boards renderizados) para você escolher?
-3. **Ordem de ataque na Fase 3**: começa por qual tela? Sugiro `/bi/painel` (entrada) ou `/bi/comercial` (a que você está olhando agora).
+### Fase 2 — Refino do modo light + tokens de superfície (PRIMEIRO)
+**Por que primeiro:** sem isso, qualquer ajuste por tela vai parecer ruim no light.
+
+1. **Repensar tokens de card no light** em `src/index.css`:
+   - `--voux-card-from` → branco puro `#ffffff`
+   - `--voux-card-to` → branco quente `#fdfbf6` (delta sutil, não gradiente óbvio)
+   - `--voux-card-border` → `hsl(36 18% 88%)` (mais visível que hoje)
+   - `--voux-card-shadow` → 2 camadas: `0 1px 2px rgba(40,30,15,.04), 0 8px 24px -8px rgba(40,30,15,.08)` (depth real no light)
+   - `--voux-grid-line` no light → `rgba(82,74,62,0.08)` (gráficos legíveis)
+   - Tooltips no light → fundo `#1a1714` claro-invertido (alto contraste), texto champagne-200
+
+2. **Hierarquia de superfícies (3 níveis):**
+   - `--surface-base` (background da página)
+   - `--surface-raised` (card)
+   - `--surface-overlay` (popover/modal)
+   Hoje só temos `card` — adiciona `--surface-base` e `--surface-overlay`.
+
+3. **Refinar topbar AppShell:**
+   - Light: `background: rgba(255,253,247,0.85)` + `border-bottom` mais sólido
+   - Dark: mantém o blur atual
+   - Reduzir padding em `<lg` (`px-4 sm:px-6 lg:px-10`)
+
+4. **KPICard:**
+   - Trocar gradiente por `bg-[var(--surface-raised)]` puro
+   - Sombra/borda derivadas dos tokens novos
+   - Ícone com background pill sutil (acento champagne em ambos os modos)
+   - Tamanho de valor responsivo: `text-2xl md:text-3xl`
+
+5. **ChartCard:**
+   - Mesmo tratamento de superfície
+   - Garantir título com `text-voux-text-heading` e subtítulo `text-voux-text-muted`
+   - Grid lines e eixos usam `--voux-grid-line` (já existe, só validar no useChartTheme)
+
+### Fase 3 — Responsividade do shell
+1. Sidebar: `Sheet` mobile (`<lg`), mini-collapse (56px) em `lg-xl`, full em `xl+`.
+2. Topbar responsivo (paddings + título que encurta).
+3. `AppShell` usa `min-h-dvh` e `min-w-0` nos containers internos.
+4. Grids de KPI globais: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`.
+5. Filtros do header viram drawer/sheet em mobile.
+
+### Fase 4 — Refino por tela (uma a uma, com checklist)
+Para cada tela aplico o mesmo checklist e valido em light + dark + mobile:
+
+**Ordem proposta (das mais visíveis para as menos):**
+1. `/bi/painel` — vitrine
+2. `/bi/comercial` — mais usada
+3. `/crm/overview`
+4. `/crm/consultores` (+ detail)
+5. `/crm/registros`
+6. `/crm/administrativo`
+7. `/crm/criticos`
+8. `/crm/insights` / `/crm/negocios` / `/crm/mapa` / `/crm/regioes`
+9. `/bi/pedidos`, `/bi/produtos`, `/bi/servicos`, `/bi/operacional`, `/bi/admin`, `/bi/acoes`
+10. `/tools/*` e `/admin/*`
+
+**Checklist por tela:**
+- [ ] Remove cores hardcoded (`text-white`, `bg-[#...]`, `border-0 shadow-sm`)
+- [ ] Aplica tokens semânticos novos
+- [ ] Espaçamentos padronizados (page padding `p-4 md:p-6 lg:p-8`)
+- [ ] Hierarquia tipográfica (eyebrow mono / título serif / corpo sans)
+- [ ] Grids responsivos
+- [ ] Estados loading/empty/error consistentes
+- [ ] Validação visual light + dark + 375px/768px/1280px/1440px
 
 ---
 
-## O que NÃO entra neste plano
-- Lógica de dados, hooks, queries Supabase, edge functions — intocados.
-- Mudanças de funcionalidade ou navegação.
-- Substituição de fontes (Instrument Serif + Inter + JetBrains Mono ficam).
-- Logo / marca.
+## Fora de escopo
+- Lógica de negócio, queries, hooks de dados
+- Troca de fontes
+- Mudança de rotas ou estrutura de páginas
+- Refactor de componentes para outros padrões além do necessário p/ visual
 
-## Entregáveis ao fim de cada fase
-- Fase 1: `src/index.css` reescrito + `AppSidebar` refatorado. Modo light já fica "respirável", sidebar fica dark fixo.
-- Fase 2: shell responsivo de verdade, testado em 375/768/1280/1920.
-- Fase 3: telas BI/CRM polidas uma a uma — entrego em PRs pequenas para você validar cada uma.
+---
+
+## Decisões que preciso de você
+
+1. **Posso começar pela Fase 2 (tokens light + cards) e validar com você o `/bi/painel` antes de seguir?** (recomendo — é o mais barato pra alinhar visual)
+2. **Sidebar em mobile:** drawer (Sheet) tradicional, ou esconde por padrão e mostra com botão flutuante?
+3. **Densidade preferida:** confortável (mais respiro, fonte 14px) ou compacta (mais info por tela, fonte 13px)? Hoje está num meio termo inconsistente.

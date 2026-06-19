@@ -101,25 +101,31 @@
     --chart-5: 9 55% 48%;     /* vermelho tijolo */
     --chart-6: 270 25% 45%;   /* roxo poeirento */
 
-    /* VOUX semânticos derivados (light) */
+    /* VOUX semânticos derivados (light) — superfícies refinadas */
     --voux-card-from:        #ffffff;
-    --voux-card-to:          #fbf8f1;
-    --voux-card-border:      hsl(36 18% 86%);
-    --voux-card-shadow:      0 1px 3px rgba(82,74,62,0.06), 0 4px 12px rgba(82,74,62,0.04);
+    --voux-card-to:          #fdfbf6;
+    --voux-card-border:      hsl(36 20% 88%);
+    --voux-card-shadow:      0 1px 2px rgba(40,30,15,0.04), 0 8px 24px -8px rgba(40,30,15,0.08);
     --voux-text-primary:     #1a1714;
-    --voux-text-heading:     #11100d;
+    --voux-text-heading:     #0e0d0a;
     --voux-text-muted:       #5c5447;
     --voux-text-faint:       #8a8273;
     --voux-accent:           #927142;
     --voux-skeleton:         #efe9dc;
-    --voux-surface:          #ffffff;
-    --voux-grid-line:        rgba(82,74,62,0.10);
-    --voux-tooltip-bg:       rgba(255,255,255,0.98);
-    --voux-tooltip-border:   rgba(82,74,62,0.14);
-    --voux-tooltip-text:     #1a1714;
-    --voux-tooltip-muted:    #6b6253;
+    --voux-surface:          #fdfbf6;
+    --voux-grid-line:        rgba(82,74,62,0.08);
+    --voux-tooltip-bg:       #1a1714;
+    --voux-tooltip-border:   rgba(212,184,150,0.20);
+    --voux-tooltip-text:     #ece5d4;
+    --voux-tooltip-muted:    #b3ab9c;
     --voux-border-alpha:     rgba(82,74,62,0.10);
-    --voux-border-hover:     rgba(82,74,62,0.18);
+    --voux-border-hover:     rgba(82,74,62,0.20);
+
+    /* Hierarquia de superfícies (3 níveis) */
+    --surface-base:          hsl(40 38% 96%);
+    --surface-raised:        #ffffff;
+    --surface-overlay:       #ffffff;
+    --surface-topbar:        rgba(253, 251, 246, 0.85);
 
     --radius: 0.75rem;
   }
