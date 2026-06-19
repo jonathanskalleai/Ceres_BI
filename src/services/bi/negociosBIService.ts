@@ -4,13 +4,6 @@ import { fetchAllPages } from "@/services/sqlServerApi";
 
 /**
  * Linha de negocio do CRM com as colunas de negocio ricas de VW_Ceres_CRM_Negocios.
- * Diferente do tipo legado, este expoe origem do lead, motivos de perda/ganho,
- * ciclo de vendas, esforco (qtd acoes) e probabilidade — o "ouro" da view.
- *
- * ATENCAO: a view e denormalizada por produto; ~10% dos NGO_Numero aparecem em
- * multiplas linhas com o mesmo NGO_VlrTotalNegociado. Toda agregacao em nivel de
- * negocio DEVE deduplicar por NGO_Numero (ver aggregateNegociosBI).
- * Quando USE_MIRROR=true, a dedup ja foi feita na ingestao (PK por ngo_numero).
  */
 export interface NegocioBIRow {
   NGO_Numero: string;
@@ -27,8 +20,15 @@ export interface NegocioBIRow {
   NGO_Vendedores: string | null;
   NGO_DataCadastro: string | null;
   NGO_DataFechamento: string | null;
-  /** Nome do vendedor resolvido via VW_Ceres_Usuario (NGO_Vendedores e um codigo). */
   vendedorNome: string;
+}
+
+export interface NegociosBIFetchOptions {
+  /** ISO YYYY-MM-DD — filtra ngo_data_fechamento >= from (exclui negocios sem fechamento) */
+  from?: string;
+  /** ISO YYYY-MM-DD — filtra ngo_data_fechamento <= to */
+  to?: string;
+  funis?: string[];
 }
 
 const NEGOCIOS_COLUMNS = [
@@ -47,6 +47,23 @@ const NEGOCIOS_COLUMNS = [
   "NGO_DataCadastro",
   "NGO_DataFechamento",
 ];
+
+const MIRROR_NEGOCIOS_SELECT = [
+  "ngo_numero",
+  "ngo_conclusao",
+  "ngo_etapa",
+  "ngo_funil",
+  "ngo_vlr_total_negociado",
+  "ngo_forma_entrada",
+  "ngo_motivo_perda",
+  "ngo_motivo_ganho",
+  "ngo_ciclo_vendas",
+  "ngo_qtd_acoes",
+  "ngo_probabilidade",
+  "ngo_vendedores",
+  "ngo_data_cadastro",
+  "ngo_data_fechamento",
+].join(",");
 
 interface UsuarioRow {
   USR_CodUsuario: string | number | null;
@@ -77,7 +94,6 @@ interface MirrorNegocioRow {
   ngo_data_fechamento: string | null;
 }
 
-/** Resolve um codigo (ou lista separada por virgula/ponto-virgula) para nome legivel. */
 function resolveVendedor(codes: string | null, map: Map<string, string>): string {
   if (!codes) return "Sem vendedor";
   const first = codes.split(/[,;]/)[0]?.trim();
@@ -85,9 +101,9 @@ function resolveVendedor(codes: string | null, map: Map<string, string>): string
   return map.get(first) ?? `Cod ${first}`;
 }
 
-/**
- * Constroi mapa codigo->nome a partir de mirror.usuarios (PostgREST).
- */
+// Cache do mapa de vendedores — raramente muda, evita refetch a cada query
+let vendedorMapPromise: Promise<Map<string, string>> | null = null;
+
 async function fetchVendedorMapMirror(): Promise<Map<string, string>> {
   const map = new Map<string, string>();
   try {
@@ -105,14 +121,18 @@ async function fetchVendedorMapMirror(): Promise<Map<string, string>> {
       }
     }
   } catch {
-    // sem mapa, resolveVendedor cai no fallback "Cod N"
+    // ignore
   }
   return map;
 }
 
-/**
- * Constroi mapa codigo->nome a partir de VW_Ceres_Usuario (legado).
- */
+function getVendedorMapMirrorCached(): Promise<Map<string, string>> {
+  if (!vendedorMapPromise) {
+    vendedorMapPromise = fetchVendedorMapMirror();
+  }
+  return vendedorMapPromise;
+}
+
 async function fetchVendedorMapLegacy(): Promise<Map<string, string>> {
   const map = new Map<string, string>();
   try {
@@ -130,12 +150,11 @@ async function fetchVendedorMapLegacy(): Promise<Map<string, string>> {
       }
     }
   } catch {
-    // sem mapa, resolveVendedor cai no fallback "Cod N"
+    // ignore
   }
   return map;
 }
 
-/** Converte valor numeric do Postgres (retornado como string pelo PostgREST) para number. */
 const toNum = (v: unknown): number | null => {
   if (v == null) return null;
   const n = Number(v);
@@ -162,10 +181,19 @@ function mapMirrorRow(row: MirrorNegocioRow, vendedorMap: Map<string, string>): 
   };
 }
 
-async function fetchFromMirror(): Promise<NegocioBIRow[]> {
+async function fetchFromMirror(options?: NegociosBIFetchOptions): Promise<NegocioBIRow[]> {
+  let q = supabase
+    .schema("mirror")
+    .from("crm_negocios")
+    .select(MIRROR_NEGOCIOS_SELECT);
+  if (options?.from) q = q.gte("ngo_data_fechamento", options.from);
+  if (options?.to) q = q.lte("ngo_data_fechamento", `${options.to}T23:59:59.999`);
+  if (options?.funis && options.funis.length > 0) q = q.in("ngo_funil", options.funis);
+  q = q.limit(50000);
+
   const [negociosRes, vendedorMap] = await Promise.all([
-    supabase.schema("mirror").from("crm_negocios").select("*"),
-    fetchVendedorMapMirror(),
+    q,
+    getVendedorMapMirrorCached(),
   ]);
   if (negociosRes.error) throw new Error(negociosRes.error.message);
   return ((negociosRes.data ?? []) as MirrorNegocioRow[]).map((row) =>
@@ -187,12 +215,11 @@ async function fetchFromLegacy(): Promise<NegocioBIRow[]> {
   }));
 }
 
-export async function fetchNegociosBI(): Promise<NegocioBIRow[]> {
+export async function fetchNegociosBI(options?: NegociosBIFetchOptions): Promise<NegocioBIRow[]> {
   if (USE_MIRROR.crm_negocios) {
     try {
-      return await fetchFromMirror();
+      return await fetchFromMirror(options);
     } catch {
-      // Fallback para legado se mirror falhar
       return await fetchFromLegacy();
     }
   }

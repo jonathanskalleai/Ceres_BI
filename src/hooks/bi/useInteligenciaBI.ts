@@ -81,15 +81,15 @@ export function useInteligenciaBI(
 ): InteligenciaBIResult {
   // --- Data fetching (shared cache via same queryKeys) ---
   const { data: negociosRaw, isLoading: loadNeg } = useQuery({
-    queryKey: ["bi-negocios"],
-    queryFn: fetchNegociosBI,
+    queryKey: ["bi-negocios", null, null, null],
+    queryFn: () => fetchNegociosBI(),
     staleTime: 5 * 60_000,
     enabled: active,
   });
 
   const { data: pedidosRaw, isLoading: loadPed } = useQuery({
-    queryKey: ["bi-pedidos"],
-    queryFn: fetchPedidosBI,
+    queryKey: ["bi-pedidos", null, null],
+    queryFn: () => fetchPedidosBI(),
     staleTime: 5 * 60_000,
     enabled: active,
   });

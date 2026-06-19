@@ -62,20 +62,32 @@ function calcTrend(atual: number, anterior: number): Trend {
  * - parqueMaquinas: total installed machines across all clients (static)
  * - coberturaComercial: % of active clients with at least 1 action in the period
  */
+function toISODate(d: Date | undefined): string | undefined {
+  if (!d) return undefined;
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 export function useClientesKPIs(dateRange: DateRange | undefined): UseClientesKPIsResult {
   const carteiraQ = useQuery({
     queryKey: ["bi-carteira"],
     queryFn: fetchCarteira,
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
   });
 
   const parqueQ = useQuery({
     queryKey: ["bi-parque"],
     queryFn: fetchParqueBI,
-    staleTime: 60_000,
+    staleTime: 5 * 60_000,
   });
 
-  const { allData, isLoading: comercialLoading } = useComercialData();
+  // Cobertura: registros do periodo atual filtrados server-side
+  const from = toISODate(dateRange?.from);
+  const to = toISODate(dateRange?.to ?? dateRange?.from);
+  const fetchOptions = (from || to) ? { from, to } : undefined;
+  const { allData, isLoading: comercialLoading } = useComercialData(undefined, undefined, fetchOptions);
 
   const kpis = useMemo((): ClientesKPIs => {
     const rawCarteira = carteiraQ.data ?? [];

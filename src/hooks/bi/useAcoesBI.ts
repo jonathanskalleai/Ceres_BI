@@ -160,10 +160,22 @@ function aggregate(registros: Registro[]): Omit<AcoesBIResult, "listaAnos" | "is
   return { kpis, porVendedor, porCidade, porMes, porDiaSemana, porTipoAcao, porTipoContato };
 }
 
+function toISODate(d: Date | undefined): string | undefined {
+  if (!d) return undefined;
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 export function useAcoesBI(active: boolean, filters: AcoesFilters, categoria?: string, funil?: string): AcoesBIResult {
-  // Usa allData (sem filtro de admin users) — a tela de ações deve mostrar TODAS as ações,
-  // incluindo usuários administrativos. O filtro isAdminUser é apenas para KPIs de performance.
-  const { allData, isLoading } = useComercialData(categoria, funil);
+  // Push date-range filter to the server when present (default = current month).
+  const from = toISODate(filters.dateRange?.from);
+  const to = toISODate(filters.dateRange?.to ?? filters.dateRange?.from);
+  const fetchOptions = (from || to) ? { from, to } : undefined;
+
+  // Usa allData (sem filtro de admin users) — a tela de ações deve mostrar TODAS as ações.
+  const { allData, isLoading } = useComercialData(categoria, funil, fetchOptions);
 
   const listaAnos = useMemo(() => {
     if (!allData) return [];
@@ -180,6 +192,8 @@ export function useAcoesBI(active: boolean, filters: AcoesFilters, categoria?: s
       const empty: AcoesKPIs = { totalAcoes: 0, cidades: 0, consultores: 0, visitas: 0, clientes: 0, tiposAcaoDistintos: 0 };
       return { kpis: empty, porVendedor: [], porCidade: [], porMes: [], porDiaSemana: [], porTipoAcao: [], porTipoContato: [] };
     }
+    // Filtros remanescentes (vendedor / cidade / tipoAcao) ainda aplicados local —
+    // sao dropdowns dinamicos sobre o conjunto ja filtrado por data no servidor.
     const filtered = applyFilters(allData.registrosRecentes, filters);
     return aggregate(filtered);
   }, [active, allData, filters]);

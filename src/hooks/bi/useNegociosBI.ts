@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { type DateRange } from "react-day-picker";
 import { fetchNegociosBI, type NegocioBIRow } from "@/services/bi/negociosBIService";
 
 import { yearMonth } from "@/lib/dateUtils";
@@ -10,50 +11,20 @@ interface NegociosKPIs {
   ganhos: number;
   perdidos: number;
   andamento: number;
-  taxaConversao: number; // % ganhos sobre negocios concluidos (ganho+perdido)
-  pipelineAberto: number; // R$ em negocios "Em Andamento"
-  pipelinePerdido: number; // R$ em negocios "Perdido"
-  valorGanho: number; // R$ em negocios ganhos
+  taxaConversao: number;
+  pipelineAberto: number;
+  pipelinePerdido: number;
+  valorGanho: number;
   ticketMedioGanho: number;
-  cicloMedioDias: number; // media de NGO_CicloVendas nos concluidos
-  esforcoMedio: number; // media de NGO_QtdAcoes
+  cicloMedioDias: number;
+  esforcoMedio: number;
 }
 
-interface EtapaDatum {
-  name: string;
-  valor: number;
-  qtd: number;
-}
-
-interface OrigemDatum {
-  name: string;
-  ganhos: number;
-  perdidos: number;
-  andamento: number;
-  total: number;
-  taxa: number; // % conversao
-  valorGanho: number;
-}
-
-interface MotivoDatum {
-  name: string;
-  valor: number;
-  qtd: number;
-}
-
-interface EvolucaoDatum {
-  name: string;
-  novos: number;
-  valorCriado: number;
-}
-
-interface ConsultorDatum {
-  name: string;
-  valorGanho: number;
-  ganhos: number;
-  total: number;
-  taxa: number;
-}
+interface EtapaDatum { name: string; valor: number; qtd: number; }
+interface OrigemDatum { name: string; ganhos: number; perdidos: number; andamento: number; total: number; taxa: number; valorGanho: number; }
+interface MotivoDatum { name: string; valor: number; qtd: number; }
+interface EvolucaoDatum { name: string; novos: number; valorCriado: number; }
+interface ConsultorDatum { name: string; valorGanho: number; ganhos: number; total: number; taxa: number; }
 
 export interface NegociosAgg {
   kpis: NegociosKPIs;
@@ -73,13 +44,11 @@ function classify(conclusao: string | null): Conclusao {
   return "andamento";
 }
 
-/** Extrai o numero inicial de uma etapa ("3-PROPOSTA" -> 3) para ordenar o funil. */
 function etapaOrder(etapa: string): number {
   const m = etapa.match(/^\s*(\d+)/);
   return m ? Number(m[1]) : 99;
 }
 
-/** Remove linhas duplicadas por NGO_Numero (view denormalizada por produto). */
 export function dedupeNegocios(rows: NegocioBIRow[]): NegocioBIRow[] {
   const seen = new Set<string>();
   const out: NegocioBIRow[] = [];
@@ -97,7 +66,6 @@ export function dedupeNegocios(rows: NegocioBIRow[]): NegocioBIRow[] {
 const num = (v: number | null): number => (typeof v === "number" && isFinite(v) ? v : 0);
 
 export function aggregateNegociosBI(rawRows: NegocioBIRow[]): NegociosAgg {
-  // View denormalizada (multiplas linhas por negocio/produto) — sempre deduplicar por NGO_Numero
   const rows = dedupeNegocios(rawRows);
 
   let ganhos = 0;
@@ -123,7 +91,6 @@ export function aggregateNegociosBI(rawRows: NegocioBIRow[]): NegociosAgg {
     const origem = (r.NGO_FormaEntrada || "Sem origem").trim() || "Sem origem";
     const consultor = r.vendedorNome || "Sem vendedor";
 
-    // KPIs por status
     if (status === "ganho") {
       ganhos++;
       valorGanho += valor;
@@ -135,7 +102,6 @@ export function aggregateNegociosBI(rawRows: NegocioBIRow[]): NegociosAgg {
       pipelineAberto += valor;
     }
 
-    // ciclo de vendas (so faz sentido em negocios concluidos)
     if (status !== "andamento" && num(r.NGO_CicloVendas) > 0) {
       cicloSoma += num(r.NGO_CicloVendas);
       cicloN++;
@@ -145,7 +111,6 @@ export function aggregateNegociosBI(rawRows: NegocioBIRow[]): NegociosAgg {
       esforcoN++;
     }
 
-    // funil: todos os negocios por etapa (pipeline do periodo filtrado)
     if (r.NGO_Etapa) {
       const e = etapaMap.get(r.NGO_Etapa) ?? { name: r.NGO_Etapa, valor: 0, qtd: 0 };
       e.valor += valor;
@@ -153,7 +118,6 @@ export function aggregateNegociosBI(rawRows: NegocioBIRow[]): NegociosAgg {
       etapaMap.set(r.NGO_Etapa, e);
     }
 
-    // conversao por origem do lead
     const o = origemMap.get(origem) ?? {
       name: origem, ganhos: 0, perdidos: 0, andamento: 0, total: 0, taxa: 0, valorGanho: 0,
     };
@@ -163,7 +127,6 @@ export function aggregateNegociosBI(rawRows: NegocioBIRow[]): NegociosAgg {
     else o.andamento++;
     origemMap.set(origem, o);
 
-    // motivos de perda (onde a receita esta vazando)
     if (status === "perdido") {
       const motivo = (r.NGO_MotivoPerda || "Nao informado").trim() || "Nao informado";
       const m = motivoMap.get(motivo) ?? { name: motivo, valor: 0, qtd: 0 };
@@ -172,7 +135,6 @@ export function aggregateNegociosBI(rawRows: NegocioBIRow[]): NegociosAgg {
       motivoMap.set(motivo, m);
     }
 
-    // evolucao mensal por data de cadastro
     const ym = yearMonth(r.NGO_DataCadastro ?? "");
     if (ym) {
       const ev = mesMap.get(ym) ?? { name: ym, novos: 0, valorCriado: 0 };
@@ -181,7 +143,6 @@ export function aggregateNegociosBI(rawRows: NegocioBIRow[]): NegociosAgg {
       mesMap.set(ym, ev);
     }
 
-    // ranking de consultores por valor ganho
     const c = consultorMap.get(consultor) ?? { name: consultor, valorGanho: 0, ganhos: 0, total: 0, taxa: 0 };
     c.total++;
     if (status === "ganho") { c.ganhos++; c.valorGanho += valor; }
@@ -231,42 +192,41 @@ export function aggregateNegociosBI(rawRows: NegocioBIRow[]): NegociosAgg {
   return { kpis, funilPorEtapa, porOrigem, motivosPerda, evolucaoMensal, rankingConsultor };
 }
 
-export function useNegociosBI(enabled: boolean, dateRange?: import("react-day-picker").DateRange, categoria?: CategoriaFilter, funil?: string) {
-  const { data: rows = [], isLoading } = useQuery({
-    queryKey: ["bi-negocios"],
-    queryFn: fetchNegociosBI,
-    staleTime: 60_000,
+/** Converte Date → "YYYY-MM-DD" no fuso local (sem deslocamento UTC). */
+function toISODate(d: Date | undefined): string | undefined {
+  if (!d) return undefined;
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/** Resolve a lista de funis efetiva (server-side) a partir de categoria + funil individual. */
+function resolveFunis(categoria?: CategoriaFilter, funil?: string): string[] | undefined {
+  if (funil && funil !== FUNIL_ALL) return [funil];
+  if (categoria && categoria !== CATEGORIA_ALL) return getFunisByCategoria(categoria);
+  return undefined;
+}
+
+export function useNegociosBI(
+  enabled: boolean,
+  dateRange?: DateRange,
+  categoria?: CategoriaFilter,
+  funil?: string,
+) {
+  const fromISO = toISODate(dateRange?.from);
+  const toISO = toISODate(dateRange?.to ?? dateRange?.from);
+  const funis = resolveFunis(categoria, funil);
+
+  const { data: rows = [], isLoading } = useQuery<NegocioBIRow[]>({
+    queryKey: ["bi-negocios", fromISO ?? null, toISO ?? null, funis ?? null],
+    queryFn: () => fetchNegociosBI({ from: fromISO, to: toISO, funis }),
+    staleTime: 5 * 60_000,
     enabled,
+    placeholderData: keepPreviousData,
   });
 
-  const filteredRows = useMemo(() => {
-    let result = rows;
-
-    // Filtro hierárquico: funil individual > categoria > todos
-    if (funil && funil !== FUNIL_ALL) {
-      // Funil específico selecionado — filtra exatamente por esse funil
-      result = result.filter((r) => r.NGO_Funil === funil);
-    } else if (categoria && categoria !== CATEGORIA_ALL) {
-      // Nenhum funil específico, mas categoria selecionada — filtra pela lista de funis da categoria
-      const funis = getFunisByCategoria(categoria);
-      result = result.filter((r) => funis.includes(r.NGO_Funil ?? ""));
-    }
-
-    // Filtro por data de fechamento/conclusão do negócio
-    if (dateRange?.from) {
-      result = result.filter((r) => {
-        const d = r.NGO_DataFechamento ? new Date(r.NGO_DataFechamento) : null;
-        // Negócios sem data de fechamento (Em Andamento) — excluir quando filtro de data está ativo
-        if (!d) return false;
-        if (dateRange.from && d < dateRange.from) return false;
-        if (dateRange.to && d > dateRange.to) return false;
-        return true;
-      });
-    }
-    return result;
-  }, [rows, dateRange, categoria, funil]);
-
-  const agg = useMemo(() => aggregateNegociosBI(filteredRows), [filteredRows]);
+  const agg = useMemo(() => aggregateNegociosBI(rows), [rows]);
 
   return { agg, isLoading };
 }
