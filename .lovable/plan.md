@@ -1,49 +1,42 @@
+## Mudanças solicitadas
 
-# Corrigir modo dark quebrado + truncamentos
+### 1. Botão "Atualizar" (topbar CRM)
+Está conectado sim — chama `queryClient.invalidateQueries(['registros-comerciais', 'pipeline-by-vendedor'])` em `ComercialDataContext.handleSync`, o que força o React Query a refazer fetch no Supabase via `useComercialData`. Não é código antigo, está funcional. Vou apenas confirmar isso na resposta (sem mudança de código).
 
-## O problema (causa raiz)
+### 2. Excluir tela "Regiões" do Comercial CRM
+- Remover rota `regioes` em `src/App.tsx` e o import de `CrmRegioes`.
+- Remover item `crm.regioes` do menu em `src/components/layout/AppSidebar.tsx`.
+- Apagar `src/pages/crm/CrmRegioes.tsx`.
+- (Mantém `DashboardRegioes` por enquanto, caso reaproveitemos — ou apago também se preferir.)
 
-Na última iteração eu introduzi tokens de superfície (`--surface-base`, `--surface-raised`, `--surface-overlay`, `--surface-topbar`) **só dentro de `:root` (light mode)** e não os redefini dentro de `.dark`. Resultado: em dark mode, KPICard, ChartCard e a topbar herdam os valores claros (`#ffffff`, `rgba(236,229,212,.82)`) — por isso os cards estão brancos e a topbar bege no seu print.
+### 3. Delay nos cards do Painel (BI)
+Investigar `src/pages/bi/BiPainel.tsx` e remover `lazy()` / `Suspense` em cascata que faz os cards aparecerem em ondas. Provavelmente cada seção é `lazy` separado — vou consolidar para renderizarem juntos (ou ao menos os KPIs do topo virem síncronos).
 
-Além disso, o `truncate` que coloquei no label do KPI e no título da topbar é cedo demais — `TOTAL RECEITA` vira `TOTAL RE…`, `Visão Geral` vira `Visao Ge…`.
+### 4. Nomes cortados nos gráficos de barras horizontais
+Em "Motivos de Perda" e "Velocidade do Funil" (e similares) o label do eixo Y é truncado. Ajustar `labelW` / margin esquerda dos componentes ECharts em `src/components/bi/charts/` para acomodar labels mais longos (ex.: 180–200px) e/ou habilitar `axisLabel.width` com quebra.
 
-> Os HTMLs (`atendimento.html`, `inadimplencia.html`, etc.) **continuam só como referência** de tipografia e padrão visual — nada vai ser copiado pro projeto.
+### 5. Cores de barras mais fortes no modo light
+Em `src/lib/chartColors.ts` / `chartTheme.ts` aumentar saturação/escurecer a paleta usada no tema light (as barras champagne/coral atuais ficam apagadas em fundo claro).
 
-## O que vou mudar (escopo cirúrgico)
+### 6. Filtros duplicados na tela "Ações" (BI)
+Na tela `/bi/acoes` aparecem duas linhas de filtros: a do topbar global (`BiTopbarPortal`) e uma interna da `AcoesSection`. Remover a barra de filtros interna da `AcoesSection`, deixando apenas a do topbar (que já tem Data, Categoria, Funil, Vendedor, Cidade).
 
-### 1. `src/index.css` — definir tokens de superfície no `.dark`
-Adicionar dentro do bloco `.dark { … }`:
-```css
---surface-base:    #0a0907;   /* mesmo do background */
---surface-raised:  #18160f;   /* card elevado, igual --voux-card-from */
---surface-overlay: #1f1c14;   /* popover / dropdown */
---surface-topbar:  rgba(10, 9, 7, 0.85);  /* topbar translúcida escura */
-```
+### 7. Filtro de data padrão = mês atual (todas as telas)
+- Em `src/contexts/NegociosFilterContext.tsx`: inicializar `dateRange` com `{ from: startOfMonth(now), to: endOfMonth(now) }` em vez de `undefined`.
+- Em `src/contexts/ComercialDataContext.tsx` (`emptyFilters`): inicializar `dateRange` com o mês atual.
+- Ajustar `DateRangePicker` para mostrar "Mês atual" quando o range corresponde ao mês corrente (label amigável), mantendo opção "Todas as datas".
 
-Também conferir/ajustar:
-- `--voux-card-border` em dark já é `rgba(214,207,193,0.08)` — ok, mas vou subir um pouco pra `0.10` para a borda aparecer no fundo `#18160f`.
-- `--voux-card-shadow` em dark já existe — ok.
+### Arquivos a alterar
+- `src/App.tsx`
+- `src/components/layout/AppSidebar.tsx`
+- `src/pages/crm/CrmRegioes.tsx` (delete)
+- `src/pages/bi/BiPainel.tsx`
+- `src/components/bi/sections/AcoesSection.tsx`
+- `src/components/bi/charts/*` (margens/labelW)
+- `src/lib/chartColors.ts` ou `chartTheme.ts` (cores light)
+- `src/contexts/NegociosFilterContext.tsx`
+- `src/contexts/ComercialDataContext.tsx`
+- `src/components/ui/date-range-picker.tsx` (label "Mês atual")
 
-### 2. `src/components/bi/KPICard.tsx` — soltar o truncate
-- Remover `truncate` do label/eyebrow; deixar quebrar em 2 linhas com `line-clamp-2` (ou simplesmente sem truncate).
-- Manter `truncate` **apenas no valor numérico** (com `title` no hover), que era o problema original do `R$ 225.370.219` estourando.
-- Reduzir `letter-spacing` do eyebrow de `0.22em` pra `0.14em` — labels longos como `CONSULTORES`/`CLIENTES` ficam menos comprimidos.
-
-### 3. `src/components/layout/AppShell.tsx` — soltar o truncate da topbar
-- Tirar `truncate` do título (`Visão Geral` não pode virar `Visao Ge…`).
-- Manter `min-w-0` no flex, mas usar `whitespace-nowrap` só quando couber; em telas estreitas o título pode quebrar pra 2 linhas.
-- Conferir contraste do eyebrow (`CERES BI…`) em dark — provavelmente também está com truncate aplicado erroneamente.
-
-### 4. Verificação visual (Playwright)
-Depois das edições, rodar Playwright em `/bi/painel`:
-- screenshot light @ 1440 e @ 1024
-- screenshot dark @ 1440 e @ 1024
-- confirmar: cards escuros no dark, labels inteiros (`TOTAL RECEITA`, `CONSULTORES`), título `Visão Geral` completo, topbar translúcida escura.
-
-## O que **NÃO** vou fazer
-- Não vou criar `SectionHead`, `Toolbar`, `FilterPanel` novos.
-- Não vou refatorar páginas BI.
-- Não vou copiar layouts dos HTMLs.
-- Não vou adicionar fonte Geist nem mexer em outras telas (CRM, Admin, etc.).
-
-Só o fix do dark mode + truncamentos. Depois disso, se quiser, retomamos a conversa sobre refinar tipografia/padrões dos HTMLs como inspiração — mas separado.
+### Pergunta antes de implementar
+Confirmar: **manter** o botão "Atualizar" como está (só esclareço que funciona) ou querer redesign/feedback visual diferente?
