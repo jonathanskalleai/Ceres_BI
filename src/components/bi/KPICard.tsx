@@ -51,7 +51,7 @@ export function KPICard({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-2xl p-5 md:p-6 transition-colors",
+        "relative overflow-hidden rounded-xl px-4 py-3 md:px-5 md:py-3.5 transition-colors",
         "border bg-[var(--surface-raised)]",
       )}
       style={{
@@ -79,7 +79,7 @@ export function KPICard({
       )}
 
       {/* Eyebrow */}
-      <div className="flex items-start justify-between mb-3 md:mb-4 gap-2">
+      <div className="flex items-start justify-between mb-2 gap-2">
         <span
           className="text-[11px] tracking-[0.12em] uppercase leading-snug font-medium"
           style={{ fontFamily: "var(--voux-font-label)", color: "var(--voux-label)" }}
@@ -88,13 +88,13 @@ export function KPICard({
         </span>
         {Icon && (
           <span
-            className="inline-flex h-7 w-7 items-center justify-center rounded-full shrink-0"
+            className="inline-flex h-6 w-6 items-center justify-center rounded-full shrink-0"
             style={{
               background: "color-mix(in srgb, var(--voux-accent) 12%, transparent)",
               color: "var(--voux-accent)",
             }}
           >
-            <Icon className="h-3.5 w-3.5" />
+            <Icon className="h-3 w-3" />
           </span>
         )}
       </div>
@@ -102,13 +102,13 @@ export function KPICard({
       {/* Value */}
       {loading ? (
         <>
-          <Skeleton className="h-8 w-24 mb-2 bg-[var(--voux-skeleton)]" />
+          <Skeleton className="h-8 w-24 mb-1 bg-[var(--voux-skeleton)]" />
           {hint && <Skeleton className="h-3 w-32 bg-[var(--voux-skeleton)]" />}
         </>
       ) : (
         <>
           <div
-            className="text-xl sm:text-2xl md:text-[26px] font-semibold leading-none tracking-[-0.02em] mb-1 truncate"
+            className="text-2xl sm:text-[28px] md:text-[32px] font-semibold leading-none tracking-[-0.02em] tabular-nums truncate"
             style={{ color: accentColor || "var(--voux-text-heading)" }}
             title={String(value)}
           >
@@ -119,7 +119,7 @@ export function KPICard({
             <DeltaBadge previousValue={previousValue} trend={trend} invertTrend={invertTrend} />
           )}
           {hint && (
-            <p className="text-[11px] mt-2" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-muted)" }}>
+            <p className="text-[11px] mt-1" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-muted)" }}>
               {hint}
             </p>
           )}
