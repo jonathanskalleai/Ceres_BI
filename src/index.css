@@ -73,7 +73,7 @@
 @layer base {
   :root {
     /* shadcn semantic */
-    --background:             40 38% 96%;       /* #faf7f0 off-white quente */
+    --background:             36 24% 91%;       /* #ece5d4 ~ creme quente, dá contraste com cards brancos */
     --foreground:             40 17% 8%;        /* ink-900 */
     --card:                   0 0% 100%;        /* branco puro */
     --card-foreground:        40 17% 8%;
@@ -122,10 +122,11 @@
     --voux-border-hover:     rgba(82,74,62,0.20);
 
     /* Hierarquia de superfícies (3 níveis) */
-    --surface-base:          hsl(40 38% 96%);
+    --surface-base:          hsl(36 24% 91%);
     --surface-raised:        #ffffff;
     --surface-overlay:       #ffffff;
-    --surface-topbar:        rgba(253, 251, 246, 0.85);
+    --surface-topbar:        rgba(236, 229, 212, 0.82);
+
 
     --radius: 0.75rem;
   }

@@ -108,11 +108,13 @@ export function KPICard({
       ) : (
         <>
           <div
-            className="text-2xl md:text-3xl font-semibold leading-none tracking-[-0.02em] mb-1"
+            className="text-xl sm:text-2xl md:text-[26px] font-semibold leading-none tracking-[-0.02em] mb-1 truncate"
             style={{ color: accentColor || "var(--voux-text-heading)" }}
+            title={String(value)}
           >
             {value}
           </div>
+
           {previousValue !== undefined && trend && (
             <DeltaBadge previousValue={previousValue} trend={trend} invertTrend={invertTrend} />
           )}
