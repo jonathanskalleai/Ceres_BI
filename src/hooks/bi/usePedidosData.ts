@@ -1,31 +1,18 @@
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { fetchPedidosBI, type PedidoRow } from "@/services/bi/pedidosBIService";
 import { yearMonth } from "@/lib/dateUtils";
 
-interface ChartDatum {
-  name: string;
-  value: number;
-}
-
-interface SituacaoDatum {
-  name: string;
-  valor: number;
-  qtd: number;
-}
-
-interface EvolucaoDatum {
-  name: string;
-  faturamento: number;
-  qtd: number;
-}
+interface ChartDatum { name: string; value: number; }
+interface SituacaoDatum { name: string; valor: number; qtd: number; }
+interface EvolucaoDatum { name: string; faturamento: number; qtd: number; }
 
 interface PedidosKPIs {
   total: number;
-  faturamento: number; // R$ em pedidos Aprovados (receita real)
-  ticketMedio: number; // sobre pedidos aprovados
+  faturamento: number;
+  ticketMedio: number;
   percentAprovado: number;
-  percentFinanciado: number; // financiado / (financiado + proprio)
+  percentFinanciado: number;
   valorCancelado: number;
 }
 
@@ -34,8 +21,8 @@ interface PedidosAgg {
   evolucaoMensal: EvolucaoDatum[];
   porSituacao: SituacaoDatum[];
   mixPagamento: ChartDatum[];
-  porVendedor: ChartDatum[]; // faturamento aprovado
-  porCidade: ChartDatum[]; // faturamento aprovado
+  porVendedor: ChartDatum[];
+  porCidade: ChartDatum[];
 }
 
 const num = (v: number | null): number => (typeof v === "number" && isFinite(v) ? v : 0);
@@ -126,26 +113,27 @@ export function aggregatePedidos(rows: PedidoRow[]): PedidosAgg {
   };
 }
 
+function toISODate(d: Date | undefined): string | undefined {
+  if (!d) return undefined;
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 export function usePedidosData(enabled: boolean, dateRange?: import("react-day-picker").DateRange) {
-  const { data: rows = [], isLoading } = useQuery({
-    queryKey: ["bi-pedidos"],
-    queryFn: fetchPedidosBI,
-    staleTime: 60_000,
+  const fromISO = toISODate(dateRange?.from);
+  const toISO = toISODate(dateRange?.to ?? dateRange?.from);
+
+  const { data: rows = [], isLoading } = useQuery<PedidoRow[]>({
+    queryKey: ["bi-pedidos", fromISO ?? null, toISO ?? null],
+    queryFn: () => fetchPedidosBI({ from: fromISO, to: toISO }),
+    staleTime: 5 * 60_000,
     enabled,
+    placeholderData: keepPreviousData,
   });
 
-  const filteredRows = useMemo(() => {
-    if (!dateRange?.from) return rows;
-    return rows.filter((r) => {
-      const d = r.PDO_DthPedido ? new Date(r.PDO_DthPedido) : null;
-      if (!d) return false;
-      if (dateRange.from && d < dateRange.from) return false;
-      if (dateRange.to && d > dateRange.to) return false;
-      return true;
-    });
-  }, [rows, dateRange]);
-
-  const agg = useMemo(() => aggregatePedidos(filteredRows), [filteredRows]);
+  const agg = useMemo(() => aggregatePedidos(rows), [rows]);
 
   return { agg, isLoading };
 }
