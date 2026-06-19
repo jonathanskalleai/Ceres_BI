@@ -69,7 +69,7 @@ export default function BiPainel() {
       <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
 
         {/* Negocios */}
-        {!isEmpty(kpis.totalNegocios.value) && (
+        {(anyLoading || !isEmpty(kpis.totalNegocios.value)) && (
           <KPICard
             title="Total Negocios"
             value={fmtNum(kpis.totalNegocios.value)}
@@ -80,7 +80,7 @@ export default function BiPainel() {
             formula="COUNT negocios unicos (dedup por numero)"
           />
         )}
-        {!isEmpty(kpis.ganhos.value) && (
+        {(anyLoading || !isEmpty(kpis.ganhos.value)) && (
           <KPICard
             title="Ganhos"
             value={fmtNum(kpis.ganhos.value)}
@@ -92,7 +92,7 @@ export default function BiPainel() {
             formula="COUNT WHERE conclusao = ganho"
           />
         )}
-        {!isEmpty(kpis.perdidos.value) && (
+        {(anyLoading || !isEmpty(kpis.perdidos.value)) && (
           <KPICard
             title="Perdidos"
             value={fmtNum(kpis.perdidos.value)}
@@ -105,7 +105,7 @@ export default function BiPainel() {
             formula="COUNT WHERE conclusao = perda"
           />
         )}
-        {!isEmpty(kpis.andamento.value) && (
+        {(anyLoading || !isEmpty(kpis.andamento.value)) && (
           <KPICard
             title="Em Andamento"
             value={fmtNum(kpis.andamento.value)}
@@ -116,7 +116,7 @@ export default function BiPainel() {
             formula="COUNT WHERE sem conclusao definitiva"
           />
         )}
-        {!isEmpty(kpis.taxaConversao.value) && (
+        {(anyLoading || !isEmpty(kpis.taxaConversao.value)) && (
           <KPICard
             title="Taxa de Conversao"
             value={fmtPct(kpis.taxaConversao.value)}
@@ -127,7 +127,7 @@ export default function BiPainel() {
             formula="ganhos / (ganhos + perdidos) x 100"
           />
         )}
-        {!isEmpty(crossKpis.cicloMedioVendas.value) && (
+        {(anyLoading || !isEmpty(crossKpis.cicloMedioVendas.value)) && (
           <KPICard
             title="Ciclo Medio"
             value={fmtDias(crossKpis.cicloMedioVendas.value)}
@@ -140,7 +140,7 @@ export default function BiPainel() {
             formula="AVG(dias ate fechar) dos ganhos"
           />
         )}
-        {!isEmpty(crossKpis.esforcoMedio.value) && (
+        {(anyLoading || !isEmpty(crossKpis.esforcoMedio.value)) && (
           <KPICard
             title="Esforco Medio"
             value={fmtNum(crossKpis.esforcoMedio.value)}
@@ -154,7 +154,7 @@ export default function BiPainel() {
           />
         )}
         {/* Valores */}
-        {!isEmpty(kpis.valorGanho.value) && (
+        {(anyLoading || !isEmpty(kpis.valorGanho.value)) && (
           <KPICard
             title="Valor Ganho"
             value={fmtBRL(kpis.valorGanho.value)}
@@ -166,7 +166,7 @@ export default function BiPainel() {
             formula="SUM(valor) dos negocios ganhos"
           />
         )}
-        {!isEmpty(kpis.valorPerdido.value) && (
+        {(anyLoading || !isEmpty(kpis.valorPerdido.value)) && (
           <KPICard
             title="Valor Perdido"
             value={fmtBRL(kpis.valorPerdido.value)}
@@ -179,7 +179,7 @@ export default function BiPainel() {
             formula="SUM(valor) dos negocios perdidos"
           />
         )}
-        {!isEmpty(kpis.pipelineAberto.value) && (
+        {(anyLoading || !isEmpty(kpis.pipelineAberto.value)) && (
           <KPICard
             title="Pipeline Aberto"
             value={fmtBRL(kpis.pipelineAberto.value)}
@@ -190,7 +190,7 @@ export default function BiPainel() {
             formula="SUM(valor) dos negocios em andamento"
           />
         )}
-        {!isEmpty(kpis.ticketMedio.value) && (
+        {(anyLoading || !isEmpty(kpis.ticketMedio.value)) && (
           <KPICard
             title="Ticket Medio"
             value={fmtBRL(kpis.ticketMedio.value)}
@@ -201,7 +201,7 @@ export default function BiPainel() {
             formula="valor ganho / qtd ganhos"
           />
         )}
-        {!isEmpty(crossKpis.receitaPorConsultor.value) && (
+        {(anyLoading || !isEmpty(crossKpis.receitaPorConsultor.value)) && (
           <KPICard
             title="Receita/Consultor"
             value={fmtBRL(crossKpis.receitaPorConsultor.value)}
@@ -214,7 +214,7 @@ export default function BiPainel() {
           />
         )}
         {/* Faturamento */}
-        {!isEmpty(pedKpis.faturamento.value) && (
+        {(anyLoading || !isEmpty(pedKpis.faturamento.value)) && (
           <KPICard
             title="Faturamento"
             value={fmtBRL(pedKpis.faturamento.value)}
@@ -226,7 +226,7 @@ export default function BiPainel() {
             formula="SUM(valor pedido) WHERE aprovado"
           />
         )}
-        {!isEmpty(pedKpis.totalPedidos.value) && (
+        {(anyLoading || !isEmpty(pedKpis.totalPedidos.value)) && (
           <KPICard
             title="Total Pedidos"
             value={fmtNum(pedKpis.totalPedidos.value)}
@@ -237,7 +237,7 @@ export default function BiPainel() {
             formula="COUNT pedidos no periodo"
           />
         )}
-        {!isEmpty(pedKpis.taxaAprovacao.value) && (
+        {(anyLoading || !isEmpty(pedKpis.taxaAprovacao.value)) && (
           <KPICard
             title="Taxa Aprovacao"
             value={fmtPct(pedKpis.taxaAprovacao.value)}
@@ -248,7 +248,7 @@ export default function BiPainel() {
             formula="pedidos aprovados / total x 100"
           />
         )}
-        {!isEmpty(pedKpis.mixFinanciamento.value) && (
+        {(anyLoading || !isEmpty(pedKpis.mixFinanciamento.value)) && (
           <KPICard
             title="Mix Financiamento"
             value={fmtPct(pedKpis.mixFinanciamento.value)}
@@ -260,7 +260,7 @@ export default function BiPainel() {
             formula="valor financiado / (financiado + recurso proprio) x 100"
           />
         )}
-        {!isEmpty(crossKpis.conversaoPedidoNegocio.value) && (
+        {(anyLoading || !isEmpty(crossKpis.conversaoPedidoNegocio.value)) && (
           <KPICard
             title="Conversao Pedido"
             value={fmtPct(crossKpis.conversaoPedidoNegocio.value)}
@@ -273,7 +273,7 @@ export default function BiPainel() {
           />
         )}
         {/* Clientes */}
-        {!isEmpty(cliKpis.clientesAtivos.value) && (
+        {(anyLoading || !isEmpty(cliKpis.clientesAtivos.value)) && (
           <KPICard
             title="Clientes Ativos"
             value={fmtNum(cliKpis.clientesAtivos.value)}
@@ -284,7 +284,7 @@ export default function BiPainel() {
             formula="COUNT carteira WHERE nao prospect"
           />
         )}
-        {!isEmpty(cliKpis.prospects.value) && (
+        {(anyLoading || !isEmpty(cliKpis.prospects.value)) && (
           <KPICard
             title="Prospects"
             value={fmtNum(cliKpis.prospects.value)}
@@ -296,7 +296,7 @@ export default function BiPainel() {
             formula="COUNT carteira WHERE prospect = S"
           />
         )}
-        {!isEmpty(cliKpis.parqueMaquinas.value) && (
+        {(anyLoading || !isEmpty(cliKpis.parqueMaquinas.value)) && (
           <KPICard
             title="Parque Maquinas"
             value={fmtNum(cliKpis.parqueMaquinas.value)}
@@ -307,7 +307,7 @@ export default function BiPainel() {
             formula="SUM(qtd maquinas) da base"
           />
         )}
-        {!isEmpty(cliKpis.coberturaComercial.value) && (
+        {(anyLoading || !isEmpty(cliKpis.coberturaComercial.value)) && (
           <KPICard
             title="Cobertura Comercial"
             value={fmtPct(cliKpis.coberturaComercial.value)}
@@ -320,7 +320,7 @@ export default function BiPainel() {
           />
         )}
         {/* Servicos */}
-        {!isEmpty(svcKpis.osAbertas.value) && (
+        {(anyLoading || !isEmpty(svcKpis.osAbertas.value)) && (
           <KPICard
             title="OS Abertas"
             value={fmtNum(svcKpis.osAbertas.value)}
@@ -331,7 +331,7 @@ export default function BiPainel() {
             formula="COUNT OS abertas no periodo"
           />
         )}
-        {!isEmpty(svcKpis.osFechadas.value) && (
+        {(anyLoading || !isEmpty(svcKpis.osFechadas.value)) && (
           <KPICard
             title="OS Fechadas"
             value={fmtNum(svcKpis.osFechadas.value)}
@@ -343,7 +343,7 @@ export default function BiPainel() {
             formula="COUNT OS encerradas no periodo"
           />
         )}
-        {!isEmpty(svcKpis.tempoMedioResolucao.value) && (
+        {(anyLoading || !isEmpty(svcKpis.tempoMedioResolucao.value)) && (
           <KPICard
             title="Tempo Medio Resolucao"
             value={fmtDias(svcKpis.tempoMedioResolucao.value)}
@@ -361,7 +361,7 @@ export default function BiPainel() {
       {/* ACOES / OPERACIONAL — secao secundaria separada */}
       <SectionEyebrow label="ACOES / OPERACIONAL" />
       <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4 opacity-90">
-        {!isEmpty(kpis.totalAcoes.value) && (
+        {(anyLoading || !isEmpty(kpis.totalAcoes.value)) && (
           <KPICard
             title="Total Acoes"
             value={fmtNum(kpis.totalAcoes.value)}
@@ -372,7 +372,7 @@ export default function BiPainel() {
             formula="COUNT acoes concluidas no periodo"
           />
         )}
-        {!isEmpty(kpis.totalVisitas.value) && (
+        {(anyLoading || !isEmpty(kpis.totalVisitas.value)) && (
           <KPICard
             title="Total Visitas"
             value={fmtNum(kpis.totalVisitas.value)}
