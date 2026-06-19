@@ -73,7 +73,7 @@
 @layer base {
   :root {
     /* shadcn semantic */
-    --background:             40 38% 96%;       /* #faf7f0 off-white quente */
+    --background:             36 24% 91%;       /* #ece5d4 ~ creme quente, dá contraste com cards brancos */
     --foreground:             40 17% 8%;        /* ink-900 */
     --card:                   0 0% 100%;        /* branco puro */
     --card-foreground:        40 17% 8%;
