@@ -103,7 +103,7 @@ export function useInteligenciaBI(
 
   const { data: ordensRaw, isLoading: loadOS } = useQuery({
     queryKey: ["bi-os"],
-    queryFn: fetchOrdensServico,
+    queryFn: () => fetchOrdensServico(),
     staleTime: 5 * 60_000,
     enabled: active,
   });

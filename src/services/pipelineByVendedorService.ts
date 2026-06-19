@@ -18,7 +18,7 @@ export interface VendedorPipeline {
 
 interface MirrorNegocioSlim {
   ngo_conclusao: string | null;
-  ngo_vlr_total: number | null;
+  ngo_vlr_total_negociado: number | null;
   ngo_vendedores: string | null;
 }
 
@@ -39,7 +39,7 @@ export async function fetchPipelineByVendedor(funis?: string[]): Promise<Map<str
   let negociosQuery = supabase
     .schema("mirror")
     .from("crm_negocios")
-    .select("ngo_conclusao,ngo_vlr_total,ngo_vendedores,ngo_funil");
+    .select("ngo_conclusao,ngo_vlr_total_negociado,ngo_vendedores,ngo_funil");
 
   if (funis && funis.length > 0) {
     negociosQuery = negociosQuery.in("ngo_funil", funis);
@@ -84,7 +84,7 @@ export async function fetchPipelineByVendedor(funis?: string[]): Promise<Map<str
     }
     const v = result.get(vendedorNome)!;
     const status = classifyConclusao(row.ngo_conclusao);
-    const valor = typeof row.ngo_vlr_total === "number" && isFinite(row.ngo_vlr_total) ? row.ngo_vlr_total : 0;
+    const valor = typeof row.ngo_vlr_total_negociado === "number" && isFinite(row.ngo_vlr_total_negociado) ? row.ngo_vlr_total_negociado : 0;
 
     v.negocios++;
     if (status === "ganho") {

@@ -137,7 +137,7 @@ export function useServicosKPIs(
 ): UseServicosKPIsReturn {
   const { data: allOrdens, isLoading } = useQuery({
     queryKey: ["bi-os"],
-    queryFn: fetchOrdensServico,
+    queryFn: () => fetchOrdensServico(),
     staleTime: 60_000,
   });
 
