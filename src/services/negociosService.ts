@@ -42,6 +42,48 @@ interface MirrorUsuario {
   usr_nome_usuario: string | null;
 }
 
+export interface NegociosMensaisFetchOptions {
+  /** ISO YYYY-MM-DD */
+  from?: string;
+  /** ISO YYYY-MM-DD */
+  to?: string;
+}
+
+const MIRROR_NEGOCIOS_COLS = [
+  "ngo_numero",
+  "ngo_conclusao",
+  "ngo_etapa",
+  "ngo_funil",
+  "ngo_vlr_total",
+  "ngo_forma_entrada",
+  "ngo_motivo_perda",
+  "ngo_motivo_ganho",
+  "ngo_ciclo_vendas",
+  "ngo_qtd_acoes",
+  "ngo_probabilidade",
+  "ngo_vendedores",
+  "ngo_data_cadastro",
+  "ngo_data_fechamento",
+  "cli_nome",
+  "cli_cidade",
+  "emp_cidade",
+  "emp_uf",
+  "prd_condicao_produto",
+  "usa_valor",
+  "ngo_obs_negocio",
+].join(",");
+
+const MIRROR_PEDIDOS_COLS = [
+  "ngo_numero",
+  "pdo_situacao",
+  "pdo_vlr_pedido",
+  "pdo_vlr_financiado",
+  "pdo_vlr_recurso_proprio",
+  "pdo_cidade_uf_entrega",
+  "pdo_vendedor",
+  "pdo_dth_pedido",
+].join(",");
+
 async function getUsuariosMap(): Promise<Map<string, string>> {
   const { data, error } = await supabase
     .schema("mirror")
@@ -58,10 +100,28 @@ async function getUsuariosMap(): Promise<Map<string, string>> {
   return map;
 }
 
-export async function fetchNegociosMensais(): Promise<NegocioRow[]> {
+export async function fetchNegociosMensais(
+  options?: NegociosMensaisFetchOptions,
+): Promise<NegocioRow[]> {
+  let negociosQ = supabase.schema("mirror").from("crm_negocios").select(MIRROR_NEGOCIOS_COLS);
+  let pedidosQ = supabase.schema("mirror").from("crm_pedidos").select(MIRROR_PEDIDOS_COLS);
+
+  if (options?.from) {
+    negociosQ = negociosQ.gte("ngo_data_cadastro", options.from);
+    pedidosQ = pedidosQ.gte("pdo_dth_pedido", options.from);
+  }
+  if (options?.to) {
+    const toEnd = `${options.to}T23:59:59.999`;
+    negociosQ = negociosQ.lte("ngo_data_cadastro", toEnd);
+    pedidosQ = pedidosQ.lte("pdo_dth_pedido", toEnd);
+  }
+
+  negociosQ = negociosQ.limit(50000);
+  pedidosQ = pedidosQ.limit(50000);
+
   const [negociosRes, pedidosRes, usuariosMap] = await Promise.all([
-    supabase.schema("mirror").from("crm_negocios").select("*"),
-    supabase.schema("mirror").from("crm_pedidos").select("*"),
+    negociosQ,
+    pedidosQ,
     getUsuariosMap(),
   ]);
 
