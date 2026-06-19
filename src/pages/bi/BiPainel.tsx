@@ -76,7 +76,7 @@ export default function BiPainel() {
             icon={Briefcase}
             previousValue={fmtNum(kpis.totalNegocios.previousValue)}
             trend={kpis.totalNegocios.trend}
-            loading={isLoading}
+            loading={anyLoading}
             formula="COUNT negocios unicos (dedup por numero)"
           />
         )}
@@ -87,7 +87,7 @@ export default function BiPainel() {
             icon={TrendingUp}
             previousValue={fmtNum(kpis.ganhos.previousValue)}
             trend={kpis.ganhos.trend}
-            loading={isLoading}
+            loading={anyLoading}
             accentColor="var(--voux-success, #4ade80)"
             formula="COUNT WHERE conclusao = ganho"
           />
@@ -100,7 +100,7 @@ export default function BiPainel() {
             previousValue={fmtNum(kpis.perdidos.previousValue)}
             trend={kpis.perdidos.trend}
             invertTrend
-            loading={isLoading}
+            loading={anyLoading}
             accentColor="var(--voux-danger, #f87171)"
             formula="COUNT WHERE conclusao = perda"
           />
@@ -112,7 +112,7 @@ export default function BiPainel() {
             icon={Activity}
             previousValue={fmtNum(kpis.andamento.previousValue)}
             trend={kpis.andamento.trend}
-            loading={isLoading}
+            loading={anyLoading}
             formula="COUNT WHERE sem conclusao definitiva"
           />
         )}
@@ -123,7 +123,7 @@ export default function BiPainel() {
             icon={Target}
             previousValue={fmtPct(kpis.taxaConversao.previousValue)}
             trend={kpis.taxaConversao.trend}
-            loading={isLoading}
+            loading={anyLoading}
             formula="ganhos / (ganhos + perdidos) x 100"
           />
         )}
@@ -135,7 +135,7 @@ export default function BiPainel() {
             previousValue={fmtDias(crossKpis.cicloMedioVendas.previousValue)}
             trend={crossKpis.cicloMedioVendas.trend}
             invertTrend
-            loading={crossLoading}
+            loading={anyLoading}
             hint="Media dias ate fechar (ganhos)"
             formula="AVG(dias ate fechar) dos ganhos"
           />
@@ -148,7 +148,7 @@ export default function BiPainel() {
             previousValue={fmtNum(crossKpis.esforcoMedio.previousValue)}
             trend={crossKpis.esforcoMedio.trend}
             invertTrend
-            loading={crossLoading}
+            loading={anyLoading}
             hint="Acoes por negocio ganho"
             formula="AVG(qtd acoes) por negocio ganho"
           />
@@ -161,7 +161,7 @@ export default function BiPainel() {
             icon={DollarSign}
             previousValue={fmtBRL(kpis.valorGanho.previousValue)}
             trend={kpis.valorGanho.trend}
-            loading={isLoading}
+            loading={anyLoading}
             accentColor="var(--voux-success, #4ade80)"
             formula="SUM(valor) dos negocios ganhos"
           />
@@ -174,7 +174,7 @@ export default function BiPainel() {
             previousValue={fmtBRL(kpis.valorPerdido.previousValue)}
             trend={kpis.valorPerdido.trend}
             invertTrend
-            loading={isLoading}
+            loading={anyLoading}
             accentColor="var(--voux-danger, #f87171)"
             formula="SUM(valor) dos negocios perdidos"
           />
@@ -186,7 +186,7 @@ export default function BiPainel() {
             icon={Briefcase}
             previousValue={fmtBRL(kpis.pipelineAberto.previousValue)}
             trend={kpis.pipelineAberto.trend}
-            loading={isLoading}
+            loading={anyLoading}
             formula="SUM(valor) dos negocios em andamento"
           />
         )}
@@ -197,7 +197,7 @@ export default function BiPainel() {
             icon={Ticket}
             previousValue={fmtBRL(kpis.ticketMedio.previousValue)}
             trend={kpis.ticketMedio.trend}
-            loading={isLoading}
+            loading={anyLoading}
             formula="valor ganho / qtd ganhos"
           />
         )}
@@ -208,7 +208,7 @@ export default function BiPainel() {
             icon={BarChart3}
             previousValue={fmtBRL(crossKpis.receitaPorConsultor.previousValue)}
             trend={crossKpis.receitaPorConsultor.trend}
-            loading={crossLoading}
+            loading={anyLoading}
             hint="Media valor ganho por vendedor"
             formula="valor ganho / qtd vendedores com ganho"
           />
@@ -221,7 +221,7 @@ export default function BiPainel() {
             icon={DollarSign}
             previousValue={fmtBRL(pedKpis.faturamento.previousValue)}
             trend={pedKpis.faturamento.trend}
-            loading={pedLoading}
+            loading={anyLoading}
             accentColor="var(--voux-success, #4ade80)"
             formula="SUM(valor pedido) WHERE aprovado"
           />
@@ -233,7 +233,7 @@ export default function BiPainel() {
             icon={FileCheck}
             previousValue={fmtNum(pedKpis.totalPedidos.previousValue)}
             trend={pedKpis.totalPedidos.trend}
-            loading={pedLoading}
+            loading={anyLoading}
             formula="COUNT pedidos no periodo"
           />
         )}
@@ -244,7 +244,7 @@ export default function BiPainel() {
             icon={ShieldCheck}
             previousValue={fmtPct(pedKpis.taxaAprovacao.previousValue)}
             trend={pedKpis.taxaAprovacao.trend}
-            loading={pedLoading}
+            loading={anyLoading}
             formula="pedidos aprovados / total x 100"
           />
         )}
@@ -255,7 +255,7 @@ export default function BiPainel() {
             icon={Percent}
             previousValue={fmtPct(pedKpis.mixFinanciamento.previousValue)}
             trend={pedKpis.mixFinanciamento.trend}
-            loading={pedLoading}
+            loading={anyLoading}
             hint="% valor financiado vs total"
             formula="valor financiado / (financiado + recurso proprio) x 100"
           />
@@ -267,7 +267,7 @@ export default function BiPainel() {
             icon={Target}
             previousValue={fmtPct(crossKpis.conversaoPedidoNegocio.previousValue)}
             trend={crossKpis.conversaoPedidoNegocio.trend}
-            loading={crossLoading}
+            loading={anyLoading}
             hint="% ganhos com pedido emitido"
             formula="negocios ganhos com pedido / total ganhos x 100"
           />
@@ -280,7 +280,7 @@ export default function BiPainel() {
             icon={Users}
             previousValue={fmtNum(cliKpis.clientesAtivos.previousValue)}
             trend={cliKpis.clientesAtivos.trend}
-            loading={cliLoading}
+            loading={anyLoading}
             formula="COUNT carteira WHERE nao prospect"
           />
         )}
@@ -291,7 +291,7 @@ export default function BiPainel() {
             icon={Users}
             previousValue={fmtNum(cliKpis.prospects.previousValue)}
             trend={cliKpis.prospects.trend}
-            loading={cliLoading}
+            loading={anyLoading}
             accentColor="var(--voux-champagne-400, #d4a574)"
             formula="COUNT carteira WHERE prospect = S"
           />
@@ -303,7 +303,7 @@ export default function BiPainel() {
             icon={Wrench}
             previousValue={fmtNum(cliKpis.parqueMaquinas.previousValue)}
             trend={cliKpis.parqueMaquinas.trend}
-            loading={cliLoading}
+            loading={anyLoading}
             formula="SUM(qtd maquinas) da base"
           />
         )}
@@ -314,7 +314,7 @@ export default function BiPainel() {
             icon={Target}
             previousValue={fmtPct(cliKpis.coberturaComercial.previousValue)}
             trend={cliKpis.coberturaComercial.trend}
-            loading={cliLoading}
+            loading={anyLoading}
             hint="% clientes com acao no periodo"
             formula="clientes com acao no periodo / total ativos x 100"
           />
@@ -327,7 +327,7 @@ export default function BiPainel() {
             icon={Wrench}
             previousValue={fmtNum(svcKpis.osAbertas.previousValue)}
             trend={svcKpis.osAbertas.trend}
-            loading={svcLoading}
+            loading={anyLoading}
             formula="COUNT OS abertas no periodo"
           />
         )}
@@ -338,7 +338,7 @@ export default function BiPainel() {
             icon={ShieldCheck}
             previousValue={fmtNum(svcKpis.osFechadas.previousValue)}
             trend={svcKpis.osFechadas.trend}
-            loading={svcLoading}
+            loading={anyLoading}
             accentColor="var(--voux-success, #4ade80)"
             formula="COUNT OS encerradas no periodo"
           />
@@ -351,7 +351,7 @@ export default function BiPainel() {
             previousValue={fmtDias(svcKpis.tempoMedioResolucao.previousValue)}
             trend={svcKpis.tempoMedioResolucao.trend}
             invertTrend
-            loading={svcLoading}
+            loading={anyLoading}
             hint="Media dias para encerrar OS"
             formula="AVG(encerramento - abertura) em dias"
           />
@@ -368,7 +368,7 @@ export default function BiPainel() {
             icon={ClipboardList}
             previousValue={fmtNum(kpis.totalAcoes.previousValue)}
             trend={kpis.totalAcoes.trend}
-            loading={isLoading}
+            loading={anyLoading}
             formula="COUNT acoes concluidas no periodo"
           />
         )}
@@ -379,7 +379,7 @@ export default function BiPainel() {
             icon={Eye}
             previousValue={fmtNum(kpis.totalVisitas.previousValue)}
             trend={kpis.totalVisitas.trend}
-            loading={isLoading}
+            loading={anyLoading}
             formula="COUNT acoes tipo visita"
           />
         )}
@@ -393,7 +393,7 @@ export default function BiPainel() {
               icon={ClipboardList}
               previousValue={fmtNum(tipo.previousValue)}
               trend={tipo.trend}
-              loading={isLoading}
+              loading={anyLoading}
               formula={`COUNT acoes tipo ${tipo.name.toLowerCase()}`}
             />
           ))}
