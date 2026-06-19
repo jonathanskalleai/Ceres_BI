@@ -1,82 +1,82 @@
-# Plano — Performance do BI (filtro de data server-side)
+# Análise de Views + Descoberta de KPIs
 
-## Diagnóstico confirmado
+## Objetivo
+Varrer as ~29 views disponíveis no SQL Server, entender o que cada uma oferece de fato (não só pelo nome), mapear relacionamentos (joins possíveis) e propor uma lista priorizada de **KPIs novos** que hoje não existem no BI — usando como referência os KPIs já implementados em `BiPainel` (Negócios, Pedidos, Clientes, Serviços, Cross).
 
-Os dados vêm do **Postgres mirror** (Supabase self-hosted, schema `mirror`). A lentidão não é do banco — é do frontend que **baixa a tabela inteira e filtra no navegador**:
+Esta entrega é **um documento de análise + um backlog priorizado**, não código de produção ainda. Depois que você aprovar quais KPIs entram, criamos hooks/services/cards numa segunda rodada.
 
-- `fetchNegociosMensais` → `crm_negocios.select("*")` + `crm_pedidos.select("*")` sem `where`.
-- `fetchRegistrosComerciais` → `crm_acoes` inteira (~28k+ linhas).
-- O filtro de data (mês atual, definido em `ComercialDataContext` via `currentMonthFilterRange()`) é aplicado **só depois** do download, em memória.
+## Etapa 1 — Coleta automatizada (sample de 10 por view)
 
-Resultado: toda visita ao `/bi/painel` baixa megabytes pra mostrar algumas centenas de linhas.
+Script Node/TS rodado localmente que:
+- Itera as 29 views listadas em `DashboardViewExplorer.tsx`.
+- Para cada view: chama `querySqlServer({ view, limit: 10 })` + `count_only` para ter o volume total.
+- Salva tudo em `docs/analise-views/raw/<view>.json` (10 linhas + total + lista de colunas com tipo inferido).
 
-## Mudança principal
+Vantagem: usa exatamente o mesmo edge function que o explorer já usa, então não inventa nada de schema.
 
-Empurrar o `dateRange` (e os outros filtros já existentes) pro PostgREST. O range já está disponível no contexto — basta passar adiante até a query.
+## Etapa 2 — Mapa de relacionamentos
 
-### 1. Services aceitam filtros e aplicam no servidor
-
-```ts
-// negociosService.ts
-fetchNegociosMensais({ from, to, funis? })
-// → .gte("ngo_data_fechamento", from).lte("ngo_data_fechamento", to)
-//   .in("ngo_funil", funis) quando houver
-```
-
-```ts
-// registrosService.ts
-fetchRegistrosComerciais({ from, to, vendedor?, cidade? })
-// → .gte("aco_dth_conclusao", from).lte("aco_dth_conclusao", to)
-```
-
-`pipelineByVendedorService` recebe o mesmo `{ from, to, funis }`.
-
-### 2. Selecionar só as colunas usadas
-
-Trocar `select("*")` em `crm_negocios` e `crm_pedidos` pela lista explícita já tipada em `MirrorNegocio` / `MirrorPedido`. Payload cai ~3-5x.
-
-### 3. Hooks repassam filtros e entram no queryKey
-
-- `useComercialData(filters)` passa `filters.dateRange` ao service. `queryKey: ["registros-comerciais", from, to, …]`.
-- `useNegociosBI` / `useAcoesBI` recebem `dateRange` e passam pro fetcher. Param interna de filtro client-side vira apenas refinamento (vendedor/cidade UI).
-- `usePainelKPIs`: a chamada do período anterior também usa filtro server-side (mesma economia 2x).
-
-### 4. Cache + loading não-bloqueante
-
-- `staleTime: 5 * 60_000` padronizado nos hooks BI.
-- `placeholderData: keepPreviousData` em todas as queries com filtro — ao trocar de mês/aba, a tela **não some**, só mostra "atualizando" discreto no topbar.
-- `ComercialDataProvider` e `BiLayout`: skeleton fullscreen apenas no primeiro load (sem dados em cache). Refetch não apaga a tela.
-
-### 5. Índices no mirror (rápido e seguro)
-
-Migration `CREATE INDEX IF NOT EXISTS`:
-- `mirror.crm_acoes (aco_dth_conclusao)`, `(aco_vendedor)`
-- `mirror.crm_negocios (ngo_data_fechamento)`, `(ngo_funil)`
-- `mirror.crm_pedidos (ngo_numero)`
-
-## Arquivos afetados
+A partir do sample, identificar chaves comuns entre views (heurística por nome de coluna + valores reais):
 
 ```text
-src/services/negociosService.ts
-src/services/registrosService.ts
-src/services/pipelineByVendedorService.ts
-src/hooks/useComercialData.ts
-src/hooks/bi/useNegociosBI.ts
-src/hooks/bi/useAcoesBI.ts
-src/hooks/bi/usePainelKPIs.ts
-src/contexts/ComercialDataContext.tsx       (loading não-bloqueante)
-src/components/bi/BiLayout.tsx              (idem)
-supabase/migrations/<ts>_mirror_indexes.sql (índices)
+Acoes ──ACO_idCliente──┐
+Negocios ──NGO_idCliente──┼──> CarteiraClientes (CLI_idCliente)
+Pedidos ──PDO_idCliente──┘                          │
+                                                    ├──> ParqueMaquinas
+                                                    ├──> Propriedade
+                                                    └──> Contatos
+
+Negocios ──NGO_Numero──> Pedidos ──PDO_Numero──> PedidosItem ──> Produtos
+                                                                 ├─ Grupo
+                                                                 ├─ Marca
+                                                                 └─ Modelo
+Negocios ──NGO_idNegocio──> Negocios_Etapas ──> FunilEtapa
+Acoes/Negocios/Pedidos ──> TAGX{ACAO,CLIENTE,NEGOCIO,PEDIDO}
+OrdemServico ──OS_idCliente──> Cliente; ──> AtendimentoOS, TecnicoTempo, Ocorrencias
 ```
 
-## Fora do escopo
+Saída: `docs/analise-views/relacionamentos.md` com diagrama ASCII + tabela "view A × view B × chave × força".
 
-- Mudanças visuais nos cards (já em outro fluxo).
-- Refatorar a edge function `query-sqlserver` (vira fallback raro).
-- Sync incremental do mirror (já existe).
+## Etapa 3 — Inventário de KPIs atuais
 
-## Validação
+Listar o que já existe (de `usePainelKPIs`, `usePedidosKPIs`, `useClientesKPIs`, `useServicosKPIs`, `useCrossKPIs`, dashboards CRM) para **não duplicar**. Saída resumida no doc.
 
-1. Network: payload de `crm_negocios` no `/bi/painel` cai de MBs → < 200 KB no mês atual.
-2. Tempo até KPIs aparecerem (cache frio): meta **< 3 s** (hoje 15-25 s).
-3. Navegar entre abas mantém conteúdo visível.
+## Etapa 4 — Backlog de KPIs novos (priorizado)
+
+Para cada KPI proposto:
+- Nome, fórmula, view(s) de origem, joins necessários
+- Por que é útil (insight de negócio)
+- Esforço (S/M/L) e dependências (ex.: precisa de `PedidosItem` que ainda não consumimos)
+- Em qual página BI ele entra (Painel, Pedidos, Serviços, Produtos, Inteligência…)
+
+Áreas onde já há sinais de KPIs faltando, com base nas views não consumidas:
+
+1. **Funil real** (`Negocios_Etapas` + `FunilEtapa`) — tempo médio por etapa, etapa que mais perde, conversão etapa→etapa, gargalo.
+2. **Produtos / Mix** (`PedidosItem` + `Produtos`/`Grupo`/`Marca`/`Modelo`) — top produtos vendidos, mix por marca, ticket por categoria, margem por grupo, share de usado vs novo.
+3. **Pós-venda profundo** (`OrdemServico` + `AtendimentoOS` + `TecnicoTempo` + `Ocorrencias`) — SLA, reincidência, produtividade de técnico (h faturáveis / h totais), TOP ocorrências, MTTR por tipo de máquina.
+4. **Cliente 360** (`CarteiraClientes` + `ParqueMaquinas` + `Propriedade`) — share-of-wallet, clientes sem ação X dias, potencial por hectare/qtd máquinas, cobertura por safra.
+5. **Tags** (`TAGX*`) — segmentação de clientes/negócios por tag, performance por tag.
+6. **Agenda** — taxa de cumprimento, agenda futura vs realizada, no-show.
+7. **Estoque virtual** — cobertura de estoque vs pipeline, dias de estoque, produtos parados.
+8. **Cross-views** — receita por m²/hectare de propriedade, parque de máquinas vs OS abertas (saúde da base), tempo entre 1ª ação → 1ª venda (lead-to-cash real).
+
+## Etapa 5 — Entregáveis
+
+```text
+docs/analise-views/
+  ├── raw/<view>.json              (sample bruto, 10 linhas)
+  ├── inventario-colunas.md        (todas as colunas, tipos, volume)
+  ├── relacionamentos.md           (mapa de joins)
+  ├── kpis-existentes.md           (o que já temos)
+  └── kpis-propostos.md            (backlog priorizado, S/M/L)
+```
+
+Ao final apresento um resumo no chat com os top 10 KPIs recomendados para você dar GO/NO-GO antes de eu implementar.
+
+## Fora de escopo desta etapa
+- Implementar hooks/services/cards dos novos KPIs (próxima rodada, depois da sua escolha).
+- Mudar dashboards existentes.
+- Criar novas views no SQL Server.
+
+## Pergunta antes de aprovar
+Posso rodar o script de coleta usando o `query-sqlserver` em produção (29 views × 1 request cada = ~58 chamadas leves, `limit=10`)? Ou prefere que eu use apenas os samples que já estão acessíveis via Explorer e trabalhe a análise sobre os nomes/colunas conhecidos sem coleta nova?

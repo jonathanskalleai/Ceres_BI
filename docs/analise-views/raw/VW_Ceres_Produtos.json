@@ -1,0 +1,269 @@
+{
+  "view": "VW_Ceres_Produtos",
+  "total": 241,
+  "error": null,
+  "columns": [
+    {
+      "name": "EMP_IdEmpresa",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "PRD_IdProduto",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "PRD_Descrição",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "PRD_Valor",
+      "types": [
+        "decimal-str"
+      ]
+    },
+    {
+      "name": "PRD_Codigo",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "PRD_CodFiname",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "PRD_CodIntegração",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "PG_IdProdutoGrupo",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "PG_Grupo",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "PM_IdProdutoMarca",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "PM_Marca",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "PMDL_IdProdutoModelo",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "PMDL_Modelo",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "PRD_Ativo",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "dthregistro",
+      "types": [
+        "datetime"
+      ]
+    }
+  ],
+  "sample": [
+    {
+      "EMP_IdEmpresa": 84239246,
+      "PRD_IdProduto": 115534,
+      "PRD_Descrição": "AGRONAVE TOUCH COM MODULO COMODATO PARA ATENDIMENTO A CLIENT - Descricao adicional: TELAS COMODATO PARA ATENDIMENTO AO CLIENTE QUANDO A TELA VAI PARA CONSERTO",
+      "PRD_Valor": "0.00",
+      "PRD_Codigo": "GPSAGRO",
+      "PRD_CodFiname": "",
+      "PRD_CodIntegração": "GPSAGRO",
+      "PG_IdProdutoGrupo": 16203,
+      "PG_Grupo": "GPS GUIA",
+      "PM_IdProdutoMarca": 12814,
+      "PM_Marca": "AGRES",
+      "PMDL_IdProdutoModelo": 51566,
+      "PMDL_Modelo": "GERAL- GERAL",
+      "PRD_Ativo": "Ativo",
+      "dthregistro": "2026-06-19T13:19:23.283Z"
+    },
+    {
+      "EMP_IdEmpresa": 84239246,
+      "PRD_IdProduto": 115535,
+      "PRD_Descrição": "ISOVIW ISOGUIDE ECU CORDOBA 2 ESTEIRAS                       - Descricao adicional: GPS AGRES\nCORDOBA PARA DOIS MOTORES",
+      "PRD_Valor": "0.00",
+      "PRD_Codigo": "GPSCORD",
+      "PRD_CodFiname": "",
+      "PRD_CodIntegração": "GPSCORD",
+      "PG_IdProdutoGrupo": 17899,
+      "PG_Grupo": "TAXA VARIAVEL",
+      "PM_IdProdutoMarca": 12814,
+      "PM_Marca": "AGRES",
+      "PMDL_IdProdutoModelo": 51566,
+      "PMDL_Modelo": "GERAL- GERAL",
+      "PRD_Ativo": "Ativo",
+      "dthregistro": "2026-06-19T13:19:23.283Z"
+    },
+    {
+      "EMP_IdEmpresa": 84239246,
+      "PRD_IdProduto": 115536,
+      "PRD_Descrição": "ISOVIEW ISOGUIDE PILOTO ELETRICO ISOPOINT - Descricao adicional: PILOTO ELETRICO AGRES\nMARCA: AGRES\n",
+      "PRD_Valor": "0.00",
+      "PRD_Codigo": "PILOAGRES",
+      "PRD_CodFiname": "",
+      "PRD_CodIntegração": "PILOAGRES",
+      "PG_IdProdutoGrupo": 16207,
+      "PG_Grupo": "PILOTO AGRES",
+      "PM_IdProdutoMarca": 12814,
+      "PM_Marca": "AGRES",
+      "PMDL_IdProdutoModelo": 51566,
+      "PMDL_Modelo": "GERAL- GERAL",
+      "PRD_Ativo": "Ativo",
+      "dthregistro": "2026-06-19T13:19:23.283Z"
+    },
+    {
+      "EMP_IdEmpresa": 84239246,
+      "PRD_IdProduto": 115538,
+      "PRD_Descrição": "KIT UPGRADE TAXA VARIAVEL N/S                                - Descricao adicional: UPGRADE TAXA VARIAVEL.\nMARCA: AGRES\nN/S:",
+      "PRD_Valor": "0.00",
+      "PRD_Codigo": "UPGRADETX",
+      "PRD_CodFiname": "",
+      "PRD_CodIntegração": "UPGRADETX",
+      "PG_IdProdutoGrupo": 16208,
+      "PG_Grupo": "UPGRADE TAXAS",
+      "PM_IdProdutoMarca": 12814,
+      "PM_Marca": "AGRES",
+      "PMDL_IdProdutoModelo": 51566,
+      "PMDL_Modelo": "GERAL- GERAL",
+      "PRD_Ativo": "Ativo",
+      "dthregistro": "2026-06-19T13:19:23.283Z"
+    },
+    {
+      "EMP_IdEmpresa": 84239246,
+      "PRD_IdProduto": 115539,
+      "PRD_Descrição": "TAXA VARIAVEL AGRES                                          - Descricao adicional: TAXA VARIAVEL \nMARCA: AGRES\n",
+      "PRD_Valor": "0.00",
+      "PRD_Codigo": "TAXVARI",
+      "PRD_CodFiname": "",
+      "PRD_CodIntegração": "TAXVARI",
+      "PG_IdProdutoGrupo": 17899,
+      "PG_Grupo": "TAXA VARIAVEL",
+      "PM_IdProdutoMarca": 12814,
+      "PM_Marca": "AGRES",
+      "PMDL_IdProdutoModelo": 51566,
+      "PMDL_Modelo": "GERAL- GERAL",
+      "PRD_Ativo": "Ativo",
+      "dthregistro": "2026-06-19T13:19:23.283Z"
+    },
+    {
+      "EMP_IdEmpresa": 84239246,
+      "PRD_IdProduto": 115540,
+      "PRD_Descrição": "GPS ISOVIEW ISOGUIDE ISOPOINT AGRES GPS GUIA N/S             - Descricao adicional: GPS AGRES ISO30\nMARCA: AGRES\nN/S:",
+      "PRD_Valor": "0.00",
+      "PRD_Codigo": "GPSAGRES",
+      "PRD_CodFiname": "",
+      "PRD_CodIntegração": "GPSAGRES",
+      "PG_IdProdutoGrupo": 16203,
+      "PG_Grupo": "GPS GUIA",
+      "PM_IdProdutoMarca": 12814,
+      "PM_Marca": "AGRES",
+      "PMDL_IdProdutoModelo": 51566,
+      "PMDL_Modelo": "GERAL- GERAL",
+      "PRD_Ativo": "Ativo",
+      "dthregistro": "2026-06-19T13:19:23.283Z"
+    },
+    {
+      "EMP_IdEmpresa": 84239246,
+      "PRD_IdProduto": 128733,
+      "PRD_Descrição": "TAXA GRAVITACIONAL VARIAVEL AGRES                            - Descricao adicional: TAXA VARIAVEL \nMARCA: AGRES",
+      "PRD_Valor": "0.00",
+      "PRD_Codigo": "TAXGRAV",
+      "PRD_CodFiname": "",
+      "PRD_CodIntegração": "TAXGRAV",
+      "PG_IdProdutoGrupo": 17899,
+      "PG_Grupo": "TAXA VARIAVEL",
+      "PM_IdProdutoMarca": 12814,
+      "PM_Marca": "AGRES",
+      "PMDL_IdProdutoModelo": 51566,
+      "PMDL_Modelo": "GERAL- GERAL",
+      "PRD_Ativo": "Ativo",
+      "dthregistro": "2026-06-19T13:19:23.283Z"
+    },
+    {
+      "EMP_IdEmpresa": 84239246,
+      "PRD_IdProduto": 129363,
+      "PRD_Descrição": "GPS AGRES USADO                                              - Descricao adicional: GPS AGRES USADO\nCHASSI:\nANO:\n",
+      "PRD_Valor": "0.00",
+      "PRD_Codigo": "GPSAGRESUS",
+      "PRD_CodFiname": "",
+      "PRD_CodIntegração": "GPSAGRESUS",
+      "PG_IdProdutoGrupo": 16206,
+      "PG_Grupo": "UPGRADE PULVERIZACAO",
+      "PM_IdProdutoMarca": 12814,
+      "PM_Marca": "AGRES",
+      "PMDL_IdProdutoModelo": 51566,
+      "PMDL_Modelo": "GERAL- GERAL",
+      "PRD_Ativo": "Ativo",
+      "dthregistro": "2026-06-19T13:19:23.283Z"
+    },
+    {
+      "EMP_IdEmpresa": 84239246,
+      "PRD_IdProduto": 132641,
+      "PRD_Descrição": "PILOTO AGRES ELETRICO COM LIBERACAO  PARA RECEBER SINAL PAGO - Descricao adicional: PILOTO AGRES ELETRICO COM LIBERACAO  PARA RECEBER SINAL PAGO",
+      "PRD_Valor": "0.00",
+      "PRD_Codigo": "PAGRESSINAL",
+      "PRD_CodFiname": "",
+      "PRD_CodIntegração": "PAGRESSINAL",
+      "PG_IdProdutoGrupo": 16207,
+      "PG_Grupo": "PILOTO AGRES",
+      "PM_IdProdutoMarca": 12814,
+      "PM_Marca": "AGRES",
+      "PMDL_IdProdutoModelo": 51566,
+      "PMDL_Modelo": "GERAL- GERAL",
+      "PRD_Ativo": "Ativo",
+      "dthregistro": "2026-06-19T13:19:23.283Z"
+    },
+    {
+      "EMP_IdEmpresa": 84239246,
+      "PRD_IdProduto": 132105,
+      "PRD_Descrição": "KIT UPGRADE  ISOSPREAD TX VAR N PREP GRAVITACIONAL COM ATUA. - Descricao adicional: KIT UPGRADE  ISOSPREAD TX VAR N PREP GRAVITACIONAL COM ATUADOR LINEAR",
+      "PRD_Valor": "0.00",
+      "PRD_Codigo": "UPTAXAGRAV",
+      "PRD_CodFiname": "",
+      "PRD_CodIntegração": "UPTAXAGRAV",
+      "PG_IdProdutoGrupo": 16208,
+      "PG_Grupo": "UPGRADE TAXAS",
+      "PM_IdProdutoMarca": 12814,
+      "PM_Marca": "AGRES",
+      "PMDL_IdProdutoModelo": 51566,
+      "PMDL_Modelo": "GERAL- GERAL",
+      "PRD_Ativo": "Ativo",
+      "dthregistro": "2026-06-19T13:19:23.283Z"
+    }
+  ]
+}

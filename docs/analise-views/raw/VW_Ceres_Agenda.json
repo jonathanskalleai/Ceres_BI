@@ -1,0 +1,381 @@
+{
+  "view": "VW_Ceres_Agenda",
+  "total": 152,
+  "error": null,
+  "columns": [
+    {
+      "name": "EMP_CodFilial",
+      "types": [
+        "int-str"
+      ]
+    },
+    {
+      "name": "EMP_idEmpresa",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "OS_idOS",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "OS_nrOS",
+      "types": [
+        "int-str"
+      ]
+    },
+    {
+      "name": "OS_fStatus",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "OS_idCliente",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "CLI_CodigoCliente",
+      "types": [
+        "int-str"
+      ]
+    },
+    {
+      "name": "CLI_Nome",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "CLI_CNPJ_CPF",
+      "types": [
+        "int-str"
+      ]
+    },
+    {
+      "name": "ATD_idAtendimento",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "USR_idUsuario",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "USR_codUsuario",
+      "types": [
+        "int-str"
+      ]
+    },
+    {
+      "name": "USR_nomeUsuario",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "AGE_idAgenda",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "AGE_fStatus",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "AGE_dthPrevisaoInicio",
+      "types": [
+        "datetime"
+      ]
+    },
+    {
+      "name": "AGE_dthPrevisaoFim",
+      "types": [
+        "datetime"
+      ]
+    },
+    {
+      "name": "TPS_codServicoDeslocamento",
+      "types": [
+        "null"
+      ]
+    },
+    {
+      "name": "TPS_dscTipoServicoDeslocamento",
+      "types": [
+        "null"
+      ]
+    },
+    {
+      "name": "TPS_codServicoAtendimento",
+      "types": [
+        "null"
+      ]
+    },
+    {
+      "name": "TPS_dscTipoServicoAtendimento",
+      "types": [
+        "null"
+      ]
+    },
+    {
+      "name": "dthRegistro",
+      "types": [
+        "datetime"
+      ]
+    }
+  ],
+  "sample": [
+    {
+      "EMP_CodFilial": "1",
+      "EMP_idEmpresa": 84239246,
+      "OS_idOS": 936024,
+      "OS_nrOS": "1020",
+      "OS_fStatus": "Fechada",
+      "OS_idCliente": 2511782,
+      "CLI_CodigoCliente": "535",
+      "CLI_Nome": "AREUVALDIR CANDIOTTO",
+      "CLI_CNPJ_CPF": "36878405904",
+      "ATD_idAtendimento": 1128198,
+      "USR_idUsuario": 17236,
+      "USR_codUsuario": "15",
+      "USR_nomeUsuario": "ALEXANDRE VINICIO BADIA",
+      "AGE_idAgenda": 1050184,
+      "AGE_fStatus": "Concluída",
+      "AGE_dthPrevisaoInicio": "2024-09-16T13:30:00.000Z",
+      "AGE_dthPrevisaoFim": "2024-09-16T18:00:00.000Z",
+      "TPS_codServicoDeslocamento": null,
+      "TPS_dscTipoServicoDeslocamento": null,
+      "TPS_codServicoAtendimento": null,
+      "TPS_dscTipoServicoAtendimento": null,
+      "dthRegistro": "2026-06-19T13:19:23.377Z"
+    },
+    {
+      "EMP_CodFilial": "1",
+      "EMP_idEmpresa": 84239246,
+      "OS_idOS": 920058,
+      "OS_nrOS": "968",
+      "OS_fStatus": "Fechada",
+      "OS_idCliente": 2511787,
+      "CLI_CodigoCliente": "511",
+      "CLI_Nome": "CLARINDO JOSE STORTI",
+      "CLI_CNPJ_CPF": "22572228068",
+      "ATD_idAtendimento": 1109024,
+      "USR_idUsuario": 17238,
+      "USR_codUsuario": "44",
+      "USR_nomeUsuario": "RUAN GABRIEL TIBES",
+      "AGE_idAgenda": 1030809,
+      "AGE_fStatus": "Concluída",
+      "AGE_dthPrevisaoInicio": "2024-08-19T08:00:00.000Z",
+      "AGE_dthPrevisaoFim": "2024-08-19T18:00:00.000Z",
+      "TPS_codServicoDeslocamento": null,
+      "TPS_dscTipoServicoDeslocamento": null,
+      "TPS_codServicoAtendimento": null,
+      "TPS_dscTipoServicoAtendimento": null,
+      "dthRegistro": "2026-06-19T13:19:23.377Z"
+    },
+    {
+      "EMP_CodFilial": "1",
+      "EMP_idEmpresa": 84239246,
+      "OS_idOS": 1166990,
+      "OS_nrOS": "1542",
+      "OS_fStatus": "Fechada",
+      "OS_idCliente": 2511787,
+      "CLI_CodigoCliente": "511",
+      "CLI_Nome": "CLARINDO JOSE STORTI",
+      "CLI_CNPJ_CPF": "22572228068",
+      "ATD_idAtendimento": 1409716,
+      "USR_idUsuario": 18900,
+      "USR_codUsuario": "69",
+      "USR_nomeUsuario": "NATHAN HENRIQUE TIBES",
+      "AGE_idAgenda": 1335338,
+      "AGE_fStatus": "Concluída",
+      "AGE_dthPrevisaoInicio": "2025-08-29T08:30:00.000Z",
+      "AGE_dthPrevisaoFim": "2025-08-29T09:30:00.000Z",
+      "TPS_codServicoDeslocamento": null,
+      "TPS_dscTipoServicoDeslocamento": null,
+      "TPS_codServicoAtendimento": null,
+      "TPS_dscTipoServicoAtendimento": null,
+      "dthRegistro": "2026-06-19T13:19:23.377Z"
+    },
+    {
+      "EMP_CodFilial": "1",
+      "EMP_idEmpresa": 84239303,
+      "OS_idOS": 1118405,
+      "OS_nrOS": "1430",
+      "OS_fStatus": "Fechada",
+      "OS_idCliente": 2511792,
+      "CLI_CodigoCliente": "970",
+      "CLI_Nome": "CELSO JOSE SANTIN",
+      "CLI_CNPJ_CPF": "53314930925",
+      "ATD_idAtendimento": 1351032,
+      "USR_idUsuario": 17242,
+      "USR_codUsuario": "13",
+      "USR_nomeUsuario": "GIAN FABRICIO SEVERO DA SILVA",
+      "AGE_idAgenda": 1276009,
+      "AGE_fStatus": "Concluída",
+      "AGE_dthPrevisaoInicio": "2025-06-17T11:00:00.000Z",
+      "AGE_dthPrevisaoFim": "2025-06-17T15:00:00.000Z",
+      "TPS_codServicoDeslocamento": null,
+      "TPS_dscTipoServicoDeslocamento": null,
+      "TPS_codServicoAtendimento": null,
+      "TPS_dscTipoServicoAtendimento": null,
+      "dthRegistro": "2026-06-19T13:19:23.377Z"
+    },
+    {
+      "EMP_CodFilial": "1",
+      "EMP_idEmpresa": 84239303,
+      "OS_idOS": 1253394,
+      "OS_nrOS": "1687",
+      "OS_fStatus": "Aberta",
+      "OS_idCliente": 2511792,
+      "CLI_CodigoCliente": "970",
+      "CLI_Nome": "CELSO JOSE SANTIN",
+      "CLI_CNPJ_CPF": "53314930925",
+      "ATD_idAtendimento": 1513301,
+      "USR_idUsuario": 17242,
+      "USR_codUsuario": "13",
+      "USR_nomeUsuario": "GIAN FABRICIO SEVERO DA SILVA",
+      "AGE_idAgenda": 1440108,
+      "AGE_fStatus": "Aberta",
+      "AGE_dthPrevisaoInicio": "2026-02-03T09:00:00.000Z",
+      "AGE_dthPrevisaoFim": "2026-02-04T13:30:00.000Z",
+      "TPS_codServicoDeslocamento": null,
+      "TPS_dscTipoServicoDeslocamento": null,
+      "TPS_codServicoAtendimento": null,
+      "TPS_dscTipoServicoAtendimento": null,
+      "dthRegistro": "2026-06-19T13:19:23.377Z"
+    },
+    {
+      "EMP_CodFilial": "1",
+      "EMP_idEmpresa": 84239303,
+      "OS_idOS": 947769,
+      "OS_nrOS": "1042",
+      "OS_fStatus": "Cancelada",
+      "OS_idCliente": 2511804,
+      "CLI_CodigoCliente": "685",
+      "CLI_Nome": "MARCELO MARCOS CAMBRUSSI",
+      "CLI_CNPJ_CPF": "89455258900",
+      "ATD_idAtendimento": 1142313,
+      "USR_idUsuario": 17242,
+      "USR_codUsuario": "13",
+      "USR_nomeUsuario": "GIAN FABRICIO SEVERO DA SILVA",
+      "AGE_idAgenda": 1064471,
+      "AGE_fStatus": "Cancelada",
+      "AGE_dthPrevisaoInicio": "2024-10-03T15:30:00.000Z",
+      "AGE_dthPrevisaoFim": "2024-10-03T16:00:00.000Z",
+      "TPS_codServicoDeslocamento": null,
+      "TPS_dscTipoServicoDeslocamento": null,
+      "TPS_codServicoAtendimento": null,
+      "TPS_dscTipoServicoAtendimento": null,
+      "dthRegistro": "2026-06-19T13:19:23.377Z"
+    },
+    {
+      "EMP_CodFilial": "1",
+      "EMP_idEmpresa": 84239246,
+      "OS_idOS": 1019937,
+      "OS_nrOS": "1191",
+      "OS_fStatus": "Fechada",
+      "OS_idCliente": 2511819,
+      "CLI_CodigoCliente": "517",
+      "CLI_Nome": "VICENTE LUCIO MICHALISZYN",
+      "CLI_CNPJ_CPF": "73449911953",
+      "ATD_idAtendimento": 1229359,
+      "USR_idUsuario": 18900,
+      "USR_codUsuario": "69",
+      "USR_nomeUsuario": "NATHAN HENRIQUE TIBES",
+      "AGE_idAgenda": 1152704,
+      "AGE_fStatus": "Concluída",
+      "AGE_dthPrevisaoInicio": "2025-01-27T09:00:00.000Z",
+      "AGE_dthPrevisaoFim": "2025-01-27T10:00:00.000Z",
+      "TPS_codServicoDeslocamento": null,
+      "TPS_dscTipoServicoDeslocamento": null,
+      "TPS_codServicoAtendimento": null,
+      "TPS_dscTipoServicoAtendimento": null,
+      "dthRegistro": "2026-06-19T13:19:23.377Z"
+    },
+    {
+      "EMP_CodFilial": "1",
+      "EMP_idEmpresa": 84239246,
+      "OS_idOS": 1028152,
+      "OS_nrOS": "1215",
+      "OS_fStatus": "Fechada",
+      "OS_idCliente": 2511895,
+      "CLI_CodigoCliente": "604",
+      "CLI_Nome": "LEUCIMAR OLIVO",
+      "CLI_CNPJ_CPF": "84010924934",
+      "ATD_idAtendimento": 1239347,
+      "USR_idUsuario": 18900,
+      "USR_codUsuario": "69",
+      "USR_nomeUsuario": "NATHAN HENRIQUE TIBES",
+      "AGE_idAgenda": 1162800,
+      "AGE_fStatus": "Concluída",
+      "AGE_dthPrevisaoInicio": "2025-02-06T08:30:00.000Z",
+      "AGE_dthPrevisaoFim": "2025-02-06T09:30:00.000Z",
+      "TPS_codServicoDeslocamento": null,
+      "TPS_dscTipoServicoDeslocamento": null,
+      "TPS_codServicoAtendimento": null,
+      "TPS_dscTipoServicoAtendimento": null,
+      "dthRegistro": "2026-06-19T13:19:23.377Z"
+    },
+    {
+      "EMP_CodFilial": "1",
+      "EMP_idEmpresa": 84239246,
+      "OS_idOS": 1169929,
+      "OS_nrOS": "1548",
+      "OS_fStatus": "Cancelada",
+      "OS_idCliente": 2511895,
+      "CLI_CodigoCliente": "604",
+      "CLI_Nome": "LEUCIMAR OLIVO",
+      "CLI_CNPJ_CPF": "84010924934",
+      "ATD_idAtendimento": 1413293,
+      "USR_idUsuario": 18900,
+      "USR_codUsuario": "69",
+      "USR_nomeUsuario": "NATHAN HENRIQUE TIBES",
+      "AGE_idAgenda": 1338958,
+      "AGE_fStatus": "Cancelada",
+      "AGE_dthPrevisaoInicio": "2025-09-03T08:30:00.000Z",
+      "AGE_dthPrevisaoFim": "2025-09-03T09:30:00.000Z",
+      "TPS_codServicoDeslocamento": null,
+      "TPS_dscTipoServicoDeslocamento": null,
+      "TPS_codServicoAtendimento": null,
+      "TPS_dscTipoServicoAtendimento": null,
+      "dthRegistro": "2026-06-19T13:19:23.377Z"
+    },
+    {
+      "EMP_CodFilial": "1",
+      "EMP_idEmpresa": 84239246,
+      "OS_idOS": 1153097,
+      "OS_nrOS": "1515",
+      "OS_fStatus": "Fechada",
+      "OS_idCliente": 2511895,
+      "CLI_CodigoCliente": "604",
+      "CLI_Nome": "LEUCIMAR OLIVO",
+      "CLI_CNPJ_CPF": "84010924934",
+      "ATD_idAtendimento": 1392745,
+      "USR_idUsuario": 18900,
+      "USR_codUsuario": "69",
+      "USR_nomeUsuario": "NATHAN HENRIQUE TIBES",
+      "AGE_idAgenda": 1318164,
+      "AGE_fStatus": "Concluída",
+      "AGE_dthPrevisaoInicio": "2025-08-11T09:00:00.000Z",
+      "AGE_dthPrevisaoFim": "2025-08-11T10:00:00.000Z",
+      "TPS_codServicoDeslocamento": null,
+      "TPS_dscTipoServicoDeslocamento": null,
+      "TPS_codServicoAtendimento": null,
+      "TPS_dscTipoServicoAtendimento": null,
+      "dthRegistro": "2026-06-19T13:19:23.377Z"
+    }
+  ]
+}

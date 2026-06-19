@@ -1,0 +1,533 @@
+{
+  "view": "VW_Ceres_CRM_ClientePropriedade",
+  "total": 341,
+  "error": null,
+  "columns": [
+    {
+      "name": "CLI_Nome",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "CLI_CNPJ_CPF",
+      "types": [
+        "int-str"
+      ]
+    },
+    {
+      "name": "CLI_CodigoCliente",
+      "types": [
+        "int-str"
+      ]
+    },
+    {
+      "name": "CLI_idCliente",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "CLI_Prospect",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "CLI_Segmento",
+      "types": [
+        "null"
+      ]
+    },
+    {
+      "name": "PPD_idPropriedade",
+      "types": [
+        "string",
+        "int-str"
+      ]
+    },
+    {
+      "name": "PPD_CodigoIntegracao",
+      "types": [
+        "int-str",
+        "string"
+      ]
+    },
+    {
+      "name": "PPD_CNPJ_CPF",
+      "types": [
+        "string",
+        "int-str"
+      ]
+    },
+    {
+      "name": "PPD_InsEstadualCadProdutor",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "PPD_Matricula",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "PPD_Descricao",
+      "types": [
+        "string",
+        "int-str"
+      ]
+    },
+    {
+      "name": "PPD_Cidade",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "PPD_UF",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "PPD_Endereco",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "PPD_TipoPropriedade",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "PPD_Medida",
+      "types": [
+        "decimal-str"
+      ]
+    },
+    {
+      "name": "PPD_TipoMedida",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "PPD_Lat",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "PPD_Lon",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "PPD_Observacao",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "PPD_dthRegistro",
+      "types": [
+        "datetime"
+      ]
+    },
+    {
+      "name": "CLT_idRelacaoPropCultura",
+      "types": [
+        "string",
+        "int-str"
+      ]
+    },
+    {
+      "name": "CLT_CodigoIntegracao",
+      "types": [
+        "int-str",
+        "string"
+      ]
+    },
+    {
+      "name": "CLT_idTipoCultura",
+      "types": [
+        "int-str",
+        "string"
+      ]
+    },
+    {
+      "name": "CLT_TipoCultura",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "CLT_Medida",
+      "types": [
+        "string",
+        "decimal-str"
+      ]
+    },
+    {
+      "name": "CLT_TipoMedida",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "CLT_DthPrevisaoColheita",
+      "types": [
+        "datetime"
+      ]
+    },
+    {
+      "name": "CLT_Qtde",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "dthRegistro",
+      "types": [
+        "datetime"
+      ]
+    }
+  ],
+  "sample": [
+    {
+      "CLI_Nome": "AREUVALDIR CANDIOTTO",
+      "CLI_CNPJ_CPF": "36878405904",
+      "CLI_CodigoCliente": "535",
+      "CLI_idCliente": 2511782,
+      "CLI_Prospect": "Não",
+      "CLI_Segmento": null,
+      "PPD_idPropriedade": "W25011016255110049",
+      "PPD_CodigoIntegracao": "120",
+      "PPD_CNPJ_CPF": "                  ",
+      "PPD_InsEstadualCadProdutor": "",
+      "PPD_Matricula": "",
+      "PPD_Descricao": "faz santa barbara",
+      "PPD_Cidade": "Renascença",
+      "PPD_UF": "PR",
+      "PPD_Endereco": "",
+      "PPD_TipoPropriedade": "Própria",
+      "PPD_Medida": "100.00",
+      "PPD_TipoMedida": "Ha",
+      "PPD_Lat": 0,
+      "PPD_Lon": 0,
+      "PPD_Observacao": "",
+      "PPD_dthRegistro": "2025-07-14T15:55:28.933Z",
+      "CLT_idRelacaoPropCultura": "W25011016255110049",
+      "CLT_CodigoIntegracao": "14",
+      "CLT_idTipoCultura": "1563",
+      "CLT_TipoCultura": "FEIJAO",
+      "CLT_Medida": "",
+      "CLT_TipoMedida": "Ha",
+      "CLT_DthPrevisaoColheita": "1900-01-01T00:00:00.000Z",
+      "CLT_Qtde": 35,
+      "dthRegistro": "2026-06-19T13:19:14.860Z"
+    },
+    {
+      "CLI_Nome": "PAULO RANCATTI",
+      "CLI_CNPJ_CPF": "52484629915",
+      "CLI_CodigoCliente": "554",
+      "CLI_idCliente": 2511852,
+      "CLI_Prospect": "Não",
+      "CLI_Segmento": null,
+      "PPD_idPropriedade": "W2501200929518972",
+      "PPD_CodigoIntegracao": "129",
+      "PPD_CNPJ_CPF": "                  ",
+      "PPD_InsEstadualCadProdutor": "95285915-39",
+      "PPD_Matricula": "",
+      "PPD_Descricao": "Fazenda Sao Paulo",
+      "PPD_Cidade": "Vitorino",
+      "PPD_UF": "PR",
+      "PPD_Endereco": "",
+      "PPD_TipoPropriedade": "Própria",
+      "PPD_Medida": "120.00",
+      "PPD_TipoMedida": "Ha",
+      "PPD_Lat": 0,
+      "PPD_Lon": 0,
+      "PPD_Observacao": "",
+      "PPD_dthRegistro": "2025-11-18T11:56:35.583Z",
+      "CLT_idRelacaoPropCultura": "W2501200929518972",
+      "CLT_CodigoIntegracao": "4",
+      "CLT_idTipoCultura": "1553",
+      "CLT_TipoCultura": "MILHO",
+      "CLT_Medida": "120.00",
+      "CLT_TipoMedida": "Ha",
+      "CLT_DthPrevisaoColheita": "2025-07-10T00:00:00.000Z",
+      "CLT_Qtde": 120,
+      "dthRegistro": "2026-06-19T13:19:14.860Z"
+    },
+    {
+      "CLI_Nome": "PAULO RANCATTI",
+      "CLI_CNPJ_CPF": "52484629915",
+      "CLI_CodigoCliente": "554",
+      "CLI_idCliente": 2511852,
+      "CLI_Prospect": "Não",
+      "CLI_Segmento": null,
+      "PPD_idPropriedade": "W2501200929518972",
+      "PPD_CodigoIntegracao": "129",
+      "PPD_CNPJ_CPF": "                  ",
+      "PPD_InsEstadualCadProdutor": "95285915-39",
+      "PPD_Matricula": "",
+      "PPD_Descricao": "Fazenda Sao Paulo",
+      "PPD_Cidade": "Vitorino",
+      "PPD_UF": "PR",
+      "PPD_Endereco": "",
+      "PPD_TipoPropriedade": "Própria",
+      "PPD_Medida": "120.00",
+      "PPD_TipoMedida": "Ha",
+      "PPD_Lat": 0,
+      "PPD_Lon": 0,
+      "PPD_Observacao": "",
+      "PPD_dthRegistro": "2025-11-18T11:56:35.583Z",
+      "CLT_idRelacaoPropCultura": "W2501200929518972",
+      "CLT_CodigoIntegracao": "3",
+      "CLT_idTipoCultura": "1552",
+      "CLT_TipoCultura": "SOJA",
+      "CLT_Medida": "120.00",
+      "CLT_TipoMedida": "Ha",
+      "CLT_DthPrevisaoColheita": "2026-02-10T00:00:00.000Z",
+      "CLT_Qtde": 120,
+      "dthRegistro": "2026-06-19T13:19:14.860Z"
+    },
+    {
+      "CLI_Nome": "ADILSON SBABO",
+      "CLI_CNPJ_CPF": "03006841930",
+      "CLI_CodigoCliente": "608",
+      "CLI_idCliente": 2511898,
+      "CLI_Prospect": "Não",
+      "CLI_Segmento": null,
+      "PPD_idPropriedade": "2411021904518966",
+      "PPD_CodigoIntegracao": "117",
+      "PPD_CNPJ_CPF": "                  ",
+      "PPD_InsEstadualCadProdutor": "",
+      "PPD_Matricula": "",
+      "PPD_Descricao": "Cede 01 barrinha",
+      "PPD_Cidade": "Renascença",
+      "PPD_UF": "PR",
+      "PPD_Endereco": "",
+      "PPD_TipoPropriedade": "Própria",
+      "PPD_Medida": "75.00",
+      "PPD_TipoMedida": "Ha",
+      "PPD_Lat": 0,
+      "PPD_Lon": 0,
+      "PPD_Observacao": "",
+      "PPD_dthRegistro": "2024-11-02T19:15:16.493Z",
+      "CLT_idRelacaoPropCultura": "2411021904518966",
+      "CLT_CodigoIntegracao": "3",
+      "CLT_idTipoCultura": "1552",
+      "CLT_TipoCultura": "SOJA",
+      "CLT_Medida": "75.00",
+      "CLT_TipoMedida": "Ha",
+      "CLT_DthPrevisaoColheita": "1900-01-01T00:00:00.000Z",
+      "CLT_Qtde": 0,
+      "dthRegistro": "2026-06-19T13:19:14.860Z"
+    },
+    {
+      "CLI_Nome": "DOUGLAS RICARDO PHILIPPSEN",
+      "CLI_CNPJ_CPF": "05592254903",
+      "CLI_CodigoCliente": "645",
+      "CLI_idCliente": 2511931,
+      "CLI_Prospect": "Não",
+      "CLI_Segmento": null,
+      "PPD_idPropriedade": "2604131600088971",
+      "PPD_CodigoIntegracao": "",
+      "PPD_CNPJ_CPF": "05592254903",
+      "PPD_InsEstadualCadProdutor": "",
+      "PPD_Matricula": "",
+      "PPD_Descricao": "400",
+      "PPD_Cidade": "Honório Serpa",
+      "PPD_UF": "PR",
+      "PPD_Endereco": "",
+      "PPD_TipoPropriedade": "Própria",
+      "PPD_Medida": "400.00",
+      "PPD_TipoMedida": "Ha",
+      "PPD_Lat": 0,
+      "PPD_Lon": 0,
+      "PPD_Observacao": "",
+      "PPD_dthRegistro": "2026-04-13T16:09:26.107Z",
+      "CLT_idRelacaoPropCultura": "",
+      "CLT_CodigoIntegracao": "",
+      "CLT_idTipoCultura": "",
+      "CLT_TipoCultura": "",
+      "CLT_Medida": "",
+      "CLT_TipoMedida": "M²",
+      "CLT_DthPrevisaoColheita": "1900-01-01T00:00:00.000Z",
+      "CLT_Qtde": 0,
+      "dthRegistro": "2026-06-19T13:19:14.860Z"
+    },
+    {
+      "CLI_Nome": "RAFAEL RICARDO COLFERAI",
+      "CLI_CNPJ_CPF": "04876785910",
+      "CLI_CodigoCliente": "694",
+      "CLI_idCliente": 2511969,
+      "CLI_Prospect": "Não",
+      "CLI_Segmento": null,
+      "PPD_idPropriedade": "2504111501508971",
+      "PPD_CodigoIntegracao": "185",
+      "PPD_CNPJ_CPF": "                  ",
+      "PPD_InsEstadualCadProdutor": "",
+      "PPD_Matricula": "",
+      "PPD_Descricao": "Fazenda San Rafael",
+      "PPD_Cidade": "Coronel Vivida",
+      "PPD_UF": "PR",
+      "PPD_Endereco": "",
+      "PPD_TipoPropriedade": "Própria",
+      "PPD_Medida": "1500.00",
+      "PPD_TipoMedida": "Ha",
+      "PPD_Lat": 0,
+      "PPD_Lon": 0,
+      "PPD_Observacao": "",
+      "PPD_dthRegistro": "2025-04-11T18:15:11.463Z",
+      "CLT_idRelacaoPropCultura": "",
+      "CLT_CodigoIntegracao": "",
+      "CLT_idTipoCultura": "",
+      "CLT_TipoCultura": "",
+      "CLT_Medida": "",
+      "CLT_TipoMedida": "M²",
+      "CLT_DthPrevisaoColheita": "1900-01-01T00:00:00.000Z",
+      "CLT_Qtde": 0,
+      "dthRegistro": "2026-06-19T13:19:14.860Z"
+    },
+    {
+      "CLI_Nome": "ELIAS KOSLINSKI",
+      "CLI_CNPJ_CPF": "28547373934",
+      "CLI_CodigoCliente": "756",
+      "CLI_idCliente": 2512020,
+      "CLI_Prospect": "Não",
+      "CLI_Segmento": null,
+      "PPD_idPropriedade": "25012009300318559",
+      "PPD_CodigoIntegracao": "131",
+      "PPD_CNPJ_CPF": "                  ",
+      "PPD_InsEstadualCadProdutor": "",
+      "PPD_Matricula": "",
+      "PPD_Descricao": "Milho, soja, trigo, feijao e pecuaria",
+      "PPD_Cidade": "Pato Branco",
+      "PPD_UF": "PR",
+      "PPD_Endereco": "",
+      "PPD_TipoPropriedade": "Própria",
+      "PPD_Medida": "363.00",
+      "PPD_TipoMedida": "Ha",
+      "PPD_Lat": 0,
+      "PPD_Lon": 0,
+      "PPD_Observacao": "",
+      "PPD_dthRegistro": "2025-01-20T11:55:34.633Z",
+      "CLT_idRelacaoPropCultura": "",
+      "CLT_CodigoIntegracao": "",
+      "CLT_idTipoCultura": "",
+      "CLT_TipoCultura": "",
+      "CLT_Medida": "",
+      "CLT_TipoMedida": "M²",
+      "CLT_DthPrevisaoColheita": "1900-01-01T00:00:00.000Z",
+      "CLT_Qtde": 0,
+      "dthRegistro": "2026-06-19T13:19:14.860Z"
+    },
+    {
+      "CLI_Nome": "REGINA MARIA MEZZOMO E OUTROS",
+      "CLI_CNPJ_CPF": "21249733000134",
+      "CLI_CodigoCliente": "770",
+      "CLI_idCliente": 2512034,
+      "CLI_Prospect": "Não",
+      "CLI_Segmento": null,
+      "PPD_idPropriedade": "2507071148198971",
+      "PPD_CodigoIntegracao": "225",
+      "PPD_CNPJ_CPF": "                  ",
+      "PPD_InsEstadualCadProdutor": "",
+      "PPD_Matricula": "",
+      "PPD_Descricao": "Fazenda Sao Geronimo",
+      "PPD_Cidade": "Indefinida",
+      "PPD_UF": "IN",
+      "PPD_Endereco": "",
+      "PPD_TipoPropriedade": "Própria",
+      "PPD_Medida": "1400.00",
+      "PPD_TipoMedida": "Ha",
+      "PPD_Lat": 0,
+      "PPD_Lon": 0,
+      "PPD_Observacao": "",
+      "PPD_dthRegistro": "2025-07-07T13:37:26.397Z",
+      "CLT_idRelacaoPropCultura": "",
+      "CLT_CodigoIntegracao": "",
+      "CLT_idTipoCultura": "",
+      "CLT_TipoCultura": "",
+      "CLT_Medida": "",
+      "CLT_TipoMedida": "M²",
+      "CLT_DthPrevisaoColheita": "1900-01-01T00:00:00.000Z",
+      "CLT_Qtde": 0,
+      "dthRegistro": "2026-06-19T13:19:14.860Z"
+    },
+    {
+      "CLI_Nome": "AGRO GEHLEN",
+      "CLI_CNPJ_CPF": "20118652000132",
+      "CLI_CodigoCliente": "830",
+      "CLI_idCliente": 2512091,
+      "CLI_Prospect": "Não",
+      "CLI_Segmento": null,
+      "PPD_idPropriedade": "2301201045348971",
+      "PPD_CodigoIntegracao": "3",
+      "PPD_CNPJ_CPF": "20118652000132",
+      "PPD_InsEstadualCadProdutor": "",
+      "PPD_Matricula": "",
+      "PPD_Descricao": "Fazenda Vista Alegre",
+      "PPD_Cidade": "Coronel Vivida",
+      "PPD_UF": "PR",
+      "PPD_Endereco": "",
+      "PPD_TipoPropriedade": "Própria",
+      "PPD_Medida": "650.00",
+      "PPD_TipoMedida": "Ha",
+      "PPD_Lat": 0,
+      "PPD_Lon": 0,
+      "PPD_Observacao": "",
+      "PPD_dthRegistro": "2023-01-24T14:55:29.853Z",
+      "CLT_idRelacaoPropCultura": "2301201045348971",
+      "CLT_CodigoIntegracao": "",
+      "CLT_idTipoCultura": "1502",
+      "CLT_TipoCultura": "Soja",
+      "CLT_Medida": "600.00",
+      "CLT_TipoMedida": "Ha",
+      "CLT_DthPrevisaoColheita": "1900-01-01T00:00:00.000Z",
+      "CLT_Qtde": 0,
+      "dthRegistro": "2026-06-19T13:19:14.860Z"
+    },
+    {
+      "CLI_Nome": "AGRO GEHLEN",
+      "CLI_CNPJ_CPF": "20118652000132",
+      "CLI_CodigoCliente": "830",
+      "CLI_idCliente": 2512091,
+      "CLI_Prospect": "Não",
+      "CLI_Segmento": null,
+      "PPD_idPropriedade": "2301201045348971",
+      "PPD_CodigoIntegracao": "3",
+      "PPD_CNPJ_CPF": "20118652000132",
+      "PPD_InsEstadualCadProdutor": "",
+      "PPD_Matricula": "",
+      "PPD_Descricao": "Fazenda Vista Alegre",
+      "PPD_Cidade": "Coronel Vivida",
+      "PPD_UF": "PR",
+      "PPD_Endereco": "",
+      "PPD_TipoPropriedade": "Própria",
+      "PPD_Medida": "650.00",
+      "PPD_TipoMedida": "Ha",
+      "PPD_Lat": 0,
+      "PPD_Lon": 0,
+      "PPD_Observacao": "",
+      "PPD_dthRegistro": "2023-01-24T14:55:29.853Z",
+      "CLT_idRelacaoPropCultura": "2301201045348971",
+      "CLT_CodigoIntegracao": "",
+      "CLT_idTipoCultura": "1513",
+      "CLT_TipoCultura": "Feijão",
+      "CLT_Medida": "50.00",
+      "CLT_TipoMedida": "Ha",
+      "CLT_DthPrevisaoColheita": "1900-01-01T00:00:00.000Z",
+      "CLT_Qtde": 0,
+      "dthRegistro": "2026-06-19T13:19:14.860Z"
+    }
+  ]
+}

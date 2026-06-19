@@ -1,0 +1,317 @@
+{
+  "view": "VW_Ceres_CRM_ClienteContatos",
+  "total": 8518,
+  "error": null,
+  "columns": [
+    {
+      "name": "CLI_Nome",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "CLI_CNPJ_CPF",
+      "types": [
+        "int-str"
+      ]
+    },
+    {
+      "name": "CLI_CodigoCliente",
+      "types": [
+        "int-str"
+      ]
+    },
+    {
+      "name": "CLI_idCliente",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "CLI_Segmento",
+      "types": [
+        "null"
+      ]
+    },
+    {
+      "name": "ANV_Nome",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "ANV_DataNascimento",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "ANV_AnoNascimento",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "ANV_dthRegistro",
+      "types": [
+        "datetime"
+      ]
+    },
+    {
+      "name": "CTT_CPF",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "CTT_Nome",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "CTT_DataNascimento",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "CTT_Email",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "CTT_Influencia",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "CTT_OBS",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "CTT_Telefone",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "CTT_RedeSocial",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "dthRegistro",
+      "types": [
+        "datetime"
+      ]
+    }
+  ],
+  "sample": [
+    {
+      "CLI_Nome": "AREUVALDIR CANDIOTTO",
+      "CLI_CNPJ_CPF": "36878405904",
+      "CLI_CodigoCliente": "535",
+      "CLI_idCliente": 2511782,
+      "CLI_Segmento": null,
+      "ANV_Nome": "",
+      "ANV_DataNascimento": "",
+      "ANV_AnoNascimento": "",
+      "ANV_dthRegistro": "1900-01-01T00:00:00.000Z",
+      "CTT_CPF": "",
+      "CTT_Nome": "",
+      "CTT_DataNascimento": "",
+      "CTT_Email": "",
+      "CTT_Influencia": "",
+      "CTT_OBS": "",
+      "CTT_Telefone": "",
+      "CTT_RedeSocial": "",
+      "dthRegistro": "2026-06-19T13:19:14.000Z"
+    },
+    {
+      "CLI_Nome": "COSTA   AMARAL REPRESENTACOES LTDA",
+      "CLI_CNPJ_CPF": "23835797000142",
+      "CLI_CodigoCliente": "3411",
+      "CLI_idCliente": 2511783,
+      "CLI_Segmento": null,
+      "ANV_Nome": "",
+      "ANV_DataNascimento": "",
+      "ANV_AnoNascimento": "",
+      "ANV_dthRegistro": "1900-01-01T00:00:00.000Z",
+      "CTT_CPF": "",
+      "CTT_Nome": "",
+      "CTT_DataNascimento": "",
+      "CTT_Email": "",
+      "CTT_Influencia": "",
+      "CTT_OBS": "",
+      "CTT_Telefone": "",
+      "CTT_RedeSocial": "",
+      "dthRegistro": "2026-06-19T13:19:14.000Z"
+    },
+    {
+      "CLI_Nome": "ADRIANO SANTOS MENEZES",
+      "CLI_CNPJ_CPF": "03634709561",
+      "CLI_CodigoCliente": "3400",
+      "CLI_idCliente": 2511784,
+      "CLI_Segmento": null,
+      "ANV_Nome": "",
+      "ANV_DataNascimento": "",
+      "ANV_AnoNascimento": "",
+      "ANV_dthRegistro": "1900-01-01T00:00:00.000Z",
+      "CTT_CPF": "",
+      "CTT_Nome": "",
+      "CTT_DataNascimento": "",
+      "CTT_Email": "",
+      "CTT_Influencia": "",
+      "CTT_OBS": "",
+      "CTT_Telefone": "",
+      "CTT_RedeSocial": "",
+      "dthRegistro": "2026-06-19T13:19:14.000Z"
+    },
+    {
+      "CLI_Nome": "ITAIR AQUILINO ROMANI",
+      "CLI_CNPJ_CPF": "40126285934",
+      "CLI_CodigoCliente": "1889",
+      "CLI_idCliente": 2511786,
+      "CLI_Segmento": null,
+      "ANV_Nome": "",
+      "ANV_DataNascimento": "",
+      "ANV_AnoNascimento": "",
+      "ANV_dthRegistro": "1900-01-01T00:00:00.000Z",
+      "CTT_CPF": "",
+      "CTT_Nome": "",
+      "CTT_DataNascimento": "",
+      "CTT_Email": "",
+      "CTT_Influencia": "",
+      "CTT_OBS": "",
+      "CTT_Telefone": "",
+      "CTT_RedeSocial": "",
+      "dthRegistro": "2026-06-19T13:19:14.000Z"
+    },
+    {
+      "CLI_Nome": "CLARINDO JOSE STORTI",
+      "CLI_CNPJ_CPF": "22572228068",
+      "CLI_CodigoCliente": "511",
+      "CLI_idCliente": 2511787,
+      "CLI_Segmento": null,
+      "ANV_Nome": "",
+      "ANV_DataNascimento": "",
+      "ANV_AnoNascimento": "",
+      "ANV_dthRegistro": "1900-01-01T00:00:00.000Z",
+      "CTT_CPF": "",
+      "CTT_Nome": "",
+      "CTT_DataNascimento": "",
+      "CTT_Email": "",
+      "CTT_Influencia": "",
+      "CTT_OBS": "",
+      "CTT_Telefone": "",
+      "CTT_RedeSocial": "",
+      "dthRegistro": "2026-06-19T13:19:14.000Z"
+    },
+    {
+      "CLI_Nome": "MARIELLI STORTI IARONKA",
+      "CLI_CNPJ_CPF": "04548735909",
+      "CLI_CodigoCliente": "1952",
+      "CLI_idCliente": 2511788,
+      "CLI_Segmento": null,
+      "ANV_Nome": "",
+      "ANV_DataNascimento": "",
+      "ANV_AnoNascimento": "",
+      "ANV_dthRegistro": "1900-01-01T00:00:00.000Z",
+      "CTT_CPF": "",
+      "CTT_Nome": "",
+      "CTT_DataNascimento": "",
+      "CTT_Email": "",
+      "CTT_Influencia": "",
+      "CTT_OBS": "",
+      "CTT_Telefone": "",
+      "CTT_RedeSocial": "",
+      "dthRegistro": "2026-06-19T13:19:14.000Z"
+    },
+    {
+      "CLI_Nome": "CELITO LUIZ REGINATO",
+      "CLI_CNPJ_CPF": "21795118091",
+      "CLI_CodigoCliente": "803",
+      "CLI_idCliente": 2511789,
+      "CLI_Segmento": null,
+      "ANV_Nome": "",
+      "ANV_DataNascimento": "",
+      "ANV_AnoNascimento": "",
+      "ANV_dthRegistro": "1900-01-01T00:00:00.000Z",
+      "CTT_CPF": "",
+      "CTT_Nome": "",
+      "CTT_DataNascimento": "",
+      "CTT_Email": "",
+      "CTT_Influencia": "",
+      "CTT_OBS": "",
+      "CTT_Telefone": "",
+      "CTT_RedeSocial": "",
+      "dthRegistro": "2026-06-19T13:19:14.000Z"
+    },
+    {
+      "CLI_Nome": "FERNANDO ANDRETTA GIACOMINI",
+      "CLI_CNPJ_CPF": "07068679986",
+      "CLI_CodigoCliente": "1076",
+      "CLI_idCliente": 2511790,
+      "CLI_Segmento": null,
+      "ANV_Nome": "",
+      "ANV_DataNascimento": "",
+      "ANV_AnoNascimento": "",
+      "ANV_dthRegistro": "1900-01-01T00:00:00.000Z",
+      "CTT_CPF": "",
+      "CTT_Nome": "",
+      "CTT_DataNascimento": "",
+      "CTT_Email": "",
+      "CTT_Influencia": "",
+      "CTT_OBS": "",
+      "CTT_Telefone": "",
+      "CTT_RedeSocial": "",
+      "dthRegistro": "2026-06-19T13:19:14.000Z"
+    },
+    {
+      "CLI_Nome": "HENRIQUE BARATTO BORTOLUZZI",
+      "CLI_CNPJ_CPF": "00950356999",
+      "CLI_CodigoCliente": "1345",
+      "CLI_idCliente": 2511791,
+      "CLI_Segmento": null,
+      "ANV_Nome": "",
+      "ANV_DataNascimento": "",
+      "ANV_AnoNascimento": "",
+      "ANV_dthRegistro": "1900-01-01T00:00:00.000Z",
+      "CTT_CPF": "",
+      "CTT_Nome": "",
+      "CTT_DataNascimento": "",
+      "CTT_Email": "",
+      "CTT_Influencia": "",
+      "CTT_OBS": "",
+      "CTT_Telefone": "",
+      "CTT_RedeSocial": "",
+      "dthRegistro": "2026-06-19T13:19:14.000Z"
+    },
+    {
+      "CLI_Nome": "CELSO JOSE SANTIN",
+      "CLI_CNPJ_CPF": "53314930925",
+      "CLI_CodigoCliente": "970",
+      "CLI_idCliente": 2511792,
+      "CLI_Segmento": null,
+      "ANV_Nome": "",
+      "ANV_DataNascimento": "",
+      "ANV_AnoNascimento": "",
+      "ANV_dthRegistro": "1900-01-01T00:00:00.000Z",
+      "CTT_CPF": "",
+      "CTT_Nome": "",
+      "CTT_DataNascimento": "",
+      "CTT_Email": "",
+      "CTT_Influencia": "",
+      "CTT_OBS": "",
+      "CTT_Telefone": "",
+      "CTT_RedeSocial": "",
+      "dthRegistro": "2026-06-19T13:19:14.000Z"
+    }
+  ]
+}
