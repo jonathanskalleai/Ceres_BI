@@ -181,6 +181,15 @@
     --voux-tooltip-muted:    #6b6253;
     --voux-border-alpha:     rgba(214, 207, 193, 0.08);
     --voux-border-hover:     rgba(214, 207, 193, 0.16);
+
+    /* Hierarquia de superficies (dark) — sobrescreve as do :root */
+    --surface-base:          #0a0907;
+    --surface-raised:        #18160f;
+    --surface-overlay:       #1f1c14;
+    --surface-topbar:        rgba(10, 9, 7, 0.85);
+
+    /* Borda mais visivel sobre o card #18160f */
+    --voux-card-border:      rgba(214, 207, 193, 0.10);
   }
 
   * { @apply border-border; }
