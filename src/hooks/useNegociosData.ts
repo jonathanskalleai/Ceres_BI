@@ -193,6 +193,11 @@ function aggregate(rows: NegocioRow[], filters: Filters, registrosClientes: Regi
   };
 }
 
+/**
+ * @deprecated Use useNegociosBI instead - this hook uses ngo_data_cadastro which is
+ * semantically different from ngo_data_fechamento. Per business decision,
+ * always use ngo_data_fechamento for consistency.
+ */
 export function useNegociosData(filters: Filters) {
   const from = filters.dateRange?.from;
   const to = filters.dateRange?.to;
