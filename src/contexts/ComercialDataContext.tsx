@@ -103,8 +103,9 @@ export function ComercialDataProvider({ children }: { children?: ReactNode }) {
 
   const categorias = CATEGORIA_OPTIONS;
 
+  let body: ReactNode;
   if (error) {
-    return (
+    body = (
       <div className="flex h-full items-center justify-center">
         <div className="text-center space-y-2">
           <p className="text-destructive font-semibold text-lg">Erro ao carregar dados</p>
@@ -112,16 +113,16 @@ export function ComercialDataProvider({ children }: { children?: ReactNode }) {
         </div>
       </div>
     );
-  }
-
-  if (!data) {
-    return <ContentSkeleton />;
+  } else if (!data) {
+    body = <ContentSkeleton />;
+  } else {
+    body = children ?? <Outlet />;
   }
 
   return (
     <ComercialDataContext.Provider
       value={{
-        data,
+        data: data as ComercialDataContextValue['data'],
         allData,
         filters,
         setFilters,
@@ -136,8 +137,9 @@ export function ComercialDataProvider({ children }: { children?: ReactNode }) {
         categorias,
       }}
     >
-      <CrmTopbarPortal />
-      {children ?? <Outlet />}
+      {data && <CrmTopbarPortal />}
+      {body}
     </ComercialDataContext.Provider>
   );
 }
+
