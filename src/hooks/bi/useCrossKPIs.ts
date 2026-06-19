@@ -192,6 +192,20 @@ function computeMetrics(negocios: NegocioBIRow[], pedidos: PedidoRow[]): PeriodM
  * - conversaoPedidoNegocio: % of won deals that generated at least 1 order
  * - receitaPorConsultor: AVG revenue per active seller (won deals)
  */
+function toISODate(d: Date | undefined): string | undefined {
+  if (!d) return undefined;
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function resolveFunisServer(categoria: CategoriaFilter, funil: string): string[] | undefined {
+  if (funil && funil !== FUNIL_ALL) return [funil];
+  if (categoria && categoria !== CATEGORIA_ALL) return getFunisByCategoria(categoria);
+  return undefined;
+}
+
 export function useCrossKPIs(
   dateRange: DateRange | undefined,
   categoria: CategoriaFilter,
@@ -199,30 +213,44 @@ export function useCrossKPIs(
 ): UseCrossKPIsResult {
   const prevDateRange = useMemo(() => getPreviousDateRange(dateRange), [dateRange]);
 
-  // Share cache with useNegociosBI (key: ["bi-negocios"])
-  const { data: negociosRaw = [], isLoading: negLoad } = useQuery({
-    queryKey: ["bi-negocios"],
-    queryFn: fetchNegociosBI,
-    staleTime: 60_000,
+  const fromAtual = toISODate(dateRange?.from);
+  const toAtual = toISODate(dateRange?.to ?? dateRange?.from);
+  const fromPrev = toISODate(prevDateRange?.from);
+  const toPrev = toISODate(prevDateRange?.to ?? prevDateRange?.from);
+  const funisServer = resolveFunisServer(categoria, funil);
+
+  // Current period — filtered server-side, shares cache with useNegociosBI/usePedidosData
+  const { data: negociosAtualRaw = [], isLoading: negLoadA } = useQuery<NegocioBIRow[]>({
+    queryKey: ["bi-negocios", fromAtual ?? null, toAtual ?? null, funisServer ?? null],
+    queryFn: () => fetchNegociosBI({ from: fromAtual, to: toAtual, funis: funisServer }),
+    staleTime: 5 * 60_000,
   });
 
-  // Share cache with usePedidosData (key: ["bi-pedidos"])
-  const { data: pedidosRaw = [], isLoading: pedLoad } = useQuery({
-    queryKey: ["bi-pedidos"],
-    queryFn: fetchPedidosBI,
-    staleTime: 60_000,
+  const { data: pedidosAtualRaw = [], isLoading: pedLoadA } = useQuery<PedidoRow[]>({
+    queryKey: ["bi-pedidos", fromAtual ?? null, toAtual ?? null],
+    queryFn: () => fetchPedidosBI({ from: fromAtual, to: toAtual }),
+    staleTime: 5 * 60_000,
+  });
+
+  // Previous period
+  const { data: negociosPrevRaw = [], isLoading: negLoadP } = useQuery<NegocioBIRow[]>({
+    queryKey: ["bi-negocios", fromPrev ?? null, toPrev ?? null, funisServer ?? null],
+    queryFn: () => fetchNegociosBI({ from: fromPrev, to: toPrev, funis: funisServer }),
+    staleTime: 5 * 60_000,
+  });
+
+  const { data: pedidosPrevRaw = [], isLoading: pedLoadP } = useQuery<PedidoRow[]>({
+    queryKey: ["bi-pedidos", fromPrev ?? null, toPrev ?? null],
+    queryFn: () => fetchPedidosBI({ from: fromPrev, to: toPrev }),
+    staleTime: 5 * 60_000,
   });
 
   const kpis = useMemo((): CrossKPIs => {
-    // Current period
-    const negAtual = filterNegocios(negociosRaw, dateRange, categoria, funil);
-    const pedAtual = filterPedidos(pedidosRaw, dateRange);
-    const metricsAtual = computeMetrics(negAtual, pedAtual);
-
-    // Previous period (year-over-year)
-    const negAnterior = filterNegocios(negociosRaw, prevDateRange, categoria, funil);
-    const pedAnterior = filterPedidos(pedidosRaw, prevDateRange);
-    const metricsAnterior = computeMetrics(negAnterior, pedAnterior);
+    // Server-side filter already applied; still apply local funil/categoria for safety + dedup
+    const negAtual = filterNegocios(negociosAtualRaw, undefined, categoria, funil);
+    const negAnterior = filterNegocios(negociosPrevRaw, undefined, categoria, funil);
+    const metricsAtual = computeMetrics(negAtual, pedidosAtualRaw);
+    const metricsAnterior = computeMetrics(negAnterior, pedidosPrevRaw);
 
     return {
       cicloMedioVendas: makeKPI(metricsAtual.cicloMedioDias, metricsAnterior.cicloMedioDias, true),
@@ -230,7 +258,7 @@ export function useCrossKPIs(
       conversaoPedidoNegocio: makeKPI(metricsAtual.conversaoPedido, metricsAnterior.conversaoPedido),
       receitaPorConsultor: makeKPI(metricsAtual.receitaPorConsultor, metricsAnterior.receitaPorConsultor),
     };
-  }, [negociosRaw, pedidosRaw, dateRange, prevDateRange, categoria, funil]);
+  }, [negociosAtualRaw, pedidosAtualRaw, negociosPrevRaw, pedidosPrevRaw, categoria, funil]);
 
-  return { kpis, isLoading: negLoad || pedLoad };
+  return { kpis, isLoading: negLoadA || pedLoadA || negLoadP || pedLoadP };
 }
