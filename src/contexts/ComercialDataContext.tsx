@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from 'react';
 import { Outlet } from 'react-router-dom';
+import { startOfMonth, endOfMonth, format } from 'date-fns';
 import { useComercialData } from '@/hooks/useComercialData';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
@@ -15,13 +16,21 @@ import { CrmTopbarPortal } from '@/components/dashboard/CrmTopbarPortal';
 import type { DadosComerciais, Filters } from '@/types/comercial';
 import { type CategoriaFilter, CATEGORIA_OPTIONS } from '@/lib/categoriaFunil';
 
-const emptyFilters: Filters = {
+function currentMonthFilterRange() {
+  const now = new Date();
+  return {
+    from: format(startOfMonth(now), 'yyyy-MM-dd'),
+    to: format(endOfMonth(now), 'yyyy-MM-dd'),
+  };
+}
+
+const defaultFilters = (): Filters => ({
   cidade: '',
   tipoAcao: '',
   categoria: '',
   funil: '',
-  dateRange: undefined,
-};
+  dateRange: currentMonthFilterRange(),
+});
 
 interface ComercialDataContextValue {
   data: DadosComerciais;
@@ -67,7 +76,7 @@ function ContentSkeleton() {
 }
 
 export function ComercialDataProvider({ children }: { children?: ReactNode }) {
-  const [filters, setFilters] = useState<Filters>(emptyFilters);
+  const [filters, setFilters] = useState<Filters>(() => defaultFilters());
   const { data, allData, error, lastUpdated } = useComercialData(filters.categoria || undefined, filters.funil || undefined);
   const queryClient = useQueryClient();
   const { toast } = useToast();

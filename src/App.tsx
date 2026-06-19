@@ -16,7 +16,7 @@ import NotFound from "./pages/NotFound";
 import CrmOverview from "./pages/crm/CrmOverview";
 import CrmConsultores from "./pages/crm/CrmConsultores";
 import CrmConsultorDetail from "./pages/crm/CrmConsultorDetail";
-import CrmRegioes from "./pages/crm/CrmRegioes";
+
 import CrmRegistros from "./pages/crm/CrmRegistros";
 import CrmCriticos from "./pages/crm/CrmCriticos";
 import CrmMapa from "./pages/crm/CrmMapa";
@@ -97,7 +97,7 @@ const App = () => (
                 <Route path="overview" element={<CrmOverview />} />
                 <Route path="consultores" element={<CrmConsultores />} />
                 <Route path="consultores/:vendedor" element={<CrmConsultorDetail />} />
-                <Route path="regioes" element={<CrmRegioes />} />
+                
                 <Route path="registros" element={<CrmRegistros />} />
                 <Route path="criticos" element={<CrmCriticos />} />
                 <Route path="mapa" element={<CrmMapa />} />
