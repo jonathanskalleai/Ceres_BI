@@ -1,42 +1,27 @@
-## Mudanças solicitadas
+## Objetivo
 
-### 1. Botão "Atualizar" (topbar CRM)
-Está conectado sim — chama `queryClient.invalidateQueries(['registros-comerciais', 'pipeline-by-vendedor'])` em `ComercialDataContext.handleSync`, o que força o React Query a refazer fetch no Supabase via `useComercialData`. Não é código antigo, está funcional. Vou apenas confirmar isso na resposta (sem mudança de código).
+Reduzir a altura vertical dos cards de KPI e aumentar a hierarquia do número, ganhando densidade na tela. Como `KPICard.tsx` é compartilhado por **todas** as abas (Painel, Comercial, Operacional, Pedidos, Produtos, Serviços, Inteligência, Ações, Admin), uma única alteração propaga pra tudo.
 
-### 2. Excluir tela "Regiões" do Comercial CRM
-- Remover rota `regioes` em `src/App.tsx` e o import de `CrmRegioes`.
-- Remover item `crm.regioes` do menu em `src/components/layout/AppSidebar.tsx`.
-- Apagar `src/pages/crm/CrmRegioes.tsx`.
-- (Mantém `DashboardRegioes` por enquanto, caso reaproveitemos — ou apago também se preferir.)
+## Alterações
 
-### 3. Delay nos cards do Painel (BI)
-Investigar `src/pages/bi/BiPainel.tsx` e remover `lazy()` / `Suspense` em cascata que faz os cards aparecerem em ondas. Provavelmente cada seção é `lazy` separado — vou consolidar para renderizarem juntos (ou ao menos os KPIs do topo virem síncronos).
+**1. `src/components/bi/KPICard.tsx`** — único arquivo tocado:
 
-### 4. Nomes cortados nos gráficos de barras horizontais
-Em "Motivos de Perda" e "Velocidade do Funil" (e similares) o label do eixo Y é truncado. Ajustar `labelW` / margin esquerda dos componentes ECharts em `src/components/bi/charts/` para acomodar labels mais longos (ex.: 180–200px) e/ou habilitar `axisLabel.width` com quebra.
+- **Padding**: de `p-5 md:p-6` (20–24px) → `px-4 py-3 md:px-5 md:py-3.5` (~12–14px vertical). Redução de ~40% na altura.
+- **Espaçamento interno**: `mb-3 md:mb-4` no header → `mb-2`. `mt-1.5` e `mt-2` reduzidos pra `mt-1`.
+- **Número (valor)**: de `text-xl sm:text-2xl md:text-[26px]` → `text-2xl sm:text-[28px] md:text-[32px]`. Mais peso visual.
+- **Rótulo**: mantém tamanho (`text-[11px]`) — já está bom depois da última iteração.
+- **Ícone**: `h-7 w-7` → `h-6 w-6` (menos peso, libera espaço lateral).
+- **Hint / delta**: mantém tamanho, só reduz margens.
+- **Truncate**: para números muito grandes (ex.: `R$ 2.767.000`), adiciona `tabular-nums` e mantém `truncate` já existente — se faltar espaço, o `truncate` corta com ellipsis ao invés de quebrar layout.
 
-### 5. Cores de barras mais fortes no modo light
-Em `src/lib/chartColors.ts` / `chartTheme.ts` aumentar saturação/escurecer a paleta usada no tema light (as barras champagne/coral atuais ficam apagadas em fundo claro).
+**2. Grid (opcional, NÃO mexer agora)**: o grid de cards (definido em `BiPainel.tsx` e nas outras páginas BI) já é responsivo. Não vamos alterar o número de colunas — só a altura individual já reduz bastante a área ocupada.
 
-### 6. Filtros duplicados na tela "Ações" (BI)
-Na tela `/bi/acoes` aparecem duas linhas de filtros: a do topbar global (`BiTopbarPortal`) e uma interna da `AcoesSection`. Remover a barra de filtros interna da `AcoesSection`, deixando apenas a do topbar (que já tem Data, Categoria, Funil, Vendedor, Cidade).
+## Não incluso (fora de escopo)
 
-### 7. Filtro de data padrão = mês atual (todas as telas)
-- Em `src/contexts/NegociosFilterContext.tsx`: inicializar `dateRange` com `{ from: startOfMonth(now), to: endOfMonth(now) }` em vez de `undefined`.
-- Em `src/contexts/ComercialDataContext.tsx` (`emptyFilters`): inicializar `dateRange` com o mês atual.
-- Ajustar `DateRangePicker` para mostrar "Mês atual" quando o range corresponde ao mês corrente (label amigável), mantendo opção "Todas as datas".
+- Mudar grid/colunas das páginas BI.
+- Alterar `ChartCard` ou cards de outras telas (Dashboard CRM, Performance, etc.) — escopo é o KPICard do BI, que é o que aparece nas suas screenshots.
+- Refatorar tipografia (já feito na última iteração).
 
-### Arquivos a alterar
-- `src/App.tsx`
-- `src/components/layout/AppSidebar.tsx`
-- `src/pages/crm/CrmRegioes.tsx` (delete)
-- `src/pages/bi/BiPainel.tsx`
-- `src/components/bi/sections/AcoesSection.tsx`
-- `src/components/bi/charts/*` (margens/labelW)
-- `src/lib/chartColors.ts` ou `chartTheme.ts` (cores light)
-- `src/contexts/NegociosFilterContext.tsx`
-- `src/contexts/ComercialDataContext.tsx`
-- `src/components/ui/date-range-picker.tsx` (label "Mês atual")
+## Validação
 
-### Pergunta antes de implementar
-Confirmar: **manter** o botão "Atualizar" como está (só esclareço que funciona) ou querer redesign/feedback visual diferente?
+Após aplicar: comparar `/bi/painel` antes/depois — esperado ganhar ~30–40% de espaço vertical, número mais legível, fonte do rótulo permanece preta no light / clara no dark.
