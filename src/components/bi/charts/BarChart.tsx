@@ -3,7 +3,8 @@ import { ChartFrame } from "./ChartFrame";
 import { SvgBarH } from "./primitives/SvgBarH";
 import { SvgBarV } from "./primitives/SvgBarV";
 import { useContainerWidth } from "./primitives/useContainerWidth";
-import { VOUX_COLORS, VOUX_PALETTE, fmtCompact } from "./primitives/svgGeometry";
+import { VOUX_COLORS, getVouxPalette, fmtCompact } from "./primitives/svgGeometry";
+import { useTheme } from "@/hooks/useTheme";
 
 export interface BarChartData {
   name: string;
@@ -43,15 +44,15 @@ function Tooltip({ state }: { state: TooltipState }) {
         position: "fixed",
         left: state.x + 14,
         top: state.y - 10,
-        background: "rgba(17,16,13,0.96)",
-        border: "1px solid rgba(212,184,150,0.15)",
+        background: "var(--voux-tooltip-bg)",
+        border: "1px solid var(--voux-tooltip-border)",
         backdropFilter: "blur(10px)",
         WebkitBackdropFilter: "blur(10px)",
         padding: "8px 12px",
         borderRadius: 10,
         fontFamily: "var(--voux-font-mono)",
         fontSize: 11,
-        color: VOUX_COLORS.ink,
+        color: "var(--voux-tooltip-text)",
         pointerEvents: "none",
         zIndex: 9999,
         whiteSpace: "nowrap",
@@ -77,7 +78,7 @@ export default function BarChart({
   data,
   layout = "vertical",
   keys,
-  colors = VOUX_PALETTE,
+  colors,
   itemColors,
   seriesLabels,
   height,
@@ -88,6 +89,8 @@ export default function BarChart({
 }: BarChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const width = useContainerWidth(containerRef as React.RefObject<HTMLElement>);
+  const { isDark } = useTheme();
+  const palette = colors ?? getVouxPalette(isDark);
 
   const [tooltip, setTooltip] = useState<TooltipState>({
     visible: false,
@@ -110,7 +113,7 @@ export default function BarChart({
       <ChartFrame loading={loading} isEmpty={isEmpty} height={height}>
         <div ref={containerRef} style={{ width: "100%", position: "relative" }}>
           {keys.map((key, ki) => {
-            const color = resolveColor(ki, 0, colors, itemColors);
+            const color = resolveColor(ki, 0, palette, itemColors);
             const seriesData = data.map((d, di) => ({
               label: String(d.name),
               value: Number(d[key] ?? 0),
@@ -147,7 +150,7 @@ export default function BarChart({
                         width: 8,
                         height: 8,
                         borderRadius: "50%",
-                        backgroundColor: itemColors ? colors[0] : color,
+                        backgroundColor: itemColors ? palette[0] : color,
                       }}
                     />
                     {seriesLabels?.[key] ?? key}
@@ -159,7 +162,7 @@ export default function BarChart({
                     label: sd.label,
                     value: sd.value,
                   }))}
-                  color={itemColors ? resolveColor(ki, 0, colors, itemColors) : color}
+                  color={itemColors ? resolveColor(ki, 0, palette, itemColors) : color}
                   valueFormatter={(v) => fmt(v)}
                   max={globalMax}
                   onBarEnter={(di, x, y, label, value) => {
@@ -196,7 +199,7 @@ export default function BarChart({
       <ChartFrame loading={loading} isEmpty={isEmpty} height={height}>
         <div ref={containerRef} style={{ width: "100%", position: "relative" }}>
           {keys.map((key, ki) => {
-            const color = resolveColor(ki, 0, colors, itemColors);
+            const color = resolveColor(ki, 0, palette, itemColors);
             const values = data.map((d) => Number(d[key] ?? 0));
             return (
               <div key={key}>
@@ -257,8 +260,35 @@ export default function BarChart({
   return (
     <ChartFrame loading={loading} isEmpty={isEmpty} height={height}>
       <div ref={containerRef} style={{ width: "100%", position: "relative" }}>
+        {/* Single-series legend when seriesLabels is provided */}
+        {keys.length === 1 && seriesLabels && seriesLabels[keys[0]] && (
+          <div
+            style={{
+              fontFamily: "var(--voux-font-mono)",
+              fontSize: 10,
+              color: VOUX_COLORS.inkMuted,
+              letterSpacing: "0.10em",
+              marginBottom: 6,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              textTransform: "uppercase",
+            }}
+          >
+            <span
+              style={{
+                display: "inline-block",
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                backgroundColor: resolveColor(0, 0, colors, itemColors),
+              }}
+            />
+            {seriesLabels[keys[0]]}
+          </div>
+        )}
         {keys.map((key, ki) => {
-          const color = resolveColor(ki, 0, colors, itemColors);
+          const color = resolveColor(ki, 0, palette, itemColors);
           const values = data.map((d) => Number(d[key] ?? 0));
           return (
             <div key={key}>

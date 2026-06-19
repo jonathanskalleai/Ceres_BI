@@ -1,0 +1,229 @@
+- generic [ref=e2]:
+  - region "Notifications (F8)":
+    - list
+  - region "Notifications alt+T"
+  - generic [ref=e3]:
+    - complementary [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]: C
+        - generic [ref=e7]:
+          - generic [ref=e8]:
+            - text: Ceres
+            - emphasis [ref=e9]: BI
+          - generic [ref=e10]: Business Intelligence
+        - button [ref=e11] [cursor=pointer]:
+          - img [ref=e12]
+      - navigation [ref=e14]:
+        - generic [ref=e15]:
+          - button "COMERCIAL CRM" [ref=e16] [cursor=pointer]:
+            - generic [ref=e17]: COMERCIAL CRM
+            - img [ref=e19]
+          - generic [ref=e21]:
+            - button "Visão Geral 01" [ref=e22] [cursor=pointer]:
+              - img [ref=e23]
+              - generic [ref=e28]: Visão Geral
+              - generic [ref=e29]: "01"
+            - button "Consultores 02" [ref=e30] [cursor=pointer]:
+              - img [ref=e31]
+              - generic [ref=e36]: Consultores
+              - generic [ref=e37]: "02"
+            - button "Regiões 03" [ref=e38] [cursor=pointer]:
+              - img [ref=e39]
+              - generic [ref=e42]: Regiões
+              - generic [ref=e43]: "03"
+            - button "Registros 04" [ref=e44] [cursor=pointer]:
+              - img [ref=e45]
+              - generic [ref=e47]: Registros
+              - generic [ref=e48]: "04"
+            - button "Clientes Críticos 05" [ref=e49] [cursor=pointer]:
+              - img [ref=e50]
+              - generic [ref=e52]: Clientes Críticos
+              - generic [ref=e53]: "05"
+            - button "Mapa de Ações 06" [ref=e54] [cursor=pointer]:
+              - img [ref=e55]
+              - generic [ref=e57]: Mapa de Ações
+              - generic [ref=e58]: "06"
+            - button "Observações 07" [ref=e59] [cursor=pointer]:
+              - img [ref=e60]
+              - generic [ref=e62]: Observações
+              - generic [ref=e63]: "07"
+            - button "Negócios 08" [ref=e64] [cursor=pointer]:
+              - img [ref=e65]
+              - generic [ref=e70]: Negócios
+              - generic [ref=e71]: "08"
+            - button "Administrativo 09" [ref=e72] [cursor=pointer]:
+              - img [ref=e73]
+              - generic [ref=e76]: Administrativo
+              - generic [ref=e77]: "09"
+        - generic [ref=e78]:
+          - button "BI ANALYTICS" [ref=e79] [cursor=pointer]:
+            - generic [ref=e80]: BI ANALYTICS
+            - img [ref=e82]
+          - button "Dashboard BI 10" [ref=e85] [cursor=pointer]:
+            - img [ref=e86]
+            - generic [ref=e88]: Dashboard BI
+            - generic [ref=e89]: "10"
+        - button "FERRAMENTAS" [ref=e91] [cursor=pointer]:
+          - generic [ref=e92]: FERRAMENTAS
+          - img [ref=e94]
+      - generic [ref=e96]:
+        - paragraph [ref=e125]: "Sync: 20:10"
+        - button "Modo claro" [ref=e97] [cursor=pointer]:
+          - img [ref=e98]
+          - generic [ref=e104]: Modo claro
+    - main [ref=e105]:
+      - generic [ref=e106]:
+        - generic [ref=e107]:
+          - generic [ref=e108]: Ceres BI · COMERCIAL CRM
+          - heading "Visão Geral" [level=1] [ref=e1473]
+        - generic [ref=e110]:
+          - generic [ref=e126]:
+            - combobox [ref=e127] [cursor=pointer]:
+              - generic: Todos anos
+              - img [ref=e128]
+            - combobox [ref=e130] [cursor=pointer]:
+              - generic: Todos meses
+              - img [ref=e131]
+            - combobox [ref=e133] [cursor=pointer]:
+              - generic: Todos consultores
+              - img [ref=e134]
+            - combobox [ref=e136] [cursor=pointer]:
+              - generic: Todas cidades
+              - img [ref=e137]
+          - button "Atualizar" [ref=e111] [cursor=pointer]:
+            - img
+            - text: Atualizar
+      - generic [ref=e1474]:
+        - generic [ref=e1475]:
+          - heading "Visão Geral" [level=2] [ref=e1476]
+          - paragraph [ref=e1477]: Painel de controle comercial — Campos Dealer
+        - generic [ref=e1478]:
+          - generic [ref=e1480]:
+            - img [ref=e1482]
+            - paragraph [ref=e1484]: "4.344"
+            - paragraph [ref=e1485]: Total Registros
+          - generic [ref=e1487]:
+            - img [ref=e1489]
+            - paragraph [ref=e1494]: "1.757"
+            - paragraph [ref=e1495]: Clientes Únicos
+          - generic [ref=e1497]:
+            - img [ref=e1499]
+            - paragraph [ref=e1501]: R$ 371.4M
+            - paragraph [ref=e1502]: Pipeline Total
+          - generic [ref=e1504]:
+            - img [ref=e1506]
+            - paragraph [ref=e1509]: "2.833"
+            - paragraph [ref=e1510]: Visitas
+          - generic [ref=e1512]:
+            - img [ref=e1514]
+            - paragraph [ref=e1517]: "25"
+            - paragraph [ref=e1518]: Consultores
+          - generic [ref=e1520]:
+            - img [ref=e1522]
+            - paragraph [ref=e1525]: "4"
+            - paragraph [ref=e1526]: Cidades
+        - generic [ref=e1527]:
+          - generic [ref=e1528]:
+            - heading "Evolução Mensal" [level=3] [ref=e1530]:
+              - text: Evolução Mensal
+              - img [ref=e1532]
+            - img [ref=e1537]:
+              - generic [ref=e1539]: "0"
+              - generic [ref=e1541]: "250"
+              - generic [ref=e1543]: "500"
+              - generic [ref=e1545]: "750"
+              - generic [ref=e1547]: 1k
+              - generic [ref=e1548]: dez/2025
+              - generic [ref=e1549]: jan/2026
+              - generic [ref=e1550]: fev/2026
+              - generic [ref=e1551]: mar/2026
+              - generic [ref=e1552]: abr/2026
+              - generic [ref=e1553]: mai/2026
+          - generic [ref=e1571]:
+            - heading "Top 10 Consultores — Ações Concluídas" [level=3] [ref=e1573]
+            - img [ref=e1578]:
+              - generic [ref=e1579]:
+                - generic [ref=e1580]: KALISKY
+                - generic [ref=e1583]: 564 ações
+              - generic [ref=e1584]:
+                - generic [ref=e1585]: CUNICO
+                - generic [ref=e1588]: 478 ações
+              - generic [ref=e1589]:
+                - generic [ref=e1590]: ZILLI
+                - generic [ref=e1593]: 442 ações
+              - generic [ref=e1594]:
+                - generic [ref=e1595]: AUGUSTIN
+                - generic [ref=e1598]: 369 ações
+              - generic [ref=e1599]:
+                - generic [ref=e1600]: AMARAL
+                - generic [ref=e1603]: 331 ações
+              - generic [ref=e1604]:
+                - generic [ref=e1605]: PILONETTO
+                - generic [ref=e1608]: 277 ações
+              - generic [ref=e1609]:
+                - generic [ref=e1610]: MACHADO
+                - generic [ref=e1613]: 226 ações
+              - generic [ref=e1614]:
+                - generic [ref=e1615]: OSOWSKI
+                - generic [ref=e1618]: 211 ações
+              - generic [ref=e1619]:
+                - generic [ref=e1620]: JUNIOR
+                - generic [ref=e1623]: 206 ações
+              - generic [ref=e1624]:
+                - generic [ref=e1625]: BOARETTO
+                - generic [ref=e1628]: 181 ações
+          - generic [ref=e1629]:
+            - heading "Tipos de Contato" [level=3] [ref=e1631]
+            - generic [ref=e1634]:
+              - img [ref=e1635]:
+                - generic [ref=e1641]: 3.8k
+              - generic [ref=e1642]:
+                - generic [ref=e1643]:
+                  - generic [ref=e1645]: Visita
+                  - generic [ref=e1646]: 2.8k
+                - generic [ref=e1647]:
+                  - generic [ref=e1649]: Telefonema/Whatsapp
+                  - generic [ref=e1650]: "889"
+                - generic [ref=e1651]:
+                  - generic [ref=e1653]: Outro
+                  - generic [ref=e1654]: "17"
+                - generic [ref=e1655]:
+                  - generic [ref=e1657]: Eventos/Feiras
+                  - generic [ref=e1658]: "17"
+                - generic [ref=e1659]:
+                  - generic [ref=e1661]: E-mail/Redes Sociais
+                  - generic [ref=e1662]: "7"
+          - generic [ref=e1663]:
+            - heading "Tipos de Ação" [level=3] [ref=e1665]
+            - img [ref=e1670]:
+              - generic [ref=e1671]:
+                - generic [ref=e1672]: 1 - Prospecção Maq
+                - generic [ref=e1675]: "1.501"
+              - generic [ref=e1676]:
+                - generic [ref=e1677]: 2 - Prospecção AP
+                - generic [ref=e1680]: "724"
+              - generic [ref=e1681]:
+                - generic [ref=e1682]: 0 - Cliente Novo
+                - generic [ref=e1685]: "303"
+              - generic [ref=e1686]:
+                - generic [ref=e1687]: 11- Repasse de máquina
+                - generic [ref=e1690]: "301"
+              - generic [ref=e1691]:
+                - generic [ref=e1692]: 7 - Pós-Vendas AP
+                - generic [ref=e1695]: "158"
+              - generic [ref=e1696]:
+                - generic [ref=e1697]: 16 - Alinhamento / Treinamento
+                - generic [ref=e1700]: "94"
+              - generic [ref=e1701]:
+                - generic [ref=e1702]: 6 - Pós-Vendas Máquinas
+                - generic [ref=e1705]: "73"
+              - generic [ref=e1706]:
+                - generic [ref=e1707]: 10- Fechamento de AP( pedido fechado)
+                - generic [ref=e1710]: "51"
+        - generic [ref=e1712]:
+          - heading "Top Regiões por Ações Concluídas" [level=3] [ref=e1714]
+          - img [ref=e1719]:
+            - generic [ref=e1722]: Xanxerê
+            - generic [ref=e1725]: Mafra
+            - generic [ref=e1728]: Vitorino
+            - generic [ref=e1731]: Guarapuava

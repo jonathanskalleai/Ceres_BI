@@ -48,6 +48,7 @@ export default function OperacionalSection({ active, dateRange }: Props) {
           <HorizontalBarChart
             data={agg.kmPorTecnico.map(item => ({ name: item.name, value: item.value }))}
             keys={['value']}
+            seriesLabels={{ value: "KM" }}
             title=""
             tooltipFormatter={(v: number) => `${v.toLocaleString("pt-BR")} km`}
             colors={[CHART_COLORS[3]]}
@@ -66,6 +67,7 @@ export default function OperacionalSection({ active, dateRange }: Props) {
           <HorizontalBarChart
             data={agg.agendaPorTipo.map(item => ({ name: item.name, value: item.value }))}
             keys={['value']}
+            seriesLabels={{ value: "Agendamentos" }}
             title=""
             colors={[CHART_COLORS[2]]}
           />

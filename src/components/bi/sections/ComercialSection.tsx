@@ -10,16 +10,19 @@ import { HorizontalBarChart, VerticalBarChart, LineChart } from "@/components/bi
 import { CHART_COLORS, POSITIVE_COLOR, NEGATIVE_COLOR } from "@/lib/chartTheme";
 import { formatBRL, formatBRLShort, formatDias, formatMonthYear } from "@/lib/dateUtils";
 
+import { type CategoriaFilter } from "@/lib/categoriaFunil";
+
 interface Props {
   active: boolean;
   dateRange?: DateRange;
+  categoria?: CategoriaFilter;
   funil?: string;
 }
 
 const pct = (v: number) => `${v.toFixed(1)}%`;
 
-export default function ComercialSection({ active, dateRange, funil }: Props) {
-  const { agg, isLoading } = useNegociosBI(active, dateRange, funil);
+export default function ComercialSection({ active, dateRange, categoria, funil }: Props) {
+  const { agg, isLoading } = useNegociosBI(active, dateRange, categoria, funil);
   const { agg: funil_, isLoading: funilLoading } = useFunilData(active);
   const { kpis } = agg;
 
@@ -48,6 +51,11 @@ export default function ComercialSection({ active, dateRange, funil }: Props) {
           title="Pipeline Aberto" value={formatBRL(kpis.pipelineAberto)}
           icon={Wallet} loading={isLoading}
           hint="valor em negocios em andamento"
+        />
+        <KPICard
+          title="Pipeline Perdido" value={formatBRL(kpis.pipelinePerdido)}
+          icon={Wallet} loading={isLoading}
+          hint="valor em negocios perdidos"
         />
         <KPICard
           title="Valor Ganho" value={formatBRL(kpis.valorGanho)}

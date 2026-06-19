@@ -1,8 +1,9 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchNegociosBI, type NegocioBIRow } from "@/services/bi/negociosBIService";
-import { USE_MIRROR } from "@/config/featureFlags";
+
 import { yearMonth } from "@/lib/dateUtils";
+import { type CategoriaFilter, CATEGORIA_ALL, getFunisByCategoria, FUNIL_ALL } from "@/lib/categoriaFunil";
 
 interface NegociosKPIs {
   totalNegocios: number;
@@ -11,6 +12,7 @@ interface NegociosKPIs {
   andamento: number;
   taxaConversao: number; // % ganhos sobre negocios concluidos (ganho+perdido)
   pipelineAberto: number; // R$ em negocios "Em Andamento"
+  pipelinePerdido: number; // R$ em negocios "Perdido"
   valorGanho: number; // R$ em negocios ganhos
   ticketMedioGanho: number;
   cicloMedioDias: number; // media de NGO_CicloVendas nos concluidos
@@ -95,13 +97,14 @@ export function dedupeNegocios(rows: NegocioBIRow[]): NegocioBIRow[] {
 const num = (v: number | null): number => (typeof v === "number" && isFinite(v) ? v : 0);
 
 export function aggregateNegociosBI(rawRows: NegocioBIRow[]): NegociosAgg {
-  // Mirror ja deduplica na ingestao (PK por ngo_numero) — skip dedup
-  const rows = USE_MIRROR.crm_negocios ? rawRows : dedupeNegocios(rawRows);
+  // View denormalizada (multiplas linhas por negocio/produto) — sempre deduplicar por NGO_Numero
+  const rows = dedupeNegocios(rawRows);
 
   let ganhos = 0;
   let perdidos = 0;
   let andamento = 0;
   let pipelineAberto = 0;
+  let pipelinePerdido = 0;
   let valorGanho = 0;
   let cicloSoma = 0;
   let cicloN = 0;
@@ -126,6 +129,7 @@ export function aggregateNegociosBI(rawRows: NegocioBIRow[]): NegociosAgg {
       valorGanho += valor;
     } else if (status === "perdido") {
       perdidos++;
+      pipelinePerdido += valor;
     } else {
       andamento++;
       pipelineAberto += valor;
@@ -141,8 +145,8 @@ export function aggregateNegociosBI(rawRows: NegocioBIRow[]): NegociosAgg {
       esforcoN++;
     }
 
-    // funil: negocios em andamento por etapa (valor em risco/oportunidade)
-    if (status === "andamento" && r.NGO_Etapa) {
+    // funil: todos os negocios por etapa (pipeline do periodo filtrado)
+    if (r.NGO_Etapa) {
       const e = etapaMap.get(r.NGO_Etapa) ?? { name: r.NGO_Etapa, valor: 0, qtd: 0 };
       e.valor += valor;
       e.qtd++;
@@ -192,6 +196,7 @@ export function aggregateNegociosBI(rawRows: NegocioBIRow[]): NegociosAgg {
     andamento,
     taxaConversao: concluidos > 0 ? (ganhos / concluidos) * 100 : 0,
     pipelineAberto,
+    pipelinePerdido,
     valorGanho,
     ticketMedioGanho: ganhos > 0 ? valorGanho / ganhos : 0,
     cicloMedioDias: cicloN > 0 ? cicloSoma / cicloN : 0,
@@ -226,7 +231,7 @@ export function aggregateNegociosBI(rawRows: NegocioBIRow[]): NegociosAgg {
   return { kpis, funilPorEtapa, porOrigem, motivosPerda, evolucaoMensal, rankingConsultor };
 }
 
-export function useNegociosBI(enabled: boolean, dateRange?: import("react-day-picker").DateRange, funil?: string) {
+export function useNegociosBI(enabled: boolean, dateRange?: import("react-day-picker").DateRange, categoria?: CategoriaFilter, funil?: string) {
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ["bi-negocios"],
     queryFn: fetchNegociosBI,
@@ -236,14 +241,22 @@ export function useNegociosBI(enabled: boolean, dateRange?: import("react-day-pi
 
   const filteredRows = useMemo(() => {
     let result = rows;
-    // Filtro por funil
-    if (funil && funil !== "__all__") {
+
+    // Filtro hierárquico: funil individual > categoria > todos
+    if (funil && funil !== FUNIL_ALL) {
+      // Funil específico selecionado — filtra exatamente por esse funil
       result = result.filter((r) => r.NGO_Funil === funil);
+    } else if (categoria && categoria !== CATEGORIA_ALL) {
+      // Nenhum funil específico, mas categoria selecionada — filtra pela lista de funis da categoria
+      const funis = getFunisByCategoria(categoria);
+      result = result.filter((r) => funis.includes(r.NGO_Funil ?? ""));
     }
-    // Filtro por data
+
+    // Filtro por data de fechamento/conclusão do negócio
     if (dateRange?.from) {
       result = result.filter((r) => {
-        const d = r.NGO_DataCadastro ? new Date(r.NGO_DataCadastro) : null;
+        const d = r.NGO_DataFechamento ? new Date(r.NGO_DataFechamento) : null;
+        // Negócios sem data de fechamento (Em Andamento) — excluir quando filtro de data está ativo
         if (!d) return false;
         if (dateRange.from && d < dateRange.from) return false;
         if (dateRange.to && d > dateRange.to) return false;
@@ -251,7 +264,7 @@ export function useNegociosBI(enabled: boolean, dateRange?: import("react-day-pi
       });
     }
     return result;
-  }, [rows, dateRange, funil]);
+  }, [rows, dateRange, categoria, funil]);
 
   const agg = useMemo(() => aggregateNegociosBI(filteredRows), [filteredRows]);
 

@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Database, Table2 } from "lucide-react";
+import { Database, Download, Table2 } from "lucide-react";
 
 const VIEWS = [
   "VW_Ceres_Empresas",
@@ -38,6 +38,29 @@ const VIEWS = [
   "VW_Ceres_AtividadeExtra",
   "VW_Ceres_TecnicoTempo",
 ] as const;
+
+function downloadCsv(data: Record<string, unknown>[], viewName: string) {
+  if (!data.length) return;
+  const cols = Object.keys(data[0]);
+  const header = cols.join(";");
+  const rows = data.map(row =>
+    cols.map(col => {
+      const val = row[col];
+      if (val === null || val === undefined) return "";
+      const str = String(val).replace(/"/g, '""');
+      return `"${str}"`;
+    }).join(";")
+  );
+  const bom = "﻿";
+  const csv = bom + [header, ...rows].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${viewName}_sample.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 export const DashboardViewExplorer = () => {
   const [selectedView, setSelectedView] = useState<string>("");
@@ -91,6 +114,16 @@ export const DashboardViewExplorer = () => {
             <Table2 className="h-3 w-3 mr-1" />
             {countQuery.data.total.toLocaleString("pt-BR")} registros totais
           </Badge>
+        )}
+
+        {dataQuery.data && dataQuery.data.data.length > 0 && (
+          <button
+            onClick={() => downloadCsv(dataQuery.data!.data, selectedView)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-border bg-background hover:bg-muted transition-colors"
+          >
+            <Download className="h-3 w-3" />
+            Baixar CSV
+          </button>
         )}
       </div>
 

@@ -65,13 +65,13 @@ interface MirrorNegocioRow {
   ngo_conclusao: string | null;
   ngo_etapa: string | null;
   ngo_funil: string | null;
-  ngo_vlr_total: number | null;
+  ngo_vlr_total_negociado: string | number | null;
   ngo_forma_entrada: string | null;
   ngo_motivo_perda: string | null;
   ngo_motivo_ganho: string | null;
-  ngo_ciclo_vendas: number | null;
-  ngo_qtd_acoes: number | null;
-  ngo_probabilidade: number | null;
+  ngo_ciclo_vendas: string | number | null;
+  ngo_qtd_acoes: string | number | null;
+  ngo_probabilidade: string | number | null;
   ngo_vendedores: string | null;
   ngo_data_cadastro: string | null;
   ngo_data_fechamento: string | null;
@@ -135,19 +135,26 @@ async function fetchVendedorMapLegacy(): Promise<Map<string, string>> {
   return map;
 }
 
+/** Converte valor numeric do Postgres (retornado como string pelo PostgREST) para number. */
+const toNum = (v: unknown): number | null => {
+  if (v == null) return null;
+  const n = Number(v);
+  return isFinite(n) ? n : null;
+};
+
 function mapMirrorRow(row: MirrorNegocioRow, vendedorMap: Map<string, string>): NegocioBIRow {
   return {
     NGO_Numero: row.ngo_numero,
     NGO_Conclusao: row.ngo_conclusao,
     NGO_Etapa: row.ngo_etapa,
     NGO_Funil: row.ngo_funil,
-    NGO_VlrTotalNegociado: row.ngo_vlr_total,
+    NGO_VlrTotalNegociado: toNum(row.ngo_vlr_total_negociado),
     NGO_FormaEntrada: row.ngo_forma_entrada,
     NGO_MotivoPerda: row.ngo_motivo_perda,
     NGO_MotivoGanho: row.ngo_motivo_ganho,
-    NGO_CicloVendas: row.ngo_ciclo_vendas,
-    NGO_QtdAcoes: row.ngo_qtd_acoes,
-    NGO_Probabilidade: row.ngo_probabilidade,
+    NGO_CicloVendas: toNum(row.ngo_ciclo_vendas),
+    NGO_QtdAcoes: toNum(row.ngo_qtd_acoes),
+    NGO_Probabilidade: toNum(row.ngo_probabilidade),
     NGO_Vendedores: row.ngo_vendedores,
     NGO_DataCadastro: row.ngo_data_cadastro,
     NGO_DataFechamento: row.ngo_data_fechamento,

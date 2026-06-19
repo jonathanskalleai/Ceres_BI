@@ -37,6 +37,7 @@ export default function ProdutosSection({ active, dateRange }: Props) {
           <HorizontalBarChart
             data={agg.porMarca.map(item => ({ name: item.name, value: item.value }))}
             keys={['value']}
+            seriesLabels={{ value: "Máquinas" }}
             title=""
             colors={[CHART_COLORS[1]]}
           />
@@ -46,6 +47,7 @@ export default function ProdutosSection({ active, dateRange }: Props) {
           <HorizontalBarChart
             data={agg.topModelos.map(item => ({ name: item.name, value: item.value }))}
             keys={['value']}
+            seriesLabels={{ value: "Máquinas" }}
             title=""
             colors={[CHART_COLORS[2]]}
           />

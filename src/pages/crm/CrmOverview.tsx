@@ -6,7 +6,7 @@ export default function CrmOverview() {
 
   return (
     <DashboardOverview
-      data={data}
+      data={allData ?? data}
       filters={filters}
       onSelectConsultor={handleSelectConsultor}
       totalRegistrosBase={allData?.kpis.totalRegistros}

@@ -2,7 +2,7 @@ import { useComercialDataContext } from '@/contexts/ComercialDataContext';
 import { DashboardMapa } from '@/components/dashboard/DashboardMapa';
 
 export default function CrmMapa() {
-  const { data, filters } = useComercialDataContext();
+  const { data, allData, filters } = useComercialDataContext();
 
-  return <DashboardMapa data={data} filters={filters} />;
+  return <DashboardMapa data={allData ?? data} filters={filters} />;
 }

@@ -7,29 +7,29 @@ import { useOperacionalData, type OperacionalAgg } from "@/hooks/bi/useOperacion
 
 type Trend = "up" | "down" | "neutral";
 
-interface KPIWithDelta {
+interface KPIWithPrev {
   value: number;
-  delta: number;
+  previousValue: number;
   trend: Trend;
 }
 
 export interface PainelKPIs {
   // Negocios
-  totalNegocios: KPIWithDelta;
-  ganhos: KPIWithDelta;
-  perdidos: KPIWithDelta;
-  andamento: KPIWithDelta;
-  taxaConversao: KPIWithDelta;
+  totalNegocios: KPIWithPrev;
+  ganhos: KPIWithPrev;
+  perdidos: KPIWithPrev;
+  andamento: KPIWithPrev;
+  taxaConversao: KPIWithPrev;
   // Valores
-  valorGanho: KPIWithDelta;
-  valorPerdido: KPIWithDelta;
-  pipelineAberto: KPIWithDelta;
-  ticketMedio: KPIWithDelta;
+  valorGanho: KPIWithPrev;
+  valorPerdido: KPIWithPrev;
+  pipelineAberto: KPIWithPrev;
+  ticketMedio: KPIWithPrev;
   // Acoes / Operacional
-  totalAcoes: KPIWithDelta;
-  totalVisitas: KPIWithDelta;
-  totalOS: KPIWithDelta;
-  porTipoAcao: Array<{ name: string; value: number; delta: number; trend: Trend }>;
+  totalAcoes: KPIWithPrev;
+  totalVisitas: KPIWithPrev;
+  totalOS: KPIWithPrev;
+  porTipoAcao: Array<{ name: string; value: number; previousValue: number; trend: Trend }>;
 }
 
 export interface UsePainelResult {
@@ -37,17 +37,14 @@ export interface UsePainelResult {
   isLoading: boolean;
 }
 
-function calcDelta(atual: number, anterior: number): { delta: number; trend: Trend } {
-  if (anterior === 0 && atual === 0) return { delta: 0, trend: "neutral" };
-  if (anterior === 0) return { delta: 100, trend: "up" };
-  const delta = ((atual - anterior) / anterior) * 100;
-  const trend: Trend = delta > 0.5 ? "up" : delta < -0.5 ? "down" : "neutral";
-  return { delta, trend };
+function calcTrend(atual: number, anterior: number): Trend {
+  if (atual > anterior) return "up";
+  if (atual < anterior) return "down";
+  return "neutral";
 }
 
-function makeKPI(atual: number, anterior: number): KPIWithDelta {
-  const { delta, trend } = calcDelta(atual, anterior);
-  return { value: atual, delta, trend };
+function makeKPI(atual: number, anterior: number): KPIWithPrev {
+  return { value: atual, previousValue: anterior, trend: calcTrend(atual, anterior) };
 }
 
 /**
@@ -72,18 +69,12 @@ function getPreviousDateRange(dateRange: DateRange | undefined): DateRange | und
   return { from, to };
 }
 
-/**
- * Derives year string for AcoesBI filters from the dateRange.
- */
-function getAnoFromDateRange(dateRange: DateRange | undefined): string {
-  if (dateRange?.from) return String(dateRange.from.getFullYear());
-  return String(new Date().getFullYear());
-}
-
 export function usePainelKPIs(
   dateRange: DateRange | undefined,
   categoria: CategoriaFilter,
   funil: string,
+  vendedor?: string,
+  cidade?: string,
 ): UsePainelResult {
   const prevDateRange = useMemo(() => getPreviousDateRange(dateRange), [dateRange]);
 
@@ -92,16 +83,15 @@ export function usePainelKPIs(
   // Previous period negocios
   const { agg: negAnterior, isLoading: negLoad2 } = useNegociosBI(true, prevDateRange, categoria, funil);
 
-  // Current period acoes
-  const anoAtual = useMemo(() => getAnoFromDateRange(dateRange), [dateRange]);
-  const anoAnterior = useMemo(() => String(Number(anoAtual) - 1), [anoAtual]);
-
+  // Current period acoes — use real dateRange instead of just year string
   const filtersAtual = useMemo(() => ({
-    ano: anoAtual, mes: "", vendedor: "", tipoAcao: "", cidade: "",
-  }), [anoAtual]);
+    ano: "", mes: "", vendedor: vendedor ?? "", tipoAcao: "", cidade: cidade ?? "",
+    dateRange,
+  }), [dateRange, vendedor, cidade]);
   const filtersAnterior = useMemo(() => ({
-    ano: anoAnterior, mes: "", vendedor: "", tipoAcao: "", cidade: "",
-  }), [anoAnterior]);
+    ano: "", mes: "", vendedor: vendedor ?? "", tipoAcao: "", cidade: cidade ?? "",
+    dateRange: prevDateRange,
+  }), [prevDateRange, vendedor, cidade]);
 
   const acoesAtual = useAcoesBI(true, filtersAtual, categoria, funil);
   const acoesAnterior = useAcoesBI(true, filtersAnterior, categoria, funil);
@@ -115,13 +105,11 @@ export function usePainelKPIs(
     const aa = acoesAtual.kpis;
     const ap = acoesAnterior.kpis;
 
-    // Build porTipoAcao with deltas
-    const tipoAtualMap = new Map(acoesAtual.porTipoAcao.map((t) => [t.name, t.value]));
+    // Build porTipoAcao with previous values
     const tipoAnteriorMap = new Map(acoesAnterior.porTipoAcao.map((t) => [t.name, t.value]));
     const porTipoAcao = acoesAtual.porTipoAcao.map((t) => {
       const prev = tipoAnteriorMap.get(t.name) ?? 0;
-      const { delta, trend } = calcDelta(t.value, prev);
-      return { name: t.name, value: t.value, delta, trend };
+      return { name: t.name, value: t.value, previousValue: prev, trend: calcTrend(t.value, prev) };
     });
 
     return {

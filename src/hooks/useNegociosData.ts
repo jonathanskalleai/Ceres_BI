@@ -58,32 +58,20 @@ interface RegistroCliente {
 
 function aggregate(rows: NegocioRow[], filters: Filters, registrosClientes: RegistroCliente[]): NegociosSummary {
   let filtered = rows;
-  if (filters.vendedor) filtered = filtered.filter((r) => r.consultor === filters.vendedor);
+  if (filters.dateRange?.from) filtered = filtered.filter((r) => r.pdo_dth_abertura && r.pdo_dth_abertura >= filters.dateRange!.from);
+  if (filters.dateRange?.to) filtered = filtered.filter((r) => r.pdo_dth_abertura && r.pdo_dth_abertura <= filters.dateRange!.to);
   if (filters.cidade) filtered = filtered.filter((r) => r.unidade?.includes(filters.cidade) || r.pdo_cidade_entrega?.includes(filters.cidade));
-  if (filters.ano) filtered = filtered.filter((r) => r.pdo_dth_abertura?.startsWith(filters.ano));
-  if (filters.mes) {
-    filtered = filtered.filter((r) => {
-      const parts = r.pdo_dth_abertura?.split("-");
-      return parts && parts.length >= 2 && parts[1] === filters.mes;
-    });
-  }
 
   // Filter registros_comerciais by same filters for accurate conversion rate
   let filteredRegistros = registrosClientes;
-  if (filters.vendedor) {
-    filteredRegistros = filteredRegistros.filter((r) => r.vendedor === filters.vendedor);
+  if (filters.dateRange?.from) {
+    filteredRegistros = filteredRegistros.filter((r) => r.dt_conclusao && r.dt_conclusao >= filters.dateRange!.from);
+  }
+  if (filters.dateRange?.to) {
+    filteredRegistros = filteredRegistros.filter((r) => r.dt_conclusao && r.dt_conclusao <= filters.dateRange!.to);
   }
   if (filters.cidade) {
     filteredRegistros = filteredRegistros.filter((r) => r.cidade_cliente?.includes(filters.cidade));
-  }
-  if (filters.ano) {
-    filteredRegistros = filteredRegistros.filter((r) => r.dt_conclusao?.startsWith(filters.ano));
-  }
-  if (filters.mes) {
-    filteredRegistros = filteredRegistros.filter((r) => {
-      const parts = r.dt_conclusao?.split("-");
-      return parts && parts.length >= 2 && parts[1] === filters.mes;
-    });
   }
 
   const ganhos = filtered.filter((r) => r.ngo_conclusao === "Ganho");

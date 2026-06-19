@@ -2,24 +2,29 @@ import { Filters, Registro } from "@/types/comercial";
 
 export function filterRegistros(records: Registro[], filters: Filters): Registro[] {
   let result = records;
-  if (filters.vendedor) result = result.filter((r) => r.vendedor === filters.vendedor);
+  if (filters.dateRange?.from) {
+    result = result.filter((r) => r.dtConclusao && r.dtConclusao >= filters.dateRange!.from);
+  }
+  if (filters.dateRange?.to) {
+    result = result.filter((r) => r.dtConclusao && r.dtConclusao <= filters.dateRange!.to);
+  }
   if (filters.cidade) result = result.filter((r) => r.cidade === filters.cidade);
   if (filters.tipoAcao) result = result.filter((r) => r.tipoAcao === filters.tipoAcao);
-  if (filters.ano) result = result.filter((r) => r.dtConclusao?.includes(filters.ano));
-  if (filters.mes) {
-    result = result.filter((r) => {
-      const parts = r.dtConclusao?.split(/[-/]/);
-      return parts && parts.length >= 2 && parts[1] === filters.mes;
-    });
-  }
   return result;
 }
 
 export function filterEvolucao(evolucao: { YearMonth: string }[], filters: Filters) {
   let result = evolucao;
-  if (filters.ano) result = result.filter((e) => e.YearMonth?.startsWith(filters.ano));
-  if (filters.mes) result = result.filter((e) => e.YearMonth?.endsWith(`-${filters.mes}`));
+  if (filters.dateRange?.from) {
+    const fromYM = filters.dateRange.from.slice(0, 7); // YYYY-MM
+    result = result.filter((e) => e.YearMonth >= fromYM);
+  }
+  if (filters.dateRange?.to) {
+    const toYM = filters.dateRange.to.slice(0, 7);
+    result = result.filter((e) => e.YearMonth <= toYM);
+  }
   return result;
 }
 
-export const hasActiveFilters = (filters: Filters) => Object.values(filters).some(Boolean);
+export const hasActiveFilters = (filters: Filters) =>
+  !!(filters.dateRange || filters.cidade || filters.tipoAcao || filters.categoria || filters.funil);

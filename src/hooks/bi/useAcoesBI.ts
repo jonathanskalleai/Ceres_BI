@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { type DateRange } from "react-day-picker";
 import { useComercialData } from "@/hooks/useComercialData";
 import type { Registro } from "@/types/comercial";
 
@@ -8,6 +9,8 @@ interface AcoesFilters {
   vendedor: string;
   tipoAcao: string;
   cidade: string;
+  /** When provided, overrides ano/mes and filters by exact date range */
+  dateRange?: DateRange;
 }
 
 interface AcoesKPIs {
@@ -51,12 +54,25 @@ function getDiaSemana(dtStr: string): string {
 
 function applyFilters(registros: Registro[], filters: AcoesFilters): Registro[] {
   let result = registros;
-  if (filters.ano) {
-    result = result.filter((r) => r.dtConclusao?.startsWith(filters.ano));
+
+  // dateRange takes priority over ano/mes when provided
+  if (filters.dateRange?.from) {
+    const from = filters.dateRange.from.getTime();
+    const to = filters.dateRange.to ? filters.dateRange.to.getTime() : from;
+    result = result.filter((r) => {
+      if (!r.dtConclusao) return false;
+      const t = new Date(r.dtConclusao).getTime();
+      return t >= from && t <= to + 86_399_999; // include full end day
+    });
+  } else {
+    if (filters.ano) {
+      result = result.filter((r) => r.dtConclusao?.startsWith(filters.ano));
+    }
+    if (filters.mes) {
+      result = result.filter((r) => r.dtConclusao?.slice(5, 7) === filters.mes);
+    }
   }
-  if (filters.mes) {
-    result = result.filter((r) => r.dtConclusao?.slice(5, 7) === filters.mes);
-  }
+
   if (filters.vendedor) {
     result = result.filter((r) => r.vendedor === filters.vendedor);
   }
@@ -145,26 +161,28 @@ function aggregate(registros: Registro[]): Omit<AcoesBIResult, "listaAnos" | "is
 }
 
 export function useAcoesBI(active: boolean, filters: AcoesFilters, categoria?: string, funil?: string): AcoesBIResult {
-  const { data, isLoading } = useComercialData(categoria, funil);
+  // Usa allData (sem filtro de admin users) — a tela de ações deve mostrar TODAS as ações,
+  // incluindo usuários administrativos. O filtro isAdminUser é apenas para KPIs de performance.
+  const { allData, isLoading } = useComercialData(categoria, funil);
 
   const listaAnos = useMemo(() => {
-    if (!data) return [];
+    if (!allData) return [];
     const anos = new Set<string>();
-    for (const r of data.registrosRecentes) {
+    for (const r of allData.registrosRecentes) {
       const ano = r.dtConclusao?.slice(0, 4);
       if (ano && ano.length === 4) anos.add(ano);
     }
     return Array.from(anos).sort().reverse();
-  }, [data]);
+  }, [allData]);
 
   const result = useMemo(() => {
-    if (!active || !data) {
+    if (!active || !allData) {
       const empty: AcoesKPIs = { totalAcoes: 0, cidades: 0, consultores: 0, visitas: 0, clientes: 0, tiposAcaoDistintos: 0 };
       return { kpis: empty, porVendedor: [], porCidade: [], porMes: [], porDiaSemana: [], porTipoAcao: [], porTipoContato: [] };
     }
-    const filtered = applyFilters(data.registrosRecentes, filters);
+    const filtered = applyFilters(allData.registrosRecentes, filters);
     return aggregate(filtered);
-  }, [active, data, filters]);
+  }, [active, allData, filters]);
 
   return { ...result, listaAnos, isLoading };
 }

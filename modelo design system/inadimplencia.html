@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inadimplência · Voux BI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="assets/font-system.js"></script>
+  <link rel="stylesheet" href="assets/voux.css">
+  <link rel="stylesheet" href="assets/layout.css">
+</head>
+<body data-page="inadimplencia">
+  <div class="app">
+    <aside class="sidebar" data-sidebar></aside>
+    <main class="main">
+      <header class="topbar" data-topbar></header>
+      <div class="toolbar" data-toolbar></div>
+      <div class="content">
+
+        <!-- View tabs -->
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
+          <div class="toolbar__seg">
+            <button class="toolbar__seg-btn toolbar__seg-btn--active">Valor Mensal & % inadim.</button>
+            <button class="toolbar__seg-btn">Total por Tempo</button>
+            <button class="toolbar__seg-btn">Valor Indim. & Previsão</button>
+            <button class="toolbar__seg-btn">Dias & % Vlr Indim.</button>
+          </div>
+        </div>
+
+        <!-- KPI principais (vermelhos) -->
+        <section class="kpi-trio">
+          <article class="kpi-trio__group">
+            <div class="kpi-trio__icon" style="color:var(--voux-danger);">
+              <svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M10 6h-3a1.5 1.5 0 0 0 0 3h2a1.5 1.5 0 0 1 0 3H6M8 4.5v1M8 10.5v1"/></svg>
+            </div>
+            <div class="kpi-trio__items">
+              <div class="kpi-trio__item kpi-trio__item--lg">
+                <div class="kpi-trio__value voux-num">R$ 1,56M</div>
+                <div class="kpi-trio__label" style="color:var(--voux-danger);">Valor Faturado</div>
+              </div>
+              <div class="kpi-trio__sep"></div>
+              <div class="kpi-trio__item">
+                <div class="kpi-trio__value voux-num" style="font-size:18px;">R$ 80,4k</div>
+                <div class="kpi-trio__label" style="color:var(--voux-danger);">Valor Inadimplente</div>
+              </div>
+            </div>
+          </article>
+
+          <article class="kpi-trio__group">
+            <div class="kpi-trio__icon" style="color:var(--voux-danger);">
+              <svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4v4l2.5 2.5"/></svg>
+            </div>
+            <div class="kpi-trio__items">
+              <div class="kpi-trio__item">
+                <div class="kpi-trio__value voux-num">4,89%</div>
+                <div class="kpi-trio__label">% Inadimp. Total</div>
+              </div>
+              <div class="kpi-trio__sep"></div>
+              <div class="kpi-trio__item">
+                <div class="kpi-trio__value voux-num" style="color:var(--voux-warning);">22,52%</div>
+                <div class="kpi-trio__label">% Mês Atual</div>
+              </div>
+            </div>
+          </article>
+
+          <article class="kpi-trio__group">
+            <div class="kpi-trio__icon" style="color:var(--voux-danger);">
+              <svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><circle cx="5" cy="6" r="2.5"/><circle cx="11" cy="6" r="2.5"/><path d="M1 14c0-2 2-3.5 4-3.5s4 1.5 4 3.5M7 14c0-2 2-3.5 4-3.5s4 1.5 4 3.5"/></svg>
+            </div>
+            <div class="kpi-trio__items">
+              <div class="kpi-trio__item">
+                <div class="kpi-trio__value voux-num">556</div>
+                <div class="kpi-trio__label">Clientes</div>
+              </div>
+              <div class="kpi-trio__sep"></div>
+              <div class="kpi-trio__item">
+                <div class="kpi-trio__value voux-num" style="color:var(--voux-success);">430</div>
+                <div class="kpi-trio__label">Ativos</div>
+              </div>
+              <div class="kpi-trio__sep"></div>
+              <div class="kpi-trio__item">
+                <div class="kpi-trio__value voux-num" style="color:var(--voux-text-faint);">126</div>
+                <div class="kpi-trio__label">Inativos</div>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section class="kpi-trio" style="grid-template-columns:1fr 1fr;">
+          <article class="kpi-trio__group">
+            <div class="kpi-trio__icon" style="color:var(--voux-danger);">
+              <svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><rect x="2.5" y="3.5" width="11" height="10" rx="1"/><path d="M5 1.5v3M11 1.5v3M2.5 7h11"/></svg>
+            </div>
+            <div class="kpi-trio__items">
+              <div class="kpi-trio__item kpi-trio__item--lg">
+                <div class="kpi-trio__value voux-num">718</div>
+                <div class="kpi-trio__label" style="color:var(--voux-danger);">Inad. Atual</div>
+              </div>
+            </div>
+          </article>
+
+          <article class="kpi-trio__group">
+            <div class="kpi-trio__icon" style="color:var(--voux-warning);">
+              <svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><path d="M2 8c1-3 3-5 6-5s5 2 6 5"/><path d="M14 5v3h-3M2 11c1 3 3 5 6 5s5-2 6-5"/></svg>
+            </div>
+            <div class="kpi-trio__items">
+              <div class="kpi-trio__item kpi-trio__item--lg">
+                <div class="kpi-trio__value voux-num">43,56%</div>
+                <div class="kpi-trio__label" style="color:var(--voux-warning);">% Cobranças retornadas</div>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <!-- Valor Inadimplente vs Valor Faturado -->
+        <article class="voux-card">
+          <div class="voux-card__head">
+            <div>
+              <div class="voux-card__label">01 · Comparativo Anual</div>
+              <h3 class="voux-card__title">Valor Inadimplente <em>e</em> Valor Faturado <span style="font-family:var(--voux-font-sans); font-size:14px; color:var(--voux-text-muted);">— com % inadimplência</span></h3>
+            </div>
+            <div class="legend">
+              <div class="legend__item" style="color:var(--voux-danger); opacity:0.55;"><span class="legend__swatch"></span>Valor Total</div>
+              <div class="legend__item" style="color:var(--voux-danger);"><span class="legend__swatch"></span>Valor Aberto</div>
+            </div>
+          </div>
+          <div class="chart-canvas" id="chart-inad" style="height:300px;"></div>
+        </article>
+
+        <!-- Inadimplencia fixa comparativo -->
+        <article class="voux-card">
+          <div class="voux-card__head">
+            <div>
+              <div class="voux-card__label">02 · Tendência</div>
+              <h3 class="voux-card__title">Inadimplência <em>fixa</em> · % comparativo do mês anterior</h3>
+            </div>
+            <span class="tag" style="color:var(--voux-warning);"><span class="voux-dot"></span>2026</span>
+          </div>
+          <div class="chart-canvas" id="chart-fixa" style="height:280px;"></div>
+        </article>
+
+        <!-- Tabelas e detalhes -->
+        <div class="grid-12">
+          <article class="voux-card col-4">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">03 · Clientes em atraso</div>
+                <h3 class="voux-card__title">Parcelas <em>em atraso</em></h3>
+              </div>
+              <span class="tag" style="color:var(--voux-danger);"><span class="voux-dot"></span>556 clientes</span>
+            </div>
+            <div style="max-height:480px; overflow-y:auto;">
+              <table class="voux-table">
+                <thead><tr><th>Cliente</th><th class="num">Faturas</th><th class="num">Valor</th></tr></thead>
+                <tbody id="tbl-atraso"></tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="voux-card col-4">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">04 · Geografia</div>
+                <h3 class="voux-card__title">Inadimplência por <em>cidade</em></h3>
+              </div>
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="voux-table">
+                <thead><tr><th>Cidade</th><th class="num">Valor</th><th class="num" style="color:var(--voux-warning);">Qtd</th><th class="num">%</th></tr></thead>
+                <tbody id="tbl-cidade"></tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="voux-card col-4">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">05 · Status de Contrato</div>
+                <h3 class="voux-card__title">Quantidade por <em>status</em></h3>
+              </div>
+            </div>
+            <div id="chart-status"></div>
+          </article>
+        </div>
+
+        <div class="grid-2">
+          <article class="voux-card">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">06 · Faixa Etária</div>
+                <h3 class="voux-card__title">Clientes por <em>idade</em></h3>
+              </div>
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="voux-table">
+                <thead><tr><th>Faixa Etária</th><th class="num" style="color:var(--voux-warning);">Clientes</th><th class="num">Qtd Faturas</th></tr></thead>
+                <tbody id="tbl-idade"></tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="voux-card">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">07 · Por Plano</div>
+                <h3 class="voux-card__title">Quantidade por <em>plano</em></h3>
+              </div>
+            </div>
+            <div id="chart-plano"></div>
+          </article>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="assets/data.js"></script>
+  <script src="assets/charts.js"></script>
+  <script src="assets/layout.js"></script>
+  <script>
+    const D = VOUX_DATA;
+    const C = VOUX_CHART.COLORS;
+    VOUX_LAYOUT.renderTopbar({
+      section: "Financeiro · Inadimplência",
+      title: `Inadimplência <em>Ano Atual</em>`,
+    });
+    VOUX_LAYOUT.renderToolbar({
+      period: "01 Jan – 31 Mai · 2026",
+      segments: [{label:"Mês",active:true},{label:"Trimestre"},{label:"Ano"}],
+      filters: [{ label: "Cidade", value: "Todas" }, { label: "Status", value: "Todos" }],
+    });
+
+    VOUX_CHART.dualLineArea(document.getElementById("chart-inad"),
+      D.inadimplencia.inadMes.map(m => ({ label: m.mes.split("/")[0], total: m.total, aberto: m.aberto, pct: m.pct })),
+      { height: 300, colorTotal: C.danger, colorAberto: C.danger, labelColor: C.warning });
+
+    VOUX_CHART.lineGrowth(document.getElementById("chart-fixa"),
+      D.inadimplencia.inadFixaComparativo.map(m => ({ label: m.mes, value: m.valor, growth: m.growth })),
+      { height: 280, color: C.danger, labelColor: C.warning, fmt: v => "R$ " + v.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}) });
+
+    document.getElementById("tbl-atraso").innerHTML = D.inadimplencia.clientesAtraso.map(c => `
+      <tr>
+        <td>${c.nome}</td>
+        <td class="num">${c.faturas}</td>
+        <td class="num" style="color:var(--voux-danger);">R$ ${c.valor.toFixed(2).replace(".",",")}</td>
+      </tr>
+    `).join("");
+
+    const total = D.inadimplencia.porCidade.reduce((a,b)=>a+b.valor,0);
+    const totalQtd = D.inadimplencia.porCidade.reduce((a,b)=>a+b.qtd,0);
+    document.getElementById("tbl-cidade").innerHTML = D.inadimplencia.porCidade.map(c => `
+      <tr>
+        <td>${c.cidade}</td>
+        <td class="num">R$ ${c.valor.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+        <td class="num" style="color:var(--voux-warning);">${c.qtd}</td>
+        <td class="num">${c.pct.toFixed(2)}%</td>
+      </tr>
+    `).join("") + `<tr style="border-top:1px solid var(--voux-border);">
+      <td style="font-weight:600; color:var(--voux-text);">Total</td>
+      <td class="num" style="color:var(--voux-text);">R$ ${total.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td class="num" style="color:var(--voux-text);">${totalQtd.toLocaleString("pt-BR")}</td>
+      <td class="num" style="color:var(--voux-text);">100,00%</td>
+    </tr>`;
+
+    VOUX_CHART.barHDual(document.getElementById("chart-status"),
+      D.inadimplencia.statusContrato.map(s => ({ label: s.status, a: s.valor, b: s.faturas })),
+      { colorA: C.danger, colorB: C.warning });
+
+    document.getElementById("tbl-idade").innerHTML = D.inadimplencia.porIdade.map(i => `
+      <tr>
+        <td>${i.faixa}</td>
+        <td class="num" style="color:var(--voux-warning);">${i.clientes}</td>
+        <td class="num">${i.faturas}</td>
+      </tr>
+    `).join("");
+
+    VOUX_CHART.barH(document.getElementById("chart-plano"),
+      D.inadimplencia.porPlano.map(p => ({ label: p.plano, value: p.valor })),
+      { color: C.danger, labelW: 200, valueFormatter: v => "R$ " + VOUX_CHART.fmtCompact(v) });
+  </script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { DadosComerciais, Filters } from "@/types/comercial";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { KPICard } from "@/components/bi/KPICard";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquareText, ThumbsUp, ThumbsDown, Package, Search } from "lucide-react";
 import { BarChart } from "@/components/bi/charts";
@@ -130,30 +131,30 @@ export const DashboardInsights = ({ data, filters }: Props) => {
 
       {/* KPI Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="border-0 shadow-sm border-l-4 border-l-primary">
-          <CardContent className="p-4">
-            <p className="text-3xl font-bold text-primary">{obsWithContent.length}</p>
-            <p className="text-xs text-muted-foreground">Observações com Conteúdo</p>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-sm border-l-4" style={{ borderLeftColor: COLORS_POS }}>
-          <CardContent className="p-4">
-            <p className="text-3xl font-bold text-success">{totalPos}</p>
-            <p className="text-xs text-muted-foreground">Menções Positivas</p>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-sm border-l-4" style={{ borderLeftColor: COLORS_NEG }}>
-          <CardContent className="p-4">
-            <p className="text-3xl font-bold text-destructive">{totalNeg}</p>
-            <p className="text-xs text-muted-foreground">Menções Negativas</p>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-sm border-l-4 border-l-warning">
-          <CardContent className="p-4">
-            <p className="text-3xl font-bold text-warning">{products.length}</p>
-            <p className="text-xs text-muted-foreground">Produtos Identificados</p>
-          </CardContent>
-        </Card>
+        <KPICard
+          title="Observacoes com Conteudo"
+          value={obsWithContent.length.toString()}
+          icon={MessageSquareText}
+          accentColor="#3b82f6"
+        />
+        <KPICard
+          title="Mencoes Positivas"
+          value={totalPos.toString()}
+          icon={ThumbsUp}
+          accentColor={COLORS_POS}
+        />
+        <KPICard
+          title="Mencoes Negativas"
+          value={totalNeg.toString()}
+          icon={ThumbsDown}
+          accentColor={COLORS_NEG}
+        />
+        <KPICard
+          title="Produtos Identificados"
+          value={products.length.toString()}
+          icon={Package}
+          accentColor="#eab308"
+        />
       </div>
 
       {/* Products of Interest */}

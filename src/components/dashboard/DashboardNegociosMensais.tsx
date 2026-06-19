@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { KPICard } from "@/components/bi/KPICard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -221,9 +222,6 @@ export const DashboardNegociosMensais = ({ filters, crmData }: Props) => {
 
   // Financial performance classification
   const usadoClassification = summary.percentUsado <= 10 ? "healthy" : summary.percentUsado <= 16 ? "warning" : "critical";
-  const usadoLabel = usadoClassification === "healthy" ? "✅ Saudável" : usadoClassification === "warning" ? "⚠️ Alerta" : "❌ Crítico";
-  const usadoBorderColor = usadoClassification === "healthy" ? "border-l-green-500" : usadoClassification === "warning" ? "border-l-yellow-500" : "border-l-red-500";
-  const usadoTextColor = usadoClassification === "healthy" ? "text-green-600" : usadoClassification === "warning" ? "text-yellow-600" : "text-red-600";
 
   // Automatic financial alerts
   const financialAlerts: { titulo: string; descricao: string; severidade: "alta" | "media" | "baixa" }[] = [];
@@ -257,56 +255,39 @@ export const DashboardNegociosMensais = ({ filters, crmData }: Props) => {
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {kpis.map((kpi) => (
-          <Card key={kpi.label} className="border-0 shadow-sm">
-            <CardContent className="p-4">
-              <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
-              <p className="text-2xl font-bold mt-2">{kpi.value}</p>
-              <p className="text-xs text-muted-foreground">{kpi.label}</p>
-              {"subtitle" in kpi && (kpi as any).subtitle && (
-                <p className="text-[10px] text-muted-foreground mt-0.5">{(kpi as any).subtitle}</p>
-              )}
-            </CardContent>
-          </Card>
+          <KPICard
+            key={kpi.label}
+            title={kpi.label}
+            value={kpi.value}
+            icon={kpi.icon}
+            hint={"subtitle" in kpi ? (kpi as any).subtitle : undefined}
+          />
         ))}
       </div>
 
       {/* Financial KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-0 shadow-sm border-l-4 border-l-green-500">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Wallet className="h-5 w-5 text-green-600" />
-              <p className="text-xs text-muted-foreground font-medium">💰 Valor Recebido</p>
-            </div>
-            <p className="text-2xl font-bold mt-2 text-green-600">{fmtCurrencyShort(summary.totalRecebido)}</p>
-            <p className="text-[10px] text-muted-foreground mt-1">Entrada efetiva de caixa</p>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-sm border-l-4 border-l-orange-500">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <ArrowDownUp className="h-5 w-5 text-orange-600" />
-              <p className="text-xs text-muted-foreground font-medium">📦 Total de Usado</p>
-            </div>
-            <p className="text-2xl font-bold mt-2 text-orange-600">{fmtCurrencyShort(summary.totalUsado)}</p>
-            <p className="text-[10px] text-muted-foreground mt-1">Equipamentos usados recebidos</p>
-          </CardContent>
-        </Card>
-        <Card className={`border-0 shadow-sm border-l-4 ${usadoBorderColor}`}>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <Percent className="h-5 w-5 ${usadoTextColor}" />
-              <p className="text-xs text-muted-foreground font-medium">📉 % Usado sobre Venda</p>
-            </div>
-            <p className={`text-2xl font-bold mt-2 ${usadoTextColor}`}>{summary.percentUsado.toFixed(1)}%</p>
-            <Badge variant={usadoClassification === "healthy" ? "default" : usadoClassification === "warning" ? "secondary" : "destructive"} className="text-[10px] mt-1">
-              {usadoLabel}
-            </Badge>
-            <p className="text-[10px] text-muted-foreground mt-1">
-              {usadoClassification === "healthy" ? "5-10% ideal" : usadoClassification === "warning" ? "10-16% atenção" : ">16% crítico"}
-            </p>
-          </CardContent>
-        </Card>
+        <KPICard
+          title="Valor Recebido"
+          value={fmtCurrencyShort(summary.totalRecebido)}
+          icon={Wallet}
+          hint="Entrada efetiva de caixa"
+          accentColor="#22c55e"
+        />
+        <KPICard
+          title="Total de Usado"
+          value={fmtCurrencyShort(summary.totalUsado)}
+          icon={ArrowDownUp}
+          hint="Equipamentos usados recebidos"
+          accentColor="#f97316"
+        />
+        <KPICard
+          title="% Usado sobre Venda"
+          value={`${summary.percentUsado.toFixed(1)}%`}
+          icon={Percent}
+          hint={usadoClassification === "healthy" ? "5-10% ideal" : usadoClassification === "warning" ? "10-16% atencao" : ">16% critico"}
+          accentColor={usadoClassification === "healthy" ? "#22c55e" : usadoClassification === "warning" ? "#eab308" : "#ef4444"}
+        />
       </div>
 
       {/* Financial Alerts */}

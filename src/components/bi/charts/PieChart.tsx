@@ -2,7 +2,8 @@ import { useRef, useState } from "react";
 import { ChartFrame } from "./ChartFrame";
 import { SvgDonut } from "./primitives/SvgDonut";
 import { useContainerWidth } from "./primitives/useContainerWidth";
-import { VOUX_PALETTE, fmtCompact } from "./primitives/svgGeometry";
+import { getVouxPalette, fmtCompact } from "./primitives/svgGeometry";
+import { useTheme } from "@/hooks/useTheme";
 
 interface TooltipState {
   visible: boolean;
@@ -32,12 +33,14 @@ export default function PieChart({
   data,
   height,
   loading = false,
-  colors = VOUX_PALETTE,
+  colors,
   enableLabels: _enableLabels = false,
   tooltipFormatter,
 }: PieChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const width = useContainerWidth(containerRef as React.RefObject<HTMLElement>);
+  const { isDark } = useTheme();
+  const palette = colors ?? getVouxPalette(isDark);
 
   const [tooltip, setTooltip] = useState<TooltipState>({ visible: false, x: 0, y: 0, content: "" });
 
@@ -46,7 +49,7 @@ export default function PieChart({
   const donutData = data.map((d, i) => ({
     label: d.name,
     value: d.value,
-    color: colors[i % colors.length] as string,
+    color: palette[i % palette.length] as string,
   }));
 
   const total = data.reduce((s, d) => s + d.value, 0);
@@ -75,7 +78,7 @@ export default function PieChart({
                 visible: true,
                 x,
                 y,
-                content: `<div style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:${d.color};display:inline-block"></span><span style="color:#b3ab9c">${d.label}</span></div><div style="margin-top:4px;color:#ece5d4"><strong>${formatted}</strong> <span style="color:#6b6253">(${pct}%)</span></div>`,
+                content: `<div style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:${d.color};display:inline-block"></span><span style="color:var(--voux-text-muted)">${d.label}</span></div><div style="margin-top:4px;color:var(--voux-text-primary)"><strong>${formatted}</strong> <span style="color:var(--voux-text-faint)">(${pct}%)</span></div>`,
               });
             }}
             onSegmentLeave={() => setTooltip((t) => ({ ...t, visible: false }))}
@@ -88,15 +91,15 @@ export default function PieChart({
             position: "fixed",
             left: tooltip.x + 14,
             top: tooltip.y - 10,
-            background: "rgba(17,16,13,0.96)",
-            border: "1px solid rgba(212,184,150,0.15)",
+            background: "var(--voux-tooltip-bg)",
+            border: "1px solid var(--voux-tooltip-border)",
             backdropFilter: "blur(10px)",
             WebkitBackdropFilter: "blur(10px)",
             padding: "8px 12px",
             borderRadius: 10,
             fontFamily: "var(--voux-font-mono)",
             fontSize: 11,
-            color: "#ece5d4",
+            color: "var(--voux-tooltip-text)",
             pointerEvents: "none",
             zIndex: 9999,
             whiteSpace: "nowrap",

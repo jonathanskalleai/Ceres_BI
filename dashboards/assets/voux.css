@@ -1,0 +1,430 @@
+/* ============================================================
+   VOUX DESIGN SYSTEM — Tokens + Base + Components
+   Editorial Dark · v1.0
+   ============================================================ */
+
+:root {
+  /* INK — neutros quentes */
+  --voux-ink-1000: #050403;
+  --voux-ink-950:  #0a0907;
+  --voux-ink-900:  #11100d;
+  --voux-ink-850:  #18160f;
+  --voux-ink-800:  #1f1c14;
+  --voux-ink-700:  #2a2620;
+  --voux-ink-600:  #3a342a;
+  --voux-ink-500:  #524a3e;
+  --voux-ink-400:  #6b6253;
+  --voux-ink-300:  #8a8273;
+  --voux-ink-200:  #b3ab9c;
+  --voux-ink-100:  #d6cfc1;
+  --voux-ink-50:   #ece5d4;
+  --voux-ink-0:    #f7f1e3;
+
+  /* CHAMPAGNE — acento */
+  --voux-champagne-950: #1d160c;
+  --voux-champagne-900: #2e2316;
+  --voux-champagne-800: #4a3920;
+  --voux-champagne-700: #6e542f;
+  --voux-champagne-600: #927142;
+  --voux-champagne-500: #b8945a;
+  --voux-champagne-400: #d4b896;
+  --voux-champagne-300: #e0c9aa;
+  --voux-champagne-200: #ead7be;
+  --voux-champagne-100: #f1e3d2;
+  --voux-champagne-50:  #f8efe1;
+
+  /* SEMÂNTICAS dessaturadas */
+  --voux-success: #7a9b6f;   --voux-success-soft: #1a2317;
+  --voux-warning: #d4a05a;   --voux-warning-soft: #2a1f10;
+  --voux-danger:  #c97565;   --voux-danger-soft:  #2a1612;
+  --voux-info:    #8ea3b8;   --voux-info-soft:    #131a20;
+
+  /* Aliases */
+  --voux-bg:           var(--voux-ink-950);
+  --voux-bg-elevated:  var(--voux-ink-900);
+  --voux-surface:      var(--voux-ink-850);
+  --voux-text:         var(--voux-ink-50);
+  --voux-text-soft:    var(--voux-ink-200);
+  --voux-text-muted:   var(--voux-ink-300);
+  --voux-text-faint:   var(--voux-ink-400);
+  --voux-accent:       var(--voux-champagne-400);
+  --voux-border:       rgba(214, 207, 193, 0.08);
+  --voux-border-hover: rgba(214, 207, 193, 0.16);
+  --voux-border-strong:rgba(214, 207, 193, 0.24);
+
+  /* Fonts — defaults; pode ser sobrescrito por data-font-system */
+  --voux-font-display: "Geist", "Inter", "Helvetica Neue", system-ui, sans-serif;
+  --voux-font-sans:    "Geist", "Inter", "Helvetica Neue", system-ui, sans-serif;
+  --voux-font-mono:    "JetBrains Mono", "IBM Plex Mono", "SF Mono", monospace;
+  --voux-display-tracking: -0.022em;
+  --voux-display-weight: 500;
+  --voux-em-style: normal;
+  --voux-em-weight: 500;
+
+  /* Type scale */
+  --voux-text-2xs: 10px;  --voux-text-xs: 12px;  --voux-text-sm: 13px;
+  --voux-text-base:15px;  --voux-text-md: 17px;  --voux-text-lg: 20px;
+  --voux-text-xl: 24px;   --voux-text-2xl:30px;  --voux-text-3xl:38px;
+  --voux-text-4xl:48px;   --voux-text-5xl:64px;  --voux-text-6xl:84px;
+
+  /* Spacing */
+  --voux-space-1:4px; --voux-space-2:8px; --voux-space-3:12px;
+  --voux-space-4:16px; --voux-space-5:20px; --voux-space-6:24px;
+  --voux-space-7:32px; --voux-space-8:40px; --voux-space-9:48px;
+  --voux-space-10:64px; --voux-space-11:80px; --voux-space-12:96px;
+
+  /* Radius */
+  --voux-radius-xs:2px; --voux-radius-sm:4px; --voux-radius-md:8px;
+  --voux-radius-lg:12px; --voux-radius-xl:16px; --voux-radius-2xl:24px;
+  --voux-radius-pill:999px;
+
+  /* Shadows */
+  --voux-shadow-sm: 0 2px 6px rgba(0,0,0,0.45), 0 1px 2px rgba(0,0,0,0.3);
+  --voux-shadow-md: 0 8px 24px rgba(0,0,0,0.5), 0 2px 6px rgba(0,0,0,0.35);
+  --voux-shadow-lg: 0 16px 48px rgba(0,0,0,0.55), 0 4px 12px rgba(0,0,0,0.4);
+  --voux-glow-accent: 0 0 32px rgba(212, 184, 150, 0.12), 0 0 1px rgba(212, 184, 150, 0.4);
+  --voux-shadow-inset: inset 0 1px 0 rgba(255, 250, 230, 0.04);
+
+  /* Motion */
+  --voux-ease-out:    cubic-bezier(0.22, 1, 0.36, 1);
+  --voux-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --voux-dur-fast:    120ms;
+  --voux-dur-base:    220ms;
+}
+
+/* ============================================================
+   Reset + base
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  background: var(--voux-bg);
+  color: var(--voux-text);
+  font-family: var(--voux-font-sans);
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+::selection { background: var(--voux-champagne-400); color: var(--voux-ink-1000); }
+
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+
+/* Subtle ambient grain */
+body::before {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(212,184,150,0.05), transparent 60%),
+    radial-gradient(800px 500px at -10% 30%, rgba(212,184,150,0.025), transparent 60%);
+}
+
+/* ============================================================
+   Typographic helpers
+   ============================================================ */
+
+.voux-display {
+  font-family: var(--voux-font-display);
+  font-weight: var(--voux-display-weight);
+  letter-spacing: var(--voux-display-tracking);
+  line-height: 1.05;
+}
+.voux-display em {
+  font-style: var(--voux-em-style);
+  color: var(--voux-champagne-400);
+  font-weight: var(--voux-em-weight);
+}
+
+/* Sistemas tipográficos alternativos ============================== */
+html[data-font-system="editorial"] {
+  --voux-font-display: "Instrument Serif", "Cormorant Garamond", Georgia, serif;
+  --voux-font-sans: "Inter", "Helvetica Neue", system-ui, sans-serif;
+  --voux-display-tracking: -0.012em;
+  --voux-display-weight: 400;
+  --voux-em-style: italic;
+  --voux-em-weight: 400;
+}
+html[data-font-system="jakarta"] {
+  --voux-font-display: "Plus Jakarta Sans", "Inter", "Helvetica Neue", system-ui, sans-serif;
+  --voux-font-sans: "Plus Jakarta Sans", "Inter", "Helvetica Neue", system-ui, sans-serif;
+  --voux-display-tracking: -0.024em;
+  --voux-display-weight: 600;
+  --voux-em-style: normal;
+  --voux-em-weight: 600;
+}
+html[data-font-system="geist"] {
+  --voux-font-display: "Geist", "Inter", "Helvetica Neue", system-ui, sans-serif;
+  --voux-font-sans: "Geist", "Inter", "Helvetica Neue", system-ui, sans-serif;
+  --voux-display-tracking: -0.022em;
+  --voux-display-weight: 500;
+  --voux-em-style: normal;
+  --voux-em-weight: 600;
+}
+html[data-font-system="inter"] {
+  --voux-font-display: "Inter Tight", "Inter", "Helvetica Neue", system-ui, sans-serif;
+  --voux-font-sans: "Inter", "Helvetica Neue", system-ui, sans-serif;
+  --voux-display-tracking: -0.024em;
+  --voux-display-weight: 600;
+  --voux-em-style: normal;
+  --voux-em-weight: 700;
+}
+
+.voux-eyebrow {
+  font-family: var(--voux-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--voux-text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+.voux-eyebrow--rule::before {
+  content: ""; display: inline-block;
+  width: 24px; height: 1px;
+  background: currentColor;
+  opacity: 0.5;
+}
+
+.voux-mono {
+  font-family: var(--voux-font-mono);
+  letter-spacing: 0.06em;
+}
+.voux-num {
+  font-family: var(--voux-font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* ============================================================
+   Buttons
+   ============================================================ */
+
+.voux-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 8px;
+  font-family: var(--voux-font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.012em;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all var(--voux-dur-base) var(--voux-ease-out);
+  white-space: nowrap;
+}
+.voux-btn--primary {
+  background: var(--voux-champagne-400);
+  color: var(--voux-ink-1000);
+  box-shadow: var(--voux-glow-accent), var(--voux-shadow-inset);
+}
+.voux-btn--primary:hover {
+  background: var(--voux-champagne-300);
+  transform: translateY(-1px);
+}
+.voux-btn--secondary {
+  background: rgba(214, 207, 193, 0.04);
+  color: var(--voux-text);
+  border-color: var(--voux-border-strong);
+}
+.voux-btn--secondary:hover {
+  border-color: var(--voux-champagne-400);
+  color: var(--voux-champagne-400);
+}
+.voux-btn--ghost {
+  color: var(--voux-text-soft);
+}
+.voux-btn--ghost:hover { color: var(--voux-champagne-400); }
+.voux-btn--sm { padding: 7px 12px; font-size: 12px; }
+
+/* ============================================================
+   Cards
+   ============================================================ */
+
+.voux-card {
+  position: relative;
+  background: linear-gradient(180deg, var(--voux-ink-850), var(--voux-ink-900));
+  border: 1px solid var(--voux-border);
+  border-radius: var(--voux-radius-2xl);
+  padding: 28px;
+  box-shadow: var(--voux-shadow-sm), var(--voux-shadow-inset);
+  transition: border-color var(--voux-dur-base) var(--voux-ease-out);
+}
+.voux-card:hover { border-color: var(--voux-border-hover); }
+.voux-card--flat {
+  background: var(--voux-ink-900);
+}
+.voux-card--bare {
+  background: transparent;
+  border-color: var(--voux-border);
+  padding: 24px;
+}
+
+.voux-card__head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 16px; margin-bottom: 20px;
+}
+.voux-card__label {
+  font-family: var(--voux-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: var(--voux-text-muted);
+  text-transform: uppercase;
+}
+.voux-card__title {
+  font-family: var(--voux-font-display);
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: -0.012em;
+  margin: 0;
+  color: var(--voux-text);
+}
+.voux-card__title em {
+  font-style: var(--voux-em-style);
+  font-weight: var(--voux-em-weight);
+  color: var(--voux-champagne-400);
+}
+.voux-card__sub {
+  font-family: var(--voux-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--voux-text-faint);
+}
+
+/* ============================================================
+   Badges & pills
+   ============================================================ */
+
+.voux-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: var(--voux-font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  background: var(--voux-ink-800);
+  color: var(--voux-text-soft);
+  border: 1px solid var(--voux-border);
+}
+.voux-badge--accent  { background: var(--voux-champagne-950); color: var(--voux-champagne-300); border-color: rgba(212,184,150,0.25); }
+.voux-badge--success { background: var(--voux-success-soft);  color: var(--voux-success);       border-color: rgba(122,155,111,0.25); }
+.voux-badge--warning { background: var(--voux-warning-soft);  color: var(--voux-warning);       border-color: rgba(212,160,90,0.25); }
+.voux-badge--danger  { background: var(--voux-danger-soft);   color: var(--voux-danger);        border-color: rgba(201,117,101,0.25); }
+.voux-badge--info    { background: var(--voux-info-soft);     color: var(--voux-info);          border-color: rgba(142,163,184,0.25); }
+
+.voux-dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.voux-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-family: var(--voux-font-mono);
+  letter-spacing: 0.06em;
+  background: rgba(214, 207, 193, 0.04);
+  color: var(--voux-text-soft);
+  border: 1px solid var(--voux-border);
+}
+
+/* ============================================================
+   Inputs
+   ============================================================ */
+
+.voux-input, .voux-select {
+  background: var(--voux-ink-900);
+  border: 1px solid var(--voux-border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: var(--voux-font-sans);
+  font-size: 13px;
+  color: var(--voux-text);
+  width: 100%;
+  transition: all var(--voux-dur-fast) var(--voux-ease-out);
+}
+.voux-input:focus, .voux-select:focus {
+  outline: none;
+  border-color: var(--voux-champagne-400);
+  box-shadow: 0 0 0 3px rgba(212, 184, 150, 0.10);
+}
+.voux-label {
+  font-family: var(--voux-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--voux-text-muted);
+  display: block;
+  margin-bottom: 6px;
+}
+.voux-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none' stroke='%238a8273' stroke-width='1.5'%3e%3cpath d='M3 4.5l3 3 3-3'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+/* ============================================================
+   Tables
+   ============================================================ */
+
+.voux-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.voux-table th {
+  text-align: left;
+  padding: 12px 14px;
+  font-family: var(--voux-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--voux-text-muted);
+  font-weight: 500;
+  border-bottom: 1px solid var(--voux-border);
+  white-space: nowrap;
+}
+.voux-table td {
+  padding: 14px;
+  border-bottom: 1px solid var(--voux-border);
+  color: var(--voux-text-soft);
+  font-variant-numeric: tabular-nums;
+}
+.voux-table tr:last-child td { border-bottom: 0; }
+.voux-table tr:hover td { background: rgba(214, 207, 193, 0.02); }
+.voux-table td.num, .voux-table th.num { text-align: right; font-family: var(--voux-font-mono); letter-spacing: 0.02em; }
+
+/* ============================================================
+   Decorative backgrounds
+   ============================================================ */
+
+.voux-bg-grid {
+  background-image:
+    linear-gradient(var(--voux-border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--voux-border) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+/* ============================================================
+   Scrollbar (subtle)
+   ============================================================ */
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(214, 207, 193, 0.08);
+  border-radius: 999px;
+  border: 2px solid var(--voux-bg);
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(214, 207, 193, 0.16); }

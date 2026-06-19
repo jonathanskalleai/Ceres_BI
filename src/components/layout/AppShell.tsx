@@ -13,6 +13,7 @@ const ROUTE_META: Record<string, { section: string; title: string }> = {
   '/crm/insights': { section: 'COMERCIAL CRM', title: 'Observacoes' },
   '/crm/negocios': { section: 'COMERCIAL CRM', title: 'Negocios' },
   '/crm/administrativo': { section: 'COMERCIAL CRM', title: 'Administrativo' },
+  '/bi/painel': { section: 'BI ANALYTICS', title: 'Painel' },
   '/bi/comercial': { section: 'BI ANALYTICS', title: 'Comercial' },
   '/bi/pedidos': { section: 'BI ANALYTICS', title: 'Pedidos' },
   '/bi/produtos': { section: 'BI ANALYTICS', title: 'Produtos' },
@@ -20,6 +21,7 @@ const ROUTE_META: Record<string, { section: string; title: string }> = {
   '/bi/operacional': { section: 'BI ANALYTICS', title: 'Operacional' },
   '/bi/admin': { section: 'BI ANALYTICS', title: 'Admin' },
   '/bi/acoes': { section: 'BI ANALYTICS', title: 'Acoes' },
+  '/bi/inteligencia': { section: 'BI ANALYTICS', title: 'Inteligencia' },
   '/tools/explorer': { section: 'FERRAMENTAS', title: 'Explorador de Views' },
   '/tools/performance': { section: 'FERRAMENTAS', title: 'Performance 2026' },
   '/admin/users': { section: 'ADMINISTRACAO', title: 'Usuarios' },
@@ -53,8 +55,8 @@ function AppShellTopbar({ section, title }: AppShellTopbarProps) {
     <header
       className="flex items-center justify-between gap-5 px-10 py-5 border-b shrink-0"
       style={{
-        borderColor: 'rgba(214,207,193,0.06)',
-        background: 'rgba(10,9,7,0.7)',
+        borderColor: 'var(--voux-card-border)',
+        background: 'var(--voux-tooltip-bg)',
         backdropFilter: 'blur(12px)',
         position: 'sticky',
         top: 0,
@@ -63,14 +65,14 @@ function AppShellTopbar({ section, title }: AppShellTopbarProps) {
     >
       <div className="flex flex-col gap-1">
         <div
-          className="text-[10px] tracking-[0.22em] uppercase text-[#524a3e]"
-          style={{ fontFamily: 'var(--voux-font-mono)' }}
+          className="text-[10px] tracking-[0.22em] uppercase"
+          style={{ fontFamily: 'var(--voux-font-mono)', color: 'var(--voux-text-faint)' }}
         >
-          Ceres BI <span className="text-[#3a342a] mx-2">·</span> {section}
+          Ceres BI <span style={{ color: 'var(--voux-grid-line)' }} className="mx-2">·</span> {section}
         </div>
         <h1
-          className="text-[22px] leading-none tracking-[-0.012em] text-[#ece5d4]"
-          style={{ fontFamily: 'var(--voux-font-display)', margin: 0 }}
+          className="text-[22px] leading-none tracking-[-0.012em]"
+          style={{ fontFamily: 'var(--voux-font-display)', margin: 0, color: 'var(--voux-text-heading)' }}
         >
           {title}
         </h1>

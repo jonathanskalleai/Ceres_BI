@@ -85,13 +85,7 @@ async function fetchAgendaFromMirror(): Promise<AgendaRow[]> {
 }
 
 export async function fetchTecnicoTempo(): Promise<TecnicoTempoRow[]> {
-  if (USE_MIRROR.crm_acoes) {
-    try {
-      return await fetchTempoFromMirror();
-    } catch {
-      return await fetchAllPages<TecnicoTempoRow>("VW_Ceres_TecnicoTempo", TEMPO_COLUMNS);
-    }
-  }
+  // Mirror crm_acoes does NOT have tempo columns (tmp_*) — skip mirror, use legacy only
   try {
     return await fetchAllPages<TecnicoTempoRow>("VW_Ceres_TecnicoTempo", TEMPO_COLUMNS);
   } catch {
@@ -100,13 +94,7 @@ export async function fetchTecnicoTempo(): Promise<TecnicoTempoRow[]> {
 }
 
 export async function fetchAgenda(): Promise<AgendaRow[]> {
-  if (USE_MIRROR.crm_acoes) {
-    try {
-      return await fetchAgendaFromMirror();
-    } catch {
-      return await fetchAllPages<AgendaRow>("VW_Ceres_Agenda", AGENDA_COLUMNS);
-    }
-  }
+  // Mirror crm_acoes does NOT have agenda columns (age_*) — skip mirror, use legacy only
   try {
     return await fetchAllPages<AgendaRow>("VW_Ceres_Agenda", AGENDA_COLUMNS);
   } catch {

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { DadosComerciais, Registro } from "@/types/comercial";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,12 +17,21 @@ const formatCurrency = (v: number) => v > 0 ? `R$ ${(v / 1e3).toFixed(0)}K` : "-
 
 export const DashboardRegistros = ({ data, filters }: Props) => {
   const [search, setSearch] = useState("");
+  const [nrFilter, setNrFilter] = useState("");
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [records, setRecords] = useState<Registro[]>(data.registrosRecentes);
   const [editValues, setEditValues] = useState<Partial<Registro>>({});
 
+  useEffect(() => {
+    setRecords(data.registrosRecentes);
+  }, [data.registrosRecentes]);
+
   const filtered = useMemo(() => {
     let result = filterRegistros(records, filters);
+    if (nrFilter) {
+      const nr = nrFilter.trim();
+      result = result.filter((r) => (r.numero || "").includes(nr));
+    }
     if (search) {
       const s = search.toLowerCase();
       result = result.filter((r) =>
@@ -33,7 +42,7 @@ export const DashboardRegistros = ({ data, filters }: Props) => {
       );
     }
     return result;
-  }, [records, filters, search]);
+  }, [records, filters, search, nrFilter]);
 
   const startEdit = (idx: number) => { setEditingIdx(idx); setEditValues({ ...filtered[idx] }); };
   const saveEdit = () => {
@@ -53,9 +62,14 @@ export const DashboardRegistros = ({ data, filters }: Props) => {
           <p className="text-sm text-muted-foreground">Últimos 500 registros — editável ({filtered.length} filtrados)</p>
           <p className="text-xs text-muted-foreground">Dados de ações comerciais do CRM (campo Atividade Executada)</p>
         </div>
-        <div className="relative w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar cliente, vendedor..." className="pl-9 h-9" value={search} onChange={(e) => setSearch(e.target.value)} />
+        <div className="flex items-center gap-2">
+          <div className="relative w-32">
+            <Input placeholder="Nr Ação" className="h-9 text-xs" value={nrFilter} onChange={(e) => setNrFilter(e.target.value)} />
+          </div>
+          <div className="relative w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Buscar cliente, vendedor..." className="pl-9 h-9" value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
         </div>
       </div>
 
@@ -80,7 +94,7 @@ export const DashboardRegistros = ({ data, filters }: Props) => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.slice(0, 100).map((r, i) => (
+                {filtered.slice(0, 500).map((r, i) => (
                   <TableRow key={i} className="hover:bg-muted/30">
                     <TableCell className="p-1">
                       {editingIdx === i ? (
@@ -123,7 +137,7 @@ export const DashboardRegistros = ({ data, filters }: Props) => {
         </CardContent>
       </Card>
       <p className="text-xs text-muted-foreground text-center">
-        Mostrando {Math.min(100, filtered.length)} de {filtered.length} registros filtrados
+        Mostrando {Math.min(500, filtered.length)} de {filtered.length} registros filtrados
       </p>
     </div>
   );

@@ -2,7 +2,7 @@ import { useComercialDataContext } from '@/contexts/ComercialDataContext';
 import { DashboardInsights } from '@/components/dashboard/DashboardInsights';
 
 export default function CrmInsights() {
-  const { data, filters } = useComercialDataContext();
+  const { data, allData, filters } = useComercialDataContext();
 
-  return <DashboardInsights data={data} filters={filters} />;
+  return <DashboardInsights data={allData ?? data} filters={filters} />;
 }

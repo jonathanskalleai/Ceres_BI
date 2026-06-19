@@ -1,0 +1,425 @@
+- generic [ref=e2]:
+  - region "Notifications (F8)":
+    - list
+  - region "Notifications alt+T"
+  - generic [ref=e3]:
+    - complementary [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]: C
+        - generic [ref=e7]:
+          - generic [ref=e8]:
+            - text: Ceres
+            - emphasis [ref=e9]: BI
+          - generic [ref=e10]: Business Intelligence
+        - button [ref=e11] [cursor=pointer]:
+          - img [ref=e12]
+      - navigation [ref=e14]:
+        - generic [ref=e15]:
+          - button "COMERCIAL CRM" [ref=e16] [cursor=pointer]:
+            - generic [ref=e17]: COMERCIAL CRM
+            - img [ref=e19]
+          - generic [ref=e21]:
+            - button "Visão Geral 01" [ref=e22] [cursor=pointer]:
+              - img [ref=e23]
+              - generic [ref=e28]: Visão Geral
+              - generic [ref=e29]: "01"
+            - button "Consultores 02" [ref=e30] [cursor=pointer]:
+              - img [ref=e31]
+              - generic [ref=e36]: Consultores
+              - generic [ref=e37]: "02"
+            - button "Regiões 03" [ref=e38] [cursor=pointer]:
+              - img [ref=e39]
+              - generic [ref=e42]: Regiões
+              - generic [ref=e43]: "03"
+            - button "Registros 04" [ref=e44] [cursor=pointer]:
+              - img [ref=e45]
+              - generic [ref=e47]: Registros
+              - generic [ref=e48]: "04"
+            - button "Clientes Críticos 05" [ref=e49] [cursor=pointer]:
+              - img [ref=e50]
+              - generic [ref=e52]: Clientes Críticos
+              - generic [ref=e53]: "05"
+            - button "Mapa de Ações 06" [ref=e54] [cursor=pointer]:
+              - img [ref=e55]
+              - generic [ref=e57]: Mapa de Ações
+              - generic [ref=e58]: "06"
+            - button "Observações 07" [ref=e59] [cursor=pointer]:
+              - img [ref=e60]
+              - generic [ref=e62]: Observações
+              - generic [ref=e63]: "07"
+            - button "Negócios 08" [ref=e64] [cursor=pointer]:
+              - img [ref=e65]
+              - generic [ref=e70]: Negócios
+              - generic [ref=e71]: "08"
+            - button "Administrativo 09" [ref=e72] [cursor=pointer]:
+              - img [ref=e73]
+              - generic [ref=e76]: Administrativo
+              - generic [ref=e77]: "09"
+        - generic [ref=e78]:
+          - button "BI ANALYTICS" [ref=e79] [cursor=pointer]:
+            - generic [ref=e80]: BI ANALYTICS
+            - img [ref=e82]
+          - button "Dashboard BI 10" [active] [ref=e85] [cursor=pointer]:
+            - img [ref=e86]
+            - generic [ref=e88]: Dashboard BI
+            - generic [ref=e89]: "10"
+        - button "FERRAMENTAS" [ref=e91] [cursor=pointer]:
+          - generic [ref=e92]: FERRAMENTAS
+          - img [ref=e94]
+      - generic [ref=e96]:
+        - paragraph [ref=e125]: "Sync: 19:49"
+        - button "Modo claro" [ref=e97] [cursor=pointer]:
+          - img [ref=e98]
+          - generic [ref=e104]: Modo claro
+    - main [ref=e105]:
+      - generic [ref=e106]:
+        - generic [ref=e107]:
+          - generic [ref=e108]: Ceres BI · BI ANALYTICS
+          - heading "Dashboard BI" [level=1] [ref=e126]
+        - button "Atualizar" [ref=e111] [cursor=pointer]:
+          - img
+          - text: Atualizar
+      - generic [ref=e127]:
+        - generic [ref=e128]:
+          - generic [ref=e129]:
+            - generic [ref=e130]: BI ANALYTICS
+            - heading "Dashboard BI" [level=2] [ref=e131]:
+              - text: Dashboard
+              - emphasis [ref=e132]: BI
+            - paragraph [ref=e133]: Análise completa — SQL Server
+          - generic [ref=e134]:
+            - button "Todas as datas" [ref=e135] [cursor=pointer]:
+              - img
+              - text: Todas as datas
+            - combobox [ref=e136] [cursor=pointer]:
+              - generic: Todos os funis
+              - img [ref=e137]
+            - generic [ref=e139]: Atualizado ha 4 min
+        - generic [ref=e140]:
+          - tablist [ref=e141]:
+            - tab "Comercial" [selected] [ref=e142] [cursor=pointer]
+            - tab "Pedidos" [ref=e143] [cursor=pointer]
+            - tab "Produtos" [ref=e144] [cursor=pointer]
+            - tab "Servicos" [ref=e145] [cursor=pointer]
+            - tab "Operacional" [ref=e146] [cursor=pointer]
+            - tab "Admin" [ref=e147] [cursor=pointer]
+            - tab "Acoes" [ref=e148] [cursor=pointer]
+            - tab "Explorer" [ref=e149] [cursor=pointer]
+          - tabpanel "Comercial" [ref=e150]:
+            - generic [ref=e151]:
+              - link "Ver metas e planejamento →" [ref=e153] [cursor=pointer]:
+                - /url: /performance
+              - generic [ref=e154]:
+                - generic [ref=e155]:
+                  - generic [ref=e156]:
+                    - generic [ref=e157]: Negocios
+                    - img [ref=e158]
+                  - generic [ref=e161]: "3.585"
+                  - paragraph [ref=e162]: 607 ganhos · 752 perdidos · 2226 em aberto
+                - generic [ref=e163]:
+                  - generic [ref=e164]:
+                    - generic [ref=e165]: Taxa de Conversao
+                    - img [ref=e166]
+                  - generic [ref=e170]: 44.7%
+                  - paragraph [ref=e171]: ganhos / (ganhos + perdidos)
+                - generic [ref=e172]:
+                  - generic [ref=e173]:
+                    - generic [ref=e174]: Pipeline Aberto
+                    - img [ref=e175]
+                  - generic [ref=e178]: R$ 306.468.732,85
+                  - paragraph [ref=e179]: valor em negocios em andamento
+                - generic [ref=e180]:
+                  - generic [ref=e181]:
+                    - generic [ref=e182]: Valor Ganho
+                    - img [ref=e183]
+                  - generic [ref=e185]: R$ 84.572.403,56
+                  - paragraph [ref=e186]: ticket medio R$ 139.328,51
+                - generic [ref=e187]:
+                  - generic [ref=e188]:
+                    - generic [ref=e189]: Ciclo de Vendas
+                    - img [ref=e190]
+                  - generic [ref=e193]: 135 dias
+                  - paragraph [ref=e194]: media nos negocios concluidos
+                - generic [ref=e195]:
+                  - generic [ref=e196]:
+                    - generic [ref=e197]: Esforco Medio
+                    - img [ref=e198]
+                  - generic [ref=e204]: "2.7"
+                  - paragraph [ref=e205]: acoes por negocio
+              - generic [ref=e206]:
+                - generic [ref=e207]:
+                  - generic [ref=e209]:
+                    - heading "Funil de Vendas — Pipeline por Etapa" [level=3] [ref=e210]
+                    - paragraph [ref=e211]: Valor em aberto (R$) acumulado em cada etapa do funil
+                  - img [ref=e217]:
+                    - generic [ref=e218]:
+                      - generic [ref=e219]: 1-OPORTUNIDADE
+                      - generic [ref=e222]: R$ 220.532.743,87
+                    - generic [ref=e223]:
+                      - generic [ref=e224]: 1-Prospecção de Repasse
+                      - generic [ref=e227]: R$ 16.107.000,01
+                    - generic [ref=e228]:
+                      - generic [ref=e229]: 1-Intenção de Compra
+                      - generic [ref=e232]: R$ 1.384.293,16
+                    - generic [ref=e233]:
+                      - generic [ref=e234]: 1-Programar Coleta
+                      - generic [ref=e237]: R$ 523.603,28
+                    - generic [ref=e238]:
+                      - generic [ref=e239]: 1-Pedido Assinado
+                      - generic [ref=e242]: R$ 207.381,00
+                    - generic [ref=e243]:
+                      - generic [ref=e244]: 2-COTACAO
+                      - generic [ref=e247]: R$ 26.118.575,57
+                    - generic [ref=e248]:
+                      - generic [ref=e249]: 2-Proposta
+                      - generic [ref=e252]: R$ 774.900,00
+                    - generic [ref=e253]:
+                      - generic [ref=e254]: 2-Negociação
+                      - generic [ref=e257]: R$ 497.157,50
+                    - generic [ref=e258]:
+                      - generic [ref=e259]: 2-PEDIDO ASSINADO
+                      - generic [ref=e262]: R$ 20.000,00
+                    - generic [ref=e263]:
+                      - generic [ref=e264]: 2-Coletas Programadas
+                      - generic [ref=e267]: R$ 9.000,00
+                    - generic [ref=e268]:
+                      - generic [ref=e269]: 3-PROPOSTA AO CLIENTE
+                      - generic [ref=e272]: R$ 25.791.253,25
+                    - generic [ref=e273]:
+                      - generic [ref=e274]: 3-Orçamento
+                      - generic [ref=e277]: R$ 1.447.127,81
+                    - generic [ref=e278]:
+                      - generic [ref=e279]: 3-Pedido
+                      - generic [ref=e282]: R$ 1.116.000,00
+                    - generic [ref=e283]:
+                      - generic [ref=e284]: 3-Coletas Realizadas
+                      - generic [ref=e287]: R$ 364.532,50
+                    - generic [ref=e288]:
+                      - generic [ref=e289]: 3-EM ANALISE
+                      - generic [ref=e292]: R$ 364.000,00
+                    - generic [ref=e293]:
+                      - generic [ref=e294]: 3-Coleta Despachada
+                      - generic [ref=e297]: R$ 53.215,00
+                    - generic [ref=e298]:
+                      - generic [ref=e299]: 4-REALIZAR NPS
+                      - generic [ref=e302]: R$ 5.639.966,77
+                    - generic [ref=e303]:
+                      - generic [ref=e304]: 4-Pedido Cliente
+                      - generic [ref=e307]: R$ 1.845.681,63
+                    - generic [ref=e308]:
+                      - generic [ref=e309]: 4-PEDIDO
+                      - generic [ref=e312]: R$ 442.000,00
+                    - generic [ref=e313]:
+                      - generic [ref=e314]: 4-APROVADO FINAN
+                      - generic [ref=e317]: R$ 310.000,00
+                    - generic [ref=e318]:
+                      - generic [ref=e319]: 4-Aguardando Mapas
+                      - generic [ref=e322]: R$ 21.325,00
+                    - generic [ref=e323]:
+                      - generic [ref=e324]: 5-AGUARD MAQUINA
+                      - generic [ref=e327]: R$ 817.401,00
+                    - generic [ref=e328]:
+                      - generic [ref=e329]: 5-Laudos Prontos
+                      - generic [ref=e332]: R$ 157.055,00
+                    - generic [ref=e333]:
+                      - generic [ref=e334]: 6-AP Entregue
+                      - generic [ref=e337]: R$ 1.917.520,50
+                    - generic [ref=e338]:
+                      - generic [ref=e339]: 6-AGUARD FATURAMENTO
+                      - generic [ref=e342]: R$ 7.000,00
+                - generic [ref=e343]:
+                  - generic [ref=e345]:
+                    - heading "Origem do Lead — Conversao" [level=3] [ref=e346]
+                    - paragraph [ref=e347]: Negocios por canal de entrada (ganho / perdido / em aberto)
+                  - generic [ref=e351]:
+                    - generic [ref=e352]:
+                      - generic [ref=e353]: ganhos
+                      - img [ref=e355]:
+                        - generic [ref=e356]:
+                          - generic [ref=e357]: Sem origem
+                          - generic [ref=e360]: "232"
+                        - generic [ref=e361]:
+                          - generic [ref=e362]: Prospecção
+                          - generic [ref=e365]: "205"
+                        - generic [ref=e366]:
+                          - generic [ref=e367]: Indicação
+                          - generic [ref=e370]: "49"
+                        - generic [ref=e371]:
+                          - generic [ref=e372]: Trafego pago
+                          - generic [ref=e375]: "38"
+                        - generic [ref=e376]:
+                          - generic [ref=e377]: Eventos / Feiras
+                          - generic [ref=e380]: "17"
+                        - generic [ref=e381]:
+                          - generic [ref=e382]: Facebook
+                          - generic [ref=e385]: "8"
+                        - generic [ref=e386]:
+                          - generic [ref=e387]: Campanha Fábrica
+                          - generic [ref=e390]: "40"
+                        - generic [ref=e391]:
+                          - generic [ref=e392]: Grupos de WhatsApp
+                          - generic [ref=e395]: "6"
+                    - generic [ref=e396]:
+                      - generic [ref=e397]: perdidos
+                      - img [ref=e399]:
+                        - generic [ref=e400]:
+                          - generic [ref=e401]: Sem origem
+                          - generic [ref=e404]: "271"
+                        - generic [ref=e405]:
+                          - generic [ref=e406]: Prospecção
+                          - generic [ref=e409]: "317"
+                        - generic [ref=e410]:
+                          - generic [ref=e411]: Indicação
+                          - generic [ref=e414]: "40"
+                        - generic [ref=e415]:
+                          - generic [ref=e416]: Trafego pago
+                          - generic [ref=e419]: "47"
+                        - generic [ref=e420]:
+                          - generic [ref=e421]: Eventos / Feiras
+                          - generic [ref=e424]: "18"
+                        - generic [ref=e425]:
+                          - generic [ref=e426]: Facebook
+                          - generic [ref=e429]: "12"
+                        - generic [ref=e430]:
+                          - generic [ref=e431]: Campanha Fábrica
+                          - generic [ref=e434]: "15"
+                        - generic [ref=e435]:
+                          - generic [ref=e436]: Grupos de WhatsApp
+                          - generic [ref=e439]: "10"
+                    - generic [ref=e440]:
+                      - generic [ref=e441]: andamento
+                      - img [ref=e443]:
+                        - generic [ref=e444]:
+                          - generic [ref=e445]: Sem origem
+                          - generic [ref=e448]: "998"
+                        - generic [ref=e449]:
+                          - generic [ref=e450]: Prospecção
+                          - generic [ref=e453]: "918"
+                        - generic [ref=e454]:
+                          - generic [ref=e455]: Indicação
+                          - generic [ref=e458]: "89"
+                        - generic [ref=e459]:
+                          - generic [ref=e460]: Trafego pago
+                          - generic [ref=e463]: "20"
+                        - generic [ref=e464]:
+                          - generic [ref=e465]: Eventos / Feiras
+                          - generic [ref=e468]: "66"
+                        - generic [ref=e469]:
+                          - generic [ref=e470]: Facebook
+                          - generic [ref=e473]: "51"
+                        - generic [ref=e474]:
+                          - generic [ref=e475]: Campanha Fábrica
+                          - generic [ref=e478]: "11"
+                        - generic [ref=e479]:
+                          - generic [ref=e480]: Grupos de WhatsApp
+                          - generic [ref=e483]: "43"
+                - generic [ref=e484]:
+                  - generic [ref=e486]:
+                    - heading "Motivos de Perda — Valor Perdido" [level=3] [ref=e487]
+                    - paragraph [ref=e488]: Onde a receita esta vazando (R$ em negocios perdidos)
+                  - img [ref=e494]:
+                    - generic [ref=e495]:
+                      - generic [ref=e496]: DESISTENCIA
+                      - generic [ref=e499]: R$ 54.044.146,08 (0 negocios)
+                    - generic [ref=e500]:
+                      - generic [ref=e501]: MUDANCA DE PROPONENTE
+                      - generic [ref=e504]: R$ 25.523.246,01 (0 negocios)
+                    - generic [ref=e505]:
+                      - generic [ref=e506]: VENDA PERDIDA
+                      - generic [ref=e509]: R$ 19.103.778,36 (0 negocios)
+                    - generic [ref=e510]:
+                      - generic [ref=e511]: PRECO
+                      - generic [ref=e514]: R$ 11.724.803,01 (0 negocios)
+                    - generic [ref=e515]:
+                      - generic [ref=e516]: DISPONIBILIDADE DE MAQUINAS
+                      - generic [ref=e519]: R$ 6.558.500,00 (0 negocios)
+                    - generic [ref=e520]:
+                      - generic [ref=e521]: MAQUINA USADA
+                      - generic [ref=e524]: R$ 5.769.101,00 (0 negocios)
+                    - generic [ref=e525]:
+                      - generic [ref=e526]: QUALIDADE DE PRODUTO
+                      - generic [ref=e529]: R$ 925.000,00 (0 negocios)
+                    - generic [ref=e530]:
+                      - generic [ref=e531]: QUALIDADE DE ATENDIMENTO
+                      - generic [ref=e534]: R$ 500.000,00 (0 negocios)
+                - generic [ref=e535]:
+                  - generic [ref=e537]:
+                    - heading "Velocidade do Funil — Gargalos" [level=3] [ref=e538]
+                    - paragraph [ref=e539]: Tempo medio (dias) que negocios permanecem em cada etapa
+                  - img [ref=e545]:
+                    - generic [ref=e546]:
+                      - generic [ref=e547]: Sem etapa
+                      - generic [ref=e550]: 69 dias (0 passagens)
+                - generic [ref=e551]:
+                  - generic [ref=e553]:
+                    - heading "Evolucao Mensal de Negocios" [level=3] [ref=e554]:
+                      - text: Evolucao Mensal de Negocios
+                      - img [ref=e556]
+                    - paragraph [ref=e558]: Novos negocios criados e valor negociado por mes
+                  - generic [ref=e562]:
+                    - img [ref=e567]:
+                      - generic [ref=e570]: jun/2025
+                      - generic [ref=e573]: jul/2025
+                      - generic [ref=e576]: ago/2025
+                      - generic [ref=e579]: set/2025
+                      - generic [ref=e582]: out/2025
+                      - generic [ref=e585]: nov/2025
+                      - generic [ref=e588]: dez/2025
+                      - generic [ref=e591]: jan/2026
+                      - generic [ref=e594]: fev/2026
+                      - generic [ref=e597]: mar/2026
+                      - generic [ref=e600]: abr/2026
+                      - generic [ref=e603]: mai/2026
+                    - img [ref=e607]:
+                      - generic [ref=e609]: R$ 0,00
+                      - generic [ref=e611]: R$ 6.538.347,01
+                      - generic [ref=e613]: R$ 13.076.694,02
+                      - generic [ref=e615]: R$ 19.615.041,04
+                      - generic [ref=e617]: R$ 26.153.388,05
+                      - generic [ref=e618]: jun/2025
+                      - generic [ref=e619]: jul/2025
+                      - generic [ref=e620]: ago/2025
+                      - generic [ref=e621]: set/2025
+                      - generic [ref=e622]: out/2025
+                      - generic [ref=e623]: nov/2025
+                      - generic [ref=e624]: dez/2025
+                      - generic [ref=e625]: jan/2026
+                      - generic [ref=e626]: fev/2026
+                      - generic [ref=e627]: mar/2026
+                      - generic [ref=e628]: abr/2026
+                      - generic [ref=e629]: mai/2026
+                - generic [ref=e645]:
+                  - generic [ref=e647]:
+                    - heading "Ranking de Consultores — Valor Ganho" [level=3] [ref=e648]
+                    - paragraph [ref=e649]: Top 10 por receita fechada (taxa de conversao no tooltip)
+                  - img [ref=e655]:
+                    - generic [ref=e656]:
+                      - generic [ref=e657]: DIEGO JOSE DO AMARAL
+                      - generic [ref=e660]: R$ 23.013.259,68 · 0/0 (0.0%)
+                    - generic [ref=e661]:
+                      - generic [ref=e662]: GERIEL DOS SANTOS
+                      - generic [ref=e665]: R$ 12.488.250,00 · 0/0 (0.0%)
+                    - generic [ref=e666]:
+                      - generic [ref=e667]: DIEGO KNOPF
+                      - generic [ref=e670]: R$ 9.362.980,00 · 0/0 (0.0%)
+                    - generic [ref=e671]:
+                      - generic [ref=e672]: RAUNI FERNANDO PILONETTO
+                      - generic [ref=e675]: R$ 8.836.850,00 · 0/0 (0.0%)
+                    - generic [ref=e676]:
+                      - generic [ref=e677]: VIVIANI BASTEZINI
+                      - generic [ref=e680]: R$ 3.742.300,00 · 0/0 (0.0%)
+                    - generic [ref=e681]:
+                      - generic [ref=e682]: EDIOMAR CARLOS ZILLI
+                      - generic [ref=e685]: R$ 3.716.100,00 · 0/0 (0.0%)
+                    - generic [ref=e686]:
+                      - generic [ref=e687]: RODRIGO LUIZ AMARO OSOWSKI
+                      - generic [ref=e690]: R$ 2.942.700,00 · 0/0 (0.0%)
+                    - generic [ref=e691]:
+                      - generic [ref=e692]: RAMES PEDRO SOARES MACHADO
+                      - generic [ref=e695]: R$ 2.889.000,00 · 0/0 (0.0%)
+                    - generic [ref=e696]:
+                      - generic [ref=e697]: WAGNER GALVAO
+                      - generic [ref=e700]: R$ 2.024.000,00 · 0/0 (0.0%)
+                    - generic [ref=e701]:
+                      - generic [ref=e702]: ANDRE CANDIOTTO
+                      - generic [ref=e705]: R$ 1.538.217,00 · 0/0 (0.0%)

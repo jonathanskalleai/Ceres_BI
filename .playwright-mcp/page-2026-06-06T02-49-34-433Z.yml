@@ -1,0 +1,140 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - emphasis [ref=e6]: V
+      - generic [ref=e7]:
+        - generic [ref=e8]:
+          - text: Ceres
+          - emphasis [ref=e9]: BI
+        - generic [ref=e10]: Business Intelligence
+    - generic [ref=e11]:
+      - generic [ref=e12]: Visão Geral
+      - link "Dashboard 01" [ref=e13] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e14]
+        - generic [ref=e19]: Dashboard
+        - generic [ref=e20]: "01"
+    - generic [ref=e21]:
+      - generic [ref=e22]: CRM
+      - link "Comercial 02" [ref=e23] [cursor=pointer]:
+        - /url: comercial.html
+        - img [ref=e24]
+        - generic [ref=e27]: Comercial
+        - generic [ref=e28]: "02"
+      - link "Pedidos 03" [ref=e29] [cursor=pointer]:
+        - /url: pedidos.html
+        - img [ref=e30]
+        - generic [ref=e33]: Pedidos
+        - generic [ref=e34]: "03"
+      - link "Ações CRM 04" [ref=e35] [cursor=pointer]:
+        - /url: acoes.html
+        - img [ref=e36]
+        - generic [ref=e39]: Ações CRM
+        - generic [ref=e40]: "04"
+    - generic [ref=e41]:
+      - generic [ref=e42]: Operação
+      - link "Operacional 05" [ref=e43] [cursor=pointer]:
+        - /url: operacional.html
+        - img [ref=e44]
+        - generic [ref=e46]: Operacional
+        - generic [ref=e47]: "05"
+      - link "Produtos 06" [ref=e48] [cursor=pointer]:
+        - /url: produtos.html
+        - img [ref=e49]
+        - generic [ref=e52]: Produtos
+        - generic [ref=e53]: "06"
+      - link "Serviços 07" [ref=e54] [cursor=pointer]:
+        - /url: servicos.html
+        - img [ref=e55]
+        - generic [ref=e58]: Serviços
+        - generic [ref=e59]: "07"
+    - generic [ref=e60]:
+      - generic [ref=e61]: CR
+      - generic [ref=e62]:
+        - generic [ref=e63]: Ceres BI
+        - generic [ref=e64]: CRM Analytics
+  - main [ref=e65]:
+    - generic [ref=e68]:
+      - generic [ref=e69]:
+        - generic [ref=e70]:
+          - generic [ref=e71]:
+            - generic [ref=e72]: 01 · Total Pedidos
+            - img [ref=e74]
+          - generic [ref=e77]: —
+          - generic [ref=e78]: pedidos no período
+        - generic [ref=e79]:
+          - generic [ref=e80]:
+            - generic [ref=e81]: 02 · Faturamento (Aprovado)
+            - img [ref=e83]
+          - generic [ref=e86]: —
+          - generic [ref=e87]: pedidos aprovados
+        - generic [ref=e88]:
+          - generic [ref=e89]:
+            - generic [ref=e90]: 03 · Ticket Médio
+            - img [ref=e92]
+          - generic [ref=e94]: —
+          - generic [ref=e95]: por pedido aprovado
+        - generic [ref=e96]:
+          - generic [ref=e97]:
+            - generic [ref=e98]: 04 · Taxa de Aprovação
+            - img [ref=e100]
+          - generic [ref=e102]: —
+          - generic [ref=e103]: dos pedidos
+        - generic [ref=e104]:
+          - generic [ref=e105]:
+            - generic [ref=e106]: 05 · % Financiado
+            - img [ref=e108]
+          - generic [ref=e111]: —
+          - generic [ref=e112]: do faturamento
+        - generic [ref=e113]:
+          - generic [ref=e114]:
+            - generic [ref=e115]: 06 · Valor Cancelado
+            - img [ref=e117]
+          - generic [ref=e120]: —
+          - generic [ref=e121]: pedidos cancelados
+      - generic [ref=e122]:
+        - article [ref=e123]:
+          - generic [ref=e125]:
+            - generic [ref=e126]: 01 · Evolução Mensal
+            - heading "Faturamento & Pedidos" [level=3] [ref=e127]:
+              - text: Faturamento
+              - emphasis [ref=e128]: "& Pedidos"
+          - paragraph [ref=e129]: Receita aprovada por mês
+          - paragraph [ref=e131]: Quantidade de pedidos aprovados
+        - article [ref=e133]:
+          - generic [ref=e135]:
+            - generic [ref=e136]: 02 · Mix de Pagamento
+            - heading "Próprio vs Financiado" [level=3] [ref=e137]:
+              - text: Próprio
+              - emphasis [ref=e138]: vs Financiado
+          - paragraph [ref=e139]: R$ aprovado por modalidade
+      - generic [ref=e141]:
+        - article [ref=e142]:
+          - generic [ref=e144]:
+            - generic [ref=e145]: 03 · Por Situação
+            - heading "Valor por Status" [level=3] [ref=e146]:
+              - text: Valor
+              - emphasis [ref=e147]: por Status
+          - paragraph [ref=e148]: R$ em cada status do pedido
+        - article [ref=e150]:
+          - generic [ref=e152]:
+            - generic [ref=e153]: 04 · Ranking Vendedores
+            - heading "Faturamento Aprovado" [level=3] [ref=e154]:
+              - text: Faturamento
+              - emphasis [ref=e155]: Aprovado
+          - paragraph [ref=e156]: Top 10 por receita aprovada
+      - generic [ref=e158]:
+        - article [ref=e159]:
+          - generic [ref=e161]:
+            - generic [ref=e162]: 05 · Top Cidades
+            - heading "Entrega por Localidade" [level=3] [ref=e163]:
+              - text: Entrega
+              - emphasis [ref=e164]: por Localidade
+          - paragraph [ref=e165]: Faturamento aprovado por cidade/UF
+        - article [ref=e167]:
+          - generic [ref=e169]:
+            - generic [ref=e170]: 06 · Itens Mais Vendidos
+            - heading "Grupo de Produto" [level=3] [ref=e171]:
+              - text: Grupo
+              - emphasis [ref=e172]: de Produto
+          - paragraph [ref=e173]: Valor vendido por grupo de produto

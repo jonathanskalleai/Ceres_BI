@@ -2,34 +2,38 @@
  * VOUX SVG Chart — pure geometry helpers (no React).
  */
 
-// ── Color tokens ──────────────────────────────────────────────────────────────
+// ── Color tokens (CSS-var based for light/dark theming) ──────────────────────
 export const VOUX_COLORS = {
-  accent:   "#d4b896",
-  accent2:  "#b8945a",
-  accent3:  "#6e542f",
-  ink:      "#ece5d4",
-  inkSoft:  "#b3ab9c",
-  inkMuted: "#8a8273",
-  inkFaint: "#6b6253",
-  grid:     "rgba(214,207,193,0.06)",
-  gridStrong: "rgba(214,207,193,0.10)",
-  track:    "rgba(214,207,193,0.04)",
-  surface:  "#18160f",
+  accent:     "var(--voux-accent)",
+  ink:        "var(--voux-text-primary)",
+  inkSoft:    "var(--voux-text-muted)",
+  inkMuted:   "var(--voux-text-muted)",
+  inkFaint:   "var(--voux-text-faint)",
+  grid:       "var(--voux-grid-line)",
+  gridStrong: "var(--voux-grid-line)",
+  track:      "var(--voux-grid-line)",
+  surface:    "var(--voux-surface)",
+  // Semantic status colors (unchanged)
   success:  "#7a9b6f",
   warning:  "#d4a05a",
   danger:   "#c97565",
   info:     "#8ea3b8",
 } as const;
 
+// Dark palette (existing — warm muted on dark bg)
 export const VOUX_PALETTE = [
-  VOUX_COLORS.accent,
-  VOUX_COLORS.info,
-  VOUX_COLORS.success,
-  VOUX_COLORS.warning,
-  VOUX_COLORS.danger,
-  VOUX_COLORS.accent3,
-  VOUX_COLORS.inkMuted,
+  "#c8b99a", "#7ca88e", "#c27c5a", "#8b9dc3", "#b8a9d4", "#6e542f", "#8a8273",
 ] as const;
+
+// Light palette (vibrant, high-contrast for white bg)
+export const VOUX_PALETTE_LIGHT = [
+  "#b8782a", "#2d8f5c", "#d4592e", "#2a6cb8", "#8b4fbf", "#c4883a", "#4a7a6e",
+] as const;
+
+/** Returns the correct chart palette based on active theme. */
+export function getVouxPalette(isDark: boolean): readonly string[] {
+  return isDark ? VOUX_PALETTE : VOUX_PALETTE_LIGHT;
+}
 
 // ── Tick generation ───────────────────────────────────────────────────────────
 /**

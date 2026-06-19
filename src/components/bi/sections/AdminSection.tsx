@@ -3,7 +3,7 @@ import { type DateRange } from "react-day-picker";
 import { useAdminData } from "@/hooks/bi/useAdminData";
 import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
-import { HorizontalBarChart, PieChartWithLabels } from "@/components/bi/charts";
+import { HorizontalBarChart, PieChartWithLabels, BrazilHeatmap } from "@/components/bi/charts";
 import { CHART_COLORS, POSITIVE_COLOR } from "@/lib/chartTheme";
 
 interface Props {
@@ -39,11 +39,8 @@ export default function AdminSection({ active, dateRange }: Props) {
         </ChartCard>
 
         <ChartCard title="Cobertura Geografica" description="Clientes por UF" loading={isLoading}>
-          <HorizontalBarChart
+          <BrazilHeatmap
             data={agg.porUF.map(item => ({ name: item.name, value: item.value }))}
-            keys={['value']}
-            title=""
-            colors={[CHART_COLORS[0]]}
           />
         </ChartCard>
 
@@ -51,15 +48,17 @@ export default function AdminSection({ active, dateRange }: Props) {
           <HorizontalBarChart
             data={agg.porConsultor.map(item => ({ name: item.name, value: item.value }))}
             keys={['value']}
+            seriesLabels={{ value: "Clientes" }}
             title=""
             colors={[CHART_COLORS[2]]}
           />
         </ChartCard>
 
-        <ChartCard title="Classificacao de Clientes" description="Distribuicao por tipo (A/B/C/D)" loading={isLoading}>
+        <ChartCard title="Classificação de Clientes" description="Conforme Campus Dealer (sistema origem) — maioria ainda sem classificação no ERP" loading={isLoading}>
           <HorizontalBarChart
-            data={agg.porTipoCliente.map(item => ({ name: item.name, value: item.value }))}
+            data={agg.porTipoCliente.filter(item => item.name !== "Sem classificação" && item.name !== "").map(item => ({ name: item.name, value: item.value }))}
             keys={['value']}
+            seriesLabels={{ value: "Clientes" }}
             title=""
             colors={[CHART_COLORS[4]]}
           />

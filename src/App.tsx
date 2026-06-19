@@ -33,6 +33,7 @@ const BiServicos = lazy(() => import("./pages/bi/BiServicos"));
 const BiOperacional = lazy(() => import("./pages/bi/BiOperacional"));
 const BiAdmin = lazy(() => import("./pages/bi/BiAdmin"));
 const BiAcoes = lazy(() => import("./pages/bi/BiAcoes"));
+const BiInteligencia = lazy(() => import("./pages/bi/BiInteligencia"));
 
 // Tools pages
 const ToolsExplorer = lazy(() => import("./pages/tools/ToolsExplorer"));
@@ -116,6 +117,7 @@ const App = () => (
                 <Route path="operacional" element={<LazySuspense><BiOperacional /></LazySuspense>} />
                 <Route path="admin" element={<LazySuspense><BiAdmin /></LazySuspense>} />
                 <Route path="acoes" element={<LazySuspense><BiAcoes /></LazySuspense>} />
+                <Route path="inteligencia" element={<LazySuspense><BiInteligencia /></LazySuspense>} />
               </Route>
 
               {/* Tools — same filter layout */}

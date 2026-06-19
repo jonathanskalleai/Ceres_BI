@@ -11,17 +11,19 @@ export interface PedidoRow {
   PDO_CidadeUFEntrega: string;
   PDO_Vendedor: string;
   PDO_DthPedido: string | null;
+  PDO_FinanciamentoBanco: string;
 }
 
 interface MirrorPedidoRow {
   ngo_numero: string;
-  pdo_situacao_pedido: string | null;
+  pdo_situacao: string | null;
   pdo_vlr_pedido: number | null;
   pdo_vlr_financiado: number | null;
   pdo_vlr_recurso_proprio: number | null;
   pdo_cidade_uf_entrega: string | null;
   pdo_vendedor: string | null;
   pdo_dth_pedido: string | null;
+  pdo_financiamento_banco: string | null;
 }
 
 const PEDIDOS_COLUMNS = [
@@ -38,13 +40,14 @@ const PEDIDOS_COLUMNS = [
 function mapMirrorRow(row: MirrorPedidoRow): PedidoRow {
   return {
     NGO_Numero: row.ngo_numero,
-    PDO_SituacaoPedido: row.pdo_situacao_pedido ?? "",
+    PDO_SituacaoPedido: row.pdo_situacao ?? "",
     PDO_VlrPedido: row.pdo_vlr_pedido,
     PDO_VlrFinanciado: row.pdo_vlr_financiado,
     PDO_VlrRecursoProprio: row.pdo_vlr_recurso_proprio,
     PDO_CidadeUFEntrega: row.pdo_cidade_uf_entrega ?? "",
     PDO_Vendedor: row.pdo_vendedor ?? "",
     PDO_DthPedido: row.pdo_dth_pedido,
+    PDO_FinanciamentoBanco: row.pdo_financiamento_banco?.trim() ?? "",
   };
 }
 

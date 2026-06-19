@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Regiões · Ceres BI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="assets/font-system.js"></script>
+  <link rel="stylesheet" href="assets/voux.css">
+  <link rel="stylesheet" href="assets/layout.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <style>
+    .region-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; }
+    .region-card { background:var(--voux-surface); border:1px solid var(--voux-border); border-radius:12px; padding:16px; }
+    .region-card__city { font-size:13px; font-weight:600; color:var(--voux-text); margin-bottom:10px; }
+    .region-card__row { display:flex; justify-content:space-between; align-items:center; padding:3px 0; font-size:11px; }
+    .region-card__label { color:var(--voux-text-muted); }
+    .region-card__val { font-family:"JetBrains Mono",monospace; font-weight:600; color:var(--voux-text-soft); }
+    .region-card__rec { margin-top:10px; padding:8px 10px; background:rgba(212,184,150,.07); border-radius:8px; border-left:2px solid var(--voux-champagne-400); font-size:10px; color:var(--voux-text-muted); line-height:1.4; }
+    .intensity-badge { display:inline-block; padding:2px 8px; border-radius:20px; font-size:9px; font-family:"JetBrains Mono",monospace; font-weight:600; letter-spacing:.05em; }
+    .intensity-alta    { background:rgba(34,197,94,.12); color:#22c55e; }
+    .intensity-media   { background:rgba(234,179,8,.12); color:#eab308; }
+    .intensity-baixa   { background:rgba(239,68,68,.12); color:#ef4444; }
+  </style>
+</head>
+<body data-page="regioes">
+  <div class="app">
+    <aside class="sidebar" data-sidebar></aside>
+    <main class="main">
+      <header class="topbar" data-topbar></header>
+      <div class="toolbar" data-toolbar></div>
+      <div class="content">
+
+        <section class="kpis">
+          <div class="kpi">
+            <div class="kpi__head"><span class="kpi__label">01 · Cidades</span></div>
+            <div class="kpi__value voux-num" id="kpi-cidades">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">municípios</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head"><span class="kpi__label">02 · Maior Região</span></div>
+            <div class="kpi__value voux-num" id="kpi-maior">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">mais ativa</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head"><span class="kpi__label">03 · Pipeline Total</span></div>
+            <div class="kpi__value voux-num" id="kpi-pipeline">—</div>
+            <div class="kpi__delta kpi__delta--up">em negociação</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head"><span class="kpi__label">04 · Visitas Totais</span></div>
+            <div class="kpi__value voux-num" id="kpi-visitas">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">presenciais</div>
+          </div>
+        </section>
+
+        <article class="voux-card">
+          <div class="voux-card__head">
+            <div>
+              <div class="voux-card__label">01 · TOP 20</div>
+              <h3 class="voux-card__title">Atividade <em>por Região</em></h3>
+            </div>
+          </div>
+          <div class="chart-canvas" id="chart-regioes" style="height:380px;"></div>
+        </article>
+
+        <article class="voux-card">
+          <div class="voux-card__head">
+            <div>
+              <div class="voux-card__label">02 · TODAS AS REGIÕES</div>
+              <h3 class="voux-card__title">Detalhes <em>por Cidade</em></h3>
+            </div>
+          </div>
+          <div id="region-grid" class="region-grid"></div>
+        </article>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="assets/supabase.js"></script>
+  <script src="assets/ceres-data.js"></script>
+  <script src="assets/charts.js"></script>
+  <script src="assets/layout.js"></script>
+  <script>
+    function getSugestao(r, maxAcoes) {
+      const pct = r.totalAcoes / maxAcoes;
+      if (pct >= 0.66) return "Região de alta atividade — manter cadência e expandir carteira.";
+      if (pct >= 0.33) return "Região com potencial — aumentar frequência de visitas.";
+      return "Região pouco explorada — prospecção ativa recomendada.";
+    }
+
+    async function init() {
+      await window.CERES_DATA_READY;
+      const D = window.CERES_DATA;
+      const regioes = D.crm.regioes;
+      const C = VOUX_CHART.COLORS;
+
+      VOUX_LAYOUT.renderTopbar({ section: "COMERCIAL CRM", title: "Regiões <em>CRM</em>" });
+      VOUX_LAYOUT.renderToolbar({ period: "Base atual" });
+
+      document.getElementById("kpi-cidades").textContent  = D.fmtNum(regioes.length);
+      document.getElementById("kpi-maior").textContent    = regioes[0]?.cidade || "—";
+      document.getElementById("kpi-pipeline").textContent = D.fmtBRLShort(D.crm.kpis.totalPipeline);
+      document.getElementById("kpi-visitas").textContent  = D.fmtNum(D.crm.kpis.totalVisitas);
+
+      // Bar chart top 20
+      const top20 = regioes.slice(0, 20).map(r => ({ label: r.cidade, value: r.totalAcoes }));
+      if (top20.length) {
+        VOUX_CHART.barH(
+          document.getElementById("chart-regioes"),
+          top20,
+          { color: C.accent, height: 370, rowH: 22, labelW: 150 }
+        );
+      }
+
+      // Region cards
+      const maxAcoes = regioes[0]?.totalAcoes || 1;
+      const gridEl = document.getElementById("region-grid");
+      regioes.slice(0, 50).forEach((r, i) => {
+        const pct = r.totalAcoes / maxAcoes;
+        const intensity = pct >= 0.66 ? "alta" : pct >= 0.33 ? "media" : "baixa";
+        const intensityLabel = pct >= 0.66 ? "Alta" : pct >= 0.33 ? "Média" : "Baixa";
+        const div = document.createElement("div");
+        div.className = "region-card";
+        div.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+            <div class="region-card__city">${i + 1}. ${r.cidade}</div>
+            <span class="intensity-badge intensity-${intensity}">${intensityLabel}</span>
+          </div>
+          <div class="region-card__row"><span class="region-card__label">Ações</span><span class="region-card__val">${D.fmtNum(r.totalAcoes)}</span></div>
+          <div class="region-card__row"><span class="region-card__label">Clientes</span><span class="region-card__val">${D.fmtNum(r.clientes)}</span></div>
+          <div class="region-card__row"><span class="region-card__label">Visitas</span><span class="region-card__val">${D.fmtNum(r.visitas)}</span></div>
+          <div class="region-card__rec">${getSugestao(r, maxAcoes)}</div>`;
+        gridEl.appendChild(div);
+      });
+    }
+    init();
+  </script>
+</body>
+</html>

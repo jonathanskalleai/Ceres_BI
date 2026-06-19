@@ -2,7 +2,8 @@ import { useRef, useState } from "react";
 import { ChartFrame } from "./ChartFrame";
 import { SvgLine } from "./primitives/SvgLine";
 import { useContainerWidth } from "./primitives/useContainerWidth";
-import { VOUX_PALETTE, fmtCompact } from "./primitives/svgGeometry";
+import { VOUX_PALETTE, getVouxPalette, fmtCompact } from "./primitives/svgGeometry";
+import { useTheme } from "@/hooks/useTheme";
 
 export interface LineChartData {
   x: string | number;
@@ -47,6 +48,8 @@ export default function LineChart({
 }: LineChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const width = useContainerWidth(containerRef as React.RefObject<HTMLElement>);
+  const { isDark } = useTheme();
+  const palette = getVouxPalette(isDark);
 
   const [tooltip, setTooltip] = useState<TooltipState>({ visible: false, x: 0, y: 0, content: "" });
   const [hoveredIdx, setHoveredIdx] = useState<number | undefined>(undefined);
@@ -67,7 +70,7 @@ export default function LineChart({
       const dataMap = new Map(s.data.map((d) => [String(d.x), d.y]));
       return {
         name: s.name,
-        color: s.color ?? VOUX_PALETTE[i % VOUX_PALETTE.length],
+        color: s.color ?? palette[i % palette.length],
         values: labels.map((lbl) => dataMap.get(lbl) ?? null),
       };
     });
@@ -87,8 +90,50 @@ export default function LineChart({
     ? series.every((s) => s.data.length === 0)
     : data.length === 0;
 
+  // Always show legend to give context (single or multi-series)
+  const showLegend = svgSeries.length >= 1 && svgSeries[0].name !== "Valor";
+
   return (
     <ChartFrame loading={loading} isEmpty={isEmpty} height={height}>
+      {showLegend && (
+        <div
+          style={{
+            display: "flex",
+            gap: 16,
+            marginBottom: 8,
+            paddingLeft: 4,
+            flexWrap: "wrap",
+          }}
+        >
+          {svgSeries.map((s) => (
+            <div
+              key={s.name}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                fontFamily: "var(--voux-font-mono, monospace)",
+                fontSize: 10,
+                color: "var(--voux-text-muted)",
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+              }}
+            >
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  background: s.color ?? "#c8b99a",
+                  flexShrink: 0,
+                  display: "inline-block",
+                }}
+              />
+              {s.name}
+            </div>
+          ))}
+        </div>
+      )}
       <div ref={containerRef} style={{ width: "100%" }}>
         {width > 0 && (
           <SvgLine
@@ -106,16 +151,16 @@ export default function LineChart({
                 .map((s, si) => {
                   const v = s.values[idx];
                   if (v == null) return "";
-                  const c = s.color ?? VOUX_PALETTE[si % VOUX_PALETTE.length];
+                  const c = s.color ?? palette[si % palette.length];
                   const formatted = tooltipFormatter ? tooltipFormatter(v) : fmtCompact(v);
-                  return `<div style="display:flex;align-items:center;gap:6px;margin-top:3px"><span style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0;display:inline-block"></span><span style="color:#b3ab9c;font-size:11px">${s.name}: <strong style="color:#ece5d4">${formatted}</strong></span></div>`;
+                  return `<div style="display:flex;align-items:center;gap:6px;margin-top:3px"><span style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0;display:inline-block"></span><span style="color:var(--voux-text-muted);font-size:11px">${s.name}: <strong style="color:var(--voux-text-primary)">${formatted}</strong></span></div>`;
                 })
                 .join("");
               setTooltip({
                 visible: true,
                 x,
                 y,
-                content: `<div style="font-size:10px;color:#6b6253;letter-spacing:0.08em;margin-bottom:4px">${label}</div>${rows}`,
+                content: `<div style="font-size:10px;color:var(--voux-text-faint);letter-spacing:0.08em;margin-bottom:4px">${label}</div>${rows}`,
               });
             }}
             onLeave={() => {
@@ -131,15 +176,15 @@ export default function LineChart({
             position: "fixed",
             left: tooltip.x + 14,
             top: tooltip.y - 10,
-            background: "rgba(17,16,13,0.96)",
-            border: "1px solid rgba(212,184,150,0.15)",
+            background: "var(--voux-tooltip-bg)",
+            border: "1px solid var(--voux-tooltip-border)",
             backdropFilter: "blur(10px)",
             WebkitBackdropFilter: "blur(10px)",
             padding: "8px 12px",
             borderRadius: 10,
             fontFamily: "var(--voux-font-mono)",
             fontSize: 11,
-            color: "#ece5d4",
+            color: "var(--voux-tooltip-text)",
             pointerEvents: "none",
             zIndex: 9999,
             whiteSpace: "nowrap",

@@ -1,4 +1,4 @@
-import type { ElementType } from "react";
+import { type ElementType, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -7,19 +7,19 @@ interface KPICardProps {
   value: string | number;
   icon?: ElementType;
   hint?: string;
+  /** Formula/explanation shown on hover */
+  formula?: string;
   loading?: boolean;
   accentColor?: string;
-  /** Percentage variation vs previous period */
-  delta?: number;
+  /** Formatted previous period value to display */
+  previousValue?: string | number;
   /** Trend direction */
   trend?: "up" | "down" | "neutral";
   /** When true, a downward trend is positive (e.g. fewer losses) */
   invertTrend?: boolean;
-  /** Span 2 columns on lg screens (hero card) */
-  hero?: boolean;
 }
 
-function DeltaBadge({ delta, trend, invertTrend }: { delta: number; trend: "up" | "down" | "neutral"; invertTrend?: boolean }) {
+function DeltaBadge({ previousValue, trend, invertTrend }: { previousValue: string | number; trend: "up" | "down" | "neutral"; invertTrend?: boolean }) {
   const arrow = trend === "up" ? "↑" : trend === "down" ? "↓" : "→";
   const isPositive = invertTrend ? trend === "down" : trend === "up";
   const isNegative = invertTrend ? trend === "up" : trend === "down";
@@ -30,30 +30,29 @@ function DeltaBadge({ delta, trend, invertTrend }: { delta: number; trend: "up" 
       ? "var(--voux-danger, #f87171)"
       : "var(--voux-text-muted)";
 
-  const label = `${trend === "up" ? "Aumento" : trend === "down" ? "Reducao" : "Sem variacao"} de ${Math.abs(delta).toFixed(1)} por cento em relacao ao periodo anterior`;
-
   return (
     <span
-      className="inline-flex items-center gap-0.5 text-[11px] font-medium mt-1.5"
+      className="inline-flex items-center gap-1 text-[11px] font-medium mt-1.5"
       style={{ fontFamily: "var(--voux-font-mono)", color }}
     >
       <span aria-hidden="true">{arrow}</span>
-      <span>{Math.abs(delta).toFixed(1)}%</span>
-      <span className="sr-only">{label}</span>
+      <span>{previousValue} per. anterior</span>
+      <span className="sr-only">Periodo anterior: {previousValue}</span>
     </span>
   );
 }
 
 export function KPICard({
-  title, value, icon: Icon, hint, loading = false, accentColor,
-  delta, trend, invertTrend, hero,
+  title, value, icon: Icon, hint, formula, loading = false, accentColor,
+  previousValue, trend, invertTrend,
 }: KPICardProps) {
+  const [showTooltip, setShowTooltip] = useState(false);
+
   return (
     <div
       className={cn(
         "relative overflow-hidden rounded-[20px] p-[22px_24px]",
         "border",
-        hero && "lg:col-span-2",
       )}
       style={{
         background: "linear-gradient(to bottom, var(--voux-card-from), var(--voux-card-to))",
@@ -61,7 +60,25 @@ export function KPICard({
         boxShadow: "var(--voux-card-shadow)",
         ...(accentColor ? { borderLeftColor: accentColor, borderLeftWidth: 3 } : {}),
       }}
+      onMouseEnter={() => formula && setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
     >
+      {/* Formula tooltip */}
+      {showTooltip && formula && (
+        <div
+          className="absolute top-2 left-2 right-2 z-10 rounded-lg px-3 py-2 text-[11px] leading-tight"
+          style={{
+            background: "var(--voux-bg, #0f0f0f)",
+            border: "1px solid var(--voux-card-border)",
+            color: "var(--voux-text-soft)",
+            fontFamily: "var(--voux-font-mono)",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+          }}
+        >
+          {formula}
+        </div>
+      )}
+
       {/* Eyebrow */}
       <div className="flex items-center justify-between mb-4">
         <span
@@ -87,8 +104,8 @@ export function KPICard({
           >
             {value}
           </div>
-          {delta !== undefined && trend && (
-            <DeltaBadge delta={delta} trend={trend} invertTrend={invertTrend} />
+          {previousValue !== undefined && trend && (
+            <DeltaBadge previousValue={previousValue} trend={trend} invertTrend={invertTrend} />
           )}
           {hint && (
             <p className="text-[11px] mt-2" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-muted)" }}>

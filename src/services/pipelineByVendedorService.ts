@@ -35,12 +35,18 @@ function classifyConclusao(c: string | null): "ganho" | "perdido" | "andamento" 
   return "andamento";
 }
 
-export async function fetchPipelineByVendedor(): Promise<Map<string, VendedorPipeline>> {
+export async function fetchPipelineByVendedor(funis?: string[]): Promise<Map<string, VendedorPipeline>> {
+  let negociosQuery = supabase
+    .schema("mirror")
+    .from("crm_negocios")
+    .select("ngo_conclusao,ngo_vlr_total,ngo_vendedores,ngo_funil");
+
+  if (funis && funis.length > 0) {
+    negociosQuery = negociosQuery.in("ngo_funil", funis);
+  }
+
   const [negociosRes, usuariosRes] = await Promise.all([
-    supabase
-      .schema("mirror")
-      .from("crm_negocios")
-      .select("ngo_conclusao,ngo_vlr_total,ngo_vendedores"),
+    negociosQuery,
     supabase
       .schema("mirror")
       .from("usuarios")

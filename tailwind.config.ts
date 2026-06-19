@@ -13,7 +13,24 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        display: ["Instrument Serif", "Georgia", "serif"],
+        sans: ["Inter", "system-ui", "sans-serif"],
+        mono: ["JetBrains Mono", "IBM Plex Mono", "monospace"],
+      },
       colors: {
+        /* VOUX ink palette */
+        ink: {
+          1000: "#050403", 950: "#0a0907", 900: "#11100d", 850: "#18160f",
+          800: "#1f1c14", 700: "#2a2620", 600: "#3a342a", 500: "#524a3e",
+          400: "#6b6253", 300: "#8a8273", 200: "#b3ab9c", 100: "#d6cfc1",
+          50: "#ece5d4", 0: "#f7f1e3",
+        },
+        champagne: {
+          950: "#1d160c", 900: "#2e2316", 800: "#4a3920", 700: "#6e542f",
+          600: "#927142", 500: "#b8945a", 400: "#d4b896", 300: "#e0c9aa",
+          200: "#ead7be",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

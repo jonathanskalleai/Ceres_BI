@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contratos Cancelados · Voux BI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="assets/font-system.js"></script>
+  <link rel="stylesheet" href="assets/voux.css">
+  <link rel="stylesheet" href="assets/layout.css">
+</head>
+<body data-page="contratos-cancelados">
+  <div class="app">
+    <aside class="sidebar" data-sidebar></aside>
+    <main class="main">
+      <header class="topbar" data-topbar></header>
+      <div class="toolbar" data-toolbar></div>
+      <div class="content">
+
+        <section class="kpis">
+          <div class="kpi">
+            <div class="kpi__head"><span class="kpi__label">01 · LTV Médio</span></div>
+            <div class="kpi__value voux-num">18<span style="color:var(--voux-text-muted);">.84</span></div>
+            <div class="kpi__delta kpi__delta--neutral">meses até cancelamento</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head"><span class="kpi__label">02 · Valor Perdido</span></div>
+            <div class="kpi__value voux-num">R$ 40<span style="color:var(--voux-text-muted);">,4k</span></div>
+            <div class="kpi__delta kpi__delta--down">▼ MRR cancelado</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head"><span class="kpi__label">03 · Total Cancelados</span></div>
+            <div class="kpi__value voux-num" style="color:var(--voux-danger);">478</div>
+            <div class="kpi__delta kpi__delta--down">▼ 11 no mês atual</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head"><span class="kpi__label">04 · Reativados</span></div>
+            <div class="kpi__value voux-num" style="color:var(--voux-success);">23</div>
+            <div class="kpi__delta kpi__delta--up">▲ 4.8% recuperação</div>
+          </div>
+        </section>
+
+        <div class="grid-12">
+
+          <!-- Filtros -->
+          <article class="voux-card col-3" style="padding:24px;">
+            <div class="filters-panel">
+              <div class="filters-panel__head">
+                <div class="filters-panel__title">Filtros</div>
+                <button class="voux-btn voux-btn--ghost voux-btn--sm">Limpar</button>
+              </div>
+              <div><span class="voux-label">Data Cancelamento</span>
+                <div style="display:flex; gap:6px;">
+                  <input class="voux-input" value="01/01/2021" />
+                  <input class="voux-input" value="03/06/2022" />
+                </div>
+              </div>
+              <div><span class="voux-label">Data Ativação</span>
+                <div style="display:flex; gap:6px;">
+                  <input class="voux-input" value="25/08/2018" />
+                  <input class="voux-input" value="29/04/2022" />
+                </div>
+              </div>
+              <div><span class="voux-label">Operador</span><select class="voux-select"><option>Todos</option></select></div>
+              <div><span class="voux-label">Bairro</span><select class="voux-select"><option>Todos</option></select></div>
+              <div><span class="voux-label">Cidade</span><select class="voux-select"><option>Todas</option></select></div>
+              <div><span class="voux-label">Motivo</span><select class="voux-select"><option>Todos</option></select></div>
+              <div><span class="voux-label">Tipo Pessoa</span><select class="voux-select"><option>Todos</option></select></div>
+              <div><span class="voux-label">Ponto Acesso</span><select class="voux-select"><option>Todos</option></select></div>
+              <div><span class="voux-label">Plano</span><select class="voux-select"><option>Todos</option></select></div>
+            </div>
+          </article>
+
+          <div class="col-9" style="display:flex; flex-direction:column; gap:16px;">
+
+            <!-- Motivos -->
+            <article class="voux-card">
+              <div class="voux-card__head">
+                <div>
+                  <div class="voux-card__label">05 · Por que cancelam</div>
+                  <h3 class="voux-card__title">Motivos de <em>cancelamento</em></h3>
+                </div>
+                <span class="tag" style="color:var(--voux-danger);"><span class="voux-dot"></span>9 motivos</span>
+              </div>
+              <div id="chart-motivos"></div>
+            </article>
+
+            <!-- Cancelamentos no ano -->
+            <article class="voux-card">
+              <div class="voux-card__head">
+                <div>
+                  <div class="voux-card__label">06 · Tendência</div>
+                  <h3 class="voux-card__title">Cancelamentos <em>no ano</em></h3>
+                </div>
+                <span class="tag">8 meses · 477 cancelamentos</span>
+              </div>
+              <div class="chart-canvas chart-wrap-md" id="chart-mes"></div>
+            </article>
+
+            <!-- LTV bloco -->
+            <article class="voux-card">
+              <div class="voux-card__head">
+                <div>
+                  <div class="voux-card__label">07 · LTV · Lifetime Value</div>
+                  <h3 class="voux-card__title">Tempo de <em>vida</em> dos cancelados</h3>
+                </div>
+              </div>
+              <div class="statrow" style="border-radius:12px; overflow:hidden;">
+                <div class="statrow__item">
+                  <div class="statrow__label">LTV Médio</div>
+                  <div class="statrow__value voux-num">84.78</div>
+                  <div class="statrow__sub">tickets médios</div>
+                </div>
+                <div class="statrow__item">
+                  <div class="statrow__label">Média Período</div>
+                  <div class="statrow__value voux-num">12 m</div>
+                  <div class="statrow__sub">meses ativos</div>
+                </div>
+                <div class="statrow__item">
+                  <div class="statrow__label">Valor Período</div>
+                  <div class="statrow__value voux-num">R$ 1.017</div>
+                  <div class="statrow__sub">acumulado</div>
+                </div>
+                <div class="statrow__item">
+                  <div class="statrow__label">Total Receita Perdida</div>
+                  <div class="statrow__value voux-num" style="color:var(--voux-champagne-400);">R$ 683k</div>
+                  <div class="statrow__sub">296 contratos</div>
+                </div>
+              </div>
+              <div class="statrow" style="border-radius:12px; overflow:hidden; border-top:0;">
+                <div class="statrow__item">
+                  <div class="statrow__label">LTV &lt; 12m</div>
+                  <div class="statrow__value voux-num" style="color:var(--voux-danger);">5.20</div>
+                  <div class="statrow__sub">tickets</div>
+                </div>
+                <div class="statrow__item">
+                  <div class="statrow__label">Ticket Médio</div>
+                  <div class="statrow__value voux-num">R$ 84.77</div>
+                  <div class="statrow__sub">mensal</div>
+                </div>
+                <div class="statrow__item">
+                  <div class="statrow__label">Valor Cliente</div>
+                  <div class="statrow__value voux-num">R$ 438</div>
+                  <div class="statrow__sub">cliente médio</div>
+                </div>
+                <div class="statrow__item">
+                  <div class="statrow__label">Receita Cancel. &lt;12m</div>
+                  <div class="statrow__value voux-num" style="color:var(--voux-danger);">R$ 79k</div>
+                  <div class="statrow__sub">182 contratos</div>
+                </div>
+              </div>
+            </article>
+
+            <div class="grid-2">
+              <!-- Operador -->
+              <article class="voux-card">
+                <div class="voux-card__head">
+                  <div>
+                    <div class="voux-card__label">08 · Operador</div>
+                    <h3 class="voux-card__title">Quem registrou</h3>
+                  </div>
+                </div>
+                <div id="chart-op"></div>
+              </article>
+              <!-- Cidade donut -->
+              <article class="voux-card">
+                <div class="voux-card__head">
+                  <div>
+                    <div class="voux-card__label">09 · Cidade</div>
+                    <h3 class="voux-card__title">Por cidade</h3>
+                  </div>
+                </div>
+                <div style="display:flex; gap:20px; align-items:center;">
+                  <div class="chart-canvas" id="chart-cidade" style="flex:1; height:220px;"></div>
+                  <div style="flex:1;" id="cidade-list"></div>
+                </div>
+              </article>
+            </div>
+
+            <div class="grid-2">
+              <article class="voux-card">
+                <div class="voux-card__head">
+                  <div>
+                    <div class="voux-card__label">10 · Plano</div>
+                    <h3 class="voux-card__title">Cancelamento por plano</h3>
+                  </div>
+                </div>
+                <div id="chart-plano"></div>
+              </article>
+              <article class="voux-card">
+                <div class="voux-card__head">
+                  <div>
+                    <div class="voux-card__label">11 · OLT</div>
+                    <h3 class="voux-card__title">Por ponto de acesso</h3>
+                  </div>
+                </div>
+                <div id="chart-olt"></div>
+              </article>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="assets/data.js"></script>
+  <script src="assets/charts.js"></script>
+  <script src="assets/layout.js"></script>
+  <script>
+    const D = VOUX_DATA;
+    const C = VOUX_CHART.COLORS;
+    VOUX_LAYOUT.renderTopbar({ section: "Comercial · Contratos Cancelados", title: `Contratos <em>Cancelados</em>` });
+    VOUX_LAYOUT.renderToolbar({
+      period: "01 Jan – 03 Jun · 2022",
+      segments: [{label:"Mês",active:true},{label:"Tri."},{label:"Ano"}],
+      filters: [{ label: "Status", value: "Todos" }],
+    });
+
+    VOUX_CHART.barH(document.getElementById("chart-motivos"),
+      D.cancelados.motivos.map(m => ({ label: m.motivo, value: m.qtd })),
+      { color: C.danger, labelW: 200 });
+
+    VOUX_CHART.line(document.getElementById("chart-mes"),
+      D.cancelados.porMes.map(m => m.mes),
+      [{ name:"Cancelamentos", color: C.danger, values: D.cancelados.porMes.map(m => m.qtd) }],
+      { height: 240, points: true, dataLabels: true, yFmt: v => v });
+
+    VOUX_CHART.barH(document.getElementById("chart-op"),
+      D.cancelados.porOperador.map(o => ({ label: o.op, value: o.qtd })),
+      { color: C.danger, labelW: 110 });
+
+    const ccores = [C.danger, C.accent, C.warning, C.info];
+    VOUX_CHART.donut(document.getElementById("chart-cidade"),
+      D.cancelados.porCidade.map((c,i) => ({ label: c.cidade, value: c.qtd, color: ccores[i] })),
+      { centerLabel:"TOTAL", centerValue:"478", thickness: 24, height: 220 });
+    document.getElementById("cidade-list").innerHTML = D.cancelados.porCidade.map((c,i) => `
+      <div style="padding:6px 0; border-bottom:1px solid var(--voux-border); font-size:12px; display:flex; justify-content:space-between;">
+        <span style="display:flex; align-items:center; gap:8px;">
+          <span class="voux-dot" style="color:${ccores[i]};"></span>
+          <span style="color:var(--voux-text-soft);">${c.cidade}</span>
+        </span>
+        <span class="voux-mono" style="color:var(--voux-text);">${c.qtd} · ${c.pct.toFixed(1)}%</span>
+      </div>
+    `).join("");
+
+    VOUX_CHART.barH(document.getElementById("chart-plano"),
+      D.cancelados.porPlano.map(p => ({ label: p.plano, value: p.qtd })),
+      { color: C.info, labelW: 140 });
+
+    VOUX_CHART.barH(document.getElementById("chart-olt"),
+      D.cancelados.porOLT.map(o => ({ label: o.olt, value: o.qtd })),
+      { color: C.warning, labelW: 140 });
+  </script>
+</body>
+</html>

@@ -11,15 +11,16 @@ import { useComercialData } from '@/hooks/useComercialData';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { CrmTopbarPortal } from '@/components/dashboard/CrmTopbarPortal';
 import type { DadosComerciais, Filters } from '@/types/comercial';
+import { type CategoriaFilter, CATEGORIA_OPTIONS } from '@/lib/categoriaFunil';
 
 const emptyFilters: Filters = {
-  vendedor: '',
   cidade: '',
-  periodo: '',
-  ano: '',
-  mes: '',
   tipoAcao: '',
+  categoria: '',
+  funil: '',
+  dateRange: undefined,
 };
 
 interface ComercialDataContextValue {
@@ -34,7 +35,8 @@ interface ComercialDataContextValue {
   handleSelectConsultor: (nome: string) => void;
   clearSelectedConsultor: () => void;
   cidades: string[];
-  anos: string[];
+  tiposAcao: string[];
+  categorias: { value: CategoriaFilter; label: string }[];
 }
 
 const ComercialDataContext = createContext<ComercialDataContextValue | undefined>(undefined);
@@ -65,10 +67,10 @@ function ContentSkeleton() {
 }
 
 export function ComercialDataProvider({ children }: { children?: ReactNode }) {
-  const { data, allData, error, lastUpdated } = useComercialData();
+  const [filters, setFilters] = useState<Filters>(emptyFilters);
+  const { data, allData, error, lastUpdated } = useComercialData(filters.categoria || undefined, filters.funil || undefined);
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [filters, setFilters] = useState<Filters>(emptyFilters);
   const [selectedVendedor, setSelectedVendedor] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -76,7 +78,7 @@ export function ComercialDataProvider({ children }: { children?: ReactNode }) {
     setIsRefreshing(true);
     toast({ title: 'Atualizando dados...', description: 'Buscando dados mais recentes do SQL Server.' });
     await queryClient.invalidateQueries({ queryKey: ['registros-comerciais'] });
-    await queryClient.invalidateQueries({ queryKey: ['negocios-mensais'] });
+    await queryClient.invalidateQueries({ queryKey: ['pipeline-by-vendedor'] });
     setIsRefreshing(false);
     toast({ title: 'Dados atualizados', description: 'Todos os indicadores foram recalculados.' });
   }, [queryClient, toast]);
@@ -94,19 +96,12 @@ export function ComercialDataProvider({ children }: { children?: ReactNode }) {
     return Array.from(new Set(data.registrosRecentes.map((r) => r.cidade).filter(Boolean))).sort();
   }, [data]);
 
-  const anos = useMemo(() => {
+  const tiposAcao = useMemo(() => {
     if (!data) return [];
-    const set = new Set<string>();
-    for (const r of data.registrosRecentes) {
-      const y = r.dtConclusao?.split('-')[0];
-      if (y && y.length === 4) set.add(y);
-    }
-    for (const e of data.evolucaoGlobal) {
-      const y = e.YearMonth?.split('-')[0];
-      if (y) set.add(y);
-    }
-    return Array.from(set).sort();
+    return Object.keys(data.tiposAcao).sort();
   }, [data]);
+
+  const categorias = CATEGORIA_OPTIONS;
 
   if (error) {
     return (
@@ -137,9 +132,11 @@ export function ComercialDataProvider({ children }: { children?: ReactNode }) {
         handleSelectConsultor,
         clearSelectedConsultor,
         cidades,
-        anos,
+        tiposAcao,
+        categorias,
       }}
     >
+      <CrmTopbarPortal />
       {children ?? <Outlet />}
     </ComercialDataContext.Provider>
   );

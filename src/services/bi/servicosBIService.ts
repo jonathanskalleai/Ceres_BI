@@ -8,6 +8,8 @@ export interface OrdemServicoRow {
   SIT_dscSituacaoOS: string | null;
   OS_dthAbertura: string | null;
   OS_dthEncerramento: string | null;
+  EMP_CodFilial: string;
+  TOS_CodTipoOS: string;
 }
 
 export interface AtendimentoOSRow {
@@ -26,6 +28,8 @@ interface MirrorOSRow {
   sit_dsc_situacao_os: string | null;
   os_dth_abertura: string | null;
   os_dth_encerramento: string | null;
+  emp_cod_filial: string | null;
+  tos_cod_tipo_os: string | null;
 }
 
 const OS_COLUMNS = [
@@ -42,10 +46,12 @@ const OCR_COLUMNS = ["OSE_dscMotivoPausa", "OSE_dscSituacaoOcorrencia"];
 function mapMirrorOS(row: MirrorOSRow): OrdemServicoRow {
   return {
     OS_nrOS: row.os_nr_os,
-    OS_fStatus: row.os_f_status,
-    SIT_dscSituacaoOS: row.sit_dsc_situacao_os,
+    OS_fStatus: row.os_f_status?.trim() ?? null,
+    SIT_dscSituacaoOS: row.sit_dsc_situacao_os?.trim() ?? null,
     OS_dthAbertura: row.os_dth_abertura,
     OS_dthEncerramento: row.os_dth_encerramento,
+    EMP_CodFilial: row.emp_cod_filial?.trim() ?? "",
+    TOS_CodTipoOS: row.tos_cod_tipo_os?.trim() ?? "",
   };
 }
 

@@ -44,6 +44,8 @@ interface ViewConfig {
   strategy: "full" | "incremental";
   watermarkCol?: string;
   conflictKey?: string;
+  /** Horas de overlap para sync incremental — recaptura registros recentes para segurança. Default: 0 */
+  overlapHours?: number;
 }
 
 interface SyncResult {
@@ -57,6 +59,9 @@ interface SyncResult {
 // =============================================================================
 // View Configuration Map
 // =============================================================================
+
+/** Convert empty strings to null — SQL Server returns "" for empty date fields, Postgres rejects them. */
+const nullIfEmpty = (v: unknown): unknown => (v === "" || v === undefined ? null : v);
 
 const VIEW_CONFIG: Record<string, ViewConfig> = {
   "VW_Ceres_CRM_Negocios": {
@@ -101,88 +106,91 @@ const VIEW_CONFIG: Record<string, ViewConfig> = {
       ngo_forma_entrada: r.NGO_FormaEntrada,
       ngo_vlr_total_negociado: r.NGO_VlrTotalNegociado,
       prd_id_negocio_x_produto: r.PRD_IdNegocioXProduto,
-      prd_dth_registro_produto: r.PRD_dthRegistroProduto,
-      prd_produto_codigo_integracao: r.PRD_ProdutoCodigoIntegracao,
-      prd_id_marca_produto: r.PRD_IdMarcaProduto,
-      prd_marca_produto_cod_integracao: r.PRD_MarcaProdutoCodIntegracao,
-      prd_marca_produto: r.PRD_MarcaProduto,
-      prd_id_produto: r.PRD_IdProduto,
-      prd_dsc_produto: r.PRD_DscProduto,
-      prd_codigo_produto: r.PRD_CodigoProduto,
-      prd_id_grupo_produto: r.PRD_IdGrupoProduto,
-      prd_grupo_produto_cod_integracao: r.PRD_GrupoProdutoCodIntegracao,
-      prd_grupo_produto: r.PRD_GrupoProduto,
-      prd_id_modelo_produto: r.PRD_IdModeloProduto,
-      prd_modelo_produto_cod_integracao: r.PRD_ModeloProdutoCodIntegracao,
-      prd_modelo_produto: r.PRD_ModeloProduto,
-      prd_condicao_produto: r.PRD_CondicaoProduto,
+      prd_dth_registro_produto: nullIfEmpty(r.PRD_dthRegistroProduto),
+      prd_produto_codigo_integracao: nullIfEmpty(r.PRD_ProdutoCodigoIntegracao),
+      prd_id_marca_produto: nullIfEmpty(r.PRD_IdMarcaProduto),
+      prd_marca_produto_cod_integracao: nullIfEmpty(r.PRD_MarcaProdutoCodIntegracao),
+      prd_marca_produto: nullIfEmpty(r.PRD_MarcaProduto),
+      prd_id_produto: nullIfEmpty(r.PRD_IdProduto),
+      prd_dsc_produto: nullIfEmpty(r.PRD_DscProduto),
+      prd_codigo_produto: nullIfEmpty(r.PRD_CodigoProduto),
+      prd_id_grupo_produto: nullIfEmpty(r.PRD_IdGrupoProduto),
+      prd_grupo_produto_cod_integracao: nullIfEmpty(r.PRD_GrupoProdutoCodIntegracao),
+      prd_grupo_produto: nullIfEmpty(r.PRD_GrupoProduto),
+      prd_id_modelo_produto: nullIfEmpty(r.PRD_IdModeloProduto),
+      prd_modelo_produto_cod_integracao: nullIfEmpty(r.PRD_ModeloProdutoCodIntegracao),
+      prd_modelo_produto: nullIfEmpty(r.PRD_ModeloProduto),
+      prd_condicao_produto: nullIfEmpty(r.PRD_CondicaoProduto),
       prd_qtde: r.PRD_Qtde,
       prd_vlr_unitario: r.PRD_VlrUnitario,
       ngo_probabilidade: r.NGO_Probabilidade,
-      ngo_obs_negocio: r.NGO_ObsNegocio,
-      ngo_id_funil: r.NGO_IdFunil,
-      ngo_funil_cod_integracao: r.NGO_FunilCodIntegracao,
-      ngo_funil: r.NGO_Funil,
-      ngo_id_etapa: r.NGO_IdEtapa,
-      ngo_etapa_cod_integracao: r.NGO_EtapaCodIntegracao,
-      ngo_etapa: r.NGO_Etapa,
-      ngo_evento: r.NGO_Evento,
-      ngo_conclusao: r.NGO_Conclusao,
-      ngo_motivo_ganho_cod_integracao: r.NGO_MotivoGanhoCodIntegracao,
-      ngo_motivo_ganho: r.NGO_MotivoGanho,
-      ngo_obs_motivo_ganho: r.NGO_ObsMotivoGanho,
-      ngo_motivo_perda_cod_integracao: r.NGO_MotivoPerdaCodIntegracao,
-      ngo_prioridade: r.NGO_Prioridade,
-      ngo_data_previsao: r.NGO_DataPrevisao,
-      ngo_campanha: r.NGO_Campanha,
-      ngo_motivo_perda: r.NGO_MotivoPerda,
-      ngo_obs_motivo_perda: r.NGO_ObsMotivoPerda,
-      mpr_dsc_motivo_perda: r.MPR_DscMotivoPerda,
-      mpr_dsc_motivo_perda_detalhe: r.MPR_DscMotivoPerdaDetalhe,
-      mpr_produto_perda_marca: r.MPR_ProdutoPerdaMarca,
-      mpr_produto_perda_grupo: r.MPR_ProdutoPerdaGrupo,
-      mpr_produto_perda_modelo: r.MPR_ProdutoPerdaModelo,
-      mpr_produto_vlr_concorrencia: r.MPR_ProdutoVlrConcorrencia,
-      mpr_motivo_observacao: r.MPR_MotivoObservacao,
-      mpp_dsc_motivo_perda: r.MPP_DscMotivoPerda,
-      mpp_dsc_motivo_perda_detalhe: r.MPP_DscMotivoPerdaDetalhe,
-      mpp_produto_perda_marca: r.MPP_ProdutoPerdaMarca,
-      mpp_produto_perda_grupo: r.MPP_ProdutoPerdaGrupo,
-      mpp_produto_perda_modelo: r.MPP_ProdutoPerdaModelo,
-      mpp_produto_vlr_concorrencia: r.MPP_ProdutoVlrConcorrencia,
-      mpp_motivo_observacao: r.MPP_MotivoObservacao,
+      ngo_obs_negocio: nullIfEmpty(r.NGO_ObsNegocio),
+      ngo_id_funil: nullIfEmpty(r.NGO_IdFunil),
+      ngo_funil_cod_integracao: nullIfEmpty(r.NGO_FunilCodIntegracao),
+      ngo_funil: nullIfEmpty(r.NGO_Funil),
+      ngo_id_etapa: nullIfEmpty(r.NGO_IdEtapa),
+      ngo_etapa_cod_integracao: nullIfEmpty(r.NGO_EtapaCodIntegracao),
+      ngo_etapa: nullIfEmpty(r.NGO_Etapa),
+      ngo_evento: nullIfEmpty(r.NGO_Evento),
+      ngo_conclusao: nullIfEmpty(r.NGO_Conclusao),
+      ngo_motivo_ganho_cod_integracao: nullIfEmpty(r.NGO_MotivoGanhoCodIntegracao),
+      ngo_motivo_ganho: nullIfEmpty(r.NGO_MotivoGanho),
+      ngo_obs_motivo_ganho: nullIfEmpty(r.NGO_ObsMotivoGanho),
+      ngo_motivo_perda_cod_integracao: nullIfEmpty(r.NGO_MotivoPerdaCodIntegracao),
+      ngo_prioridade: nullIfEmpty(r.NGO_Prioridade),
+      ngo_data_previsao: nullIfEmpty(r.NGO_DataPrevisao),
+      ngo_campanha: nullIfEmpty(r.NGO_Campanha),
+      ngo_motivo_perda: nullIfEmpty(r.NGO_MotivoPerda),
+      ngo_obs_motivo_perda: nullIfEmpty(r.NGO_ObsMotivoPerda),
+      mpr_dsc_motivo_perda: nullIfEmpty(r.MPR_DscMotivoPerda),
+      mpr_dsc_motivo_perda_detalhe: nullIfEmpty(r.MPR_DscMotivoPerdaDetalhe),
+      mpr_produto_perda_marca: nullIfEmpty(r.MPR_ProdutoPerdaMarca),
+      mpr_produto_perda_grupo: nullIfEmpty(r.MPR_ProdutoPerdaGrupo),
+      mpr_produto_perda_modelo: nullIfEmpty(r.MPR_ProdutoPerdaModelo),
+      mpr_produto_vlr_concorrencia: nullIfEmpty(r.MPR_ProdutoVlrConcorrencia),
+      mpr_motivo_observacao: nullIfEmpty(r.MPR_MotivoObservacao),
+      mpp_dsc_motivo_perda: nullIfEmpty(r.MPP_DscMotivoPerda),
+      mpp_dsc_motivo_perda_detalhe: nullIfEmpty(r.MPP_DscMotivoPerdaDetalhe),
+      mpp_produto_perda_marca: nullIfEmpty(r.MPP_ProdutoPerdaMarca),
+      mpp_produto_perda_grupo: nullIfEmpty(r.MPP_ProdutoPerdaGrupo),
+      mpp_produto_perda_modelo: nullIfEmpty(r.MPP_ProdutoPerdaModelo),
+      mpp_produto_vlr_concorrencia: nullIfEmpty(r.MPP_ProdutoVlrConcorrencia),
+      mpp_motivo_observacao: nullIfEmpty(r.MPP_MotivoObservacao),
       orc_valor: r.ORC_Valor,
-      orc_tipo: r.ORC_Tipo,
-      orc_banco: r.ORC_Banco,
-      orc_observacao: r.ORC_Observacao,
-      usa_maquina: r.USA_Maquina,
+      orc_tipo: nullIfEmpty(r.ORC_Tipo),
+      orc_banco: nullIfEmpty(r.ORC_Banco),
+      orc_observacao: nullIfEmpty(r.ORC_Observacao),
+      usa_maquina: nullIfEmpty(r.USA_Maquina),
       usa_valor: r.USA_Valor,
-      usa_estado_cod_integracao: r.USA_EstadoCodIntegracao,
-      usa_estado_descricao: r.USA_EstadoDescricao,
-      cli_id_cliente: r.CLI_IdCliente,
-      cli_codigo_cliente: r.CLI_CodigoCliente,
-      cli_loja_cliente_cod_integracao: r.CLI_LojaClienteCodIntegracao,
-      cli_cnpj_cpf: r.CLI_CNPJ_CPF,
-      cli_tipo_cliente: r.CLI_TipoCliente,
-      cli_nome: r.CLI_Nome,
-      cli_telefone: r.CLI_Telefone,
-      cli_email: r.CLI_Email,
-      cli_cidade: r.CLI_Cidade,
-      cli_uf: r.CLI_UF,
-      ngo_vendedores: r.NGO_Vendedores,
-      aco_data_agenda_ultima_acao: r.ACO_DataAgendaUltimaAcao,
-      aco_obs_inicio_ultima_acao: r.ACO_ObsInicioUltimaAcao,
-      aco_obs_fim_ultima_acao: r.ACO_ObsFimUltimaAcao,
-      aco_status_ultima_acao: r.ACO_StatusUltimaAcao,
-      ngo_data_primeiro_contato: r.NGO_DataPrimeiroContato,
-      ngo_data_fechamento: r.NGO_DataFechamento,
-      ngo_data_cadastro: r.NGO_DataCadastro,
-      ngo_data_atualizacao: r.NGO_DataAtualizacao,
+      usa_estado_cod_integracao: nullIfEmpty(r.USA_EstadoCodIntegracao),
+      usa_estado_descricao: nullIfEmpty(r.USA_EstadoDescricao),
+      cli_id_cliente: nullIfEmpty(r.CLI_IdCliente),
+      cli_codigo_cliente: nullIfEmpty(r.CLI_CodigoCliente),
+      cli_loja_cliente_cod_integracao: nullIfEmpty(r.CLI_LojaClienteCodIntegracao),
+      cli_cnpj_cpf: nullIfEmpty(r.CLI_CNPJ_CPF),
+      cli_tipo_cliente: nullIfEmpty(r.CLI_TipoCliente),
+      cli_nome: nullIfEmpty(r.CLI_Nome),
+      cli_telefone: nullIfEmpty(r.CLI_Telefone),
+      cli_email: nullIfEmpty(r.CLI_Email),
+      cli_cidade: nullIfEmpty(r.CLI_Cidade),
+      cli_uf: nullIfEmpty(r.CLI_UF),
+      ngo_vendedores: nullIfEmpty(r.NGO_Vendedores),
+      aco_data_agenda_ultima_acao: nullIfEmpty(r.ACO_DataAgendaUltimaAcao),
+      aco_obs_inicio_ultima_acao: nullIfEmpty(r.ACO_ObsInicioUltimaAcao),
+      aco_obs_fim_ultima_acao: nullIfEmpty(r.ACO_ObsFimUltimaAcao),
+      aco_status_ultima_acao: nullIfEmpty(r.ACO_StatusUltimaAcao),
+      ngo_data_primeiro_contato: nullIfEmpty(r.NGO_DataPrimeiroContato),
+      ngo_data_fechamento: nullIfEmpty(r.NGO_DataFechamento),
+      ngo_data_cadastro: nullIfEmpty(r.NGO_DataCadastro),
+      ngo_data_atualizacao: nullIfEmpty(r.NGO_DataAtualizacao),
       ngo_ciclo_vendas: r.NGO_CicloVendas,
       ngo_qtd_acoes: r.NGO_QtdAcoes,
-      dth_registro: r.dthRegistro,
+      dth_registro: nullIfEmpty(r.dthRegistro),
     }),
-    strategy: "full",
+    strategy: "incremental",
+    watermarkCol: "NGO_DataAtualizacao",
+    overlapHours: 2,
+    conflictKey: "prd_id_negocio_x_produto",
   },
 
   "VW_Ceres_CRM_Pedidos": {
@@ -213,35 +221,38 @@ const VIEW_CONFIG: Record<string, ViewConfig> = {
       cli_codigo_cliente: r.CLI_CodigoCliente,
       cli_cnpj_cpf: r.CLI_CNPJ_CPF,
       cli_nome: r.CLI_Nome,
-      cli_telefone: r.CLI_Telefone,
-      cli_telefone2: r.CLI_Telefone2,
-      cli_email: r.CLI_Email,
+      cli_telefone: nullIfEmpty(r.CLI_Telefone),
+      cli_telefone2: nullIfEmpty(r.CLI_Telefone2),
+      cli_email: nullIfEmpty(r.CLI_Email),
       pdo_codigo_interno: r.PDO_CodigoInterno,
       pdo_nro_pedido: r.PDO_NroPedido,
-      pdo_situacao_pedido: r.PDO_SituacaoPedido,
-      pdo_dth_pedido: r.PDO_DthPedido,
+      pdo_situacao_pedido: nullIfEmpty(r.PDO_SituacaoPedido),
+      pdo_dth_pedido: nullIfEmpty(r.PDO_DthPedido),
       pdo_vlr_pedido: r.PDO_VlrPedido,
-      pdo_obs_pedido: r.PDO_ObsPedido,
-      pdo_endereco_faturamento: r.PDO_EnderecoFaturamento,
-      pdo_cidade_uf_faturamento: r.PDO_CidadeUFFaturamento,
+      pdo_obs_pedido: nullIfEmpty(r.PDO_ObsPedido),
+      pdo_endereco_faturamento: nullIfEmpty(r.PDO_EnderecoFaturamento),
+      pdo_cidade_uf_faturamento: nullIfEmpty(r.PDO_CidadeUFFaturamento),
       pdo_frete: r.PDO_Frete,
-      pdo_endereco_entrega: r.PDO_EnderecoEntrega,
-      pdo_cidade_uf_entrega: r.PDO_CidadeUFEntrega,
+      pdo_endereco_entrega: nullIfEmpty(r.PDO_EnderecoEntrega),
+      pdo_cidade_uf_entrega: nullIfEmpty(r.PDO_CidadeUFEntrega),
       usr_id_usuario_vendedor: r.USR_idUsuarioVendedor,
       usr_cod_usuario_vendedor: r.USR_CodUsuarioVendedor,
-      pdo_vendedor: r.PDO_Vendedor,
+      pdo_vendedor: nullIfEmpty(r.PDO_Vendedor),
       pdo_vlr_recurso_proprio: r.PDO_VlrRecursoProprio,
       pdo_vlr_financiado: r.PDO_VlrFinanciado,
-      pdo_financiamento_modalidade_nome: r.PDO_FinanciamentoModalidadeNome,
-      pdo_financiamento_banco: r.PDO_FiananciamentoBanco,
-      pdo_dth_aprovacao: r.PDO_DthAprovacao,
+      pdo_financiamento_modalidade_nome: nullIfEmpty(r.PDO_FinanciamentoModalidadeNome),
+      pdo_financiamento_banco: nullIfEmpty(r.PDO_FiananciamentoBanco),
+      pdo_dth_aprovacao: nullIfEmpty(r.PDO_DthAprovacao),
       usr_id_usuario_aprovador: r.USR_idUsuarioAprovador,
       usr_cod_usuario_aprovador: r.USR_CodUsuarioAprovador,
-      pdo_aprovador: r.PDO_Aprovador,
-      pdo_dth_assinatura_cliente: r.PDO_DthAssinaturaCliente,
-      dth_registro: r.dthRegistro,
+      pdo_aprovador: nullIfEmpty(r.PDO_Aprovador),
+      pdo_dth_assinatura_cliente: nullIfEmpty(r.PDO_DthAssinaturaCliente),
+      dth_registro: nullIfEmpty(r.dthRegistro),
     }),
-    strategy: "full",
+    strategy: "incremental",
+    watermarkCol: "dthRegistro",
+    overlapHours: 2,
+    conflictKey: "pdo_codigo_interno",
   },
 
   "VW_Ceres_CRM_PedidosItem": {
@@ -256,19 +267,22 @@ const VIEW_CONFIG: Record<string, ViewConfig> = {
       pdo_codigo_interno: r.PDO_CodigoInterno,
       pdo_item_id: r.PDO_ItemId,
       pdo_item_id_grupo: r.PDO_ItemIdGrupo,
-      pdo_item_grupo: r.PDO_ItemGrupo,
+      pdo_item_grupo: nullIfEmpty(r.PDO_ItemGrupo),
       pdo_item_id_marca: r.PDO_ItemIdMarca,
-      pdo_item_marca: r.PDO_ItemMarca,
+      pdo_item_marca: nullIfEmpty(r.PDO_ItemMarca),
       pdo_item_id_modelo: r.PDO_ItemIdModelo,
-      pdo_item_modelo: r.PDO_ItemModelo,
+      pdo_item_modelo: nullIfEmpty(r.PDO_ItemModelo),
       pdo_item_id_produto: r.PDO_ItemIdProduto,
-      pdo_item_descricao: r.PDO_ItemDescricao,
-      pdo_item_obs: r.PDO_ItemObs,
+      pdo_item_descricao: nullIfEmpty(r.PDO_ItemDescricao),
+      pdo_item_obs: nullIfEmpty(r.PDO_ItemObs),
       pdo_item_qtde: r.PDO_ItemQtde,
       pdo_item_vlr_unitario: r.PDO_ItemVlrUnitario,
-      dth_registro: r.dthRegistro,
+      dth_registro: nullIfEmpty(r.dthRegistro),
     }),
-    strategy: "full",
+    strategy: "incremental",
+    watermarkCol: "dthRegistro",
+    overlapHours: 2,
+    conflictKey: "pdo_item_id",
   },
 
   "VW_Ceres_CRM_CarteiraClientes": {
@@ -295,24 +309,26 @@ const VIEW_CONFIG: Record<string, ViewConfig> = {
       cli_cnpj_cpf: r.CLI_CNPJ_CPF,
       cli_codigo_cliente: r.CLI_CodigoCliente,
       cli_id_cliente: r.CLI_idCliente,
-      cli_segmento: r.CLI_Segmento,
-      cli_endereco: r.CLI_Endereco,
-      cli_cep: r.CLI_CEP,
-      cli_telefone: r.CLI_Telefone,
-      cli_telefone2: r.CLI_Telefone2,
-      cli_email: r.CLI_Email,
-      cli_cidade: r.CLI_Cidade,
-      cli_uf: r.CLI_UF,
-      cli_lat: r.CLI_Lat,
-      cli_lon: r.CLI_Lon,
-      cli_prospect: r.CLI_Prospect,
-      cli_tipo_cliente: r.CLI_TipoCliente,
-      cli_data_cadastro: r.CLI_DataCadastro,
-      cli_data_atualizacao: r.CLI_DataAtualizacao,
-      dth_registro: r.dthRegistro,
+      cli_segmento: nullIfEmpty(r.CLI_Segmento),
+      cli_endereco: nullIfEmpty(r.CLI_Endereco),
+      cli_cep: nullIfEmpty(r.CLI_CEP),
+      cli_telefone: nullIfEmpty(r.CLI_Telefone),
+      cli_telefone2: nullIfEmpty(r.CLI_Telefone2),
+      cli_email: nullIfEmpty(r.CLI_Email),
+      cli_cidade: nullIfEmpty(r.CLI_Cidade),
+      cli_uf: nullIfEmpty(r.CLI_UF),
+      cli_lat: nullIfEmpty(r.CLI_Lat),
+      cli_lon: nullIfEmpty(r.CLI_Lon),
+      cli_prospect: nullIfEmpty(r.CLI_Prospect),
+      cli_tipo_cliente: nullIfEmpty(r.CLI_TipoCliente),
+      cli_data_cadastro: nullIfEmpty(r.CLI_DataCadastro),
+      cli_data_atualizacao: nullIfEmpty(r.CLI_DataAtualizacao),
+      dth_registro: nullIfEmpty(r.dthRegistro),
     }),
-    strategy: "full",
-    conflictKey: "cli_id_cliente",
+    strategy: "incremental",
+    watermarkCol: "dthRegistro",
+    overlapHours: 2,
+    conflictKey: "cli_id_cliente,usr_id_usuario",
   },
 
   "VW_Ceres_CRM_Acoes": {
@@ -336,36 +352,37 @@ const VIEW_CONFIG: Record<string, ViewConfig> = {
       emp_cod_filial: r.EMP_CodFilial,
       emp_cnpj: r.EMP_CNPJ,
       emp_nome: r.EMP_Nome,
-      emp_cidade: r.EMP_Cidade,
-      emp_uf: r.EMP_UF,
-      cli_nome: r.CLI_Nome,
-      cli_cnpj_cpf: r.CLI_CNPJ_CPF,
-      cli_codigo_cliente: r.CLI_CodigoCliente,
-      cli_id_cliente: r.CLI_IdCliente,
-      aco_tipo_contato: r.ACO_TipoContato,
-      aco_tipo_acao: r.ACO_TipoAcao,
-      usr_id_usuario: r.USR_IdUsuario,
-      usr_codigo_usuario: r.USR_CodigoUsuario,
-      aco_vendedor: r.ACO_Vendedor,
-      aco_dth_agenda_inicio: r.ACO_DthAgendaInicio,
-      aco_dth_agenda_termino: r.ACO_DthAgendaTermino,
-      aco_atividade_a_executar: r.ACO_AtividadeAserExecutada,
-      aco_atividade_executada: r.ACO_AtividadeExecutada,
-      aco_status: r.ACO_Status,
-      aco_dth_atualizacao: r.ACO_DthAtualizacao,
-      aco_lat: r.ACO_Lat,
-      aco_lon: r.ACO_Lon,
-      aco_contato: r.ACO_Contato,
-      aco_dth_abertura: r.ACO_DthAbertura,
-      aco_dth_geolocalizacao: r.ACO_DthGeolocalizacao,
-      aco_acao_valida: r.ACO_AcaoValida,
-      aco_acao_reagendada: r.ACO_AcaoReagendada,
-      aco_dth_conclusao: r.ACO_DthConclusao,
-      ngo_nro_negocio: r.NGO_NroNegocio,
-      dth_registro: r.dthRegistro,
+      emp_cidade: nullIfEmpty(r.EMP_Cidade),
+      emp_uf: nullIfEmpty(r.EMP_UF),
+      cli_nome: nullIfEmpty(r.CLI_Nome),
+      cli_cnpj_cpf: nullIfEmpty(r.CLI_CNPJ_CPF),
+      cli_codigo_cliente: nullIfEmpty(r.CLI_CodigoCliente),
+      cli_id_cliente: nullIfEmpty(r.CLI_IdCliente),
+      aco_tipo_contato: nullIfEmpty(r.ACO_TipoContato),
+      aco_tipo_acao: nullIfEmpty(r.ACO_TipoAcao),
+      usr_id_usuario: nullIfEmpty(r.USR_IdUsuario),
+      usr_codigo_usuario: nullIfEmpty(r.USR_CodigoUsuario),
+      aco_vendedor: nullIfEmpty(r.ACO_Vendedor),
+      aco_dth_agenda_inicio: nullIfEmpty(r.ACO_DthAgendaInicio),
+      aco_dth_agenda_termino: nullIfEmpty(r.ACO_DthAgendaTermino),
+      aco_atividade_a_executar: nullIfEmpty(r.ACO_AtividadeAserExecutada),
+      aco_atividade_executada: nullIfEmpty(r.ACO_AtividadeExecutada),
+      aco_status: nullIfEmpty(r.ACO_Status),
+      aco_dth_atualizacao: nullIfEmpty(r.ACO_DthAtualizacao),
+      aco_lat: nullIfEmpty(r.ACO_Lat),
+      aco_lon: nullIfEmpty(r.ACO_Lon),
+      aco_contato: nullIfEmpty(r.ACO_Contato),
+      aco_dth_abertura: nullIfEmpty(r.ACO_DthAbertura),
+      aco_dth_geolocalizacao: nullIfEmpty(r.ACO_DthGeolocalizacao),
+      aco_acao_valida: nullIfEmpty(r.ACO_AcaoValida),
+      aco_acao_reagendada: nullIfEmpty(r.ACO_AcaoReagendada),
+      aco_dth_conclusao: nullIfEmpty(r.ACO_DthConclusao),
+      ngo_nro_negocio: nullIfEmpty(r.NGO_NroNegocio),
+      dth_registro: nullIfEmpty(r.dthRegistro),
     }),
     strategy: "incremental",
-    watermarkCol: "ACO_DthConclusao",
+    watermarkCol: "ACO_DthAtualizacao",
+    overlapHours: 2,
     conflictKey: "aco_id_acao",
   },
 
@@ -382,18 +399,21 @@ const VIEW_CONFIG: Record<string, ViewConfig> = {
       emp_cod_filial: r.EMP_CodFilial,
       emp_nome: r.EMP_Nome,
       emp_cnpj: r.EMP_CNPJ,
-      emp_cidade: r.EMP_Cidade,
-      emp_uf: r.EMP_UF,
+      emp_cidade: nullIfEmpty(r.EMP_Cidade),
+      emp_uf: nullIfEmpty(r.EMP_UF),
       ngo_codigo_integracao: r.NGO_CodigoIntegracao,
       ngo_numero: r.NGO_Numero,
-      funil_dsc: r.Funil_dsc,
-      etapa_dsc_status_negocio: r.Etapa_dscStatusNegocio,
-      fne_dth_inicio_etapa: r.FNE_dthInicioEtapa,
-      fne_dth_termino_etapa: r.FNE_dthTerminoEtapa,
+      funil_dsc: nullIfEmpty(r.Funil_dsc),
+      etapa_dsc_status_negocio: nullIfEmpty(r.Etapa_dscStatusNegocio),
+      fne_dth_inicio_etapa: nullIfEmpty(r.FNE_dthInicioEtapa),
+      fne_dth_termino_etapa: nullIfEmpty(r.FNE_dthTerminoEtapa),
       fne_duracao_dias: r.FNE_DuracaoDias,
-      dth_registro: r.dthRegistro,
+      dth_registro: nullIfEmpty(r.dthRegistro),
     }),
-    strategy: "full",
+    strategy: "incremental",
+    watermarkCol: "dthRegistro",
+    overlapHours: 2,
+    conflictKey: "ngo_numero",
   },
 
   "VW_Ceres_Usuario": {
@@ -407,24 +427,26 @@ const VIEW_CONFIG: Record<string, ViewConfig> = {
     ],
     mapRow: (r) => ({
       usr_id_usuario: r.USR_idUsuario,
-      usr_cpf: r.USR_CPF,
+      usr_cpf: nullIfEmpty(r.USR_CPF),
       usr_nome_usuario: r.USR_nomeUsuario,
-      usr_login: r.USR_Login,
+      usr_login: nullIfEmpty(r.USR_Login),
       usr_tipo_usuario: r.USR_TipoUsuario,
-      usr_dsc_tipo_usuario: r.USR_dscTipoUsuario,
+      usr_dsc_tipo_usuario: nullIfEmpty(r.USR_dscTipoUsuario),
       usr_id_empresa: r.USR_idEmpresa,
-      usr_email: r.USR_Email,
+      usr_email: nullIfEmpty(r.USR_Email),
       usr_id_licenca: r.USR_idLicenca,
-      usr_dth_registro: r.USR_dthRegistro,
+      usr_dth_registro: nullIfEmpty(r.USR_dthRegistro),
       usr_cod_usuario: r.USR_CodUsuario,
       emp_id_empresa: r.EMP_idEmpresa,
-      emp_nome: r.EMP_nome,
-      emp_cidade: r.EMP_cidade,
+      emp_nome: nullIfEmpty(r.EMP_nome),
+      emp_cidade: nullIfEmpty(r.EMP_cidade),
       emp_cod_filial: r.EMP_CodFilial,
-      dth_registro: r.dthRegistro,
+      dth_registro: nullIfEmpty(r.dthRegistro),
     }),
-    strategy: "full",
-    conflictKey: "usr_cod_usuario",
+    strategy: "incremental",
+    watermarkCol: "dthRegistro",
+    overlapHours: 2,
+    conflictKey: "usr_id_usuario",
   },
 
   "VW_Ceres_OrdemServico": {
@@ -452,31 +474,32 @@ const VIEW_CONFIG: Record<string, ViewConfig> = {
       os_nr_os: r.OS_nrOS,
       os_id_cliente: r.OS_idCliente,
       os_id_equipamento: r.OS_idEquipamento,
-      os_dt_avaria: r.OS_dtAvaria,
+      os_dt_avaria: nullIfEmpty(r.OS_dtAvaria),
       os_id_situacao_os: r.OS_idSituacaoOS,
-      os_dth_encerramento: r.OS_dthEncerramento,
+      os_dth_encerramento: nullIfEmpty(r.OS_dthEncerramento),
       sit_cod_situacao_os: r.SIT_codSituacaoOS,
       sit_dsc_situacao_os: r.SIT_dscSituacaoOS,
-      os_dsc_problema: r.OS_dscProblema,
-      os_dth_abertura: r.OS_dthAbertura,
+      os_dsc_problema: nullIfEmpty(r.OS_dscProblema),
+      os_dth_abertura: nullIfEmpty(r.OS_dthAbertura),
       os_f_status: r.OS_fStatus,
-      os_nr_os_geradora: r.OS_nrOSGeradora,
+      os_nr_os_geradora: nullIfEmpty(r.OS_nrOSGeradora),
       os_tempo_estimado: r.OS_tempoEstimado,
       os_id_area_operacao: r.OS_idAreaOperacao,
       are_cod_area_operacao: r.ARE_codAreaOperacao,
       os_id_tipo_os: r.OS_idTipoOS,
       tos_cod_tipo_os: r.TOS_codTipoOS,
-      os_dth_previsao_atendimento: r.OS_dthPrevisaoAtendimento,
-      os_contato_cliente: r.OS_ContatoCliente,
-      os_contato_telefone: r.OS_ContatoTelefone,
+      os_dth_previsao_atendimento: nullIfEmpty(r.OS_dthPrevisaoAtendimento),
+      os_contato_cliente: nullIfEmpty(r.OS_ContatoCliente),
+      os_contato_telefone: nullIfEmpty(r.OS_ContatoTelefone),
       cli_id_empresa: r.CLI_idEmpresa,
       cli_nome: r.CLI_Nome,
       cli_codigo_cliente: r.CLI_CodigoCliente,
       cli_cnpj_cpf: r.CLI_CNPJ_CPF,
-      dth_registro: r.dthRegistro,
+      dth_registro: nullIfEmpty(r.dthRegistro),
     }),
     strategy: "incremental",
-    watermarkCol: "OS_dthAbertura",
+    watermarkCol: "dthRegistro",
+    overlapHours: 2,
     conflictKey: "os_nr_os",
   },
 
@@ -508,15 +531,18 @@ const VIEW_CONFIG: Record<string, ViewConfig> = {
       pqm_codigo_produto_modelo: r.PQM_CodigoProdutoModelo,
       pqm_qtd_maquinas: r.PQM_QtdMaquinas,
       pqm_ano: r.PQM_Ano,
-      pqm_chassi: r.PQM_Chassi,
-      pqm_serie: r.PQM_Serie,
-      pqm_horimetro: r.PQM_Horimetro,
-      pqm_descricao: r.PQM_Descricao,
-      pqm_observacao: r.PQM_Observacao,
-      pqm_dth_registro: r.PQM_dthRegistro,
-      dth_registro: r.dthRegistro,
+      pqm_chassi: nullIfEmpty(r.PQM_Chassi),
+      pqm_serie: nullIfEmpty(r.PQM_Serie),
+      pqm_horimetro: nullIfEmpty(r.PQM_Horimetro),
+      pqm_descricao: nullIfEmpty(r.PQM_Descricao),
+      pqm_observacao: nullIfEmpty(r.PQM_Observacao),
+      pqm_dth_registro: nullIfEmpty(r.PQM_dthRegistro),
+      dth_registro: nullIfEmpty(r.dthRegistro),
     }),
-    strategy: "full",
+    strategy: "incremental",
+    watermarkCol: "dthRegistro",
+    overlapHours: 2,
+    conflictKey: "pqm_id",
   },
 };
 
@@ -588,6 +614,7 @@ async function execQuery(sql: string): Promise<Record<string, unknown>[]> {
 async function syncView(
   viewName: string,
   supabase: ReturnType<typeof createClient>,
+  pageOptions?: { limit: number; offset: number },
 ): Promise<SyncResult> {
   const config = VIEW_CONFIG[viewName];
   if (!config) {
@@ -624,22 +651,48 @@ async function syncView(
     let sql = `SELECT ${colList} FROM [${viewName}]`;
 
     if (config.strategy === "incremental" && meta?.last_watermark) {
-      sql += ` WHERE [${config.watermarkCol}] > '${meta.last_watermark}'`;
+      // Overlap: subtract overlapHours from watermark to recapture recent edits.
+      const overlap = config.overlapHours ?? 0;
+      const adjustedWatermark = new Date(
+        new Date(meta.last_watermark).getTime() - overlap * 3600_000
+      ).toISOString();
+      sql += ` WHERE [${config.watermarkCol}] >= '${adjustedWatermark}'`;
+      sql += ` ORDER BY [${config.watermarkCol}] ASC`;
+    }
+
+    // Pagination support — fetch a subset of rows to avoid CPU time limits
+    if (pageOptions) {
+      sql += sql.includes("ORDER BY") ? "" : " ORDER BY (SELECT NULL)";
+      sql += ` OFFSET ${pageOptions.offset} ROWS FETCH NEXT ${pageOptions.limit} ROWS ONLY`;
     }
 
     // 3. Fetch from SQL Server
     const rows = await execQuery(sql);
     const mapped = rows.map(config.mapRow);
 
+    // 3.5 Deduplicate by conflictKey to avoid "cannot affect row a second time"
+    let dedupMapped = mapped;
+    if (config.conflictKey) {
+      const keys = config.conflictKey.split(",");
+      const seen = new Map();
+      for (const row of mapped) {
+        const key = keys.map((k) => (row as Record<string, unknown>)[k]).join("|");
+        seen.set(key, row); // last wins
+      }
+      dedupMapped = Array.from(seen.values());
+    }
+
     // 4. Write to Supabase
     if (config.strategy === "full") {
-      // Truncate via RPC
-      await supabase.rpc("truncate_mirror_table", { table_name: `mirror.${config.table}` });
+      // Only truncate if NOT using pagination (full reload without pages)
+      if (!pageOptions) {
+        await supabase.rpc("truncate_mirror_table", { table_name: `mirror.${config.table}` });
+      }
 
       // Batch insert (use upsert when conflictKey is defined to handle
       // denormalized views that return duplicate PKs, e.g. crm_negocios)
-      for (let i = 0; i < mapped.length; i += BATCH_SIZE) {
-        const batch = mapped.slice(i, i + BATCH_SIZE);
+      for (let i = 0; i < dedupMapped.length; i += BATCH_SIZE) {
+        const batch = dedupMapped.slice(i, i + BATCH_SIZE);
         if (config.conflictKey) {
           const { error } = await supabase
             .schema("mirror")
@@ -660,8 +713,8 @@ async function syncView(
       }
     } else {
       // Incremental: upsert with conflict key if available, otherwise plain insert
-      for (let i = 0; i < mapped.length; i += BATCH_SIZE) {
-        const batch = mapped.slice(i, i + BATCH_SIZE);
+      for (let i = 0; i < dedupMapped.length; i += BATCH_SIZE) {
+        const batch = dedupMapped.slice(i, i + BATCH_SIZE);
         if (config.conflictKey) {
           const { error } = await supabase
             .schema("mirror")
@@ -684,19 +737,10 @@ async function syncView(
 
     // 5. Compute watermark for incremental views
     let watermarkValue = meta?.last_watermark ?? null;
-    if (config.strategy === "incremental" && config.watermarkCol && mapped.length > 0) {
-      // Map SQL Server watermark column to PG column name
-      const watermarkPgCol: Record<string, string> = {
-        "ACO_DthConclusao": "aco_dth_conclusao",
-        "OS_dthAbertura": "os_dth_abertura",
-      };
-      const pgCol = watermarkPgCol[config.watermarkCol];
-      if (pgCol) {
-        const lastRow = mapped[mapped.length - 1];
-        if (lastRow[pgCol] != null) {
-          watermarkValue = String(lastRow[pgCol]);
-        }
-      }
+    if (config.strategy === "incremental" && config.watermarkCol) {
+      // Use NOW() as watermark — decoupled from data, avoids gaps from clock skew
+      // or out-of-order records. The overlap window on next sync covers any edge cases.
+      watermarkValue = new Date().toISOString();
     }
 
     // 6. Update sync_metadata
@@ -706,7 +750,7 @@ async function syncView(
       .update({
         last_watermark: watermarkValue,
         last_sync_at: new Date().toISOString(),
-        row_count: mapped.length,
+        row_count: dedupMapped.length,
       })
       .eq("view_name", viewName);
 
@@ -718,14 +762,14 @@ async function syncView(
         .from("sync_log")
         .update({
           status: "success",
-          rows_affected: mapped.length,
+          rows_affected: dedupMapped.length,
           duration_ms: duration,
           finished_at: new Date().toISOString(),
         })
         .eq("id", logId);
     }
 
-    return { view: viewName, status: "success", rows: mapped.length, duration_ms: duration };
+    return { view: viewName, status: "success", rows: dedupMapped.length, duration_ms: duration };
   } catch (error) {
     const duration = Date.now() - startTime;
     const errMsg = error instanceof Error ? error.message : String(error);
@@ -764,6 +808,7 @@ Deno.serve(async (req) => {
 
     // Parse request body
     let viewsToSync: string[] = ALL_VIEWS;
+    let pageOptions: { limit: number; offset: number } | undefined;
     try {
       const body = await req.json();
       if (body.views && Array.isArray(body.views) && body.views.length > 0) {
@@ -777,6 +822,10 @@ Deno.serve(async (req) => {
         }
         viewsToSync = body.views;
       }
+      // Pagination support — allows fetching in chunks to avoid CPU limits
+      if (typeof body.limit === "number" && typeof body.offset === "number") {
+        pageOptions = { limit: body.limit, offset: body.offset };
+      }
     } catch {
       // Empty body or invalid JSON — sync all views
     }
@@ -784,7 +833,7 @@ Deno.serve(async (req) => {
     // Process views sequentially (single SQL Server connection at a time)
     const results: SyncResult[] = [];
     for (const viewName of viewsToSync) {
-      const result = await syncView(viewName, supabase);
+      const result = await syncView(viewName, supabase, pageOptions);
       results.push(result);
     }
 

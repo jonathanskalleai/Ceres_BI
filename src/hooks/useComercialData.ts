@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import type {
   DadosComerciais,
   Registro,
@@ -11,6 +11,8 @@ import type {
 import { isAdminUser } from "@/lib/adminUsers";
 import { fetchRegistrosComerciais } from "@/services/registrosService";
 import { fetchPipelineByVendedor, type VendedorPipeline } from "@/services/pipelineByVendedorService";
+import { supabase } from "@/integrations/supabase/client";
+import { getFunisByCategoria, type CategoriaFilter, CATEGORIA_ALL, FUNIL_ALL } from "@/lib/categoriaFunil";
 
 function yearMonth(dt: string): string {
   if (!dt) return "";
@@ -222,7 +224,19 @@ function aggregate(registros: Registro[], pipelineMap?: Map<string, VendedorPipe
   };
 }
 
-export function useComercialData() {
+export function useComercialData(categoria?: string, funil?: string) {
+  // Resolve categoria to funis array for DB queries
+  const categoriaFilter = (categoria || CATEGORIA_ALL) as CategoriaFilter;
+  const funilFilter = funil || FUNIL_ALL;
+
+  // Determine effective funis list: specific funil > categoria > all
+  const funis = funilFilter !== FUNIL_ALL
+    ? [funilFilter]
+    : categoriaFilter !== CATEGORIA_ALL
+      ? getFunisByCategoria(categoriaFilter)
+      : [];
+  const hasFunilFilter = funis.length > 0;
+
   const {
     data: rawRegistros,
     isLoading: loadingRegistros,
@@ -238,25 +252,64 @@ export function useComercialData() {
     data: pipelineMap,
     isLoading: loadingPipeline,
   } = useQuery({
-    queryKey: ["pipeline-by-vendedor"],
-    queryFn: fetchPipelineByVendedor,
+    queryKey: ["pipeline-by-vendedor", categoriaFilter, funilFilter],
+    queryFn: () => fetchPipelineByVendedor(hasFunilFilter ? funis : undefined),
     staleTime: 5 * 60_000,
+    placeholderData: keepPreviousData,
   });
 
-  const isLoading = loadingRegistros || loadingPipeline;
+  // Client set from selected categoria funis — used to filter ações (crm_acoes)
+  const {
+    data: funilClientes,
+    isLoading: loadingFunilClientes,
+  } = useQuery({
+    queryKey: ["funil-clientes", categoriaFilter, funilFilter],
+    queryFn: async (): Promise<Set<string> | null> => {
+      if (!hasFunilFilter) return null;
+      // Query all funis in the categoria
+      const { data, error } = await supabase
+        .schema("mirror")
+        .from("crm_negocios")
+        .select("cli_nome")
+        .in("ngo_funil", funis);
+      if (error) throw new Error(error.message);
+      return new Set(
+        (data ?? [])
+          .map((r: { cli_nome: string | null }) => r.cli_nome ?? "")
+          .filter(Boolean)
+      );
+    },
+    staleTime: 5 * 60_000,
+    enabled: hasFunilFilter,
+    placeholderData: keepPreviousData,
+  });
+
+  const isLoading = loadingRegistros || loadingPipeline || (hasFunilFilter && loadingFunilClientes);
   const error = queryError ? (queryError as Error).message : null;
   const lastUpdated = dataUpdatedAt ? new Date(dataUpdatedAt).toISOString() : null;
 
   const data = useMemo(() => {
     if (!rawRegistros) return null;
-    const commercialRegistros = rawRegistros.filter((r) => !isAdminUser(r.vendedor));
-    return aggregate(commercialRegistros, pipelineMap ?? undefined);
-  }, [rawRegistros, pipelineMap]);
+    // When categoria is active but clients haven't loaded yet (first time),
+    // return null to trigger loading state instead of showing unfiltered data
+    if (hasFunilFilter && !funilClientes) return null;
+    let registros = rawRegistros.filter((r) => !isAdminUser(r.vendedor));
+    // Filter actions by clients present in the selected categoria funis
+    if (hasFunilFilter && funilClientes) {
+      registros = registros.filter((r) => funilClientes.has(r.cliente));
+    }
+    return aggregate(registros, pipelineMap ?? undefined);
+  }, [rawRegistros, pipelineMap, hasFunilFilter, funilClientes]);
 
   const allData = useMemo(() => {
     if (!rawRegistros) return null;
-    return aggregate(rawRegistros, pipelineMap ?? undefined);
-  }, [rawRegistros, pipelineMap]);
+    if (hasFunilFilter && !funilClientes) return null;
+    let registros = [...rawRegistros];
+    if (hasFunilFilter && funilClientes) {
+      registros = registros.filter((r) => funilClientes.has(r.cliente));
+    }
+    return aggregate(registros, pipelineMap ?? undefined);
+  }, [rawRegistros, pipelineMap, hasFunilFilter, funilClientes]);
 
   return { data, allData, isLoading, error, lastUpdated };
 }

@@ -1,6 +1,6 @@
 import * as React from "react";
 import { CalendarIcon } from "lucide-react";
-import { format, subMonths, startOfYear, startOfMonth } from "date-fns";
+import { format, subMonths, startOfYear, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { type DateRange } from "react-day-picker";
 
@@ -21,8 +21,10 @@ interface Preset {
 
 function getPresets(): Preset[] {
   const today = new Date();
+  const lastMonth = subMonths(today, 1);
   return [
-    { label: "Ultimo mes", range: { from: startOfMonth(subMonths(today, 1)), to: today } },
+    { label: "Mes passado", range: { from: startOfMonth(lastMonth), to: endOfMonth(lastMonth) } },
+    { label: "Ultimos 30 dias", range: { from: subMonths(today, 1), to: today } },
     { label: "Ultimos 3 meses", range: { from: subMonths(today, 3), to: today } },
     { label: "Ultimos 6 meses", range: { from: subMonths(today, 6), to: today } },
     { label: "Ano atual", range: { from: startOfYear(today), to: today } },

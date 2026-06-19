@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { DadosComerciais, Filters } from "@/types/comercial";
 import { Card, CardContent } from "@/components/ui/card";
+import { KPICard } from "@/components/bi/KPICard";
 import { Badge } from "@/components/ui/badge";
 import { isAdminUser } from "@/lib/adminUsers";
 import { filterRegistros, hasActiveFilters } from "@/lib/filterUtils";
@@ -72,50 +73,10 @@ export const DashboardAdministrativo = ({ data, filters }: Props) => {
 
       {/* KPIs */}
       <div className="grid grid-cols-4 gap-4">
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Users className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">{stats.length}</p>
-              <p className="text-xs text-muted-foreground">Usuários Admin</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center">
-              <ClipboardList className="h-5 w-5 text-accent" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">{totalAcoes}</p>
-              <p className="text-xs text-muted-foreground">Total de Ações</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-warning/10 flex items-center justify-center">
-              <Eye className="h-5 w-5 text-warning" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">{totalVisitas}</p>
-              <p className="text-xs text-muted-foreground">Visitas</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-0 shadow-sm">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-success/10 flex items-center justify-center">
-              <BarChart3 className="h-5 w-5 text-success" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">{totalClientes}</p>
-              <p className="text-xs text-muted-foreground">Clientes Atendidos</p>
-            </div>
-          </CardContent>
-        </Card>
+        <KPICard title="Usuarios Admin" value={stats.length.toString()} icon={Users} />
+        <KPICard title="Total de Acoes" value={totalAcoes.toString()} icon={ClipboardList} />
+        <KPICard title="Visitas" value={totalVisitas.toString()} icon={Eye} />
+        <KPICard title="Clientes Atendidos" value={totalClientes.toString()} icon={BarChart3} />
       </div>
 
       {/* Per-user cards */}

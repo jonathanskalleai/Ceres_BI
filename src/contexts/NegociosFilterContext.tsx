@@ -10,12 +10,16 @@ interface NegociosFilterState {
   dateRange: DateRange | undefined;
   categoria: CategoriaFilter;
   funil: string;
+  vendedor: string;
+  cidade: string;
 }
 
 interface NegociosFilterContextValue extends NegociosFilterState {
   setDateRange: (range: DateRange | undefined) => void;
   setCategoria: (cat: CategoriaFilter) => void;
   setFunil: (funil: string) => void;
+  setVendedor: (vendedor: string) => void;
+  setCidade: (cidade: string) => void;
   resetFilters: () => void;
   hasActiveFilter: boolean;
 }
@@ -26,6 +30,8 @@ export function NegociosFilterProvider({ children }: { children: ReactNode }) {
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [categoria, setCategoria_] = useState<CategoriaFilter>(CATEGORIA_ALL);
   const [funil, setFunil] = useState<string>(FUNIL_ALL);
+  const [vendedor, setVendedor] = useState<string>("");
+  const [cidade, setCidade] = useState<string>("");
 
   const setCategoria = useCallback((cat: CategoriaFilter) => {
     setCategoria_(cat);
@@ -37,12 +43,16 @@ export function NegociosFilterProvider({ children }: { children: ReactNode }) {
     setDateRange(undefined);
     setCategoria_(CATEGORIA_ALL);
     setFunil(FUNIL_ALL);
+    setVendedor("");
+    setCidade("");
   }, []);
 
   const hasActiveFilter =
     dateRange !== undefined ||
     categoria !== CATEGORIA_ALL ||
-    funil !== FUNIL_ALL;
+    funil !== FUNIL_ALL ||
+    vendedor !== "" ||
+    cidade !== "";
 
   return (
     <NegociosFilterContext.Provider
@@ -50,9 +60,13 @@ export function NegociosFilterProvider({ children }: { children: ReactNode }) {
         dateRange,
         categoria,
         funil,
+        vendedor,
+        cidade,
         setDateRange,
         setCategoria,
         setFunil,
+        setVendedor,
+        setCidade,
         resetFilters,
         hasActiveFilter,
       }}

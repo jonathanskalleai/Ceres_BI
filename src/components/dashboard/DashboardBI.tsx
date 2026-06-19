@@ -224,10 +224,8 @@ export const DashboardNavigation = ({
   onNavigate,
   filters,
   onFiltersChange,
-  vendedores,
   cidades,
   tiposAcao,
-  anos,
   lastUpdated
 }: {
   dashboards: DashboardDefinition[];
@@ -235,10 +233,8 @@ export const DashboardNavigation = ({
   onNavigate: (view: string) => void;
   filters: any;
   onFiltersChange: (filters: any) => void;
-  vendedores?: string[];
   cidades?: string[];
   tiposAcao?: string[];
-  anos?: string[];
   lastUpdated?: Date;
 }) => {
   const categories = Array.from(new Set(dashboards.map(d => d.category)));
@@ -268,17 +264,6 @@ export const DashboardNavigation = ({
         <div className="space-y-2">
           <select
             className="w-full p-2 border border-border rounded text-sm"
-            value={filters.vendedor || ''}
-            onChange={(e) => onFiltersChange({ ...filters, vendedor: e.target.value })}
-          >
-            <option value="">Vendedor</option>
-            {vendedores?.map((v) => (
-              <option key={v} value={v}>{v}</option>
-            ))}
-          </select>
-
-          <select
-            className="w-full p-2 border border-border rounded text-sm"
             value={filters.cidade || ''}
             onChange={(e) => onFiltersChange({ ...filters, cidade: e.target.value })}
           >
@@ -290,12 +275,12 @@ export const DashboardNavigation = ({
 
           <select
             className="w-full p-2 border border-border rounded text-sm"
-            value={filters.periodo || ''}
-            onChange={(e) => onFiltersChange({ ...filters, periodo: e.target.value })}
+            value={filters.tipoAcao || ''}
+            onChange={(e) => onFiltersChange({ ...filters, tipoAcao: e.target.value })}
           >
-            <option value="">Período</option>
-            {anos?.map((a) => (
-              <option key={a} value={a}>{a}</option>
+            <option value="">Tipo Ação</option>
+            {tiposAcao?.map((t) => (
+              <option key={t} value={t}>{t}</option>
             ))}
           </select>
         </div>

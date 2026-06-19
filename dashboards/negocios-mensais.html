@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Negócios Mensais · Ceres BI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="assets/font-system.js"></script>
+  <link rel="stylesheet" href="assets/voux.css">
+  <link rel="stylesheet" href="assets/layout.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <style>
+    .alert-card { border-radius:12px; padding:14px 16px; border-left:4px solid; margin-bottom:10px; }
+    .alert-card--alta { background:rgba(239,68,68,.06); border-left-color:#ef4444; }
+    .alert-card--media { background:rgba(234,179,8,.06); border-left-color:#eab308; }
+    .alert-badge { display:inline-block; padding:1px 8px; border-radius:20px; font-size:9px; font-family:"JetBrains Mono",monospace; font-weight:700; letter-spacing:.06em; margin-right:6px; }
+    .alert-badge--alta { background:rgba(239,68,68,.2); color:#ef4444; }
+    .alert-badge--media { background:rgba(234,179,8,.2); color:#eab308; }
+    .consultor-table { width:100%; border-collapse:collapse; font-size:12px; }
+    .consultor-table th { padding:8px 10px; text-align:right; font-size:10px; color:var(--voux-text-muted); font-weight:600; letter-spacing:.06em; text-transform:uppercase; border-bottom:1px solid var(--voux-border); }
+    .consultor-table th:first-child { text-align:left; }
+    .consultor-table td { padding:8px 10px; border-bottom:1px solid rgba(255,255,255,.04); color:var(--voux-text-soft); text-align:right; }
+    .consultor-table td:first-child { text-align:left; font-weight:500; color:var(--voux-text); }
+    .consultor-table tr:hover td { background:rgba(255,255,255,.03); }
+    .conv-badge { display:inline-block; padding:2px 7px; border-radius:20px; font-size:10px; font-family:"JetBrains Mono",monospace; font-weight:700; }
+    .conv-high { background:rgba(34,197,94,.12); color:#22c55e; }
+    .conv-mid  { background:rgba(234,179,8,.12); color:#eab308; }
+    .conv-low  { background:rgba(239,68,68,.12); color:#ef4444; }
+    .usado-ok   { color:#22c55e; }
+    .usado-warn { color:#eab308; }
+    .usado-crit { color:#ef4444; }
+  </style>
+</head>
+<body data-page="negocios-mensais">
+  <div class="app">
+    <aside class="sidebar" data-sidebar></aside>
+    <main class="main">
+      <header class="topbar" data-topbar></header>
+      <div class="toolbar" data-toolbar></div>
+      <div class="content">
+
+        <!-- KPIs principais -->
+        <section class="kpis">
+          <div class="kpi">
+            <div class="kpi__head"><span class="kpi__label">01 · Total Negócios</span></div>
+            <div class="kpi__value voux-num" id="kpi-total">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">negócios</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head"><span class="kpi__label">02 · Total Negociado</span></div>
+            <div class="kpi__value voux-num" id="kpi-valor">—</div>
+            <div class="kpi__delta kpi__delta--up">em negócios</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head"><span class="kpi__label">03 · Ticket Médio</span></div>
+            <div class="kpi__value voux-num" id="kpi-ticket">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">por negócio</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head"><span class="kpi__label">04 · Conversão</span></div>
+            <div class="kpi__value voux-num" id="kpi-conversao">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);" id="kpi-conv-sub">ganhos/total</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head"><span class="kpi__label">05 · Ganhos</span></div>
+            <div class="kpi__value voux-num" id="kpi-ganhos" style="color:#22c55e;">—</div>
+            <div class="kpi__delta kpi__delta--up">negócios ganhos</div>
+          </div>
+        </section>
+
+        <!-- KPIs financeiros -->
+        <div class="grid-12">
+          <div class="kpi col-4" style="border-left:3px solid #22c55e;">
+            <div class="kpi__head"><span class="kpi__label">💰 Valor Recebido</span></div>
+            <div class="kpi__value voux-num" id="kpi-recebido" style="color:#22c55e;">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">entrada de caixa</div>
+          </div>
+          <div class="kpi col-4" style="border-left:3px solid #f97316;">
+            <div class="kpi__head"><span class="kpi__label">📦 Total de Usado</span></div>
+            <div class="kpi__value voux-num" id="kpi-usado" style="color:#f97316;">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">equipamentos usados</div>
+          </div>
+          <div class="kpi col-4" id="kpi-pct-usado-card">
+            <div class="kpi__head"><span class="kpi__label">📉 % Usado/Venda</span></div>
+            <div class="kpi__value voux-num" id="kpi-pct-usado">—</div>
+            <div class="kpi__delta" id="kpi-pct-label" style="color:var(--voux-text-muted);">ideal ≤10%</div>
+          </div>
+        </div>
+
+        <!-- Alertas financeiros -->
+        <div id="alertas-financeiros"></div>
+
+        <!-- Evolução mensal + Ranking -->
+        <div class="grid-12">
+          <article class="voux-card col-7">
+            <div class="voux-card__head"><div>
+              <div class="voux-card__label">01 · EVOLUÇÃO</div>
+              <h3 class="voux-card__title">Negócios <em>por Mês</em></h3>
+            </div></div>
+            <div class="chart-canvas" id="chart-evolucao" style="height:270px;"></div>
+          </article>
+          <article class="voux-card col-5">
+            <div class="voux-card__head"><div>
+              <div class="voux-card__label">02 · RANKING</div>
+              <h3 class="voux-card__title">Consultores <em>por Valor</em></h3>
+            </div></div>
+            <div class="chart-canvas" id="chart-ranking" style="height:270px;"></div>
+          </article>
+        </div>
+
+        <!-- Status + Regiões -->
+        <div class="grid-12">
+          <article class="voux-card col-4">
+            <div class="voux-card__head"><div>
+              <div class="voux-card__label">03 · STATUS</div>
+              <h3 class="voux-card__title">Situação <em>dos Negócios</em></h3>
+            </div></div>
+            <div class="chart-canvas" id="chart-status" style="height:220px;"></div>
+          </article>
+          <article class="voux-card col-8">
+            <div class="voux-card__head"><div>
+              <div class="voux-card__label">04 · REGIÕES</div>
+              <h3 class="voux-card__title">Volume <em>por Cidade</em></h3>
+            </div></div>
+            <div class="chart-canvas" id="chart-regioes" style="height:220px;"></div>
+          </article>
+        </div>
+
+        <!-- Comparativo Visitas vs Negócios -->
+        <article class="voux-card">
+          <div class="voux-card__head"><div>
+            <div class="voux-card__label">05 · CRUZAMENTO</div>
+            <h3 class="voux-card__title">Visitas CRM <em>vs Negócios Fechados</em></h3>
+          </div></div>
+          <div class="chart-canvas" id="chart-crossref" style="height:280px;"></div>
+        </article>
+
+        <!-- Tabela por consultor -->
+        <article class="voux-card">
+          <div class="voux-card__head"><div>
+            <div class="voux-card__label">06 · DETALHAMENTO</div>
+            <h3 class="voux-card__title">Taxa de Conversão <em>por Consultor</em></h3>
+          </div></div>
+          <div style="overflow-x:auto;">
+            <table class="consultor-table">
+              <thead>
+                <tr>
+                  <th>Consultor</th>
+                  <th>Negócios</th>
+                  <th>Ganhos</th>
+                  <th>Conversão</th>
+                  <th>Valor Total</th>
+                  <th>Recebido</th>
+                  <th>% Usado</th>
+                  <th>Ticket Médio</th>
+                </tr>
+              </thead>
+              <tbody id="consultor-tbody"></tbody>
+            </table>
+          </div>
+        </article>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="assets/supabase.js"></script>
+  <script src="assets/ceres-data.js"></script>
+  <script src="assets/charts.js"></script>
+  <script src="assets/layout.js"></script>
+  <script>
+    async function init() {
+      await window.CERES_DATA_READY;
+      const D = window.CERES_DATA;
+      const N = D.negociosMensais;
+      const CRM = D.crm;
+      const C = VOUX_CHART.COLORS;
+
+      VOUX_LAYOUT.renderTopbar({ section: "COMERCIAL CRM", title: "Negócios <em>Mensais</em>" });
+      VOUX_LAYOUT.renderToolbar({ period: "Base atual" });
+
+      // KPIs
+      document.getElementById("kpi-total").textContent    = D.fmtNum(N.totalNegocios);
+      document.getElementById("kpi-valor").textContent    = D.fmtBRLShort(N.totalValor);
+      document.getElementById("kpi-ticket").textContent   = D.fmtBRLShort(N.ticketMedio);
+      document.getElementById("kpi-conversao").textContent = `${N.taxaConversao}%`;
+      document.getElementById("kpi-conv-sub").textContent  = `${N.ganhos} ganhos / ${N.totalNegocios} total`;
+      document.getElementById("kpi-ganhos").textContent   = D.fmtNum(N.ganhos);
+      document.getElementById("kpi-recebido").textContent = D.fmtBRLShort(N.totalRecebido);
+      document.getElementById("kpi-usado").textContent    = D.fmtBRLShort(N.totalUsado);
+
+      const pct = N.percentUsado;
+      const pctEl = document.getElementById("kpi-pct-usado");
+      pctEl.textContent = `${pct.toFixed(1)}%`;
+      pctEl.style.color = pct <= 10 ? "#22c55e" : pct <= 16 ? "#eab308" : "#ef4444";
+      document.getElementById("kpi-pct-label").textContent = pct <= 10 ? "✅ Saudável" : pct <= 16 ? "⚠️ Alerta (10-16%)" : "❌ Crítico (>16%)";
+      document.getElementById("kpi-pct-usado-card").style.borderLeft = `3px solid ${pct <= 10 ? "#22c55e" : pct <= 16 ? "#eab308" : "#ef4444"}`;
+
+      // Alertas automáticos
+      const alertas = [];
+      if (N.totalRecebido < N.totalValor * 0.5 && N.totalValor > 0) {
+        alertas.push({ sev: "alta", titulo: "Alerta de Caixa", desc: `Alto volume de negócios (${D.fmtBRLShort(N.totalValor)}) com baixa entrada de caixa (${D.fmtBRLShort(N.totalRecebido)}). Dependência elevada de usados.` });
+      }
+      if (pct > 16) alertas.push({ sev: "alta", titulo: "% Usado Crítico", desc: `% Usado sobre venda em ${pct.toFixed(1)}% (acima de 16%). Impacto direto no caixa da empresa.` });
+      else if (pct > 10) alertas.push({ sev: "media", titulo: "% Usado em Alerta", desc: `% Usado sobre venda em ${pct.toFixed(1)}% (entre 10% e 16%). Monitorar para evitar impacto no caixa.` });
+      N.porConsultor.filter(c => c.percentUsado > 16 && c.valor > 0).slice(0, 3).forEach(c => {
+        alertas.push({ sev: "alta", titulo: `Consultor ${c.nome.split(" ").slice(-1)[0]} — Alto Usado`, desc: `${c.percentUsado.toFixed(1)}% de usado (${D.fmtBRLShort(c.usado)} de ${D.fmtBRLShort(c.valor)})` });
+      });
+      const alertasEl = document.getElementById("alertas-financeiros");
+      if (alertas.length) {
+        const card = document.createElement("article");
+        card.className = "voux-card";
+        card.innerHTML = `<div class="voux-card__head"><div><div class="voux-card__label">⚠ ALERTAS</div><h3 class="voux-card__title">Alertas <em>Financeiros</em></h3></div></div>`;
+        alertas.forEach(a => {
+          card.innerHTML += `<div class="alert-card alert-card--${a.sev}">
+            <span class="alert-badge alert-badge--${a.sev}">${a.sev.toUpperCase()}</span>
+            <strong style="font-size:12px;">${a.titulo}</strong>
+            <div style="font-size:12px;color:var(--voux-text-muted);margin-top:4px;">${a.desc}</div>
+          </div>`;
+        });
+        alertasEl.appendChild(card);
+      }
+
+      // Evolução mensal
+      const evol = N.evolucaoMensal;
+      if (evol.length) {
+        VOUX_CHART.barV(
+          document.getElementById("chart-evolucao"),
+          evol.map(e => D.fmtMonthYear(e.mes)),
+          [
+            { name: "Negócios", color: C.accent,  values: evol.map(e => e.total) },
+            { name: "Ganhos",   color: C.success, values: evol.map(e => e.ganhos) },
+          ],
+          { height: 260 }
+        );
+      }
+
+      // Ranking consultores
+      const top10 = N.porConsultor.slice(0, 10);
+      if (top10.length) {
+        VOUX_CHART.barH(
+          document.getElementById("chart-ranking"),
+          top10.map(c => ({ label: c.nome.split(" ").slice(-1)[0], value: c.valor })),
+          { color: C.accent, height: 260, rowH: 24, valueFormatter: v => D.fmtBRLShort(v) }
+        );
+      }
+
+      // Status donut
+      const statusData = [
+        { label: "Ganho",        value: N.ganhos,      color: C.success },
+        { label: "Em andamento", value: N.emAndamento, color: C.info },
+        { label: "Perdido",      value: N.perdidos,    color: C.danger },
+      ].filter(d => d.value > 0);
+      if (statusData.length) {
+        VOUX_CHART.donut(document.getElementById("chart-status"), statusData, { height: 210, innerLabel: D.fmtNum(N.totalNegocios), innerSub: "total" });
+      }
+
+      // Regiões
+      const top10r = N.porRegiao.slice(0, 10);
+      if (top10r.length) {
+        VOUX_CHART.barH(
+          document.getElementById("chart-regioes"),
+          top10r.map(r => ({ label: r.regiao, value: r.valor })),
+          { color: C.warning, height: 210, rowH: 24, labelW: 130, valueFormatter: v => D.fmtBRLShort(v) }
+        );
+      }
+
+      // Crossref visitas vs negócios
+      if (CRM) {
+        const visitaMap = {};
+        CRM.registrosRecentes.forEach(r => {
+          if ((r.tipoContato || "").toLowerCase().includes("visita") && r.vendedor) {
+            visitaMap[r.vendedor] = (visitaMap[r.vendedor] || 0) + 1;
+          }
+        });
+        const crossData = N.porConsultor
+          .map(c => ({ nome: c.nome.split(" ").slice(-1)[0], visitas: visitaMap[c.nome] || 0, negocios: c.total, ganhos: c.ganhos }))
+          .filter(c => c.visitas > 0 || c.negocios > 0)
+          .slice(0, 15);
+        if (crossData.length) {
+          VOUX_CHART.barV(
+            document.getElementById("chart-crossref"),
+            crossData.map(c => c.nome),
+            [
+              { name: "Visitas (CRM)",  color: C.info,    values: crossData.map(c => c.visitas) },
+              { name: "Negócios",       color: C.accent,  values: crossData.map(c => c.negocios) },
+              { name: "Ganhos",         color: C.success, values: crossData.map(c => c.ganhos) },
+            ],
+            { height: 270 }
+          );
+        }
+      }
+
+      // Tabela consultores
+      const tbody = document.getElementById("consultor-tbody");
+      N.porConsultor.forEach(c => {
+        const convCls = c.conversao >= 50 ? "conv-high" : c.conversao >= 25 ? "conv-mid" : "conv-low";
+        const usadoCls = c.percentUsado <= 10 ? "usado-ok" : c.percentUsado <= 16 ? "usado-warn" : "usado-crit";
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${c.nome}</td>
+          <td>${c.total}</td>
+          <td>${c.ganhos}</td>
+          <td><span class="conv-badge ${convCls}">${c.conversao}%</span></td>
+          <td>${D.fmtBRLShort(c.valor)}</td>
+          <td>${D.fmtBRLShort(c.recebido)}</td>
+          <td class="${usadoCls}">${c.percentUsado.toFixed(1)}%</td>
+          <td>${D.fmtBRLShort(c.ticketMedio)}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+    init();
+  </script>
+</body>
+</html>

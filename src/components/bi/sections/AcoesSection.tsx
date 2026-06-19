@@ -49,7 +49,8 @@ export default function AcoesSection({ active, categoria, funil }: Props) {
   const { kpis, porVendedor, porCidade, porMes, porDiaSemana, porTipoAcao, porTipoContato, listaAnos, isLoading } =
     useAcoesBI(active, filters, categoria, funil);
 
-  const { data: comercialData } = useComercialData();
+  // Usa allData (sem filtro de admin users) — dropdowns devem listar TODOS os vendedores/cidades/tipos.
+  const { allData: comercialData } = useComercialData();
 
   const listaVendedores = comercialData?.listaVendedores ?? [];
   const listaCidades = comercialData?.listaCidades ?? [];

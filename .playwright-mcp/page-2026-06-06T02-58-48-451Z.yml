@@ -1,0 +1,159 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - emphasis [ref=e6]: V
+      - generic [ref=e7]:
+        - generic [ref=e8]:
+          - text: Ceres
+          - emphasis [ref=e9]: BI
+        - generic [ref=e10]: Business Intelligence
+    - generic [ref=e11]:
+      - generic [ref=e12]: Visão Geral
+      - link "Dashboard 01" [ref=e13] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e14]
+        - generic [ref=e19]: Dashboard
+        - generic [ref=e20]: "01"
+    - generic [ref=e21]:
+      - generic [ref=e22]: CRM
+      - link "Comercial 02" [ref=e23] [cursor=pointer]:
+        - /url: comercial.html
+        - img [ref=e24]
+        - generic [ref=e27]: Comercial
+        - generic [ref=e28]: "02"
+      - link "Pedidos 03" [ref=e29] [cursor=pointer]:
+        - /url: pedidos.html
+        - img [ref=e30]
+        - generic [ref=e33]: Pedidos
+        - generic [ref=e34]: "03"
+      - link "Ações CRM 04" [ref=e35] [cursor=pointer]:
+        - /url: acoes.html
+        - img [ref=e36]
+        - generic [ref=e39]: Ações CRM
+        - generic [ref=e40]: "04"
+    - generic [ref=e41]:
+      - generic [ref=e42]: Operação
+      - link "Operacional 05" [ref=e43] [cursor=pointer]:
+        - /url: operacional.html
+        - img [ref=e44]
+        - generic [ref=e46]: Operacional
+        - generic [ref=e47]: "05"
+      - link "Produtos 06" [ref=e48] [cursor=pointer]:
+        - /url: produtos.html
+        - img [ref=e49]
+        - generic [ref=e52]: Produtos
+        - generic [ref=e53]: "06"
+      - link "Serviços 07" [ref=e54] [cursor=pointer]:
+        - /url: servicos.html
+        - img [ref=e55]
+        - generic [ref=e58]: Serviços
+        - generic [ref=e59]: "07"
+    - generic [ref=e60]:
+      - generic [ref=e61]: CR
+      - generic [ref=e62]:
+        - generic [ref=e63]: Ceres BI
+        - generic [ref=e64]: CRM Analytics
+  - main [ref=e65]:
+    - generic [ref=e68]:
+      - generic [ref=e69]:
+        - combobox [ref=e70] [cursor=pointer]:
+          - option "Todos os Anos" [selected]
+        - combobox [ref=e71] [cursor=pointer]:
+          - option "Todos os Meses" [selected]
+          - option "Janeiro"
+          - option "Fevereiro"
+          - option "Março"
+          - option "Abril"
+          - option "Maio"
+          - option "Junho"
+          - option "Julho"
+          - option "Agosto"
+          - option "Setembro"
+          - option "Outubro"
+          - option "Novembro"
+          - option "Dezembro"
+        - combobox [ref=e72] [cursor=pointer]:
+          - option "Todos Consultores" [selected]
+        - combobox [ref=e73] [cursor=pointer]:
+          - option "Todos Tipos" [selected]
+        - combobox [ref=e74] [cursor=pointer]:
+          - option "Todas Cidades" [selected]
+      - generic [ref=e75]:
+        - generic [ref=e76]:
+          - generic [ref=e77]:
+            - generic [ref=e78]: 01 · Total de Ações
+            - img [ref=e80]
+          - generic [ref=e82]: —
+          - generic [ref=e83]: atividades registradas
+        - generic [ref=e84]:
+          - generic [ref=e85]:
+            - generic [ref=e86]: 02 · Cidades Atendidas
+            - img [ref=e88]
+          - generic [ref=e91]: —
+          - generic [ref=e92]: municípios
+        - generic [ref=e93]:
+          - generic [ref=e94]:
+            - generic [ref=e95]: 03 · Consultores Ativos
+            - img [ref=e97]
+          - generic [ref=e102]: —
+          - generic [ref=e103]: com atividades
+        - generic [ref=e104]:
+          - generic [ref=e105]:
+            - generic [ref=e106]: 04 · Total de Visitas
+            - img [ref=e108]
+          - generic [ref=e111]: —
+          - generic [ref=e112]: presenciais
+        - generic [ref=e113]:
+          - generic [ref=e114]:
+            - generic [ref=e115]: 05 · Clientes Únicos
+            - img [ref=e117]
+          - generic [ref=e120]: —
+          - generic [ref=e121]: clientes contactados
+        - generic [ref=e122]:
+          - generic [ref=e123]:
+            - generic [ref=e124]: 06 · Tipos de Ação
+            - img [ref=e126]
+          - generic [ref=e131]: —
+          - generic [ref=e132]: modalidades distintas
+      - generic [ref=e133]:
+        - article [ref=e134]:
+          - generic [ref=e136]:
+            - generic [ref=e137]: 01 · Ações por Consultor
+            - heading "Top 15 por Volume" [level=3] [ref=e138]:
+              - text: Top 15
+              - emphasis [ref=e139]: por Volume
+        - article [ref=e141]:
+          - generic [ref=e143]:
+            - generic [ref=e144]: 02 · Evolução Mensal
+            - heading "Ações por Mês" [level=3] [ref=e145]:
+              - text: Ações
+              - emphasis [ref=e146]: por Mês
+      - generic [ref=e148]:
+        - article [ref=e149]:
+          - generic [ref=e151]:
+            - generic [ref=e152]: 03 · Ações por Cidade
+            - heading "Top 15 Cidades" [level=3] [ref=e153]:
+              - text: Top 15
+              - emphasis [ref=e154]: Cidades
+        - article [ref=e156]:
+          - generic [ref=e158]:
+            - generic [ref=e159]: 04 · Tipo de Ação
+            - heading "Distribuição por Tipo" [level=3] [ref=e160]:
+              - text: Distribuição
+              - emphasis [ref=e161]: por Tipo
+          - paragraph [ref=e162]: Proporção de cada tipo de atividade
+      - generic [ref=e164]:
+        - article [ref=e165]:
+          - generic [ref=e167]:
+            - generic [ref=e168]: 05 · Dia da Semana
+            - heading "Concentração Semanal" [level=3] [ref=e169]:
+              - text: Concentração
+              - emphasis [ref=e170]: Semanal
+          - paragraph [ref=e171]: Ações por dia da semana
+        - article [ref=e173]:
+          - generic [ref=e175]:
+            - generic [ref=e176]: 06 · Tipo de Contato
+            - heading "Canais de Comunicação" [level=3] [ref=e177]:
+              - text: Canais
+              - emphasis [ref=e178]: de Comunicação
+          - paragraph [ref=e179]: Distribuição dos canais utilizados

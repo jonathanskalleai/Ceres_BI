@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Consultores · Ceres BI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="assets/font-system.js"></script>
+  <link rel="stylesheet" href="assets/voux.css">
+  <link rel="stylesheet" href="assets/layout.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <style>
+    .podium { display:flex; align-items:flex-end; justify-content:center; gap:8px; margin:24px 0; }
+    .podium__item { text-align:center; flex:1; max-width:140px; }
+    .podium__bar { border-radius:8px 8px 0 0; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding:12px 8px; gap:4px; }
+    .podium__bar--1 { background:linear-gradient(180deg,rgba(212,184,150,.25) 0%,rgba(212,184,150,.08) 100%); border:1px solid rgba(212,184,150,.4); min-height:160px; }
+    .podium__bar--2 { background:linear-gradient(180deg,rgba(160,160,200,.2) 0%,rgba(160,160,200,.06) 100%); border:1px solid rgba(160,160,200,.3); min-height:120px; }
+    .podium__bar--3 { background:linear-gradient(180deg,rgba(200,140,80,.2) 0%,rgba(200,140,80,.06) 100%); border:1px solid rgba(200,140,80,.3); min-height:100px; }
+    .podium__medal { font-size:22px; line-height:1; }
+    .podium__name { font-size:11px; font-weight:600; color:var(--voux-text); line-height:1.2; margin-top:4px; }
+    .podium__score { font-family:"JetBrains Mono",monospace; font-size:20px; font-weight:700; color:var(--voux-champagne-400); margin-top:4px; }
+    .podium__acoes { font-size:10px; color:var(--voux-text-muted); }
+    .podium__pos { font-family:"JetBrains Mono",monospace; font-size:11px; color:var(--voux-text-soft); margin-top:4px; }
+    .consultant-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; padding:0; }
+    .consultant-card { background:var(--voux-surface); border:1px solid var(--voux-border); border-radius:16px; padding:20px; transition:border-color .2s,transform .2s; }
+    .consultant-card:hover { border-color:rgba(212,184,150,.35); transform:translateY(-2px); }
+    .consultant-card__header { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+    .consultant-card__avatar { width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg,var(--voux-champagne-400) 0%,rgba(212,184,150,.4) 100%); display:flex; align-items:center; justify-content:center; font-family:"JetBrains Mono",monospace; font-size:13px; font-weight:600; color:var(--voux-bg); flex-shrink:0; }
+    .consultant-card__name { font-size:14px; font-weight:600; color:var(--voux-text); line-height:1.2; }
+    .consultant-card__badge { font-size:10px; padding:2px 8px; border-radius:20px; font-family:"JetBrains Mono",monospace; font-weight:600; letter-spacing:.05em; }
+    .consultant-card__badge--admin { background:rgba(160,160,200,.15); color:rgba(160,160,200,.8); border:1px solid rgba(160,160,200,.25); }
+    .consultant-card__badge--consultor { background:rgba(212,184,150,.12); color:var(--voux-champagne-400); border:1px solid rgba(212,184,150,.25); }
+    .consultant-card__stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }
+    .consultant-card__stat { text-align:center; padding:8px 4px; background:rgba(255,255,255,.03); border-radius:8px; }
+    .consultant-card__stat-val { font-family:"JetBrains Mono",monospace; font-size:16px; font-weight:700; color:var(--voux-text); }
+    .consultant-card__stat-lbl { font-size:9px; color:var(--voux-text-muted); text-transform:uppercase; letter-spacing:.08em; margin-top:2px; }
+    .score-bar-wrap { margin-top:4px; }
+    .score-bar-label { display:flex; justify-content:space-between; font-size:10px; color:var(--voux-text-muted); margin-bottom:4px; }
+    .score-bar-track { height:6px; background:rgba(255,255,255,.06); border-radius:3px; overflow:hidden; }
+    .score-bar-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,var(--voux-champagne-400),rgba(212,184,150,.5)); transition:width .6s ease; }
+  </style>
+</head>
+<body data-page="consultores">
+  <div class="app">
+    <aside class="sidebar" data-sidebar></aside>
+    <main class="main">
+      <header class="topbar" data-topbar></header>
+      <div class="toolbar" data-toolbar></div>
+      <div class="content">
+
+        <section class="kpis">
+          <div class="kpi">
+            <div class="kpi__head"><span class="kpi__label">01 · Consultores</span></div>
+            <div class="kpi__value voux-num" id="kpi-consultores">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">ativos</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head"><span class="kpi__label">02 · Total Registros</span></div>
+            <div class="kpi__value voux-num" id="kpi-registros">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">ações CRM</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head"><span class="kpi__label">03 · Pipeline Total</span></div>
+            <div class="kpi__value voux-num" id="kpi-pipeline">—</div>
+            <div class="kpi__delta kpi__delta--up">em negociação</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head"><span class="kpi__label">04 · Média Ações</span></div>
+            <div class="kpi__value voux-num" id="kpi-media">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">por consultor</div>
+          </div>
+        </section>
+
+        <article class="voux-card">
+          <div class="voux-card__head">
+            <div>
+              <div class="voux-card__label">— TOP 5 · PODIUM</div>
+              <h3 class="voux-card__title">Ranking <em>de Consultores</em></h3>
+            </div>
+          </div>
+          <div id="podium" class="podium"></div>
+        </article>
+
+        <article class="voux-card">
+          <div class="voux-card__head">
+            <div>
+              <div class="voux-card__label">— TODOS OS CONSULTORES</div>
+              <h3 class="voux-card__title">Performance <em>Detalhada</em></h3>
+            </div>
+          </div>
+          <div id="grid-consultores" class="consultant-grid"></div>
+        </article>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="assets/supabase.js"></script>
+  <script src="assets/ceres-data.js"></script>
+  <script src="assets/charts.js"></script>
+  <script src="assets/layout.js"></script>
+  <script>
+    async function init() {
+      await window.CERES_DATA_READY;
+      const D = window.CERES_DATA;
+      const all = D.crm.vendedores;
+      const comerciais = all.filter(v => !v.isAdmin).sort((a, b) => b.crmQuality - a.crmQuality);
+      const admins = all.filter(v => v.isAdmin);
+
+      VOUX_LAYOUT.renderTopbar({ section: "COMERCIAL CRM", title: "Consultores <em>CRM</em>" });
+      VOUX_LAYOUT.renderToolbar({ period: "Base atual" });
+
+      document.getElementById("kpi-consultores").textContent = D.fmtNum(comerciais.length);
+      document.getElementById("kpi-registros").textContent   = D.fmtNum(D.crm.kpis.totalRegistros);
+      document.getElementById("kpi-pipeline").textContent    = D.fmtBRLShort(D.crm.kpis.totalPipeline);
+      const mediaAcoes = comerciais.length > 0 ? Math.round(D.crm.kpis.totalRegistros / comerciais.length) : 0;
+      document.getElementById("kpi-media").textContent       = D.fmtNum(mediaAcoes);
+
+      // Podium
+      const medals = ["🥇","🥈","🥉","4°","5°"];
+      const positions = [1, 0, 2, 3, 4]; // order: 2nd, 1st, 3rd, 4th, 5th
+      const top5 = comerciais.slice(0, 5);
+      const ordered = [top5[1], top5[0], top5[2], top5[3], top5[4]].filter(Boolean);
+      const orderedMedals = [medals[1], medals[0], medals[2], medals[3], medals[4]];
+      const barClasses = ["podium__bar--2", "podium__bar--1", "podium__bar--3", "", ""];
+
+      const podiumEl = document.getElementById("podium");
+      ordered.forEach((v, i) => {
+        const initials = v.nome.split(" ").filter(Boolean).map(w => w[0]).slice(0, 2).join("");
+        const realIdx = [1, 0, 2, 3, 4][i];
+        podiumEl.innerHTML += `
+          <div class="podium__item">
+            <div class="podium__bar ${barClasses[i] || 'podium__bar--3'}" style="min-height:${[120, 160, 100, 80, 70][i]}px">
+              <div class="podium__medal">${medals[realIdx]}</div>
+              <div class="podium__score">${v.crmQuality}</div>
+              <div class="podium__acoes">${D.fmtNum(v.totalAcoes)} ações</div>
+              <div class="podium__name">${v.nome.split(" ").slice(0, 2).join(" ")}</div>
+            </div>
+            <div class="podium__pos">#${realIdx + 1}</div>
+          </div>`;
+      });
+
+      // Cards grid
+      const gridEl = document.getElementById("grid-consultores");
+      const renderList = [...comerciais, ...admins];
+      renderList.forEach(v => {
+        const initials = v.nome.split(" ").filter(Boolean).map(w => w[0]).slice(0, 2).join("");
+        const div = document.createElement("div");
+        div.className = "consultant-card";
+        div.innerHTML = `
+          <div class="consultant-card__header">
+            <div class="consultant-card__avatar">${initials}</div>
+            <div style="flex:1; min-width:0;">
+              <div class="consultant-card__name">${v.nome}</div>
+              <span class="consultant-card__badge ${v.isAdmin ? 'consultant-card__badge--admin' : 'consultant-card__badge--consultor'}">
+                ${v.isAdmin ? "Administrativo" : "Consultor"}
+              </span>
+            </div>
+          </div>
+          <div class="consultant-card__stats">
+            <div class="consultant-card__stat">
+              <div class="consultant-card__stat-val">${D.fmtNum(v.totalAcoes)}</div>
+              <div class="consultant-card__stat-lbl">Ações</div>
+            </div>
+            <div class="consultant-card__stat">
+              <div class="consultant-card__stat-val">${D.fmtNum(v.clientes)}</div>
+              <div class="consultant-card__stat-lbl">Clientes</div>
+            </div>
+            <div class="consultant-card__stat">
+              <div class="consultant-card__stat-val">${v.conversao}%</div>
+              <div class="consultant-card__stat-lbl">Conversão</div>
+            </div>
+            <div class="consultant-card__stat">
+              <div class="consultant-card__stat-val">${D.fmtNum(v.visitas)}</div>
+              <div class="consultant-card__stat-lbl">Visitas</div>
+            </div>
+            <div class="consultant-card__stat">
+              <div class="consultant-card__stat-val">${D.fmtBRLShort(v.pipeline)}</div>
+              <div class="consultant-card__stat-lbl">Pipeline</div>
+            </div>
+            <div class="consultant-card__stat">
+              <div class="consultant-card__stat-val" style="color:var(--voux-champagne-400)">${v.crmQuality}</div>
+              <div class="consultant-card__stat-lbl">Score</div>
+            </div>
+          </div>
+          <div class="score-bar-wrap">
+            <div class="score-bar-label"><span>CRM Quality Score</span><span>${v.crmQuality}/100</span></div>
+            <div class="score-bar-track"><div class="score-bar-fill" style="width:${v.crmQuality}%"></div></div>
+          </div>`;
+        gridEl.appendChild(div);
+      });
+    }
+    init();
+  </script>
+</body>
+</html>

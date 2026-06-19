@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ordens de Serviço · Voux BI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="assets/font-system.js"></script>
+  <link rel="stylesheet" href="assets/voux.css">
+  <link rel="stylesheet" href="assets/layout.css">
+</head>
+<body data-page="ordens-servico">
+  <div class="app">
+    <aside class="sidebar" data-sidebar></aside>
+    <main class="main">
+      <header class="topbar" data-topbar></header>
+      <div class="toolbar" data-toolbar></div>
+      <div class="content">
+
+        <!-- 3 KPI columns para Abertas / Encerradas / Aber-Enc -->
+        <section class="grid-3">
+          <article class="voux-card" style="text-align:center;">
+            <div class="voux-card__label" style="color:var(--voux-champagne-400);">01 · ABERTAS NO MÊS</div>
+            <div class="voux-display" style="font-size:64px; color:var(--voux-champagne-400); margin:10px 0 4px;">117</div>
+            <div class="voux-card__sub">+12 vs mês anterior</div>
+          </article>
+          <article class="voux-card" style="text-align:center;">
+            <div class="voux-card__label" style="color:var(--voux-info);">02 · ENCERRADAS NO MÊS</div>
+            <div class="voux-display" style="font-size:64px; color:var(--voux-info); margin:10px 0 4px;">145</div>
+            <div class="voux-card__sub">+18 vs mês anterior</div>
+          </article>
+          <article class="voux-card" style="text-align:center;">
+            <div class="voux-card__label" style="color:var(--voux-warning);">03 · ABERTAS E ENCERRADAS</div>
+            <div class="voux-display" style="font-size:64px; color:var(--voux-warning); margin:10px 0 4px;">90</div>
+            <div class="voux-card__sub">SLA 87.4%</div>
+          </article>
+        </section>
+
+        <!-- Por tipo -->
+        <section>
+          <div class="section-head" style="margin-bottom:16px;">
+            <h3 class="section-head__title"><span class="section-head__title-num">— 04 ·  POR TIPO</span> Distribuição por <em>processo</em></h3>
+            <span class="section-head__meta">9 categorias</span>
+          </div>
+          <div class="grid-3">
+            <article class="voux-card">
+              <div class="voux-card__head">
+                <div class="voux-card__label">Abertas</div>
+                <span class="tag"><span class="voux-dot" style="color:var(--voux-champagne-400);"></span>117</span>
+              </div>
+              <div id="tipo-abertas"></div>
+            </article>
+            <article class="voux-card">
+              <div class="voux-card__head">
+                <div class="voux-card__label">Encerradas</div>
+                <span class="tag"><span class="voux-dot" style="color:var(--voux-info);"></span>145</span>
+              </div>
+              <div id="tipo-encerradas"></div>
+            </article>
+            <article class="voux-card">
+              <div class="voux-card__head">
+                <div class="voux-card__label">Abr. / Enc.</div>
+                <span class="tag"><span class="voux-dot" style="color:var(--voux-warning);"></span>90</span>
+              </div>
+              <div id="tipo-abrenc"></div>
+            </article>
+          </div>
+        </section>
+
+        <!-- Por operador -->
+        <section>
+          <div class="section-head" style="margin-bottom:16px;">
+            <h3 class="section-head__title"><span class="section-head__title-num">— 05 ·  POR OPERADOR</span> Quem está <em>resolvendo</em></h3>
+            <span class="section-head__meta">9 operadores</span>
+          </div>
+          <div class="grid-3">
+            <article class="voux-card">
+              <div class="voux-card__head">
+                <div class="voux-card__label">Abertas</div>
+              </div>
+              <div id="op-abertas"></div>
+            </article>
+            <article class="voux-card">
+              <div class="voux-card__head">
+                <div class="voux-card__label">Encerradas</div>
+              </div>
+              <div id="op-encerradas"></div>
+            </article>
+            <article class="voux-card">
+              <div class="voux-card__head">
+                <div class="voux-card__label">Abr. / Enc.</div>
+              </div>
+              <div id="op-abrenc"></div>
+            </article>
+          </div>
+        </section>
+
+        <!-- Detalhamento por endereço -->
+        <section>
+          <div class="section-head" style="margin-bottom:16px;">
+            <h3 class="section-head__title"><span class="section-head__title-num">— 06 ·  ENDEREÇO</span> Detalhamento <em>geográfico</em></h3>
+          </div>
+          <div class="grid-3">
+            <article class="voux-card">
+              <div class="voux-card__head"><div class="voux-card__label">Cidade · Abertas</div></div>
+              <div class="chart-canvas" id="cid-abertas" style="height:220px;"></div>
+              <div id="cid-legend" style="margin-top:14px;"></div>
+            </article>
+            <article class="voux-card">
+              <div class="voux-card__head"><div class="voux-card__label">Bairro · Abertas</div></div>
+              <div id="bairro-abertas"></div>
+            </article>
+            <article class="voux-card">
+              <div class="voux-card__head"><div class="voux-card__label">Condomínio · Abertas</div></div>
+              <div class="placeholder" style="height:220px;">EM BRANCO · 100%</div>
+              <div style="text-align:center; margin-top:14px;"><span class="voux-mono" style="font-size:11px; color:var(--voux-text-muted);">SEM REGISTROS</span></div>
+            </article>
+          </div>
+        </section>
+
+        <!-- Linha do tempo diária -->
+        <article class="voux-card">
+          <div class="voux-card__head">
+            <div>
+              <div class="voux-card__label">07 · Cadência</div>
+              <h3 class="voux-card__title">O.S. <em>abertas</em> por dia</h3>
+            </div>
+            <span class="tag">31 dias</span>
+          </div>
+          <div class="chart-canvas chart-wrap-md" id="chart-cad"></div>
+        </article>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="assets/data.js"></script>
+  <script src="assets/charts.js"></script>
+  <script src="assets/layout.js"></script>
+  <script>
+    const D = VOUX_DATA;
+    VOUX_LAYOUT.renderTopbar({
+      section: "Operação · Ordens de Serviço",
+      title: `Ordens de <em>Serviço</em>`,
+    });
+    VOUX_LAYOUT.renderToolbar({
+      period: "01 Jun – 30 Jun · 2023",
+      segments: [{label:"Dia"},{label:"Mês",active:true},{label:"Ano"}],
+      filters: [
+        { label: "Status", value: "Todos" },
+        { label: "Cidade", value: "Todas" },
+        { label: "Tipo", value: "Todos" },
+      ],
+    });
+
+    const C = VOUX_CHART.COLORS;
+
+    VOUX_CHART.barH(document.getElementById("tipo-abertas"),
+      D.os.porTipo.abertas.map(d => ({ label: d.tipo, value: d.qtd })),
+      { color: C.accent, labelW: 130 });
+
+    VOUX_CHART.barH(document.getElementById("tipo-encerradas"),
+      D.os.porTipo.encerradas.map(d => ({ label: d.tipo, value: d.qtd })),
+      { color: C.info, labelW: 130 });
+
+    // Abr/Enc - subset of encerradas
+    VOUX_CHART.barH(document.getElementById("tipo-abrenc"),
+      D.os.porTipo.encerradas.slice(0,7).map((d,i) => ({ label: d.tipo, value: [57,8,7,5,4,3,3][i] })),
+      { color: C.warning, labelW: 130 });
+
+    VOUX_CHART.barH(document.getElementById("op-abertas"),
+      D.os.porOperador.abertas.map(d => ({ label: d.op, value: d.qtd })),
+      { color: C.accent, labelW: 90 });
+
+    VOUX_CHART.barH(document.getElementById("op-encerradas"),
+      D.os.porOperador.encerradas.map(d => ({ label: d.op, value: d.qtd })),
+      { color: C.info, labelW: 90 });
+
+    VOUX_CHART.barH(document.getElementById("op-abrenc"),
+      [{op:"jardel",qtd:21},{op:"joao",qtd:14},{op:"raudanes",qtd:14},{op:"jadson",qtd:13},{op:"thiago",qtd:9},{op:"alan",qtd:8}].map(d => ({ label: d.op, value: d.qtd })),
+      { color: C.warning, labelW: 90 });
+
+    // Cidade donut
+    const cores = [C.accent, C.info, C.success, C.warning];
+    VOUX_CHART.donut(document.getElementById("cid-abertas"),
+      D.os.porCidade.map((c,i) => ({ label: c.cidade, value: c.pct, color: cores[i] })),
+      { centerLabel: "TOTAL", centerValue: "117", thickness: 26, height: 220 });
+    document.getElementById("cid-legend").innerHTML = D.os.porCidade.map((c,i) => `
+      <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--voux-border); font-size:12px;">
+        <span style="display:flex; align-items:center; gap:8px;">
+          <span class="voux-dot" style="color:${cores[i]};"></span>
+          <span style="color:var(--voux-text-soft);">${c.cidade}</span>
+        </span>
+        <span class="voux-mono" style="color:var(--voux-text); font-size:11px;">${c.pct.toFixed(2)}%</span>
+      </div>
+    `).join("");
+
+    VOUX_CHART.barH(document.getElementById("bairro-abertas"),
+      D.os.porBairro.map(d => ({ label: d.bairro, value: d.qtd })),
+      { color: C.accent, labelW: 110 });
+
+    // Cadência diária
+    VOUX_CHART.line(document.getElementById("chart-cad"),
+      Array.from({length: D.os.diario.length}, (_,i) => String(i+1)),
+      [{ name: "Abertas", color: C.accent, values: D.os.diario }],
+      { height: 220, points: true, yFmt: v => v });
+  </script>
+</body>
+</html>

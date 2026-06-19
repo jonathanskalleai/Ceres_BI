@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { DadosComerciais } from "@/types/comercial";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { KPICard } from "@/components/bi/KPICard";
 import { Users, MapPin, TrendingUp, Eye, DollarSign, BarChart3 } from "lucide-react";
 import { BarChart, LineChart, PieChart } from "@/components/bi/charts";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
@@ -104,27 +105,14 @@ export const DashboardOverview = ({ data, filters, onSelectConsultor, totalRegis
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-foreground">Visão Geral</h2>
-        <p className="text-sm text-muted-foreground">
-          Painel de controle comercial — Campos Dealer
-          {isFiltered && (
-            <span className="ml-2 text-primary font-medium">(filtros ativos)</span>
-          )}
-        </p>
-      </div>
-
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {kpiCards.map((kpi) => (
-          <Card key={kpi.label} className="border-0 shadow-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <kpi.icon className={`h-5 w-5 ${kpi.color}`} />
-              </div>
-              <p className="text-2xl font-bold mt-2">{kpi.value}</p>
-              <p className="text-xs text-muted-foreground">{kpi.label}</p>
-            </CardContent>
-          </Card>
+          <KPICard
+            key={kpi.label}
+            title={kpi.label}
+            value={kpi.value}
+            icon={kpi.icon}
+          />
         ))}
       </div>
 
