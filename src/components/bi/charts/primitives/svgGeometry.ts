@@ -25,9 +25,9 @@ export const VOUX_PALETTE = [
   "#c8b99a", "#7ca88e", "#c27c5a", "#8b9dc3", "#b8a9d4", "#6e542f", "#8a8273",
 ] as const;
 
-// Light palette (vibrant, high-contrast for white bg)
+// Light palette (vibrant, high-contrast for white bg) — saturação reforçada
 export const VOUX_PALETTE_LIGHT = [
-  "#b8782a", "#2d8f5c", "#d4592e", "#2a6cb8", "#8b4fbf", "#c4883a", "#4a7a6e",
+  "#8a4a14", "#1f6e3f", "#b8421c", "#1d4f8a", "#6a2f99", "#9c5e1c", "#2f5c52",
 ] as const;
 
 /** Returns the correct chart palette based on active theme. */

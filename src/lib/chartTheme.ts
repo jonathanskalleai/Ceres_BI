@@ -6,21 +6,21 @@ import type { EChartsOption } from "echarts";
  * Suporta dark/light mode via getChartThemeVars().
  */
 
-// VOUX palette — champagne/ink editorial
+// VOUX palette — champagne/ink editorial (light-mode strong, legível em fundo claro)
 export const CHART_COLORS = [
-  "#d4b896", // champagne-400 (primary accent)
-  "#7a9b6f", // success (muted green)
-  "#d4a05a", // warning (amber)
-  "#8ea3b8", // info (steel blue)
-  "#c97565", // danger (muted red)
-  "#b8945a", // champagne-500
-  "#6b8273", // muted sage
-  "#a89080", // warm muted
+  "#8a4a14", // primary (champagne escurecido)
+  "#1f6e3f", // success (verde profundo)
+  "#9c5e1c", // warning (âmbar denso)
+  "#1d4f8a", // info (azul aço)
+  "#b8421c", // danger (terracota forte)
+  "#6a2f99", // accent secundário (roxo poeira)
+  "#2f5c52", // sage profundo
+  "#7a4a2a", // warm muted (cobre)
 ] as const;
 
-export const ACCENT_COLOR = "#d4b896";
-export const POSITIVE_COLOR = "#7a9b6f";
-export const NEGATIVE_COLOR = "#c97565";
+export const ACCENT_COLOR = "#8a4a14";
+export const POSITIVE_COLOR = "#1f6e3f";
+export const NEGATIVE_COLOR = "#b8421c";
 
 // ----- Dark/Light theme vars for charts -----
 

@@ -17,7 +17,7 @@ import type { AppModule } from '@/types/auth';
 const MODULE_ROUTES: Record<string, string> = {
   'crm.overview': '/crm/overview',
   'crm.consultores': '/crm/consultores',
-  'crm.regioes': '/crm/regioes',
+  
   'crm.registros': '/crm/registros',
   'crm.criticos': '/crm/criticos',
   'crm.mapa': '/crm/mapa',

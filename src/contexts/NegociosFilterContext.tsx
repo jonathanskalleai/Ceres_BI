@@ -1,5 +1,11 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 import { type DateRange } from "react-day-picker";
+import { startOfMonth, endOfMonth } from "date-fns";
+
+function currentMonthRange(): DateRange {
+  const now = new Date();
+  return { from: startOfMonth(now), to: endOfMonth(now) };
+}
 import {
   type CategoriaFilter,
   CATEGORIA_ALL,
@@ -27,7 +33,7 @@ interface NegociosFilterContextValue extends NegociosFilterState {
 const NegociosFilterContext = createContext<NegociosFilterContextValue | null>(null);
 
 export function NegociosFilterProvider({ children }: { children: ReactNode }) {
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(() => currentMonthRange());
   const [categoria, setCategoria_] = useState<CategoriaFilter>(CATEGORIA_ALL);
   const [funil, setFunil] = useState<string>(FUNIL_ALL);
   const [vendedor, setVendedor] = useState<string>("");
@@ -40,7 +46,7 @@ export function NegociosFilterProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const resetFilters = useCallback(() => {
-    setDateRange(undefined);
+    setDateRange(currentMonthRange());
     setCategoria_(CATEGORIA_ALL);
     setFunil(FUNIL_ALL);
     setVendedor("");
