@@ -40,6 +40,23 @@ CREATE INDEX IF NOT EXISTS idx_crm_pedidos_dth_pedido
 CREATE INDEX IF NOT EXISTS idx_crm_pedidos_ngo_numero
   ON mirror.crm_pedidos (ngo_numero);
 
+CREATE INDEX IF NOT EXISTS idx_crm_pedidos_situacao
+  ON mirror.crm_pedidos (pdo_situacao_pedido);
+
+CREATE INDEX IF NOT EXISTS idx_crm_pedidos_vendedor
+  ON mirror.crm_pedidos (pdo_vendedor);
+
+-- Ordens de servico — filtros server-side por data de abertura
+CREATE INDEX IF NOT EXISTS idx_ordens_servico_dth_abertura
+  ON mirror.ordens_servico (os_dth_abertura);
+
+CREATE INDEX IF NOT EXISTS idx_ordens_servico_dth_encerramento
+  ON mirror.ordens_servico (os_dth_encerramento);
+
+CREATE INDEX IF NOT EXISTS idx_ordens_servico_status
+  ON mirror.ordens_servico (os_f_status);
+
 ANALYZE mirror.crm_acoes;
 ANALYZE mirror.crm_negocios;
 ANALYZE mirror.crm_pedidos;
+ANALYZE mirror.ordens_servico;

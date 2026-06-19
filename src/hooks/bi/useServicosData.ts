@@ -1,10 +1,18 @@
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import {
   fetchOrdensServico, fetchAtendimentosOS, fetchOcorrencias,
   type OrdemServicoRow, type AtendimentoOSRow, type OcorrenciaRow,
 } from "@/services/bi/servicosBIService";
 import { daysBetween, yearMonth } from "@/lib/dateUtils";
+
+function toISODate(d: Date | undefined): string | undefined {
+  if (!d) return undefined;
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
 
 interface ChartDatum {
   name: string;
@@ -124,24 +132,34 @@ export function aggregateServicos(
 }
 
 export function useServicosData(enabled: boolean, dateRange?: import("react-day-picker").DateRange) {
-  const ordensQ = useQuery({ queryKey: ["bi-os"], queryFn: fetchOrdensServico, staleTime: 60_000, enabled });
-  const atendQ = useQuery({ queryKey: ["bi-os-atend"], queryFn: fetchAtendimentosOS, staleTime: 60_000, enabled });
-  const ocorrQ = useQuery({ queryKey: ["bi-os-ocorr"], queryFn: fetchOcorrencias, staleTime: 60_000, enabled });
+  const fromISO = toISODate(dateRange?.from);
+  const toISO = toISODate(dateRange?.to ?? dateRange?.from);
 
-  const filteredOrdens = useMemo(() => {
-    if (!dateRange?.from) return ordensQ.data ?? [];
-    return (ordensQ.data ?? []).filter((r) => {
-      const d = r.OS_dthAbertura ? new Date(r.OS_dthAbertura) : null;
-      if (!d) return false;
-      if (dateRange.from && d < dateRange.from) return false;
-      if (dateRange.to && d > dateRange.to) return false;
-      return true;
-    });
-  }, [ordensQ.data, dateRange]);
+  const ordensQ = useQuery({
+    queryKey: ["bi-os", fromISO ?? null, toISO ?? null],
+    queryFn: () => fetchOrdensServico({ from: fromISO, to: toISO }),
+    staleTime: 5 * 60_000,
+    enabled,
+    placeholderData: keepPreviousData,
+  });
+  const atendQ = useQuery({
+    queryKey: ["bi-os-atend"],
+    queryFn: fetchAtendimentosOS,
+    staleTime: 10 * 60_000,
+    enabled,
+    placeholderData: keepPreviousData,
+  });
+  const ocorrQ = useQuery({
+    queryKey: ["bi-os-ocorr"],
+    queryFn: fetchOcorrencias,
+    staleTime: 10 * 60_000,
+    enabled,
+    placeholderData: keepPreviousData,
+  });
 
   const agg = useMemo(
-    () => aggregateServicos(filteredOrdens, atendQ.data ?? [], ocorrQ.data ?? []),
-    [filteredOrdens, atendQ.data, ocorrQ.data],
+    () => aggregateServicos(ordensQ.data ?? [], atendQ.data ?? [], ocorrQ.data ?? []),
+    [ordensQ.data, atendQ.data, ocorrQ.data],
   );
 
   return { agg, isLoading: ordensQ.isLoading || atendQ.isLoading || ocorrQ.isLoading };

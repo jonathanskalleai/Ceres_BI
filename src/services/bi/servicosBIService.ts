@@ -40,6 +40,16 @@ const OS_COLUMNS = [
   "OS_dthEncerramento",
 ];
 
+const MIRROR_OS_SELECT = [
+  "os_nr_os",
+  "os_f_status",
+  "sit_dsc_situacao_os",
+  "os_dth_abertura",
+  "os_dth_encerramento",
+  "emp_cod_filial",
+  "tos_cod_tipo_os",
+].join(",");
+
 const ATD_COLUMNS = ["ATD_dscCausa", "ATD_DuracaoAtendimento"];
 const OCR_COLUMNS = ["OSE_dscMotivoPausa", "OSE_dscSituacaoOcorrencia"];
 
@@ -55,19 +65,27 @@ function mapMirrorOS(row: MirrorOSRow): OrdemServicoRow {
   };
 }
 
-async function fetchOSFromMirror(): Promise<OrdemServicoRow[]> {
-  const { data, error } = await supabase
-    .schema("mirror")
-    .from("ordens_servico")
-    .select("*");
+export interface OrdensServicoFetchOptions {
+  /** ISO YYYY-MM-DD */
+  from?: string;
+  /** ISO YYYY-MM-DD */
+  to?: string;
+}
+
+async function fetchOSFromMirror(options?: OrdensServicoFetchOptions): Promise<OrdemServicoRow[]> {
+  let q = supabase.schema("mirror").from("ordens_servico").select(MIRROR_OS_SELECT);
+  if (options?.from) q = q.gte("os_dth_abertura", options.from);
+  if (options?.to) q = q.lte("os_dth_abertura", `${options.to}T23:59:59.999`);
+  q = q.limit(50000);
+  const { data, error } = await q;
   if (error) throw new Error(error.message);
   return ((data ?? []) as MirrorOSRow[]).map(mapMirrorOS);
 }
 
-export async function fetchOrdensServico(): Promise<OrdemServicoRow[]> {
+export async function fetchOrdensServico(options?: OrdensServicoFetchOptions): Promise<OrdemServicoRow[]> {
   if (USE_MIRROR.ordens_servico) {
     try {
-      return await fetchOSFromMirror();
+      return await fetchOSFromMirror(options);
     } catch {
       return await fetchAllPages<OrdemServicoRow>("VW_Ceres_OrdemServico", OS_COLUMNS);
     }
