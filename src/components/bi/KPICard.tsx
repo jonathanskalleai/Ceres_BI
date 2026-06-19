@@ -81,8 +81,8 @@ export function KPICard({
       {/* Eyebrow */}
       <div className="flex items-start justify-between mb-3 md:mb-4 gap-2">
         <span
-          className="text-[10px] tracking-[0.14em] uppercase leading-snug"
-          style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-muted)" }}
+          className="text-[11px] tracking-[0.12em] uppercase leading-snug font-medium"
+          style={{ fontFamily: "var(--voux-font-label)", color: "var(--voux-ink-100, #d6cfc1)" }}
         >
           {title}
         </span>
