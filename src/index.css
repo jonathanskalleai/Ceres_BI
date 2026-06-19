@@ -108,8 +108,8 @@
     --voux-card-shadow:      0 1px 2px rgba(40,30,15,0.04), 0 8px 24px -8px rgba(40,30,15,0.08);
     --voux-text-primary:     #1a1714;
     --voux-text-heading:     #0e0d0a;
-    --voux-text-muted:       #5c5447;
-    --voux-text-faint:       #8a8273;
+   --voux-text-muted:       #3d362d;
+   --voux-text-faint:       #5c5447;
     --voux-accent:           #927142;
     --voux-skeleton:         #efe9dc;
     --voux-surface:          #fdfbf6;
