@@ -117,11 +117,12 @@ export function tooltipRow(
   color: string,
   formattedValue: string,
 ): string {
+  // Tooltip tem fundo escuro em ambos os modos (dark/light) — texto deve ser claro sempre.
   return `<div>
-    <div style="font-size:12px;color:var(--voux-text-muted);margin-bottom:4px">${name}</div>
+    <div style="font-size:12px;color:rgba(236,229,212,0.65);margin-bottom:4px">${name}</div>
     <div style="display:flex;align-items:center;gap:6px">
       <span style="width:8px;height:8px;border-radius:9999px;background:${color};display:inline-block;flex-shrink:0"></span>
-      <span style="font-size:13px;color:var(--voux-text-primary)">${seriesLabel ? `${seriesLabel}: ` : ""}<strong>${formattedValue}</strong></span>
+      <span style="font-size:13px;color:#ece5d4">${seriesLabel ? `${seriesLabel}: ` : ""}<strong style="color:#ffffff">${formattedValue}</strong></span>
     </div>
   </div>`;
 }
