@@ -183,6 +183,7 @@
     --voux-tooltip-muted:    #6b6253;
     --voux-border-alpha:     rgba(214, 207, 193, 0.08);
     --voux-border-hover:     rgba(214, 207, 193, 0.16);
+    --voux-label:            #ece5d4;  /* rótulos de cards no dark: branco quente */
 
     /* Hierarquia de superficies (dark) — sobrescreve as do :root */
     --surface-base:          #0a0907;
