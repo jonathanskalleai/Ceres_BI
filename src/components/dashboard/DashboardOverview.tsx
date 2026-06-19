@@ -47,7 +47,11 @@ export const DashboardOverview = ({ data, filters, onSelectConsultor, totalRegis
     };
   }, [data, filtered, isFiltered, totalRegistrosBase]);
 
-  const evolucaoFiltered = useMemo(() => filterEvolucao(data.evolucaoGlobal, filters), [data, filters]);
+  // Evolução Mensal mostra sempre os últimos 12 meses (não respeita filtro de data — é uma visão histórica anual).
+  const evolucaoFiltered = useMemo(() => {
+    const evolFilteredSemData = filterEvolucao(data.evolucaoGlobal, { ...filters, dateRange: undefined });
+    return evolFilteredSemData.slice(-12);
+  }, [data, filters]);
 
   const topConsultores = useMemo(() => {
     if (!isFiltered) {

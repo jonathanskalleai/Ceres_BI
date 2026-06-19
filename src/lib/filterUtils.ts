@@ -13,7 +13,7 @@ export function filterRegistros(records: Registro[], filters: Filters): Registro
   return result;
 }
 
-export function filterEvolucao(evolucao: { YearMonth: string }[], filters: Filters) {
+export function filterEvolucao<T extends { YearMonth: string }>(evolucao: T[], filters: Filters): T[] {
   let result = evolucao;
   if (filters.dateRange?.from) {
     const fromYM = filters.dateRange.from.slice(0, 7); // YYYY-MM
