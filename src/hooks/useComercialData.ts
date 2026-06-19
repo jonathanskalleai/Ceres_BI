@@ -9,7 +9,7 @@ import type {
   KPIs,
 } from "@/types/comercial";
 import { isAdminUser } from "@/lib/adminUsers";
-import { fetchRegistrosComerciais } from "@/services/registrosService";
+import { fetchRegistrosComerciais, type RegistrosFetchOptions } from "@/services/registrosService";
 import { fetchPipelineByVendedor, type VendedorPipeline } from "@/services/pipelineByVendedorService";
 import { supabase } from "@/integrations/supabase/client";
 import { getFunisByCategoria, type CategoriaFilter, CATEGORIA_ALL, FUNIL_ALL } from "@/lib/categoriaFunil";
@@ -22,7 +22,6 @@ function yearMonth(dt: string): string {
 }
 
 function aggregate(registros: Registro[], pipelineMap?: Map<string, VendedorPipeline>): DadosComerciais {
-  // KPIs
   const clienteSet = new Set<string>();
   const vendedorSet = new Set<string>();
   const cidadeSet = new Set<string>();
@@ -31,7 +30,6 @@ function aggregate(registros: Registro[], pipelineMap?: Map<string, VendedorPipe
   const tiposContato: Record<string, number> = {};
   const tiposAcao: Record<string, number> = {};
 
-  // Vendedor aggregation
   const vMap = new Map<
     string,
     {
@@ -48,10 +46,8 @@ function aggregate(registros: Registro[], pipelineMap?: Map<string, VendedorPipe
     }
   >();
 
-  // Region aggregation
   const rMap = new Map<string, { totalAcoes: number; clientes: Set<string>; pipeline: number; visitas: number; latSum: number; lngSum: number; coordCount: number }>();
 
-  // Global evolution
   const gEvol = new Map<string, { acoes: number; visitas: number; negocioValor: number; clientes: Set<string> }>();
 
   const now = Date.now();
@@ -66,7 +62,6 @@ function aggregate(registros: Registro[], pipelineMap?: Map<string, VendedorPipe
     if (r.tipoContato) tiposContato[r.tipoContato] = (tiposContato[r.tipoContato] || 0) + 1;
     if (r.tipoAcao) tiposAcao[r.tipoAcao] = (tiposAcao[r.tipoAcao] || 0) + 1;
 
-    // Vendedor
     if (r.vendedor) {
       if (!vMap.has(r.vendedor)) {
         vMap.set(r.vendedor, {
@@ -82,7 +77,6 @@ function aggregate(registros: Registro[], pipelineMap?: Map<string, VendedorPipe
       if (r.obs) v.obsCount++;
       if (r.tipoAcao) v.tipoAcaoMap[r.tipoAcao] = (v.tipoAcaoMap[r.tipoAcao] || 0) + 1;
 
-      // evolucao
       const ym = yearMonth(r.dtConclusao);
       if (ym) {
         if (!v.evolMap.has(ym)) v.evolMap.set(ym, { acoes: 0, visitas: 0, negocioValor: 0, clientes: new Set() });
@@ -93,7 +87,6 @@ function aggregate(registros: Registro[], pipelineMap?: Map<string, VendedorPipe
         e.clientes.add(r.cliente);
       }
 
-      // topClientes
       if (r.cliente) {
         if (!v.clienteMap.has(r.cliente)) v.clienteMap.set(r.cliente, { acoes: 0, visitas: 0, negocioValor: 0, diasSemContato: 999, cidade: r.cidade });
         const c = v.clienteMap.get(r.cliente)!;
@@ -106,7 +99,6 @@ function aggregate(registros: Registro[], pipelineMap?: Map<string, VendedorPipe
         }
       }
 
-      // regioes
       if (r.cidade) {
         if (!v.regiaoMap.has(r.cidade)) v.regiaoMap.set(r.cidade, { acoes: 0, valor: 0, clientes: new Set() });
         const rg = v.regiaoMap.get(r.cidade)!;
@@ -116,7 +108,6 @@ function aggregate(registros: Registro[], pipelineMap?: Map<string, VendedorPipe
       }
     }
 
-    // Global evolution
     const ym = yearMonth(r.dtConclusao);
     if (ym) {
       if (!gEvol.has(ym)) gEvol.set(ym, { acoes: 0, visitas: 0, negocioValor: 0, clientes: new Set() });
@@ -127,7 +118,6 @@ function aggregate(registros: Registro[], pipelineMap?: Map<string, VendedorPipe
       e.clientes.add(r.cliente);
     }
 
-    // Regioes
     if (r.cidade) {
       if (!rMap.has(r.cidade)) rMap.set(r.cidade, { totalAcoes: 0, clientes: new Set(), pipeline: 0, visitas: 0, latSum: 0, lngSum: 0, coordCount: 0 });
       const rg = rMap.get(r.cidade)!;
@@ -143,7 +133,6 @@ function aggregate(registros: Registro[], pipelineMap?: Map<string, VendedorPipe
     }
   }
 
-  // KPI totalPipeline: use real negocios data if available
   const realTotalPipeline = pipelineMap
     ? Array.from(pipelineMap.values()).reduce((sum, v) => sum + v.pipeline, 0)
     : totalPipeline;
@@ -158,7 +147,6 @@ function aggregate(registros: Registro[], pipelineMap?: Map<string, VendedorPipe
   };
 
   const vendedores: Vendedor[] = Array.from(vMap.entries()).map(([nome, v]) => {
-    // Pipeline/negocios/conversao reais a partir de crm_negocios (se disponivel)
     const pData = pipelineMap?.get(nome);
 
     const evolucao: EvolucaoMensal[] = Array.from(v.evolMap.entries())
@@ -224,12 +212,20 @@ function aggregate(registros: Registro[], pipelineMap?: Map<string, VendedorPipe
   };
 }
 
-export function useComercialData(categoria?: string, funil?: string) {
-  // Resolve categoria to funis array for DB queries
+export interface UseComercialDataOptions {
+  /** ISO date string YYYY-MM-DD — filtro server-side por aco_dth_conclusao */
+  from?: string;
+  to?: string;
+}
+
+export function useComercialData(
+  categoria?: string,
+  funil?: string,
+  options?: UseComercialDataOptions,
+) {
   const categoriaFilter = (categoria || CATEGORIA_ALL) as CategoriaFilter;
   const funilFilter = funil || FUNIL_ALL;
 
-  // Determine effective funis list: specific funil > categoria > all
   const funis = funilFilter !== FUNIL_ALL
     ? [funilFilter]
     : categoriaFilter !== CATEGORIA_ALL
@@ -237,15 +233,20 @@ export function useComercialData(categoria?: string, funil?: string) {
       : [];
   const hasFunilFilter = funis.length > 0;
 
+  const from = options?.from;
+  const to = options?.to;
+  const fetchOptions: RegistrosFetchOptions | undefined = (from || to) ? { from, to } : undefined;
+
   const {
     data: rawRegistros,
     isLoading: loadingRegistros,
     error: queryError,
     dataUpdatedAt,
   } = useQuery({
-    queryKey: ["registros-comerciais"],
-    queryFn: fetchRegistrosComerciais,
+    queryKey: ["registros-comerciais", from ?? null, to ?? null],
+    queryFn: () => fetchRegistrosComerciais(fetchOptions),
     staleTime: 5 * 60_000,
+    placeholderData: keepPreviousData,
   });
 
   const {
@@ -258,7 +259,6 @@ export function useComercialData(categoria?: string, funil?: string) {
     placeholderData: keepPreviousData,
   });
 
-  // Client set from selected categoria funis — used to filter ações (crm_acoes)
   const {
     data: funilClientes,
     isLoading: loadingFunilClientes,
@@ -266,18 +266,14 @@ export function useComercialData(categoria?: string, funil?: string) {
     queryKey: ["funil-clientes", categoriaFilter, funilFilter],
     queryFn: async (): Promise<Set<string> | null> => {
       if (!hasFunilFilter) return null;
-      // Query all funis in the categoria
-      const { data, error } = await supabase
-        .schema("mirror")
-        .from("crm_negocios")
+      const { data, error } = await (supabase
+        .schema("mirror" as never)
+        .from("crm_negocios" as never) as never)
         .select("cli_nome")
         .in("ngo_funil", funis);
       if (error) throw new Error(error.message);
-      return new Set(
-        (data ?? [])
-          .map((r: { cli_nome: string | null }) => r.cli_nome ?? "")
-          .filter(Boolean)
-      );
+      const rows = (data ?? []) as Array<{ cli_nome: string | null }>;
+      return new Set(rows.map((r) => r.cli_nome ?? "").filter(Boolean));
     },
     staleTime: 5 * 60_000,
     enabled: hasFunilFilter,
@@ -290,11 +286,8 @@ export function useComercialData(categoria?: string, funil?: string) {
 
   const data = useMemo(() => {
     if (!rawRegistros) return null;
-    // When categoria is active but clients haven't loaded yet (first time),
-    // return null to trigger loading state instead of showing unfiltered data
     if (hasFunilFilter && !funilClientes) return null;
     let registros = rawRegistros.filter((r) => !isAdminUser(r.vendedor));
-    // Filter actions by clients present in the selected categoria funis
     if (hasFunilFilter && funilClientes) {
       registros = registros.filter((r) => funilClientes.has(r.cliente));
     }

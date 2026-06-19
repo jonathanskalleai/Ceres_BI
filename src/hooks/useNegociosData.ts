@@ -194,25 +194,28 @@ function aggregate(rows: NegocioRow[], filters: Filters, registrosClientes: Regi
 }
 
 export function useNegociosData(filters: Filters) {
+  const from = filters.dateRange?.from;
+  const to = filters.dateRange?.to;
+  const negociosOptions = (from || to) ? { from, to } : undefined;
+  const registrosOptions = (from || to) ? { from, to } : undefined;
+
   const {
     data: rawRows,
     isLoading: loadingNegocios,
     error: negociosError,
   } = useQuery({
-    queryKey: ["negocios-mensais"],
-    queryFn: fetchNegociosMensais,
-    staleTime: 60_000,
-    refetchInterval: 60_000,
+    queryKey: ["negocios-mensais", from ?? null, to ?? null],
+    queryFn: () => fetchNegociosMensais(negociosOptions),
+    staleTime: 5 * 60_000,
   });
 
   const {
     data: registrosRaw,
     isLoading: loadingRegistros,
   } = useQuery({
-    queryKey: ["registros-comerciais"],
-    queryFn: fetchRegistrosComerciais,
-    staleTime: 60_000,
-    refetchInterval: 60_000,
+    queryKey: ["registros-comerciais", from ?? null, to ?? null],
+    queryFn: () => fetchRegistrosComerciais(registrosOptions),
+    staleTime: 5 * 60_000,
   });
 
   const isLoading = loadingNegocios || loadingRegistros;
