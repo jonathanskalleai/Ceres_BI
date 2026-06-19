@@ -266,9 +266,11 @@ export function useComercialData(
     queryKey: ["funil-clientes", categoriaFilter, funilFilter],
     queryFn: async (): Promise<Set<string> | null> => {
       if (!hasFunilFilter) return null;
-      const { data, error } = await (supabase
-        .schema("mirror" as never)
-        .from("crm_negocios" as never) as never)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const client = supabase as any;
+      const { data, error } = await client
+        .schema("mirror")
+        .from("crm_negocios")
         .select("cli_nome")
         .in("ngo_funil", funis);
       if (error) throw new Error(error.message);
