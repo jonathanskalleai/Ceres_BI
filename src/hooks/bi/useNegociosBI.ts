@@ -5,6 +5,7 @@ import { fetchNegociosBI, type NegocioBIRow } from "@/services/bi/negociosBIServ
 
 import { yearMonth } from "@/lib/dateUtils";
 import { type CategoriaFilter, CATEGORIA_ALL, getFunisByCategoria, FUNIL_ALL } from "@/lib/categoriaFunil";
+import { useBiDebugPublisher } from "@/components/bi/debug/useBiDebugPublisher";
 
 interface NegociosKPIs {
   totalNegocios: number;
@@ -193,7 +194,7 @@ export function aggregateNegociosBI(rawRows: NegocioBIRow[]): NegociosAgg {
 }
 
 /** Converte Date → "YYYY-MM-DD" no fuso local (sem deslocamento UTC). */
-function toISODate(d: Date | undefined): string | undefined {
+export function toISODate(d: Date | undefined): string | undefined {
   if (!d) return undefined;
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -226,7 +227,29 @@ export function useNegociosBI(
     placeholderData: keepPreviousData,
   });
 
-  const agg = useMemo(() => aggregateNegociosBI(rows), [rows]);
+  // Client-side date filter: strictly by NGO_DataFechamento.
+  // Records without NGO_DataFechamento are EXCLUDED (no conclusion date = not concluded in this period).
+  const filtered = useMemo(() => {
+    if (!fromISO && !toISO) return rows;
+    return rows.filter((r) => {
+      if (!r.NGO_DataFechamento) return false;
+      const dt = r.NGO_DataFechamento.slice(0, 10);
+      if (fromISO && dt < fromISO) return false;
+      if (toISO && dt > toISO) return false;
+      return true;
+    });
+  }, [rows, fromISO, toISO]);
+
+  const agg = useMemo(() => aggregateNegociosBI(filtered), [filtered]);
+
+  // Publish debug info for BiDebugOverlay (zero-cost when overlay not mounted)
+  useBiDebugPublisher({
+    source: "useNegociosBI",
+    queryParams: { funis: funis ?? "(all)", from: fromISO ?? null, to: toISO ?? null },
+    rawFromServer: rows.length,
+    afterDedupe: dedupeNegocios(rows).length,
+    afterClientFilter: filtered.length,
+  });
 
   return { agg, isLoading };
 }

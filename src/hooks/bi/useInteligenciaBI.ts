@@ -6,6 +6,15 @@ import { fetchNegociosBI, type NegocioBIRow } from "@/services/bi/negociosBIServ
 import { fetchPedidosBI, type PedidoRow } from "@/services/bi/pedidosBIService";
 import { fetchParqueBI, type ParqueRow } from "@/services/bi/produtosBIService";
 import { fetchOrdensServico, type OrdemServicoRow } from "@/services/bi/servicosBIService";
+import { toISODate } from "@/hooks/bi/useNegociosBI";
+import {
+  NOSSAS_MARCAS,
+  isInRange,
+  dedupNegocios,
+  isGanho,
+  isPerdido,
+  computeSlaBloco,
+} from "@/hooks/bi/useInteligenciaBI.helpers";
 import { useComercialData } from "@/hooks/useComercialData";
 
 // ---------------------------------------------------------------------------
@@ -34,42 +43,6 @@ export interface InteligenciaBIResult {
 }
 
 // ---------------------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------------------
-
-/** Marcas proprias da concessionaria CNH Industrial */
-const NOSSAS_MARCAS = ["CASE", "CASE IH", "NEW HOLLAND", "IVECO"];
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function isInRange(dateStr: string | null, range: DateRange | undefined): boolean {
-  if (!range?.from || !dateStr) return true; // no filter = include all
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return false;
-  if (d < range.from) return false;
-  if (range.to && d > range.to) return false;
-  return true;
-}
-
-function dedupNegocios(rows: NegocioBIRow[]): NegocioBIRow[] {
-  const seen = new Map<string, NegocioBIRow>();
-  for (const r of rows) {
-    if (!seen.has(r.NGO_Numero)) seen.set(r.NGO_Numero, r);
-  }
-  return Array.from(seen.values());
-}
-
-function isGanho(conclusao: string | null): boolean {
-  return !!conclusao && conclusao.toLowerCase().includes("ganho");
-}
-
-function isPerdido(conclusao: string | null): boolean {
-  return !!conclusao && conclusao.toLowerCase().includes("perdi");
-}
-
-// ---------------------------------------------------------------------------
 // Hook
 // ---------------------------------------------------------------------------
 
@@ -79,7 +52,17 @@ export function useInteligenciaBI(
   categoria?: string,
   funil?: string,
 ): InteligenciaBIResult {
+  // Date bounds derived from the active filter (same local-tz helper used by
+  // useNegociosBI). Applied server-side for pedidos/OS to avoid downloading the
+  // whole table; the client-side isInRange filter below is kept intact so the
+  // final numbers stay identical (server only narrows what is downloaded).
+  const fromISO = toISODate(dateRange?.from);
+  const toISO = toISODate(dateRange?.to ?? dateRange?.from);
+
   // --- Data fetching (shared cache via same queryKeys) ---
+  // NOTE: crm_negocios is intentionally fetched WITHOUT a server-side date
+  // filter — ngo_data_fechamento is NULL for open deals, so .gte()/.lte()
+  // would silently drop them. Date filtering for negocios stays client-side.
   const { data: negociosRaw, isLoading: loadNeg } = useQuery({
     queryKey: ["bi-negocios", null, null, null],
     queryFn: () => fetchNegociosBI(),
@@ -88,8 +71,8 @@ export function useInteligenciaBI(
   });
 
   const { data: pedidosRaw, isLoading: loadPed } = useQuery({
-    queryKey: ["bi-pedidos", null, null],
-    queryFn: () => fetchPedidosBI(),
+    queryKey: ["bi-pedidos", fromISO ?? null, toISO ?? null],
+    queryFn: () => fetchPedidosBI({ from: fromISO, to: toISO }),
     staleTime: 5 * 60_000,
     enabled: active,
   });
@@ -102,8 +85,8 @@ export function useInteligenciaBI(
   });
 
   const { data: ordensRaw, isLoading: loadOS } = useQuery({
-    queryKey: ["bi-os"],
-    queryFn: () => fetchOrdensServico(),
+    queryKey: ["bi-os", fromISO ?? null, toISO ?? null],
+    queryFn: () => fetchOrdensServico({ from: fromISO, to: toISO }),
     staleTime: 5 * 60_000,
     enabled: active,
   });
@@ -270,51 +253,11 @@ export function useInteligenciaBI(
       .slice(0, 15);
   }, [active, parqueRaw]);
 
-  // --- BLOCO 4: Pos-Venda SLA ---
-  const bloco4 = useMemo(() => {
-    const empty = {
-      slaPorFilial: [] as InteligenciaBIResult["slaPorFilial"],
-      slaPorTipoOS: [] as InteligenciaBIResult["slaPorTipoOS"],
-    };
-    if (!active || !ordensRaw) return empty;
-
-    const encerradas = ordensRaw.filter(
-      (o) => o.OS_dthAbertura && o.OS_dthEncerramento && isInRange(o.OS_dthAbertura, dateRange),
-    );
-
-    const filialMap = new Map<string, { somaDias: number; count: number }>();
-    const tipoMap = new Map<string, { somaDias: number; count: number }>();
-
-    for (const o of encerradas) {
-      const abertura = new Date(o.OS_dthAbertura!);
-      const encerramento = new Date(o.OS_dthEncerramento!);
-      if (isNaN(abertura.getTime()) || isNaN(encerramento.getTime())) continue;
-      const dias = (encerramento.getTime() - abertura.getTime()) / 86_400_000;
-      if (dias < 0) continue; // invalid
-
-      const filial = o.EMP_CodFilial?.trim() || "N/A";
-      if (!filialMap.has(filial)) filialMap.set(filial, { somaDias: 0, count: 0 });
-      const fEntry = filialMap.get(filial)!;
-      fEntry.somaDias += dias;
-      fEntry.count++;
-
-      const tipo = o.TOS_CodTipoOS?.trim() || "N/A";
-      if (!tipoMap.has(tipo)) tipoMap.set(tipo, { somaDias: 0, count: 0 });
-      const tEntry = tipoMap.get(tipo)!;
-      tEntry.somaDias += dias;
-      tEntry.count++;
-    }
-
-    const slaPorFilial = Array.from(filialMap.entries())
-      .map(([filial, v]) => ({ filial, mediaDias: Math.round((v.somaDias / v.count) * 10) / 10, totalOS: v.count }))
-      .sort((a, b) => b.mediaDias - a.mediaDias);
-
-    const slaPorTipoOS = Array.from(tipoMap.entries())
-      .map(([tipo, v]) => ({ tipo, mediaDias: Math.round((v.somaDias / v.count) * 10) / 10, totalOS: v.count }))
-      .sort((a, b) => b.mediaDias - a.mediaDias);
-
-    return { slaPorFilial, slaPorTipoOS };
-  }, [active, ordensRaw, dateRange]);
+  // --- BLOCO 4: Pos-Venda SLA (logica pura em computeSlaBloco) ---
+  const bloco4 = useMemo(
+    () => computeSlaBloco(active, ordensRaw, dateRange),
+    [active, ordensRaw, dateRange],
+  );
 
   // --- Compose result ---
   return {

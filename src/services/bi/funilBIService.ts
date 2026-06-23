@@ -15,16 +15,23 @@ export interface FunilEtapaRow {
 interface MirrorFunilRow {
   ngo_numero: string | null;
   funil_dsc: string | null;
-  etapa_dsc_status_negocio: string | null;
-  fne_duracao_dias: number | null;
+  etapa_dscstatusnegocio: string | null;
+  fne_duracaodias: number | null;
 }
+
+const MIRROR_FUNIL_SELECT = [
+  "ngo_numero",
+  "funil_dsc",
+  "etapa_dscstatusnegocio",
+  "fne_duracaodias",
+].join(",");
 
 function mapMirrorRow(row: MirrorFunilRow): FunilEtapaRow {
   return {
     NGO_Numero: row.ngo_numero,
     Funil_dsc: row.funil_dsc,
-    Etapa_dscStatusNegocio: row.etapa_dsc_status_negocio,
-    FNE_DuracaoDias: row.fne_duracao_dias,
+    Etapa_dscStatusNegocio: row.etapa_dscstatusnegocio,
+    FNE_DuracaoDias: row.fne_duracaodias,
   };
 }
 
@@ -33,7 +40,7 @@ export async function fetchFunilBI(): Promise<FunilEtapaRow[]> {
     const { data, error } = await supabase
       .schema("mirror")
       .from("crm_funil_etapa")
-      .select("*");
+      .select(MIRROR_FUNIL_SELECT);
     if (error) throw new Error(error.message);
     return ((data ?? []) as MirrorFunilRow[]).map(mapMirrorRow);
   } catch {

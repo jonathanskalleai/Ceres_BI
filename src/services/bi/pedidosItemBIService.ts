@@ -10,20 +10,28 @@ export interface PedidoItemRow {
 }
 
 interface MirrorPedidoItemRow {
-  pdo_item_grupo: string | null;
-  pdo_item_marca: string | null;
-  pdo_item_modelo: string | null;
-  pdo_item_qtde: number | null;
-  pdo_item_vlr_unitario: number | null;
+  pdo_itemgrupo: string | null;
+  pdo_itemmarca: string | null;
+  pdo_itemmodelo: string | null;
+  pdo_itemqtde: number | null;
+  pdo_itemvlrunitario: number | null;
 }
+
+const MIRROR_PEDIDO_ITEM_SELECT = [
+  "pdo_itemgrupo",
+  "pdo_itemmarca",
+  "pdo_itemmodelo",
+  "pdo_itemqtde",
+  "pdo_itemvlrunitario",
+].join(",");
 
 function mapMirrorRow(row: MirrorPedidoItemRow): PedidoItemRow {
   return {
-    PDO_ItemGrupo: row.pdo_item_grupo,
-    PDO_ItemMarca: row.pdo_item_marca,
-    PDO_ItemModelo: row.pdo_item_modelo,
-    PDO_ItemQtde: row.pdo_item_qtde,
-    PDO_ItemVlrUnitario: row.pdo_item_vlr_unitario,
+    PDO_ItemGrupo: row.pdo_itemgrupo,
+    PDO_ItemMarca: row.pdo_itemmarca,
+    PDO_ItemModelo: row.pdo_itemmodelo,
+    PDO_ItemQtde: row.pdo_itemqtde,
+    PDO_ItemVlrUnitario: row.pdo_itemvlrunitario,
   };
 }
 
@@ -32,7 +40,7 @@ export async function fetchPedidosItemBI(): Promise<PedidoItemRow[]> {
     const { data, error } = await supabase
       .schema("mirror")
       .from("crm_pedidos_item")
-      .select("*");
+      .select(MIRROR_PEDIDO_ITEM_SELECT);
     if (error) throw new Error(error.message);
     return ((data ?? []) as MirrorPedidoItemRow[]).map(mapMirrorRow);
   } catch {
