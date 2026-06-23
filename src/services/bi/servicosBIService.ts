@@ -22,23 +22,23 @@ export interface OcorrenciaRow {
 }
 
 interface MirrorOSRow {
-  os_nr_os: string | number | null;
-  os_f_status: string | null;
-  sit_dsc_situacao_os: string | null;
-  os_dth_abertura: string | null;
-  os_dth_encerramento: string | null;
-  emp_cod_filial: string | null;
-  tos_cod_tipo_os: string | null;
+  os_nros: string | number | null;
+  os_fstatus: string | null;
+  sit_dscsituacaoos: string | null;
+  os_dthabertura: string | null;
+  os_dthencerramento: string | null;
+  emp_codfilial: string | null;
+  tos_codtipoos: string | null;
 }
 
 const MIRROR_OS_SELECT = [
-  "os_nr_os",
-  "os_f_status",
-  "sit_dsc_situacao_os",
-  "os_dth_abertura",
-  "os_dth_encerramento",
-  "emp_cod_filial",
-  "tos_cod_tipo_os",
+  "os_nros",
+  "os_fstatus",
+  "sit_dscsituacaoos",
+  "os_dthabertura",
+  "os_dthencerramento",
+  "emp_codfilial",
+  "tos_codtipoos",
 ].join(",");
 
 const ATD_COLUMNS = ["ATD_dscCausa", "ATD_DuracaoAtendimento"];
@@ -46,13 +46,13 @@ const OCR_COLUMNS = ["OSE_dscMotivoPausa", "OSE_dscSituacaoOcorrencia"];
 
 function mapMirrorOS(row: MirrorOSRow): OrdemServicoRow {
   return {
-    OS_nrOS: row.os_nr_os,
-    OS_fStatus: row.os_f_status?.trim() ?? null,
-    SIT_dscSituacaoOS: row.sit_dsc_situacao_os?.trim() ?? null,
-    OS_dthAbertura: row.os_dth_abertura,
-    OS_dthEncerramento: row.os_dth_encerramento,
-    EMP_CodFilial: row.emp_cod_filial?.trim() ?? "",
-    TOS_CodTipoOS: row.tos_cod_tipo_os?.trim() ?? "",
+    OS_nrOS: row.os_nros,
+    OS_fStatus: row.os_fstatus?.trim() ?? null,
+    SIT_dscSituacaoOS: row.sit_dscsituacaoos?.trim() ?? null,
+    OS_dthAbertura: row.os_dthabertura,
+    OS_dthEncerramento: row.os_dthencerramento,
+    EMP_CodFilial: row.emp_codfilial?.trim() ?? "",
+    TOS_CodTipoOS: row.tos_codtipoos?.trim() ?? "",
   };
 }
 
@@ -66,8 +66,8 @@ export interface OrdensServicoFetchOptions {
 export async function fetchOrdensServico(options?: OrdensServicoFetchOptions): Promise<OrdemServicoRow[]> {
   try {
     let q = supabase.schema("mirror").from("ordens_servico").select(MIRROR_OS_SELECT);
-    if (options?.from) q = q.gte("os_dth_abertura", options.from);
-    if (options?.to) q = q.lte("os_dth_abertura", `${options.to}T23:59:59.999`);
+    if (options?.from) q = q.gte("os_dthabertura", options.from);
+    if (options?.to) q = q.lte("os_dthabertura", `${options.to}T23:59:59.999`);
     q = q.limit(50000);
     const { data, error } = await q;
     if (error) throw new Error(error.message);

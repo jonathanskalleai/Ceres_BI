@@ -18,14 +18,14 @@ export interface VendedorPipeline {
 
 interface MirrorNegocioSlim {
   ngo_conclusao: string | null;
-  ngo_vlr_total_negociado: number | null;
+  ngo_vlrtotalnegociado: number | null;
   ngo_vendedores: string | null;
 }
 
 interface MirrorUsuarioSlim {
-  usr_cod_usuario: string | null;
-  usr_id_usuario: string | null;
-  usr_nome_usuario: string | null;
+  usr_codusuario: string | null;
+  usr_idusuario: string | null;
+  usr_nomeusuario: string | null;
 }
 
 function classifyConclusao(c: string | null): "ganho" | "perdido" | "andamento" {
@@ -39,7 +39,7 @@ export async function fetchPipelineByVendedor(funis?: string[]): Promise<Map<str
   let negociosQuery = supabase
     .schema("mirror")
     .from("crm_negocios")
-    .select("ngo_conclusao,ngo_vlr_total_negociado,ngo_vendedores,ngo_funil");
+    .select("ngo_conclusao,ngo_vlrtotalnegociado,ngo_vendedores,ngo_funil");
 
   if (funis && funis.length > 0) {
     negociosQuery = negociosQuery.in("ngo_funil", funis);
@@ -50,7 +50,7 @@ export async function fetchPipelineByVendedor(funis?: string[]): Promise<Map<str
     supabase
       .schema("mirror")
       .from("usuarios")
-      .select("usr_cod_usuario,usr_id_usuario,usr_nome_usuario"),
+      .select("usr_codusuario,usr_idusuario,usr_nomeusuario"),
   ]);
 
   if (negociosRes.error) throw new Error(negociosRes.error.message);
@@ -59,11 +59,11 @@ export async function fetchPipelineByVendedor(funis?: string[]): Promise<Map<str
   // Build code -> nome map
   const codeToName = new Map<string, string>();
   for (const u of (usuariosRes.data ?? []) as MirrorUsuarioSlim[]) {
-    const nome = u.usr_nome_usuario?.trim();
+    const nome = u.usr_nomeusuario?.trim();
     if (!nome) continue;
-    if (u.usr_cod_usuario != null) codeToName.set(String(u.usr_cod_usuario).trim(), nome);
-    if (u.usr_id_usuario != null && !codeToName.has(String(u.usr_id_usuario).trim())) {
-      codeToName.set(String(u.usr_id_usuario).trim(), nome);
+    if (u.usr_codusuario != null) codeToName.set(String(u.usr_codusuario).trim(), nome);
+    if (u.usr_idusuario != null && !codeToName.has(String(u.usr_idusuario).trim())) {
+      codeToName.set(String(u.usr_idusuario).trim(), nome);
     }
   }
 
@@ -84,7 +84,7 @@ export async function fetchPipelineByVendedor(funis?: string[]): Promise<Map<str
     }
     const v = result.get(vendedorNome)!;
     const status = classifyConclusao(row.ngo_conclusao);
-    const valor = typeof row.ngo_vlr_total_negociado === "number" && isFinite(row.ngo_vlr_total_negociado) ? row.ngo_vlr_total_negociado : 0;
+    const valor = typeof row.ngo_vlrtotalnegociado === "number" && isFinite(row.ngo_vlrtotalnegociado) ? row.ngo_vlrtotalnegociado : 0;
 
     v.negocios++;
     if (status === "ganho") {

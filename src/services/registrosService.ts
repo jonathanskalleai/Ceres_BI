@@ -11,90 +11,80 @@ export interface RegistrosFetchOptions {
 }
 
 interface MirrorAcaoRow {
-  aco_id_acao: string;
-  aco_codigo_acao: string | null;
+  aco_idacao: string;
+  aco_codigoacao: string | null;
   emp_cidade: string | null;
   emp_uf: string | null;
   cli_nome: string | null;
-  aco_tipo_contato: string | null;
-  aco_tipo_acao: string | null;
+  aco_tipocontato: string | null;
+  aco_tipoacao: string | null;
   aco_vendedor: string | null;
-  aco_atividade_executada: string | null;
-  aco_lat: number | null;
-  aco_lon: number | null;
-  aco_dth_conclusao: string | null;
+  aco_atividadeexecutada: string | null;
+  aco_lat: string | null;
+  aco_lon: string | null;
+  aco_dthconclusao: string | null;
   aco_status: string | null;
-  aco_acao_valida: string | null;
-  aco_dth_abertura: string | null;
+  aco_acaovalida: string | null;
+  aco_dthabertura: string | null;
   aco_contato: string | null;
-  ngo_nro_negocio: string | null;
+  ngo_nronegocio: string | null;
 }
 
 const MIRROR_SELECT = [
-  "aco_id_acao",
-  "aco_codigo_acao",
+  "aco_idacao",
+  "aco_codigoacao",
   "emp_cidade",
   "emp_uf",
   "cli_nome",
-  "aco_tipo_contato",
-  "aco_tipo_acao",
+  "aco_tipocontato",
+  "aco_tipoacao",
   "aco_vendedor",
-  "aco_atividade_executada",
+  "aco_atividadeexecutada",
   "aco_lat",
   "aco_lon",
-  "aco_dth_conclusao",
+  "aco_dthconclusao",
   "aco_status",
-  "aco_acao_valida",
-  "aco_dth_abertura",
+  "aco_acaovalida",
+  "aco_dthabertura",
   "aco_contato",
-  "ngo_nro_negocio",
+  "ngo_nronegocio",
 ].join(",");
 
 function mapMirrorRow(r: MirrorAcaoRow): Registro {
   return {
-    idAcao: r.aco_id_acao || undefined,
-    numero: r.aco_codigo_acao || undefined,
+    idAcao: r.aco_idacao || undefined,
+    numero: r.aco_codigoacao || undefined,
     cliente: r.cli_nome || "",
     cidade: r.emp_cidade || "",
     uf: r.emp_uf || undefined,
     vendedor: r.aco_vendedor || "",
-    tipoContato: r.aco_tipo_contato || "",
-    tipoAcao: r.aco_tipo_acao || "",
+    tipoContato: r.aco_tipocontato || "",
+    tipoAcao: r.aco_tipoacao || "",
     negocioValor: 0,
     negocioEtapa: "",
-    dtConclusao: r.aco_dth_conclusao?.slice(0, 10) || "",
-    obs: r.aco_atividade_executada || "",
-    lat: r.aco_lat || undefined,
-    lng: r.aco_lon || undefined,
+    dtConclusao: r.aco_dthconclusao?.slice(0, 10) || "",
+    obs: r.aco_atividadeexecutada || "",
+    lat: r.aco_lat ? Number(r.aco_lat) : undefined,
+    lng: r.aco_lon ? Number(r.aco_lon) : undefined,
     status: r.aco_status || undefined,
-    acaoValida: r.aco_acao_valida || undefined,
-    dtAbertura: r.aco_dth_abertura?.slice(0, 10) || undefined,
+    acaoValida: r.aco_acaovalida || undefined,
+    dtAbertura: r.aco_dthabertura?.slice(0, 10) || undefined,
     contato: r.aco_contato || undefined,
-    nroNegocio: r.ngo_nro_negocio || undefined,
+    nroNegocio: r.ngo_nronegocio || undefined,
   };
 }
 
-// Timezone fix: Supabase PostgREST stores dates in UTC.
-// To correctly filter for Brazilian local time (UTC-3), we must:
-// - from: start of day in Brazil = start of day UTC + 3h = "YYYY-MM-DDT03:00:00Z"
-// - to:   end of day in Brazil   = next day start in UTC = "YYYY-MM-DD+1T02:59:59.999Z"
-// This captures all actions from 00:00 to 23:59:59 BRT (21:00 prev day UTC to 02:59:59 next day UTC).
-function toUTCISO(dateStr: string, endOfDay: boolean): string {
-  const d = new Date(dateStr + "T12:00:00Z"); // noon UTC avoids midnight boundary issues
-  if (endOfDay) {
-    d.setDate(d.getDate() + 1);
-    d.setUTCHours(2, 59, 59, 999); // 02:59:59.999 UTC = 23:59:59 BRT-3
-  } else {
-    d.setUTCHours(3, 0, 0, 0); // 03:00:00 UTC = 00:00:00 BRT-3
-  }
-  return d.toISOString();
-}
 
 export async function fetchRegistrosComerciais(options?: RegistrosFetchOptions): Promise<Registro[]> {
   try {
     let q = supabase.schema("mirror").from("crm_acoes").select(MIRROR_SELECT);
-    if (options?.from) q = q.gte("aco_dth_conclusao", toUTCISO(options.from, false));
-    if (options?.to) q = q.lte("aco_dth_conclusao", toUTCISO(options.to, true));
+
+    // Date filter: include rows within range OR with NULL aco_dth_conclusao (open actions).
+    // We don't filter by aco_dth_conclusao server-side because:
+    // 1. Most CRM actions are open (NULL conclusion date) and must appear in dashboard
+    // 2. PostgREST .or() with ISO timestamps containing special chars causes 400 errors
+    // Date filtering is handled client-side in the data hooks instead.
+
     if (options?.vendedor) q = q.eq("aco_vendedor", options.vendedor);
     if (options?.cidade) q = q.eq("emp_cidade", options.cidade);
     q = q.limit(50000);

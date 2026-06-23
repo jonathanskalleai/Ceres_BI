@@ -34,22 +34,22 @@ const MIRROR_NEGOCIOS_SELECT = [
   "ngo_conclusao",
   "ngo_etapa",
   "ngo_funil",
-  "ngo_vlr_total_negociado",
-  "ngo_forma_entrada",
-  "ngo_motivo_perda",
-  "ngo_motivo_ganho",
-  "ngo_ciclo_vendas",
-  "ngo_qtd_acoes",
+  "ngo_vlrtotalnegociado",
+  "ngo_formaentrada",
+  "ngo_motivoperda",
+  "ngo_motivoganho",
+  "ngo_ciclovendas",
+  "ngo_qtdacoes",
   "ngo_probabilidade",
   "ngo_vendedores",
-  "ngo_data_cadastro",
-  "ngo_data_fechamento",
+  "ngo_datacadastro",
+  "ngo_datafechamento",
 ].join(",");
 
 interface MirrorUsuarioRow {
-  usr_cod_usuario: string | number | null;
-  usr_id_usuario: string | number | null;
-  usr_nome_usuario: string | null;
+  usr_codusuario: string | number | null;
+  usr_idusuario: string | number | null;
+  usr_nomeusuario: string | null;
 }
 
 interface MirrorNegocioRow {
@@ -57,16 +57,16 @@ interface MirrorNegocioRow {
   ngo_conclusao: string | null;
   ngo_etapa: string | null;
   ngo_funil: string | null;
-  ngo_vlr_total_negociado: string | number | null;
-  ngo_forma_entrada: string | null;
-  ngo_motivo_perda: string | null;
-  ngo_motivo_ganho: string | null;
-  ngo_ciclo_vendas: string | number | null;
-  ngo_qtd_acoes: string | number | null;
+  ngo_vlrtotalnegociado: string | number | null;
+  ngo_formaentrada: string | null;
+  ngo_motivoperda: string | null;
+  ngo_motivoganho: string | null;
+  ngo_ciclovendas: string | number | null;
+  ngo_qtdacoes: string | number | null;
   ngo_probabilidade: string | number | null;
   ngo_vendedores: string | null;
-  ngo_data_cadastro: string | null;
-  ngo_data_fechamento: string | null;
+  ngo_datacadastro: string | null;
+  ngo_datafechamento: string | null;
 }
 
 function resolveVendedor(codes: string | null, map: Map<string, string>): string {
@@ -85,14 +85,14 @@ async function fetchVendedorMapMirror(): Promise<Map<string, string>> {
     const { data, error } = await supabase
       .schema("mirror")
       .from("usuarios")
-      .select("usr_cod_usuario,usr_id_usuario,usr_nome_usuario");
+      .select("usr_codusuario,usr_idusuario,usr_nomeusuario");
     if (error) throw new Error(error.message);
     for (const u of (data ?? []) as MirrorUsuarioRow[]) {
-      const nome = u.usr_nome_usuario?.trim();
+      const nome = u.usr_nomeusuario?.trim();
       if (!nome) continue;
-      if (u.usr_cod_usuario != null) map.set(String(u.usr_cod_usuario).trim(), nome);
-      if (u.usr_id_usuario != null && !map.has(String(u.usr_id_usuario).trim())) {
-        map.set(String(u.usr_id_usuario).trim(), nome);
+      if (u.usr_codusuario != null) map.set(String(u.usr_codusuario).trim(), nome);
+      if (u.usr_idusuario != null && !map.has(String(u.usr_idusuario).trim())) {
+        map.set(String(u.usr_idusuario).trim(), nome);
       }
     }
   } catch {
@@ -120,16 +120,16 @@ function mapMirrorRow(row: MirrorNegocioRow, vendedorMap: Map<string, string>): 
     NGO_Conclusao: row.ngo_conclusao,
     NGO_Etapa: row.ngo_etapa,
     NGO_Funil: row.ngo_funil,
-    NGO_VlrTotalNegociado: toNum(row.ngo_vlr_total_negociado),
-    NGO_FormaEntrada: row.ngo_forma_entrada,
-    NGO_MotivoPerda: row.ngo_motivo_perda,
-    NGO_MotivoGanho: row.ngo_motivo_ganho,
-    NGO_CicloVendas: toNum(row.ngo_ciclo_vendas),
-    NGO_QtdAcoes: toNum(row.ngo_qtd_acoes),
+    NGO_VlrTotalNegociado: toNum(row.ngo_vlrtotalnegociado),
+    NGO_FormaEntrada: row.ngo_formaentrada,
+    NGO_MotivoPerda: row.ngo_motivoperda,
+    NGO_MotivoGanho: row.ngo_motivoganho,
+    NGO_CicloVendas: toNum(row.ngo_ciclovendas),
+    NGO_QtdAcoes: toNum(row.ngo_qtdacoes),
     NGO_Probabilidade: toNum(row.ngo_probabilidade),
     NGO_Vendedores: row.ngo_vendedores,
-    NGO_DataCadastro: row.ngo_data_cadastro,
-    NGO_DataFechamento: row.ngo_data_fechamento,
+    NGO_DataCadastro: row.ngo_datacadastro,
+    NGO_DataFechamento: row.ngo_datafechamento,
     vendedorNome: resolveVendedor(row.ngo_vendedores, vendedorMap),
   };
 }
@@ -140,8 +140,9 @@ export async function fetchNegociosBI(options?: NegociosBIFetchOptions): Promise
       .schema("mirror")
       .from("crm_negocios")
       .select(MIRROR_NEGOCIOS_SELECT);
-    if (options?.from) q = q.gte("ngo_data_fechamento", options.from);
-    if (options?.to) q = q.lte("ngo_data_fechamento", `${options.to}T23:59:59.999`);
+    // Date filtering removed from server-side: ngo_data_fechamento is NULL for
+    // open deals (andamento), so .gte()/.lte() silently excludes them.
+    // Filtering by date is handled client-side in the aggregation hooks.
     if (options?.funis && options.funis.length > 0) q = q.in("ngo_funil", options.funis);
     q = q.limit(50000);
 

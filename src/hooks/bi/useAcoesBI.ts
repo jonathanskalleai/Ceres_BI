@@ -55,7 +55,9 @@ function getDiaSemana(dtStr: string): string {
 function applyFilters(registros: Registro[], filters: AcoesFilters): Registro[] {
   let result = registros;
 
-  // dateRange takes priority over ano/mes when provided
+  // dateRange filters strictly by dtConclusao (the field the user selected).
+  // Records without dtConclusao in the range are excluded.
+
   if (filters.dateRange?.from) {
     const from = filters.dateRange.from.getTime();
     const to = filters.dateRange.to ? filters.dateRange.to.getTime() : from;
@@ -109,11 +111,12 @@ function aggregate(registros: Registro[]): Omit<AcoesBIResult, "listaAnos" | "is
     if (r.vendedor) vendedorMap.set(r.vendedor, (vendedorMap.get(r.vendedor) || 0) + 1);
     if (r.cidade) cidadeMap.set(r.cidade, (cidadeMap.get(r.cidade) || 0) + 1);
 
-    const ym = r.dtConclusao?.slice(0, 7) || "";
+    const dateStr = r.dtConclusao || "";
+    const ym = dateStr.slice(0, 7);
     if (ym) mesMap.set(ym, (mesMap.get(ym) || 0) + 1);
 
-    if (r.dtConclusao) {
-      const dia = getDiaSemana(r.dtConclusao);
+    if (dateStr) {
+      const dia = getDiaSemana(dateStr);
       if (dia) diaMap.set(dia, (diaMap.get(dia) || 0) + 1);
     }
 
