@@ -77,7 +77,11 @@ function ContentSkeleton() {
 
 export function ComercialDataProvider({ children }: { children?: ReactNode }) {
   const [filters, setFilters] = useState<Filters>(() => defaultFilters());
-  const { data, allData, error, lastUpdated } = useComercialData(filters.categoria || undefined, filters.funil || undefined);
+  const { data, allData, error, lastUpdated } = useComercialData(
+    filters.categoria || undefined,
+    filters.funil || undefined,
+    { from: filters.dateRange?.from, to: filters.dateRange?.to },
+  );
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [selectedVendedor, setSelectedVendedor] = useState('');

@@ -1,6 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { USE_MIRROR } from "@/config/featureFlags";
-import { fetchAllPages, querySqlServer } from "@/services/sqlServerApi";
+import { querySqlServer } from "@/services/sqlServerApi";
 
 /** Carteira de clientes (VW_Ceres_CRM_CarteiraClientes). */
 export interface CarteiraRow {
@@ -26,15 +25,6 @@ interface MirrorCarteiraRow {
   usr_nome_usuario: string | null;
 }
 
-const CARTEIRA_COLUMNS = [
-  "CLI_idCliente",
-  "CLI_TipoCliente",
-  "CLI_Prospect",
-  "CLI_UF",
-  "CLI_Cidade",
-  "USR_NomeUsuario",
-];
-
 function mapMirrorRow(row: MirrorCarteiraRow): CarteiraRow {
   return {
     CLI_idCliente: row.cli_id_cliente,
@@ -46,29 +36,14 @@ function mapMirrorRow(row: MirrorCarteiraRow): CarteiraRow {
   };
 }
 
-async function fetchFromMirror(): Promise<CarteiraRow[]> {
-  const { data, error } = await supabase
-    .schema("mirror")
-    .from("crm_carteira_clientes")
-    .select("*");
-  if (error) throw new Error(error.message);
-  return ((data ?? []) as MirrorCarteiraRow[]).map(mapMirrorRow);
-}
-
-async function fetchFromLegacy(): Promise<CarteiraRow[]> {
-  return await fetchAllPages<CarteiraRow>("VW_Ceres_CRM_CarteiraClientes", CARTEIRA_COLUMNS);
-}
-
 export async function fetchCarteira(): Promise<CarteiraRow[]> {
-  if (USE_MIRROR.crm_carteira_clientes) {
-    try {
-      return await fetchFromMirror();
-    } catch {
-      return await fetchFromLegacy();
-    }
-  }
   try {
-    return await fetchFromLegacy();
+    const { data, error } = await supabase
+      .schema("mirror")
+      .from("crm_carteira_clientes")
+      .select("*");
+    if (error) throw new Error(error.message);
+    return ((data ?? []) as MirrorCarteiraRow[]).map(mapMirrorRow);
   } catch {
     return [];
   }

@@ -6,11 +6,6 @@ vi.mock("@/services/bi/negociosBIService", () => ({
   fetchNegociosBI: vi.fn().mockResolvedValue([]),
 }));
 
-// Mock feature flags — default mirror OFF para testar dedup legacy
-vi.mock("@/config/featureFlags", () => ({
-  USE_MIRROR: { crm_negocios: false },
-}));
-
 import { aggregateNegociosBI, dedupeNegocios } from "@/hooks/bi/useNegociosBI";
 import type { NegocioBIRow } from "@/services/bi/negociosBIService";
 

@@ -1,6 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { USE_MIRROR } from "@/config/featureFlags";
-import { fetchAllPages } from "@/services/sqlServerApi";
 
 /**
  * Linha de negocio do CRM com as colunas de negocio ricas de VW_Ceres_CRM_Negocios.
@@ -31,23 +29,6 @@ export interface NegociosBIFetchOptions {
   funis?: string[];
 }
 
-const NEGOCIOS_COLUMNS = [
-  "NGO_Numero",
-  "NGO_Conclusao",
-  "NGO_Etapa",
-  "NGO_Funil",
-  "NGO_VlrTotalNegociado",
-  "NGO_FormaEntrada",
-  "NGO_MotivoPerda",
-  "NGO_MotivoGanho",
-  "NGO_CicloVendas",
-  "NGO_QtdAcoes",
-  "NGO_Probabilidade",
-  "NGO_Vendedores",
-  "NGO_DataCadastro",
-  "NGO_DataFechamento",
-];
-
 const MIRROR_NEGOCIOS_SELECT = [
   "ngo_numero",
   "ngo_conclusao",
@@ -64,12 +45,6 @@ const MIRROR_NEGOCIOS_SELECT = [
   "ngo_data_cadastro",
   "ngo_data_fechamento",
 ].join(",");
-
-interface UsuarioRow {
-  USR_CodUsuario: string | number | null;
-  USR_idUsuario: string | number | null;
-  USR_nomeUsuario: string | null;
-}
 
 interface MirrorUsuarioRow {
   usr_cod_usuario: string | number | null;
@@ -133,28 +108,6 @@ function getVendedorMapMirrorCached(): Promise<Map<string, string>> {
   return vendedorMapPromise;
 }
 
-async function fetchVendedorMapLegacy(): Promise<Map<string, string>> {
-  const map = new Map<string, string>();
-  try {
-    const usuarios = await fetchAllPages<UsuarioRow>("VW_Ceres_Usuario", [
-      "USR_CodUsuario",
-      "USR_idUsuario",
-      "USR_nomeUsuario",
-    ]);
-    for (const u of usuarios) {
-      const nome = u.USR_nomeUsuario?.trim();
-      if (!nome) continue;
-      if (u.USR_CodUsuario != null) map.set(String(u.USR_CodUsuario).trim(), nome);
-      if (u.USR_idUsuario != null && !map.has(String(u.USR_idUsuario).trim())) {
-        map.set(String(u.USR_idUsuario).trim(), nome);
-      }
-    }
-  } catch {
-    // ignore
-  }
-  return map;
-}
-
 const toNum = (v: unknown): number | null => {
   if (v == null) return null;
   const n = Number(v);
@@ -181,50 +134,25 @@ function mapMirrorRow(row: MirrorNegocioRow, vendedorMap: Map<string, string>): 
   };
 }
 
-async function fetchFromMirror(options?: NegociosBIFetchOptions): Promise<NegocioBIRow[]> {
-  let q = supabase
-    .schema("mirror")
-    .from("crm_negocios")
-    .select(MIRROR_NEGOCIOS_SELECT);
-  if (options?.from) q = q.gte("ngo_data_fechamento", options.from);
-  if (options?.to) q = q.lte("ngo_data_fechamento", `${options.to}T23:59:59.999`);
-  if (options?.funis && options.funis.length > 0) q = q.in("ngo_funil", options.funis);
-  q = q.limit(50000);
-
-  const [negociosRes, vendedorMap] = await Promise.all([
-    q,
-    getVendedorMapMirrorCached(),
-  ]);
-  if (negociosRes.error) throw new Error(negociosRes.error.message);
-  return ((negociosRes.data ?? []) as MirrorNegocioRow[]).map((row) =>
-    mapMirrorRow(row, vendedorMap),
-  );
-}
-
-async function fetchFromLegacy(): Promise<NegocioBIRow[]> {
-  const [rows, vendedorMap] = await Promise.all([
-    fetchAllPages<Omit<NegocioBIRow, "vendedorNome">>(
-      "VW_Ceres_CRM_Negocios",
-      NEGOCIOS_COLUMNS,
-    ),
-    fetchVendedorMapLegacy(),
-  ]);
-  return rows.map((r) => ({
-    ...r,
-    vendedorNome: resolveVendedor(r.NGO_Vendedores, vendedorMap),
-  }));
-}
-
 export async function fetchNegociosBI(options?: NegociosBIFetchOptions): Promise<NegocioBIRow[]> {
-  if (USE_MIRROR.crm_negocios) {
-    try {
-      return await fetchFromMirror(options);
-    } catch {
-      return await fetchFromLegacy();
-    }
-  }
   try {
-    return await fetchFromLegacy();
+    let q = supabase
+      .schema("mirror")
+      .from("crm_negocios")
+      .select(MIRROR_NEGOCIOS_SELECT);
+    if (options?.from) q = q.gte("ngo_data_fechamento", options.from);
+    if (options?.to) q = q.lte("ngo_data_fechamento", `${options.to}T23:59:59.999`);
+    if (options?.funis && options.funis.length > 0) q = q.in("ngo_funil", options.funis);
+    q = q.limit(50000);
+
+    const [negociosRes, vendedorMap] = await Promise.all([
+      q,
+      getVendedorMapMirrorCached(),
+    ]);
+    if (negociosRes.error) throw new Error(negociosRes.error.message);
+    return ((negociosRes.data ?? []) as MirrorNegocioRow[]).map((row) =>
+      mapMirrorRow(row, vendedorMap),
+    );
   } catch {
     return [];
   }

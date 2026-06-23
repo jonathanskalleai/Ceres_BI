@@ -1,6 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { USE_MIRROR } from "@/config/featureFlags";
-import { fetchAllPages, type AdvancedFilter } from "./sqlServerApi";
 import type { Registro } from "@/types/comercial";
 
 export interface RegistrosFetchOptions {
@@ -10,26 +8,6 @@ export interface RegistrosFetchOptions {
   to?: string;
   vendedor?: string;
   cidade?: string;
-}
-
-interface AcaoRow {
-  ACO_IdAcao: string;
-  ACO_CodigoAcao: string | null;
-  EMP_Cidade: string;
-  EMP_UF: string | null;
-  CLI_Nome: string;
-  ACO_TipoContato: string;
-  ACO_TipoAcao: string;
-  ACO_Vendedor: string;
-  ACO_AtividadeExecutada: string | null;
-  ACO_Lat: number | null;
-  ACO_Lon: number | null;
-  ACO_DthConclusao: string | null;
-  ACO_Status: string | null;
-  ACO_AcaoValida: string | null;
-  ACO_DthAbertura: string | null;
-  ACO_Contato: string | null;
-  NGO_NroNegocio: string | null;
 }
 
 interface MirrorAcaoRow {
@@ -51,26 +29,6 @@ interface MirrorAcaoRow {
   aco_contato: string | null;
   ngo_nro_negocio: string | null;
 }
-
-const ACOES_COLUMNS = [
-  "ACO_IdAcao",
-  "ACO_CodigoAcao",
-  "EMP_Cidade",
-  "EMP_UF",
-  "CLI_Nome",
-  "ACO_TipoContato",
-  "ACO_TipoAcao",
-  "ACO_Vendedor",
-  "ACO_AtividadeExecutada",
-  "ACO_Lat",
-  "ACO_Lon",
-  "ACO_DthConclusao",
-  "ACO_Status",
-  "ACO_AcaoValida",
-  "ACO_DthAbertura",
-  "ACO_Contato",
-  "NGO_NroNegocio",
-];
 
 const MIRROR_SELECT = [
   "aco_id_acao",
@@ -116,74 +74,33 @@ function mapMirrorRow(r: MirrorAcaoRow): Registro {
   };
 }
 
-function mapLegacyRow(r: AcaoRow): Registro {
-  return {
-    idAcao: r.ACO_IdAcao || undefined,
-    numero: r.ACO_CodigoAcao || undefined,
-    cliente: r.CLI_Nome || "",
-    cidade: r.EMP_Cidade || "",
-    uf: r.EMP_UF || undefined,
-    vendedor: r.ACO_Vendedor || "",
-    tipoContato: r.ACO_TipoContato || "",
-    tipoAcao: r.ACO_TipoAcao || "",
-    negocioValor: 0,
-    negocioEtapa: "",
-    dtConclusao: r.ACO_DthConclusao?.slice(0, 10) || "",
-    obs: r.ACO_AtividadeExecutada || "",
-    lat: r.ACO_Lat || undefined,
-    lng: r.ACO_Lon || undefined,
-    status: r.ACO_Status || undefined,
-    acaoValida: r.ACO_AcaoValida || undefined,
-    dtAbertura: r.ACO_DthAbertura?.slice(0, 10) || undefined,
-    contato: r.ACO_Contato || undefined,
-    nroNegocio: r.ACO_Contato ? undefined : r.NGO_NroNegocio || undefined,
-  };
-}
-
-async function fetchFromMirror(options?: RegistrosFetchOptions): Promise<Registro[]> {
-  let q = supabase.schema("mirror").from("crm_acoes").select(MIRROR_SELECT);
-  if (options?.from) q = q.gte("aco_dth_conclusao", options.from);
-  if (options?.to) q = q.lte("aco_dth_conclusao", `${options.to}T23:59:59.999`);
-  if (options?.vendedor) q = q.eq("aco_vendedor", options.vendedor);
-  if (options?.cidade) q = q.eq("emp_cidade", options.cidade);
-  // PostgREST default cap (1000) — explicit higher cap for safety; with date filter
-  // the result is typically a few hundred rows.
-  q = q.limit(50000);
-  const { data, error } = await q;
-  if (error) throw new Error(error.message);
-  return ((data ?? []) as MirrorAcaoRow[]).map(mapMirrorRow);
-}
-
-async function fetchFromLegacy(options?: RegistrosFetchOptions): Promise<Registro[]> {
-  const advancedFilters: AdvancedFilter[] = [];
-  if (options?.from) {
-    advancedFilters.push({ column: "ACO_DthConclusao", operator: ">=", value: options.from });
+// Timezone fix: Supabase PostgREST stores dates in UTC.
+// To correctly filter for Brazilian local time (UTC-3), we must:
+// - from: start of day in Brazil = start of day UTC + 3h = "YYYY-MM-DDT03:00:00Z"
+// - to:   end of day in Brazil   = next day start in UTC = "YYYY-MM-DD+1T02:59:59.999Z"
+// This captures all actions from 00:00 to 23:59:59 BRT (21:00 prev day UTC to 02:59:59 next day UTC).
+function toUTCISO(dateStr: string, endOfDay: boolean): string {
+  const d = new Date(dateStr + "T12:00:00Z"); // noon UTC avoids midnight boundary issues
+  if (endOfDay) {
+    d.setDate(d.getDate() + 1);
+    d.setUTCHours(2, 59, 59, 999); // 02:59:59.999 UTC = 23:59:59 BRT-3
+  } else {
+    d.setUTCHours(3, 0, 0, 0); // 03:00:00 UTC = 00:00:00 BRT-3
   }
-  if (options?.to) {
-    advancedFilters.push({ column: "ACO_DthConclusao", operator: "<=", value: `${options.to} 23:59:59` });
-  }
-  const filters: Record<string, string> = {};
-  if (options?.vendedor) filters["ACO_Vendedor"] = options.vendedor;
-  if (options?.cidade) filters["EMP_Cidade"] = options.cidade;
-  const acoes = await fetchAllPages<AcaoRow>(
-    "VW_Ceres_CRM_Acoes",
-    ACOES_COLUMNS,
-    Object.keys(filters).length ? filters : undefined,
-    advancedFilters.length ? advancedFilters : undefined,
-  );
-  return acoes.map(mapLegacyRow);
+  return d.toISOString();
 }
 
 export async function fetchRegistrosComerciais(options?: RegistrosFetchOptions): Promise<Registro[]> {
-  if (USE_MIRROR.crm_acoes) {
-    try {
-      return await fetchFromMirror(options);
-    } catch {
-      return await fetchFromLegacy(options);
-    }
-  }
   try {
-    return await fetchFromLegacy(options);
+    let q = supabase.schema("mirror").from("crm_acoes").select(MIRROR_SELECT);
+    if (options?.from) q = q.gte("aco_dth_conclusao", toUTCISO(options.from, false));
+    if (options?.to) q = q.lte("aco_dth_conclusao", toUTCISO(options.to, true));
+    if (options?.vendedor) q = q.eq("aco_vendedor", options.vendedor);
+    if (options?.cidade) q = q.eq("emp_cidade", options.cidade);
+    q = q.limit(50000);
+    const { data, error } = await q;
+    if (error) throw new Error(error.message);
+    return ((data ?? []) as MirrorAcaoRow[]).map(mapMirrorRow);
   } catch {
     return [];
   }

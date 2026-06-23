@@ -1,6 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { USE_MIRROR } from "@/config/featureFlags";
-import { fetchAllPages } from "@/services/sqlServerApi";
 
 export interface PedidoRow {
   NGO_Numero: string;
@@ -31,17 +29,6 @@ interface MirrorPedidoRow {
   pdo_financiamento_banco: string | null;
 }
 
-const PEDIDOS_COLUMNS = [
-  "NGO_Numero",
-  "PDO_SituacaoPedido",
-  "PDO_VlrPedido",
-  "PDO_VlrFinanciado",
-  "PDO_VlrRecursoProprio",
-  "PDO_CidadeUFEntrega",
-  "PDO_Vendedor",
-  "PDO_DthPedido",
-];
-
 const MIRROR_PEDIDOS_SELECT = [
   "ngo_numero",
   "pdo_situacao_pedido",
@@ -68,30 +55,15 @@ function mapMirrorRow(row: MirrorPedidoRow): PedidoRow {
   };
 }
 
-async function fetchFromMirror(options?: PedidosBIFetchOptions): Promise<PedidoRow[]> {
-  let q = supabase.schema("mirror").from("crm_pedidos").select(MIRROR_PEDIDOS_SELECT);
-  if (options?.from) q = q.gte("pdo_dth_pedido", options.from);
-  if (options?.to) q = q.lte("pdo_dth_pedido", `${options.to}T23:59:59.999`);
-  q = q.limit(50000);
-  const { data, error } = await q;
-  if (error) throw new Error(error.message);
-  return ((data ?? []) as MirrorPedidoRow[]).map(mapMirrorRow);
-}
-
-async function fetchFromLegacy(): Promise<PedidoRow[]> {
-  return await fetchAllPages<PedidoRow>("VW_Ceres_CRM_Pedidos", PEDIDOS_COLUMNS);
-}
-
 export async function fetchPedidosBI(options?: PedidosBIFetchOptions): Promise<PedidoRow[]> {
-  if (USE_MIRROR.crm_pedidos) {
-    try {
-      return await fetchFromMirror(options);
-    } catch {
-      return await fetchFromLegacy();
-    }
-  }
   try {
-    return await fetchFromLegacy();
+    let q = supabase.schema("mirror").from("crm_pedidos").select(MIRROR_PEDIDOS_SELECT);
+    if (options?.from) q = q.gte("pdo_dth_pedido", options.from);
+    if (options?.to) q = q.lte("pdo_dth_pedido", `${options.to}T23:59:59.999`);
+    q = q.limit(50000);
+    const { data, error } = await q;
+    if (error) throw new Error(error.message);
+    return ((data ?? []) as MirrorPedidoRow[]).map(mapMirrorRow);
   } catch {
     return [];
   }

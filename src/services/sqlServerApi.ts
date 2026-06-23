@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export interface AdvancedFilter {
+interface AdvancedFilter {
   column: string;
   operator: "=" | ">=" | "<=" | "BETWEEN" | "LIKE" | "IN";
   value: string | string[];
@@ -95,19 +95,4 @@ export async function fetchAllPages<T = Record<string, unknown>>(
   );
 
   return fetchInBatches<T>(factories, 3);
-}
-
-export async function fetchWithDateRange<T = Record<string, unknown>>(
-  view: string,
-  columns: string[],
-  dateColumn: string,
-  startDate: string,
-  endDate: string,
-  extraFilters?: Record<string, string>,
-): Promise<T[]> {
-  const advancedFilters: AdvancedFilter[] = [
-    { column: dateColumn, operator: ">=", value: startDate },
-    { column: dateColumn, operator: "<=", value: endDate },
-  ];
-  return fetchAllPages<T>(view, columns, extraFilters, advancedFilters);
 }
