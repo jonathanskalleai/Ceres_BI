@@ -1,5 +1,13 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { RpcNegociosBI, RpcPedidosBI, RpcServicosBI, RpcAdminBI, RpcAcoesBI } from "@/types/biRpc";
+import type {
+  RpcNegociosBI,
+  RpcPedidosBI,
+  RpcServicosBI,
+  RpcAdminBI,
+  RpcAcoesBI,
+  RpcInteligenciaEsforcoBI,
+  RpcParqueRenovacaoBI,
+} from "@/types/biRpc";
 
 /** Unwrap Supabase RPC response — single-JSON RPCs may return wrapped in array. */
 function unwrapRpc<T>(data: unknown): T {
@@ -83,4 +91,33 @@ export async function fetchAcoesBI(params: {
   const { data, error } = await supabase.rpc("rpc_acoes_bi", rpcParams);
   if (error) throw new Error(`rpc_acoes_bi: ${error.message}`);
   return unwrapRpc<RpcAcoesBI>(data);
+}
+
+/**
+ * Calls rpc_inteligencia_esforco_bi — returns win rate + visitas/negocio metrics.
+ */
+export async function fetchInteligenciaEsforcoBI(
+  from: string,
+  to: string,
+  funis?: string[] | null,
+): Promise<RpcInteligenciaEsforcoBI> {
+  const params: Record<string, unknown> = { p_from: from, p_to: to };
+  if (funis && funis.length > 0) params.p_funis = funis;
+
+  const { data, error } = await supabase.rpc("rpc_inteligencia_esforco_bi", params);
+  if (error) throw new Error(`rpc_inteligencia_esforco_bi: ${error.message}`);
+  return unwrapRpc<RpcInteligenciaEsforcoBI>(data);
+}
+
+/**
+ * Calls rpc_parque_renovacao_bi — returns fleet renewal opportunity by brand.
+ */
+export async function fetchParqueRenovacaoBI(
+  cutoffAnos?: number,
+): Promise<RpcParqueRenovacaoBI> {
+  const { data, error } = await supabase.rpc("rpc_parque_renovacao_bi", {
+    p_cutoff_anos: cutoffAnos ?? 5,
+  });
+  if (error) throw new Error(`rpc_parque_renovacao_bi: ${error.message}`);
+  return unwrapRpc<RpcParqueRenovacaoBI>(data);
 }

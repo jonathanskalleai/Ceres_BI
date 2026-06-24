@@ -120,6 +120,17 @@ export interface PedidosMarcaProdutoItem {
   qtd: number;
 }
 
+export interface PedidosShareBancoItem {
+  name: string;
+  valor: number;
+}
+
+export interface PedidosMixFaturamento {
+  financiado: number;
+  recursoProprio: number;
+  total: number;
+}
+
 /** Full return type of rpc_pedidos_bi */
 export interface RpcPedidosBI {
   kpis: PedidosBIKpis;
@@ -130,6 +141,20 @@ export interface RpcPedidosBI {
   porCidade: PedidosCidadeItem[];
   porGrupoProduto: PedidosGrupoProdutoItem[];
   porMarcaProduto: PedidosMarcaProdutoItem[];
+  sharePorBanco?: PedidosShareBancoItem[];
+  mixFaturamento?: PedidosMixFaturamento;
+}
+
+export interface ServicosSlaPorFilialItem {
+  filial: string;
+  mediaDias: number;
+  totalOS: number;
+}
+
+export interface ServicosSlaPorTipoOSItem {
+  tipo: string;
+  mediaDias: number;
+  totalOS: number;
 }
 
 // ─── rpc_servicos_bi ─────────────────────────────────────────────────────────
@@ -157,6 +182,8 @@ export interface RpcServicosBI {
   situacaoOcorrencias: ServicosBINameValue[];
   motivosPausa: ServicosBINameValue[];
   causasAtendimento: ServicosBINameValue[];
+  slaPorFilial?: ServicosSlaPorFilialItem[];
+  slaPorTipoOS?: ServicosSlaPorTipoOSItem[];
 }
 
 // ─── rpc_admin_bi ────────────────────────────────────────────────────────────
@@ -216,4 +243,40 @@ export interface RpcAcoesBI {
   porTipoAcao: AcoesBIPieDatum[];
   porTipoContato: AcoesBIPieDatum[];
   listaAnos: string[];
+}
+
+// ─── rpc_inteligencia_esforco_bi ─────────────────────────────────────────────
+
+export interface InteligenciaWinRateItem {
+  name: string;
+  ganhos: number;
+  perdidos: number;
+  taxa: number;
+}
+
+export interface InteligenciaVisitasItem {
+  name: string;
+  visitas: number;
+  negocios: number;
+  ratio: number;
+}
+
+/** Full return type of rpc_inteligencia_esforco_bi */
+export interface RpcInteligenciaEsforcoBI {
+  winRatePorVendedor: InteligenciaWinRateItem[];
+  visitasPorNegocioGanho: InteligenciaVisitasItem[];
+}
+
+// ─── rpc_parque_renovacao_bi ─────────────────────────────────────────────────
+
+export interface ParqueRenovacaoItem {
+  marca: string;
+  clientesComFrotaAntiga: number;
+  totalMaquinas: number;
+  isNossaMarca: boolean;
+}
+
+/** Full return type of rpc_parque_renovacao_bi */
+export interface RpcParqueRenovacaoBI {
+  frotaRenovacao: ParqueRenovacaoItem[];
 }

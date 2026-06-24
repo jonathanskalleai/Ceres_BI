@@ -1,5 +1,5 @@
 import { type DateRange } from "react-day-picker";
-import { useInteligenciaBI } from "@/hooks/bi/useInteligenciaBI";
+import { useInteligenciaBIRpc } from "@/hooks/bi/useInteligenciaBIRpc";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { HorizontalBarChart, PieChart } from "@/components/bi/charts";
 import { CHART_COLORS, POSITIVE_COLOR, NEGATIVE_COLOR } from "@/lib/chartTheme";
@@ -25,7 +25,7 @@ function SectionTitle({ label }: { label: string }) {
 }
 
 export default function InteligenciaSection({ active, dateRange, categoria, funil }: Props) {
-  const data = useInteligenciaBI(active, dateRange, categoria, funil);
+  const data = useInteligenciaBIRpc(active, dateRange, categoria, funil);
   const { isLoading } = data;
 
   const winRateData = data.winRatePorVendedor.map((v) => ({
