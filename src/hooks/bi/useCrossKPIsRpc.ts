@@ -1,6 +1,6 @@
 import { type DateRange } from "react-day-picker";
 import { toISODate } from "@/lib/dateUtils";
-import { type CategoriaFilter, CATEGORIA_ALL, getFunisByCategoria, FUNIL_ALL } from "@/lib/categoriaFunil";
+import { type CategoriaFilter, resolveFunis } from "@/lib/categoriaFunil";
 import { useNegociosBIRpc } from "@/hooks/bi/useNegociosBIRpc";
 import { usePedidosBIRpc } from "@/hooks/bi/usePedidosBIRpc";
 
@@ -30,12 +30,6 @@ export interface UseCrossKPIsResult {
 
 function neutralKPI(value: number): KPIWithPrev {
   return { value, previousValue: 0, trend: "neutral" };
-}
-
-function resolveFunis(categoria: CategoriaFilter, funil: string): string[] | undefined {
-  if (funil && funil !== FUNIL_ALL) return [funil];
-  if (categoria && categoria !== CATEGORIA_ALL) return getFunisByCategoria(categoria);
-  return undefined;
 }
 
 /**

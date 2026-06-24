@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { type DateRange } from "react-day-picker";
-import { type CategoriaFilter, CATEGORIA_ALL, getFunisByCategoria, FUNIL_ALL } from "@/lib/categoriaFunil";
+import { type CategoriaFilter, resolveFunis } from "@/lib/categoriaFunil";
 import { toISODate } from "@/lib/dateUtils";
 import { useNegociosBIRpc } from "@/hooks/bi/useNegociosBIRpc";
 import { useAcoesBIRpc } from "@/hooks/bi/useAcoesBIRpc";
@@ -42,14 +42,6 @@ export interface UsePainelResult {
   isLoading: boolean;
 }
 
-type Trend = "up" | "down" | "neutral";
-
-interface KPIWithPrev {
-  value: number;
-  previousValue: number;
-  trend: Trend;
-}
-
 function calcTrend(atual: number, anterior: number): Trend {
   if (atual > anterior) return "up";
   if (atual < anterior) return "down";
@@ -58,12 +50,6 @@ function calcTrend(atual: number, anterior: number): Trend {
 
 function makeKPI(atual: number, anterior: number): KPIWithPrev {
   return { value: atual, previousValue: anterior, trend: calcTrend(atual, anterior) };
-}
-
-function resolveFunis(categoria: CategoriaFilter, funil: string): string[] | undefined {
-  if (funil && funil !== FUNIL_ALL) return [funil];
-  if (categoria && categoria !== CATEGORIA_ALL) return getFunisByCategoria(categoria);
-  return undefined;
 }
 
 /**

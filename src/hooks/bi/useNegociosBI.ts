@@ -4,7 +4,7 @@ import { type DateRange } from "react-day-picker";
 import { fetchNegociosBI, type NegocioBIRow } from "@/services/bi/negociosBIService";
 
 import { yearMonth, toISODate } from "@/lib/dateUtils";
-import { type CategoriaFilter, CATEGORIA_ALL, getFunisByCategoria, FUNIL_ALL } from "@/lib/categoriaFunil";
+import { type CategoriaFilter, resolveFunis } from "@/lib/categoriaFunil";
 import { useBiDebugPublisher } from "@/components/bi/debug/useBiDebugPublisher";
 
 interface NegociosKPIs {
@@ -191,13 +191,6 @@ export function aggregateNegociosBI(rawRows: NegocioBIRow[]): NegociosAgg {
     .slice(0, 10);
 
   return { kpis, funilPorEtapa, porOrigem, motivosPerda, evolucaoMensal, rankingConsultor };
-}
-
-/** Resolve a lista de funis efetiva (server-side) a partir de categoria + funil individual. */
-function resolveFunis(categoria?: CategoriaFilter, funil?: string): string[] | undefined {
-  if (funil && funil !== FUNIL_ALL) return [funil];
-  if (categoria && categoria !== CATEGORIA_ALL) return getFunisByCategoria(categoria);
-  return undefined;
 }
 
 export function useNegociosBI(
