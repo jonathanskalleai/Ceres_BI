@@ -41,8 +41,6 @@ export default function CrmOverviewRpc() {
     from, to, limit: 15, enabled: hasDateRange,
   });
 
-  const isLoading = kpisLoading || rankLoading || evolLoading || regLoading;
-
   // ─── Derived chart data ──────────────────────────────────────────────
   const kpiCards = useMemo(() => {
     if (!kpisRaw) return [];
@@ -124,6 +122,7 @@ export default function CrmOverviewRpc() {
                 { name: "Visitas", data: evolucaoChart.map((d) => ({ x: formatMonthYear(d.mes), y: d.visitas })) },
               ]}
               height={280}
+              loading={evolLoading}
             />
           </CardContent>
         </Card>
@@ -138,6 +137,7 @@ export default function CrmOverviewRpc() {
               layout="horizontal"
               keys={["acoes"]}
               height={280}
+              loading={rankLoading}
               tooltipFormatter={(v) => `${v} acoes`}
               onBarClick={(datum) => handleSelectConsultor(String(datum.full))}
             />
@@ -152,6 +152,7 @@ export default function CrmOverviewRpc() {
             <PieChart
               data={tiposContato}
               height={250}
+              loading={kpisLoading}
               enableLabels
             />
           </CardContent>
@@ -167,6 +168,7 @@ export default function CrmOverviewRpc() {
               layout="horizontal"
               keys={["value"]}
               height={250}
+              loading={kpisLoading}
             />
           </CardContent>
         </Card>
@@ -183,6 +185,7 @@ export default function CrmOverviewRpc() {
               layout="vertical"
               keys={["acoes"]}
               height={Math.min(regioesChart.length * 45 + 40, 300)}
+              loading={regLoading}
               tooltipFormatter={(v) => `${v} acoes`}
             />
           </CardContent>
