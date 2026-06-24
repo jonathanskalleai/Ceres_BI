@@ -3,12 +3,11 @@ import {
 } from "lucide-react";
 import { type DateRange } from "react-day-picker";
 import { useNegociosBIRpc } from "@/hooks/bi/useNegociosBIRpc";
-import { useFunilData } from "@/hooks/bi/useFunilData";
 import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { HorizontalBarChart, VerticalBarChart, LineChart } from "@/components/bi/charts";
 import { CHART_COLORS, POSITIVE_COLOR, NEGATIVE_COLOR } from "@/lib/chartTheme";
-import { formatBRL, formatBRLShort, formatDias, formatMonthYear, toISODate } from "@/lib/dateUtils";
+import { formatBRL, formatDias, formatMonthYear, toISODate } from "@/lib/dateUtils";
 
 import { type CategoriaFilter, CATEGORIA_ALL, getFunisByCategoria, FUNIL_ALL } from "@/lib/categoriaFunil";
 import type { RpcNegociosBI } from "@/types/biRpc";
@@ -31,6 +30,7 @@ function resolveFunis(categoria?: CategoriaFilter, funil?: string): string[] | u
 const EMPTY_AGG: RpcNegociosBI = {
   kpis: { totalNegocios: 0, ganhos: 0, perdidos: 0, andamento: 0, taxaConversao: 0, pipelineAberto: 0, pipelinePerdido: 0, valorGanho: 0, ticketMedioGanho: 0, cicloMedioDias: 0, esforcoMedio: 0 },
   funilPorEtapa: [], porOrigem: [], motivosPerda: [], evolucaoMensal: [], rankingConsultor: [],
+  velocidadeFunil: [], duracaoMediaTotal: 0,
 };
 
 export default function ComercialSection({ active, dateRange, categoria, funil }: Props) {
@@ -44,7 +44,6 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
     funis,
     enabled: active && !!from && !!to,
   });
-  const { agg: funil_, isLoading: funilLoading } = useFunilData(active);
   const { kpis } = agg;
 
   return (
@@ -152,10 +151,10 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
         <ChartCard
           title="Velocidade do Funil — Gargalos"
           description="Tempo medio (dias) que negocios permanecem em cada etapa"
-          loading={funilLoading}
+          loading={isLoading}
         >
           <HorizontalBarChart
-            data={funil_.velocidadePorEtapa.map(item => ({
+            data={agg.velocidadeFunil.map(item => ({
               name: item.name,
               diasMedio: item.diasMedio,
               qtd: item.qtd

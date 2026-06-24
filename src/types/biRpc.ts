@@ -52,6 +52,12 @@ export interface NegociosRankingConsultorItem {
   taxa: number;
 }
 
+export interface NegociosVelocidadeFunilItem {
+  name: string;
+  diasMedio: number;
+  qtd: number;
+}
+
 /** Full return type of rpc_negocios_bi */
 export interface RpcNegociosBI {
   kpis: NegociosBIKpis;
@@ -60,6 +66,8 @@ export interface RpcNegociosBI {
   motivosPerda: NegociosMotivoPerdaItem[];
   evolucaoMensal: NegociosEvolucaoItem[];
   rankingConsultor: NegociosRankingConsultorItem[];
+  velocidadeFunil: NegociosVelocidadeFunilItem[];
+  duracaoMediaTotal: number;
 }
 
 // ─── rpc_pedidos_bi ───────────────────────────────────────────────────────────
@@ -100,6 +108,18 @@ export interface PedidosCidadeItem {
   value: number;
 }
 
+export interface PedidosGrupoProdutoItem {
+  name: string;
+  valor: number;
+  qtd: number;
+}
+
+export interface PedidosMarcaProdutoItem {
+  name: string;
+  valor: number;
+  qtd: number;
+}
+
 /** Full return type of rpc_pedidos_bi */
 export interface RpcPedidosBI {
   kpis: PedidosBIKpis;
@@ -108,6 +128,8 @@ export interface RpcPedidosBI {
   mixPagamento: PedidosMixItem[];
   porVendedor: PedidosVendedorItem[];
   porCidade: PedidosCidadeItem[];
+  porGrupoProduto: PedidosGrupoProdutoItem[];
+  porMarcaProduto: PedidosMarcaProdutoItem[];
 }
 
 // ─── rpc_servicos_bi ─────────────────────────────────────────────────────────

@@ -1,12 +1,11 @@
 import { ShoppingCart, DollarSign, TrendingUp, CreditCard, Percent, XCircle } from "lucide-react";
 import { type DateRange } from "react-day-picker";
 import { usePedidosBIRpc } from "@/hooks/bi/usePedidosBIRpc";
-import { usePedidosItensData } from "@/hooks/bi/usePedidosItensData";
 import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { HorizontalBarChart, PieChartWithLabels, LineChart } from "@/components/bi/charts";
 import { CHART_COLORS, POSITIVE_COLOR } from "@/lib/chartTheme";
-import { formatBRL, formatBRLShort, formatMonthYear, toISODate } from "@/lib/dateUtils";
+import { formatBRL, formatMonthYear, toISODate } from "@/lib/dateUtils";
 import type { RpcPedidosBI } from "@/types/biRpc";
 
 interface Props {
@@ -17,6 +16,7 @@ interface Props {
 const EMPTY_AGG: RpcPedidosBI = {
   kpis: { total: 0, faturamento: 0, ticketMedio: 0, percentAprovado: 0, percentFinanciado: 0, valorCancelado: 0 },
   evolucaoMensal: [], porSituacao: [], mixPagamento: [], porVendedor: [], porCidade: [],
+  porGrupoProduto: [], porMarcaProduto: [],
 };
 
 export default function PedidosSection({ active, dateRange }: Props) {
@@ -28,7 +28,6 @@ export default function PedidosSection({ active, dateRange }: Props) {
     to,
     enabled: active && !!from && !!to,
   });
-  const { agg: itens, isLoading: itensLoading } = usePedidosItensData(active);
   const { kpis } = agg;
 
   return (
@@ -148,10 +147,10 @@ export default function PedidosSection({ active, dateRange }: Props) {
         <ChartCard
           title="Itens Mais Vendidos — Grupo"
           description="Valor vendido por grupo de produto (itens dos pedidos)"
-          loading={itensLoading}
+          loading={isLoading}
         >
           <HorizontalBarChart
-            data={itens.porGrupo.map(item => ({
+            data={agg.porGrupoProduto.map(item => ({
               name: item.name,
               valor: item.valor,
               qtd: item.qtd
