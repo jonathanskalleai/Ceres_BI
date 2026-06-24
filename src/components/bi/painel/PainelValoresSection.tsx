@@ -3,12 +3,12 @@ import {
 } from "lucide-react";
 import { KPICard } from "@/components/bi/KPICard";
 import { fmtBRL, isEmpty } from "@/lib/formatters";
-import type { usePainelKPIs } from "@/hooks/bi/usePainelKPIs";
-import type { useCrossKPIs } from "@/hooks/bi/useCrossKPIs";
+import type { PainelKPIs } from "@/hooks/bi/usePainelKPIsRpc";
+import type { CrossKPIs } from "@/hooks/bi/useCrossKPIsRpc";
 
 interface Props {
-  kpis: ReturnType<typeof usePainelKPIs>["kpis"];
-  crossKpis: ReturnType<typeof useCrossKPIs>["kpis"];
+  kpis: PainelKPIs;
+  crossKpis: CrossKPIs;
   loading: boolean;
 }
 

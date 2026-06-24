@@ -1,11 +1,46 @@
 import { useMemo } from "react";
 import { type DateRange } from "react-day-picker";
-import { type CategoriaFilter } from "@/lib/categoriaFunil";
+import { type CategoriaFilter, CATEGORIA_ALL, getFunisByCategoria, FUNIL_ALL } from "@/lib/categoriaFunil";
 import { toISODate } from "@/lib/dateUtils";
 import { useNegociosBIRpc } from "@/hooks/bi/useNegociosBIRpc";
 import { useAcoesBIRpc } from "@/hooks/bi/useAcoesBIRpc";
 import { useOperacionalData } from "@/hooks/bi/useOperacionalData";
-import type { UsePainelResult, PainelKPIs } from "@/hooks/bi/usePainelKPIs";
+
+// ---------------------------------------------------------------------------
+// Types (migrated from usePainelKPIs.ts — canonical source now)
+// ---------------------------------------------------------------------------
+
+type Trend = "up" | "down" | "neutral";
+
+interface KPIWithPrev {
+  value: number;
+  previousValue: number;
+  trend: Trend;
+}
+
+export interface PainelKPIs {
+  // Negocios
+  totalNegocios: KPIWithPrev;
+  ganhos: KPIWithPrev;
+  perdidos: KPIWithPrev;
+  andamento: KPIWithPrev;
+  taxaConversao: KPIWithPrev;
+  // Valores
+  valorGanho: KPIWithPrev;
+  valorPerdido: KPIWithPrev;
+  pipelineAberto: KPIWithPrev;
+  ticketMedio: KPIWithPrev;
+  // Acoes / Operacional
+  totalAcoes: KPIWithPrev;
+  totalVisitas: KPIWithPrev;
+  totalOS: KPIWithPrev;
+  porTipoAcao: Array<{ name: string; value: number; previousValue: number; trend: Trend }>;
+}
+
+export interface UsePainelResult {
+  kpis: PainelKPIs;
+  isLoading: boolean;
+}
 
 type Trend = "up" | "down" | "neutral";
 
@@ -23,6 +58,12 @@ function calcTrend(atual: number, anterior: number): Trend {
 
 function makeKPI(atual: number, anterior: number): KPIWithPrev {
   return { value: atual, previousValue: anterior, trend: calcTrend(atual, anterior) };
+}
+
+function resolveFunis(categoria: CategoriaFilter, funil: string): string[] | undefined {
+  if (funil && funil !== FUNIL_ALL) return [funil];
+  if (categoria && categoria !== CATEGORIA_ALL) return getFunisByCategoria(categoria);
+  return undefined;
 }
 
 /**
@@ -64,11 +105,8 @@ export function usePainelKPIsRpc(
   const fromAnterior = useMemo(() => toISODate(prevDateRange?.from), [prevDateRange?.from]);
   const toAnterior = useMemo(() => toISODate(prevDateRange?.to ?? prevDateRange?.from), [prevDateRange?.to, prevDateRange?.from]);
 
-  // Funis filter from categoria (pass undefined if ALL)
-  const funis = useMemo(() => {
-    if (!funil || funil === "all") return undefined;
-    return [funil];
-  }, [funil]);
+  // Funis filter from categoria + funil (mirrors ComercialSection logic)
+  const funis = useMemo(() => resolveFunis(categoria, funil), [categoria, funil]);
 
   // Negocios — current period
   const { data: negAtual, isLoading: negLoad1 } = useNegociosBIRpc({

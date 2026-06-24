@@ -3,10 +3,10 @@ import {
 } from "lucide-react";
 import { KPICard } from "@/components/bi/KPICard";
 import { fmtNum, fmtPct, isEmpty } from "@/lib/formatters";
-import type { usePainelKPIs } from "@/hooks/bi/usePainelKPIs";
+import type { PainelKPIs } from "@/hooks/bi/usePainelKPIsRpc";
 
 interface Props {
-  kpis: ReturnType<typeof usePainelKPIs>["kpis"];
+  kpis: PainelKPIs;
   loading: boolean;
 }
 

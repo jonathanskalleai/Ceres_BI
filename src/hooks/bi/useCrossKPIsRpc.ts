@@ -3,7 +3,30 @@ import { toISODate } from "@/lib/dateUtils";
 import { type CategoriaFilter, CATEGORIA_ALL, getFunisByCategoria, FUNIL_ALL } from "@/lib/categoriaFunil";
 import { useNegociosBIRpc } from "@/hooks/bi/useNegociosBIRpc";
 import { usePedidosBIRpc } from "@/hooks/bi/usePedidosBIRpc";
-import type { KPIWithPrev, CrossKPIs, UseCrossKPIsResult } from "@/hooks/bi/useCrossKPIs";
+
+// ---------------------------------------------------------------------------
+// Types (migrated from useCrossKPIs.ts — canonical source now)
+// ---------------------------------------------------------------------------
+
+type Trend = "up" | "down" | "neutral";
+
+export interface KPIWithPrev {
+  value: number;
+  previousValue: number;
+  trend: Trend;
+}
+
+export interface CrossKPIs {
+  cicloMedioVendas: KPIWithPrev;
+  esforcoMedio: KPIWithPrev;
+  conversaoPedidoNegocio: KPIWithPrev;
+  receitaPorConsultor: KPIWithPrev;
+}
+
+export interface UseCrossKPIsResult {
+  kpis: CrossKPIs;
+  isLoading: boolean;
+}
 
 function neutralKPI(value: number): KPIWithPrev {
   return { value, previousValue: 0, trend: "neutral" };
