@@ -6,7 +6,7 @@ import { fetchNegociosBI, type NegocioBIRow } from "@/services/bi/negociosBIServ
 import { fetchPedidosBI, type PedidoRow } from "@/services/bi/pedidosBIService";
 import { fetchParqueBI, type ParqueRow } from "@/services/bi/produtosBIService";
 import { fetchOrdensServico, type OrdemServicoRow } from "@/services/bi/servicosBIService";
-import { toISODate } from "@/hooks/bi/useNegociosBI";
+import { toISODate } from "@/lib/dateUtils";
 import {
   NOSSAS_MARCAS,
   isInRange,

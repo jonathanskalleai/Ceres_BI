@@ -1,6 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { RpcNegociosBI, RpcPedidosBI, RpcServicosBI, RpcAdminBI, RpcAcoesBI } from "@/types/biRpc";
 
+/** Unwrap Supabase RPC response — single-JSON RPCs may return wrapped in array. */
+function unwrapRpc<T>(data: unknown): T {
+  const raw = Array.isArray(data) ? data[0] : data;
+  return raw as T;
+}
+
 /**
  * Calls rpc_negocios_bi — returns aggregated business deal metrics as JSON.
  */
@@ -14,10 +20,7 @@ export async function fetchNegociosBI(
 
   const { data, error } = await supabase.rpc("rpc_negocios_bi", params);
   if (error) throw new Error(`rpc_negocios_bi: ${error.message}`);
-
-  // RPC returns single JSON value; Supabase may wrap in array
-  const raw = Array.isArray(data) ? data[0] : data;
-  return raw as RpcNegociosBI;
+  return unwrapRpc<RpcNegociosBI>(data);
 }
 
 /**
@@ -32,9 +35,7 @@ export async function fetchPedidosBI(
     p_to: to,
   });
   if (error) throw new Error(`rpc_pedidos_bi: ${error.message}`);
-
-  const raw = Array.isArray(data) ? data[0] : data;
-  return raw as RpcPedidosBI;
+  return unwrapRpc<RpcPedidosBI>(data);
 }
 
 /**
@@ -49,9 +50,7 @@ export async function fetchServicosBI(
     p_to: to,
   });
   if (error) throw new Error(`rpc_servicos_bi: ${error.message}`);
-
-  const raw = Array.isArray(data) ? data[0] : data;
-  return raw as RpcServicosBI;
+  return unwrapRpc<RpcServicosBI>(data);
 }
 
 /**
@@ -61,9 +60,7 @@ export async function fetchServicosBI(
 export async function fetchAdminBI(): Promise<RpcAdminBI> {
   const { data, error } = await supabase.rpc("rpc_admin_bi");
   if (error) throw new Error(`rpc_admin_bi: ${error.message}`);
-
-  const raw = Array.isArray(data) ? data[0] : data;
-  return raw as RpcAdminBI;
+  return unwrapRpc<RpcAdminBI>(data);
 }
 
 /**
@@ -85,7 +82,5 @@ export async function fetchAcoesBI(params: {
 
   const { data, error } = await supabase.rpc("rpc_acoes_bi", rpcParams);
   if (error) throw new Error(`rpc_acoes_bi: ${error.message}`);
-
-  const raw = Array.isArray(data) ? data[0] : data;
-  return raw as RpcAcoesBI;
+  return unwrapRpc<RpcAcoesBI>(data);
 }

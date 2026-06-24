@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { type DateRange } from "react-day-picker";
 import { type CategoriaFilter } from "@/lib/categoriaFunil";
+import { toISODate } from "@/lib/dateUtils";
 import { useNegociosBIRpc } from "@/hooks/bi/useNegociosBIRpc";
 import { useAcoesBIRpc } from "@/hooks/bi/useAcoesBIRpc";
 import { useOperacionalData } from "@/hooks/bi/useOperacionalData";
@@ -22,11 +23,6 @@ function calcTrend(atual: number, anterior: number): Trend {
 
 function makeKPI(atual: number, anterior: number): KPIWithPrev {
   return { value: atual, previousValue: anterior, trend: calcTrend(atual, anterior) };
-}
-
-function toISODate(d: Date | undefined): string {
-  if (!d) return "";
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 /**

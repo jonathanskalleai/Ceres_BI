@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { type DateRange } from "react-day-picker";
 import { useComercialData } from "@/hooks/useComercialData";
+import { toISODate } from "@/lib/dateUtils";
 import type { Registro } from "@/types/comercial";
 
 interface AcoesFilters {
@@ -161,14 +162,6 @@ function aggregate(registros: Registro[]): Omit<AcoesBIResult, "listaAnos" | "is
     .sort((a, b) => b.value - a.value);
 
   return { kpis, porVendedor, porCidade, porMes, porDiaSemana, porTipoAcao, porTipoContato };
-}
-
-function toISODate(d: Date | undefined): string | undefined {
-  if (!d) return undefined;
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
 }
 
 export function useAcoesBI(active: boolean, filters: AcoesFilters, categoria?: string, funil?: string): AcoesBIResult {

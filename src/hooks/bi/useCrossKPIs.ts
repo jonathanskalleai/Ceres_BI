@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { type DateRange } from "react-day-picker";
 import { type CategoriaFilter, CATEGORIA_ALL, getFunisByCategoria, FUNIL_ALL } from "@/lib/categoriaFunil";
+import { toISODate } from "@/lib/dateUtils";
 import { fetchNegociosBI, type NegocioBIRow } from "@/services/bi/negociosBIService";
 import { fetchPedidosBI, type PedidoRow } from "@/services/bi/pedidosBIService";
 import { dedupeNegocios } from "@/hooks/bi/useNegociosBI";
@@ -192,14 +193,6 @@ function computeMetrics(negocios: NegocioBIRow[], pedidos: PedidoRow[]): PeriodM
  * - conversaoPedidoNegocio: % of won deals that generated at least 1 order
  * - receitaPorConsultor: AVG revenue per active seller (won deals)
  */
-function toISODate(d: Date | undefined): string | undefined {
-  if (!d) return undefined;
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
 function resolveFunisServer(categoria: CategoriaFilter, funil: string): string[] | undefined {
   if (funil && funil !== FUNIL_ALL) return [funil];
   if (categoria && categoria !== CATEGORIA_ALL) return getFunisByCategoria(categoria);

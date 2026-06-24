@@ -3,7 +3,7 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { type DateRange } from "react-day-picker";
 import { fetchNegociosBI, type NegocioBIRow } from "@/services/bi/negociosBIService";
 
-import { yearMonth } from "@/lib/dateUtils";
+import { yearMonth, toISODate } from "@/lib/dateUtils";
 import { type CategoriaFilter, CATEGORIA_ALL, getFunisByCategoria, FUNIL_ALL } from "@/lib/categoriaFunil";
 import { useBiDebugPublisher } from "@/components/bi/debug/useBiDebugPublisher";
 
@@ -191,15 +191,6 @@ export function aggregateNegociosBI(rawRows: NegocioBIRow[]): NegociosAgg {
     .slice(0, 10);
 
   return { kpis, funilPorEtapa, porOrigem, motivosPerda, evolucaoMensal, rankingConsultor };
-}
-
-/** Converte Date → "YYYY-MM-DD" no fuso local (sem deslocamento UTC). */
-export function toISODate(d: Date | undefined): string | undefined {
-  if (!d) return undefined;
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
 }
 
 /** Resolve a lista de funis efetiva (server-side) a partir de categoria + funil individual. */

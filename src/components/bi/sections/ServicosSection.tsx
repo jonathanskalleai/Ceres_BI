@@ -6,13 +6,8 @@ import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { HorizontalBarChart, VerticalBarChart, PieChartWithLabels } from "@/components/bi/charts";
 import { CHART_COLORS } from "@/lib/chartTheme";
-import { formatDias, formatMonthYear } from "@/lib/dateUtils";
+import { formatDias, formatMonthYear, toISODate } from "@/lib/dateUtils";
 import type { RpcServicosBI } from "@/types/biRpc";
-
-function toISODate(d: Date | undefined): string {
-  if (!d) return "";
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
 
 const EMPTY: RpcServicosBI = {
   kpis: { totalOS: 0, abertas: 0, taxaFechamento: 0, tempoMedioResolucao: 0, tempoMedianoResolucao: 0, totalOcorrencias: 0 },

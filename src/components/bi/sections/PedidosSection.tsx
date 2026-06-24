@@ -6,20 +6,12 @@ import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { HorizontalBarChart, PieChartWithLabels, LineChart } from "@/components/bi/charts";
 import { CHART_COLORS, POSITIVE_COLOR } from "@/lib/chartTheme";
-import { formatBRL, formatBRLShort, formatMonthYear } from "@/lib/dateUtils";
+import { formatBRL, formatBRLShort, formatMonthYear, toISODate } from "@/lib/dateUtils";
 import type { RpcPedidosBI } from "@/types/biRpc";
 
 interface Props {
   active: boolean;
   dateRange?: DateRange;
-}
-
-function toISODate(d: Date | undefined): string {
-  if (!d) return "";
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
 }
 
 const EMPTY_AGG: RpcPedidosBI = {

@@ -8,7 +8,7 @@ import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { HorizontalBarChart, VerticalBarChart, LineChart } from "@/components/bi/charts";
 import { CHART_COLORS, POSITIVE_COLOR, NEGATIVE_COLOR } from "@/lib/chartTheme";
-import { formatBRL, formatBRLShort, formatDias, formatMonthYear } from "@/lib/dateUtils";
+import { formatBRL, formatBRLShort, formatDias, formatMonthYear, toISODate } from "@/lib/dateUtils";
 
 import { type CategoriaFilter, CATEGORIA_ALL, getFunisByCategoria, FUNIL_ALL } from "@/lib/categoriaFunil";
 import type { RpcNegociosBI } from "@/types/biRpc";
@@ -21,14 +21,6 @@ interface Props {
 }
 
 const pct = (v: number) => `${v.toFixed(1)}%`;
-
-function toISODate(d: Date | undefined): string {
-  if (!d) return "";
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
 
 function resolveFunis(categoria?: CategoriaFilter, funil?: string): string[] | undefined {
   if (funil && funil !== FUNIL_ALL) return [funil];

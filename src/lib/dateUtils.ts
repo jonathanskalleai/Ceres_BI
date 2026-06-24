@@ -62,3 +62,12 @@ export function formatDateBR(d: string): string {
   if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
   return d;
 }
+
+/** Converte Date → "YYYY-MM-DD" no fuso local (sem deslocamento UTC). */
+export function toISODate(d: Date | undefined): string | undefined {
+  if (!d) return undefined;
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}

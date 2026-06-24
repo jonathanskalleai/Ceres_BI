@@ -4,15 +4,7 @@ import {
   fetchOrdensServico, fetchAtendimentosOS, fetchOcorrencias,
   type OrdemServicoRow, type AtendimentoOSRow, type OcorrenciaRow,
 } from "@/services/bi/servicosBIService";
-import { daysBetween, yearMonth } from "@/lib/dateUtils";
-
-function toISODate(d: Date | undefined): string | undefined {
-  if (!d) return undefined;
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
+import { daysBetween, yearMonth, toISODate } from "@/lib/dateUtils";
 
 interface ChartDatum {
   name: string;

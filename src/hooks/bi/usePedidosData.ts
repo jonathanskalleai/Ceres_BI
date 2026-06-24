@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { fetchPedidosBI, type PedidoRow } from "@/services/bi/pedidosBIService";
-import { yearMonth } from "@/lib/dateUtils";
+import { yearMonth, toISODate } from "@/lib/dateUtils";
 
 interface ChartDatum { name: string; value: number; }
 interface SituacaoDatum { name: string; valor: number; qtd: number; }
@@ -111,14 +111,6 @@ export function aggregatePedidos(rows: PedidoRow[]): PedidosAgg {
     porVendedor: toTop(venMap),
     porCidade: toTop(cidMap),
   };
-}
-
-function toISODate(d: Date | undefined): string | undefined {
-  if (!d) return undefined;
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
 }
 
 export function usePedidosData(enabled: boolean, dateRange?: import("react-day-picker").DateRange) {

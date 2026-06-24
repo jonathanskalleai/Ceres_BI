@@ -7,12 +7,8 @@ import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { HorizontalBarChart, VerticalBarChart, PieChartWithLabels } from "@/components/bi/charts";
 import { CHART_COLORS } from "@/lib/chartTheme";
+import { toISODate } from "@/lib/dateUtils";
 import type { RpcAcoesBI } from "@/types/biRpc";
-
-function toISODate(d: Date | undefined): string | undefined {
-  if (!d) return undefined;
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
 
 const EMPTY: RpcAcoesBI = {
   kpis: { totalAcoes: 0, cidades: 0, consultores: 0, visitas: 0, clientes: 0, tiposAcaoDistintos: 0 },
