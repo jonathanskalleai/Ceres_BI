@@ -1,20 +1,41 @@
 import { ShoppingCart, DollarSign, TrendingUp, CreditCard, Percent, XCircle } from "lucide-react";
 import { type DateRange } from "react-day-picker";
-import { usePedidosData } from "@/hooks/bi/usePedidosData";
+import { usePedidosBIRpc } from "@/hooks/bi/usePedidosBIRpc";
 import { usePedidosItensData } from "@/hooks/bi/usePedidosItensData";
 import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { HorizontalBarChart, PieChartWithLabels, LineChart } from "@/components/bi/charts";
 import { CHART_COLORS, POSITIVE_COLOR } from "@/lib/chartTheme";
 import { formatBRL, formatBRLShort, formatMonthYear } from "@/lib/dateUtils";
+import type { RpcPedidosBI } from "@/types/biRpc";
 
 interface Props {
   active: boolean;
   dateRange?: DateRange;
 }
 
+function toISODate(d: Date | undefined): string {
+  if (!d) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+const EMPTY_AGG: RpcPedidosBI = {
+  kpis: { total: 0, faturamento: 0, ticketMedio: 0, percentAprovado: 0, percentFinanciado: 0, valorCancelado: 0 },
+  evolucaoMensal: [], porSituacao: [], mixPagamento: [], porVendedor: [], porCidade: [],
+};
+
 export default function PedidosSection({ active, dateRange }: Props) {
-  const { agg, isLoading } = usePedidosData(active, dateRange);
+  const from = toISODate(dateRange?.from);
+  const to = toISODate(dateRange?.to ?? dateRange?.from);
+
+  const { data: agg = EMPTY_AGG, isLoading } = usePedidosBIRpc({
+    from,
+    to,
+    enabled: active && !!from && !!to,
+  });
   const { agg: itens, isLoading: itensLoading } = usePedidosItensData(active);
   const { kpis } = agg;
 

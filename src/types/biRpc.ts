@@ -109,3 +109,89 @@ export interface RpcPedidosBI {
   porVendedor: PedidosVendedorItem[];
   porCidade: PedidosCidadeItem[];
 }
+
+// ─── rpc_servicos_bi ─────────────────────────────────────────────────────────
+
+export interface ServicosBIKpis {
+  totalOS: number;
+  abertas: number;
+  taxaFechamento: number;
+  tempoMedioResolucao: number;
+  tempoMedianoResolucao: number;
+  totalOcorrencias: number;
+}
+
+export interface ServicosBINameValue {
+  name: string;
+  value: number;
+}
+
+/** Full return type of rpc_servicos_bi */
+export interface RpcServicosBI {
+  kpis: ServicosBIKpis;
+  porStatus: ServicosBINameValue[];
+  faixasResolucao: ServicosBINameValue[];
+  evolucaoAberturas: ServicosBINameValue[];
+  situacaoOcorrencias: ServicosBINameValue[];
+  motivosPausa: ServicosBINameValue[];
+  causasAtendimento: ServicosBINameValue[];
+}
+
+// ─── rpc_admin_bi ────────────────────────────────────────────────────────────
+
+export interface AdminBIKpis {
+  totalClientes: number;
+  prospects: number;
+  ativos: number;
+  ufsCobertas: number;
+  consultoresCarteira: number;
+  empresas: number;
+}
+
+export interface AdminBINameValue {
+  name: string;
+  value: number;
+}
+
+/** Full return type of rpc_admin_bi */
+export interface RpcAdminBI {
+  kpis: AdminBIKpis;
+  prospectVsAtivo: AdminBINameValue[];
+  porTipoCliente: AdminBINameValue[];
+  porUF: AdminBINameValue[];
+  porConsultor: AdminBINameValue[];
+}
+
+// ─── rpc_acoes_bi ────────────────────────────────────────────────────────────
+
+export interface AcoesBIKpis {
+  totalAcoes: number;
+  cidades: number;
+  consultores: number;
+  visitas: number;
+  clientes: number;
+  tiposAcaoDistintos: number;
+}
+
+export interface AcoesBINameAcoes {
+  name: string;
+  acoes: number;
+}
+
+export interface AcoesBIPieDatum {
+  id: string;
+  name: string;
+  value: number;
+}
+
+/** Full return type of rpc_acoes_bi */
+export interface RpcAcoesBI {
+  kpis: AcoesBIKpis;
+  porVendedor: AcoesBINameAcoes[];
+  porCidade: AcoesBINameAcoes[];
+  porMes: AcoesBINameAcoes[];
+  porDiaSemana: AcoesBINameAcoes[];
+  porTipoAcao: AcoesBIPieDatum[];
+  porTipoContato: AcoesBIPieDatum[];
+  listaAnos: string[];
+}

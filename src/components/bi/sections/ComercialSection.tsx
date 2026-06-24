@@ -2,7 +2,7 @@ import {
   Briefcase, Percent, DollarSign, Trophy, Clock, Wallet,
 } from "lucide-react";
 import { type DateRange } from "react-day-picker";
-import { useNegociosBI } from "@/hooks/bi/useNegociosBI";
+import { useNegociosBIRpc } from "@/hooks/bi/useNegociosBIRpc";
 import { useFunilData } from "@/hooks/bi/useFunilData";
 import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
@@ -10,7 +10,8 @@ import { HorizontalBarChart, VerticalBarChart, LineChart } from "@/components/bi
 import { CHART_COLORS, POSITIVE_COLOR, NEGATIVE_COLOR } from "@/lib/chartTheme";
 import { formatBRL, formatBRLShort, formatDias, formatMonthYear } from "@/lib/dateUtils";
 
-import { type CategoriaFilter } from "@/lib/categoriaFunil";
+import { type CategoriaFilter, CATEGORIA_ALL, getFunisByCategoria, FUNIL_ALL } from "@/lib/categoriaFunil";
+import type { RpcNegociosBI } from "@/types/biRpc";
 
 interface Props {
   active: boolean;
@@ -21,8 +22,36 @@ interface Props {
 
 const pct = (v: number) => `${v.toFixed(1)}%`;
 
+function toISODate(d: Date | undefined): string {
+  if (!d) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function resolveFunis(categoria?: CategoriaFilter, funil?: string): string[] | undefined {
+  if (funil && funil !== FUNIL_ALL) return [funil];
+  if (categoria && categoria !== CATEGORIA_ALL) return getFunisByCategoria(categoria);
+  return undefined;
+}
+
+const EMPTY_AGG: RpcNegociosBI = {
+  kpis: { totalNegocios: 0, ganhos: 0, perdidos: 0, andamento: 0, taxaConversao: 0, pipelineAberto: 0, pipelinePerdido: 0, valorGanho: 0, ticketMedioGanho: 0, cicloMedioDias: 0, esforcoMedio: 0 },
+  funilPorEtapa: [], porOrigem: [], motivosPerda: [], evolucaoMensal: [], rankingConsultor: [],
+};
+
 export default function ComercialSection({ active, dateRange, categoria, funil }: Props) {
-  const { agg, isLoading } = useNegociosBI(active, dateRange, categoria, funil);
+  const from = toISODate(dateRange?.from);
+  const to = toISODate(dateRange?.to ?? dateRange?.from);
+  const funis = resolveFunis(categoria, funil);
+
+  const { data: agg = EMPTY_AGG, isLoading } = useNegociosBIRpc({
+    from,
+    to,
+    funis,
+    enabled: active && !!from && !!to,
+  });
   const { agg: funil_, isLoading: funilLoading } = useFunilData(active);
   const { kpis } = agg;
 
