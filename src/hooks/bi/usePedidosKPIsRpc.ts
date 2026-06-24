@@ -1,7 +1,26 @@
 import { type DateRange } from "react-day-picker";
 import { toISODate } from "@/lib/dateUtils";
 import { usePedidosBIRpc } from "@/hooks/bi/usePedidosBIRpc";
-import type { KPIWithPrev, PedidosKPIsResult, UsePedidosKPIsResult } from "@/hooks/bi/usePedidosKPIs";
+
+type Trend = "up" | "down" | "neutral";
+
+export interface KPIWithPrev {
+  value: number;
+  previousValue: number;
+  trend: Trend;
+}
+
+export interface PedidosKPIsResult {
+  faturamento: KPIWithPrev;
+  totalPedidos: KPIWithPrev;
+  taxaAprovacao: KPIWithPrev;
+  mixFinanciamento: KPIWithPrev;
+}
+
+export interface UsePedidosKPIsResult {
+  kpis: PedidosKPIsResult;
+  isLoading: boolean;
+}
 
 function neutralKPI(value: number): KPIWithPrev {
   return { value, previousValue: 0, trend: "neutral" };

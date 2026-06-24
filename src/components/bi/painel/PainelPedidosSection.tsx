@@ -1,10 +1,10 @@
 import { DollarSign, FileCheck, ShieldCheck, Percent } from "lucide-react";
 import { KPICard } from "@/components/bi/KPICard";
 import { fmtBRL, fmtNum, fmtPct, isEmpty } from "@/lib/formatters";
-import type { usePedidosKPIs } from "@/hooks/bi/usePedidosKPIs";
+import type { PedidosKPIsResult } from "@/hooks/bi/usePedidosKPIsRpc";
 
 interface Props {
-  pedKpis: ReturnType<typeof usePedidosKPIs>["kpis"];
+  pedKpis: PedidosKPIsResult;
   loading: boolean;
 }
 
