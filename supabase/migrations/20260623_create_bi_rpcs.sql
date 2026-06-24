@@ -44,8 +44,8 @@ BEGIN
       n.ngo_motivoperda,
       n.ngo_datacadastro,
       n.ngo_datafechamento,
-      n.ngo_ciclovendas,
-      n.ngo_qtdacoes,
+      NULLIF(n.ngo_ciclovendas, '')::numeric AS ngo_ciclovendas,
+      NULLIF(n.ngo_qtdacoes, '')::numeric AS ngo_qtdacoes,
       n.ngo_funil,
       n.ngo_vendedores,
       CASE
@@ -352,8 +352,8 @@ BEGIN
         THEN ROUND((COUNT(*) FILTER (WHERE status_class = 'fechada')::numeric / COUNT(*)) * 100, 1)
         ELSE 0
       END AS taxa_fechamento,
-      COALESCE(ROUND(AVG(dias_resolucao) FILTER (WHERE dias_resolucao IS NOT NULL), 1), 0) AS tempo_medio_resolucao,
-      COALESCE(ROUND(percentile_cont(0.5) WITHIN GROUP (ORDER BY dias_resolucao) FILTER (WHERE dias_resolucao IS NOT NULL), 1), 0) AS tempo_mediano_resolucao
+      COALESCE(ROUND((AVG(dias_resolucao) FILTER (WHERE dias_resolucao IS NOT NULL))::numeric, 1), 0) AS tempo_medio_resolucao,
+      COALESCE(ROUND((percentile_cont(0.5) WITHIN GROUP (ORDER BY dias_resolucao) FILTER (WHERE dias_resolucao IS NOT NULL))::numeric, 1), 0) AS tempo_mediano_resolucao
     FROM base
   ),
   kpis AS (
