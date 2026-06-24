@@ -1,5 +1,5 @@
 import { useNegociosFilter } from "@/contexts/NegociosFilterContext";
-import { usePainelKPIs } from "@/hooks/bi/usePainelKPIs";
+import { usePainelKPIsRpc } from "@/hooks/bi/usePainelKPIsRpc";
 import { usePedidosKPIs } from "@/hooks/bi/usePedidosKPIs";
 import { useClientesKPIs } from "@/hooks/bi/useClientesKPIs";
 import { useServicosKPIs } from "@/hooks/bi/useServicosKPIs";
@@ -14,7 +14,7 @@ import { PainelAcoesSection } from "@/components/bi/painel/PainelAcoesSection";
 
 export default function BiPainel() {
   const { dateRange, categoria, funil, vendedor, cidade } = useNegociosFilter();
-  const { kpis, isLoading } = usePainelKPIs(dateRange, categoria, funil, vendedor || undefined, cidade || undefined);
+  const { kpis, isLoading } = usePainelKPIsRpc(dateRange, categoria, funil, vendedor || undefined, cidade || undefined);
   const { kpis: pedKpis, isLoading: pedLoading } = usePedidosKPIs(dateRange, categoria, funil);
   const { kpis: cliKpis, isLoading: cliLoading } = useClientesKPIs(dateRange);
   const { kpis: svcKpis, isLoading: svcLoading } = useServicosKPIs(dateRange);

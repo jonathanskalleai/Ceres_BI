@@ -1,11 +1,24 @@
+import { useMemo } from "react";
 import { Wrench, AlertCircle, CheckCircle, Clock, Timer, FolderOpen } from "lucide-react";
 import { type DateRange } from "react-day-picker";
-import { useServicosData } from "@/hooks/bi/useServicosData";
+import { useServicosBIRpc } from "@/hooks/bi/useServicosBIRpc";
 import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { HorizontalBarChart, VerticalBarChart, PieChartWithLabels } from "@/components/bi/charts";
 import { CHART_COLORS } from "@/lib/chartTheme";
 import { formatDias, formatMonthYear } from "@/lib/dateUtils";
+import type { RpcServicosBI } from "@/types/biRpc";
+
+function toISODate(d: Date | undefined): string {
+  if (!d) return "";
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+const EMPTY: RpcServicosBI = {
+  kpis: { totalOS: 0, abertas: 0, taxaFechamento: 0, tempoMedioResolucao: 0, tempoMedianoResolucao: 0, totalOcorrencias: 0 },
+  porStatus: [], faixasResolucao: [], evolucaoAberturas: [],
+  situacaoOcorrencias: [], motivosPausa: [], causasAtendimento: [],
+};
 
 interface Props {
   active: boolean;
@@ -13,7 +26,11 @@ interface Props {
 }
 
 export default function ServicosSection({ active, dateRange }: Props) {
-  const { agg, isLoading } = useServicosData(active, dateRange);
+  const from = useMemo(() => toISODate(dateRange?.from), [dateRange?.from]);
+  const to = useMemo(() => toISODate(dateRange?.to ?? dateRange?.from), [dateRange?.to, dateRange?.from]);
+
+  const { data, isLoading } = useServicosBIRpc({ from, to, enabled: active && !!from });
+  const agg = data ?? EMPTY;
   const { kpis } = agg;
 
   return (

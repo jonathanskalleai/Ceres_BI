@@ -7,14 +7,14 @@
 -- INDICES (IF NOT EXISTS — idempotent)
 -------------------------------------------------------------------------------
 
-CREATE INDEX IF NOT EXISTS idx_crm_negocios_data_fechamento_conclusao
-  ON mirror.crm_negocios (ngo_data_fechamento, ngo_conclusao);
+CREATE INDEX IF NOT EXISTS idx_crm_negocios_datafechamento_conclusao
+  ON mirror.crm_negocios (ngo_datafechamento, ngo_conclusao);
 
-CREATE INDEX IF NOT EXISTS idx_crm_pedidos_dth_pedido_situacao
-  ON mirror.crm_pedidos (pdo_dth_pedido, pdo_situacao_pedido);
+CREATE INDEX IF NOT EXISTS idx_crm_pedidos_dthpedido_situacao
+  ON mirror.crm_pedidos (pdo_dthpedido, pdo_situacaopedido);
 
-CREATE INDEX IF NOT EXISTS idx_crm_pedidos_vendedor_dth
-  ON mirror.crm_pedidos (pdo_vendedor, pdo_dth_pedido);
+CREATE INDEX IF NOT EXISTS idx_crm_pedidos_vendedor_dthpedido
+  ON mirror.crm_pedidos (pdo_vendedor, pdo_dthpedido);
 
 -------------------------------------------------------------------------------
 -- RPC 1: rpc_negocios_bi
@@ -38,14 +38,14 @@ BEGIN
     SELECT DISTINCT ON (n.ngo_numero)
       n.ngo_numero,
       n.ngo_conclusao,
-      n.ngo_vlr_total_negociado,
-      n.ngo_forma_entrada,
+      n.ngo_vlrtotalnegociado,
+      n.ngo_formaentrada,
       n.ngo_etapa,
-      n.ngo_motivo_perda,
-      n.ngo_data_cadastro,
-      n.ngo_data_fechamento,
-      n.ngo_ciclo_vendas,
-      n.ngo_qtd_acoes,
+      n.ngo_motivoperda,
+      n.ngo_datacadastro,
+      n.ngo_datafechamento,
+      n.ngo_ciclovendas,
+      n.ngo_qtdacoes,
       n.ngo_funil,
       n.ngo_vendedores,
       CASE
@@ -54,9 +54,9 @@ BEGIN
         ELSE 'andamento'
       END AS status_class
     FROM mirror.crm_negocios n
-    WHERE n.ngo_data_fechamento::date BETWEEN p_from AND p_to
+    WHERE n.ngo_datafechamento::date BETWEEN p_from AND p_to
       AND (p_funis IS NULL OR n.ngo_funil = ANY(p_funis))
-    ORDER BY n.ngo_numero, n.ngo_data_atualizacao DESC NULLS LAST
+    ORDER BY n.ngo_numero, n.ngo_datacadastro DESC NULLS LAST
   ),
   -- KPIs
   kpi_agg AS (
@@ -65,12 +65,12 @@ BEGIN
       COUNT(*) FILTER (WHERE status_class = 'ganho') AS ganhos,
       COUNT(*) FILTER (WHERE status_class = 'perdido') AS perdidos,
       COUNT(*) FILTER (WHERE status_class = 'andamento') AS andamento,
-      COALESCE(SUM(ngo_vlr_total_negociado) FILTER (WHERE status_class != 'perdido'), 0) AS pipeline_aberto,
-      COALESCE(SUM(ngo_vlr_total_negociado) FILTER (WHERE status_class = 'perdido'), 0) AS pipeline_perdido,
-      COALESCE(SUM(ngo_vlr_total_negociado) FILTER (WHERE status_class = 'ganho'), 0) AS valor_ganho,
-      COALESCE(AVG(ngo_vlr_total_negociado) FILTER (WHERE status_class = 'ganho'), 0) AS ticket_medio_ganho,
-      COALESCE(AVG(ngo_ciclo_vendas) FILTER (WHERE status_class = 'ganho' AND ngo_ciclo_vendas > 0), 0) AS ciclo_medio_dias,
-      COALESCE(AVG(ngo_qtd_acoes), 0) AS esforco_medio
+      COALESCE(SUM(ngo_vlrtotalnegociado) FILTER (WHERE status_class != 'perdido'), 0) AS pipeline_aberto,
+      COALESCE(SUM(ngo_vlrtotalnegociado) FILTER (WHERE status_class = 'perdido'), 0) AS pipeline_perdido,
+      COALESCE(SUM(ngo_vlrtotalnegociado) FILTER (WHERE status_class = 'ganho'), 0) AS valor_ganho,
+      COALESCE(AVG(ngo_vlrtotalnegociado) FILTER (WHERE status_class = 'ganho'), 0) AS ticket_medio_ganho,
+      COALESCE(AVG(ngo_ciclovendas) FILTER (WHERE status_class = 'ganho' AND ngo_ciclovendas > 0), 0) AS ciclo_medio_dias,
+      COALESCE(AVG(ngo_qtdacoes), 0) AS esforco_medio
     FROM deduped
   ),
   kpis AS (
@@ -92,7 +92,7 @@ BEGIN
   funil AS (
     SELECT COALESCE(json_agg(row_to_json(sub) ORDER BY sub.qtd DESC), '[]'::json) AS val
     FROM (
-      SELECT ngo_etapa AS name, SUM(ngo_vlr_total_negociado)::numeric AS valor, COUNT(*) AS qtd
+      SELECT ngo_etapa AS name, SUM(ngo_vlrtotalnegociado)::numeric AS valor, COUNT(*) AS qtd
       FROM deduped
       WHERE ngo_etapa IS NOT NULL
       GROUP BY ngo_etapa
@@ -103,16 +103,16 @@ BEGIN
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
       SELECT
-        ngo_forma_entrada AS name,
+        ngo_formaentrada AS name,
         COUNT(*) FILTER (WHERE status_class = 'ganho') AS ganhos,
         COUNT(*) FILTER (WHERE status_class = 'perdido') AS perdidos,
         COUNT(*) FILTER (WHERE status_class = 'andamento') AS andamento,
         COUNT(*) AS total,
         CASE WHEN COUNT(*) > 0 THEN ROUND((COUNT(*) FILTER (WHERE status_class = 'ganho')::numeric / COUNT(*)) * 100, 1) ELSE 0 END AS taxa,
-        COALESCE(SUM(ngo_vlr_total_negociado) FILTER (WHERE status_class = 'ganho'), 0) AS "valorGanho"
+        COALESCE(SUM(ngo_vlrtotalnegociado) FILTER (WHERE status_class = 'ganho'), 0) AS "valorGanho"
       FROM deduped
-      WHERE ngo_forma_entrada IS NOT NULL
-      GROUP BY ngo_forma_entrada
+      WHERE ngo_formaentrada IS NOT NULL
+      GROUP BY ngo_formaentrada
       ORDER BY COUNT(*) DESC
       LIMIT 8
     ) sub
@@ -121,10 +121,10 @@ BEGIN
   motivos AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
-      SELECT ngo_motivo_perda AS name, SUM(ngo_vlr_total_negociado)::numeric AS valor, COUNT(*) AS qtd
+      SELECT ngo_motivoperda AS name, SUM(ngo_vlrtotalnegociado)::numeric AS valor, COUNT(*) AS qtd
       FROM deduped
-      WHERE status_class = 'perdido' AND ngo_motivo_perda IS NOT NULL
-      GROUP BY ngo_motivo_perda
+      WHERE status_class = 'perdido' AND ngo_motivoperda IS NOT NULL
+      GROUP BY ngo_motivoperda
       ORDER BY COUNT(*) DESC
       LIMIT 8
     ) sub
@@ -134,12 +134,12 @@ BEGIN
     SELECT COALESCE(json_agg(row_to_json(sub) ORDER BY sub.name), '[]'::json) AS val
     FROM (
       SELECT
-        TO_CHAR(ngo_data_fechamento::date, 'YYYY-MM') AS name,
+        TO_CHAR(ngo_datafechamento::date, 'YYYY-MM') AS name,
         COUNT(*) AS novos,
-        COALESCE(SUM(ngo_vlr_total_negociado), 0)::numeric AS "valorCriado"
+        COALESCE(SUM(ngo_vlrtotalnegociado), 0)::numeric AS "valorCriado"
       FROM deduped
-      GROUP BY TO_CHAR(ngo_data_fechamento::date, 'YYYY-MM')
-      ORDER BY TO_CHAR(ngo_data_fechamento::date, 'YYYY-MM')
+      GROUP BY TO_CHAR(ngo_datafechamento::date, 'YYYY-MM')
+      ORDER BY TO_CHAR(ngo_datafechamento::date, 'YYYY-MM')
     ) sub
   ),
   -- Ranking consultor (top 10)
@@ -148,14 +148,14 @@ BEGIN
     FROM (
       SELECT
         ngo_vendedores AS name,
-        COALESCE(SUM(ngo_vlr_total_negociado) FILTER (WHERE status_class = 'ganho'), 0)::numeric AS "valorGanho",
+        COALESCE(SUM(ngo_vlrtotalnegociado) FILTER (WHERE status_class = 'ganho'), 0)::numeric AS "valorGanho",
         COUNT(*) FILTER (WHERE status_class = 'ganho') AS ganhos,
         COUNT(*) AS total,
         CASE WHEN COUNT(*) > 0 THEN ROUND((COUNT(*) FILTER (WHERE status_class = 'ganho')::numeric / COUNT(*)) * 100, 1) ELSE 0 END AS taxa
       FROM deduped
       WHERE ngo_vendedores IS NOT NULL
       GROUP BY ngo_vendedores
-      ORDER BY COALESCE(SUM(ngo_vlr_total_negociado) FILTER (WHERE status_class = 'ganho'), 0) DESC
+      ORDER BY COALESCE(SUM(ngo_vlrtotalnegociado) FILTER (WHERE status_class = 'ganho'), 0) DESC
       LIMIT 10
     ) sub
   )
@@ -192,25 +192,25 @@ DECLARE
 BEGIN
   WITH base AS (
     SELECT
-      p.pdo_situacao_pedido,
-      p.pdo_vlr_pedido,
-      p.pdo_vlr_financiado,
-      p.pdo_vlr_recurso_proprio,
-      p.pdo_dth_pedido,
+      p.pdo_situacaopedido,
+      p.pdo_vlrpedido,
+      p.pdo_vlrfinanciado,
+      p.pdo_vlrrecursoproprio,
+      p.pdo_dthpedido,
       p.pdo_vendedor,
-      p.pdo_cidade_uf_entrega,
-      LOWER(COALESCE(p.pdo_situacao_pedido, '')) LIKE '%aprovado%' AS is_aprovado,
-      LOWER(COALESCE(p.pdo_situacao_pedido, '')) LIKE '%cancel%' AS is_cancelado
+      p.pdo_cidadeufentrega,
+      LOWER(COALESCE(p.pdo_situacaopedido, '')) LIKE '%aprovado%' AS is_aprovado,
+      LOWER(COALESCE(p.pdo_situacaopedido, '')) LIKE '%cancel%' AS is_cancelado
     FROM mirror.crm_pedidos p
-    WHERE p.pdo_dth_pedido::date BETWEEN p_from AND p_to
+    WHERE p.pdo_dthpedido::date BETWEEN p_from AND p_to
   ),
   -- KPIs
   kpi_agg AS (
     SELECT
       COUNT(*) AS total,
-      COALESCE(SUM(pdo_vlr_pedido) FILTER (WHERE is_aprovado), 0) AS faturamento,
+      COALESCE(SUM(pdo_vlrpedido) FILTER (WHERE is_aprovado), 0) AS faturamento,
       CASE WHEN COUNT(*) FILTER (WHERE is_aprovado) > 0
-        THEN ROUND(SUM(pdo_vlr_pedido) FILTER (WHERE is_aprovado) / COUNT(*) FILTER (WHERE is_aprovado), 2)
+        THEN ROUND(SUM(pdo_vlrpedido) FILTER (WHERE is_aprovado) / COUNT(*) FILTER (WHERE is_aprovado), 2)
         ELSE 0
       END AS ticket_medio,
       CASE WHEN COUNT(*) > 0
@@ -218,10 +218,10 @@ BEGIN
         ELSE 0
       END AS percent_aprovado,
       CASE WHEN COUNT(*) > 0
-        THEN ROUND((COUNT(*) FILTER (WHERE pdo_vlr_financiado > 0)::numeric / COUNT(*)) * 100, 1)
+        THEN ROUND((COUNT(*) FILTER (WHERE pdo_vlrfinanciado > 0)::numeric / COUNT(*)) * 100, 1)
         ELSE 0
       END AS percent_financiado,
-      COALESCE(SUM(pdo_vlr_pedido) FILTER (WHERE is_cancelado), 0) AS valor_cancelado
+      COALESCE(SUM(pdo_vlrpedido) FILTER (WHERE is_cancelado), 0) AS valor_cancelado
     FROM base
   ),
   kpis AS (
@@ -239,12 +239,12 @@ BEGIN
     SELECT COALESCE(json_agg(row_to_json(sub) ORDER BY sub.name), '[]'::json) AS val
     FROM (
       SELECT
-        TO_CHAR(pdo_dth_pedido::date, 'YYYY-MM') AS name,
-        COALESCE(SUM(pdo_vlr_pedido), 0)::numeric AS faturamento,
+        TO_CHAR(pdo_dthpedido::date, 'YYYY-MM') AS name,
+        COALESCE(SUM(pdo_vlrpedido), 0)::numeric AS faturamento,
         COUNT(*) AS qtd
       FROM base
       WHERE is_aprovado
-      GROUP BY TO_CHAR(pdo_dth_pedido::date, 'YYYY-MM')
+      GROUP BY TO_CHAR(pdo_dthpedido::date, 'YYYY-MM')
     ) sub
   ),
   -- Por situacao
@@ -252,19 +252,19 @@ BEGIN
     SELECT COALESCE(json_agg(row_to_json(sub) ORDER BY sub.valor DESC), '[]'::json) AS val
     FROM (
       SELECT
-        pdo_situacao_pedido AS name,
-        COALESCE(SUM(pdo_vlr_pedido), 0)::numeric AS valor,
+        pdo_situacaopedido AS name,
+        COALESCE(SUM(pdo_vlrpedido), 0)::numeric AS valor,
         COUNT(*) AS qtd
       FROM base
-      WHERE pdo_situacao_pedido IS NOT NULL
-      GROUP BY pdo_situacao_pedido
+      WHERE pdo_situacaopedido IS NOT NULL
+      GROUP BY pdo_situacaopedido
     ) sub
   ),
   -- Mix pagamento (Recurso Proprio vs Financiado)
   mix AS (
     SELECT json_build_array(
-      json_build_object('name', 'Recurso Proprio', 'value', COALESCE(SUM(pdo_vlr_recurso_proprio) FILTER (WHERE is_aprovado), 0)::numeric),
-      json_build_object('name', 'Financiado', 'value', COALESCE(SUM(pdo_vlr_financiado) FILTER (WHERE is_aprovado), 0)::numeric)
+      json_build_object('name', 'Recurso Proprio', 'value', COALESCE(SUM(pdo_vlrrecursoproprio) FILTER (WHERE is_aprovado), 0)::numeric),
+      json_build_object('name', 'Financiado', 'value', COALESCE(SUM(pdo_vlrfinanciado) FILTER (WHERE is_aprovado), 0)::numeric)
     ) AS val
     FROM base
   ),
@@ -272,11 +272,11 @@ BEGIN
   vendedores AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
-      SELECT pdo_vendedor AS name, COALESCE(SUM(pdo_vlr_pedido), 0)::numeric AS value
+      SELECT pdo_vendedor AS name, COALESCE(SUM(pdo_vlrpedido), 0)::numeric AS value
       FROM base
       WHERE is_aprovado AND pdo_vendedor IS NOT NULL
       GROUP BY pdo_vendedor
-      ORDER BY SUM(pdo_vlr_pedido) DESC
+      ORDER BY SUM(pdo_vlrpedido) DESC
       LIMIT 10
     ) sub
   ),
@@ -284,11 +284,11 @@ BEGIN
   cidades AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
-      SELECT pdo_cidade_uf_entrega AS name, COALESCE(SUM(pdo_vlr_pedido), 0)::numeric AS value
+      SELECT pdo_cidadeufentrega AS name, COALESCE(SUM(pdo_vlrpedido), 0)::numeric AS value
       FROM base
-      WHERE is_aprovado AND pdo_cidade_uf_entrega IS NOT NULL
-      GROUP BY pdo_cidade_uf_entrega
-      ORDER BY SUM(pdo_vlr_pedido) DESC
+      WHERE is_aprovado AND pdo_cidadeufentrega IS NOT NULL
+      GROUP BY pdo_cidadeufentrega
+      ORDER BY SUM(pdo_vlrpedido) DESC
       LIMIT 10
     ) sub
   )
