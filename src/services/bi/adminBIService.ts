@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { querySqlServer } from "@/services/sqlServerApi";
 
 /** Carteira de clientes (VW_Ceres_CRM_CarteiraClientes). */
 export interface CarteiraRow {
@@ -9,11 +8,6 @@ export interface CarteiraRow {
   CLI_UF: string | null;
   CLI_Cidade: string | null;
   USR_NomeUsuario: string | null;
-}
-
-export interface OrgCounts {
-  empresas: number;
-  usuarios: number;
 }
 
 interface MirrorCarteiraRow {
@@ -47,20 +41,4 @@ export async function fetchCarteira(): Promise<CarteiraRow[]> {
   } catch {
     return [];
   }
-}
-
-export async function fetchOrgCounts(): Promise<OrgCounts> {
-  const safeTotal = async (view: string): Promise<number> => {
-    try {
-      const { total } = await querySqlServer({ view, count_only: true });
-      return total;
-    } catch {
-      return 0;
-    }
-  };
-  const [empresas, usuarios] = await Promise.all([
-    safeTotal("VW_Ceres_Empresas"),
-    safeTotal("VW_Ceres_Usuario"),
-  ]);
-  return { empresas, usuarios };
 }
