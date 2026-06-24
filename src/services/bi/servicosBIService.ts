@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { fetchAllPages } from "@/services/sqlServerApi";
 
 export interface OrdemServicoRow {
   OS_nrOS: string | number | null;
@@ -41,8 +40,15 @@ const MIRROR_OS_SELECT = [
   "tos_codtipoos",
 ].join(",");
 
-const ATD_COLUMNS = ["ATD_dscCausa", "ATD_DuracaoAtendimento"];
-const OCR_COLUMNS = ["OSE_dscMotivoPausa", "OSE_dscSituacaoOcorrencia"];
+interface MirrorAtendimentoRow {
+  atd_dsc_causa: string | null;
+  atd_duracao_atendimento: number | null;
+}
+
+interface MirrorOcorrenciaRow {
+  ose_dsc_motivo_pausa: string | null;
+  ose_dsc_situacao_ocorrencia: string | null;
+}
 
 function mapMirrorOS(row: MirrorOSRow): OrdemServicoRow {
   return {
@@ -78,9 +84,17 @@ export async function fetchOrdensServico(options?: OrdensServicoFetchOptions): P
 }
 
 export async function fetchAtendimentosOS(): Promise<AtendimentoOSRow[]> {
-  // Atendimentos e Ocorrencias nao tem tabela mirror dedicada — mantemos legado
   try {
-    return await fetchAllPages<AtendimentoOSRow>("VW_Ceres_AtendimentoOS", ATD_COLUMNS);
+    const { data, error } = await supabase
+      .schema("mirror")
+      .from("atendimentos_os")
+      .select("atd_dsc_causa,atd_duracao_atendimento")
+      .limit(50000);
+    if (error) throw new Error(error.message);
+    return ((data ?? []) as MirrorAtendimentoRow[]).map((row) => ({
+      ATD_dscCausa: row.atd_dsc_causa,
+      ATD_DuracaoAtendimento: row.atd_duracao_atendimento,
+    }));
   } catch {
     return [];
   }
@@ -88,7 +102,16 @@ export async function fetchAtendimentosOS(): Promise<AtendimentoOSRow[]> {
 
 export async function fetchOcorrencias(): Promise<OcorrenciaRow[]> {
   try {
-    return await fetchAllPages<OcorrenciaRow>("VW_Ceres_Ocorrencias", OCR_COLUMNS);
+    const { data, error } = await supabase
+      .schema("mirror")
+      .from("ocorrencias_os")
+      .select("ose_dsc_motivo_pausa,ose_dsc_situacao_ocorrencia")
+      .limit(50000);
+    if (error) throw new Error(error.message);
+    return ((data ?? []) as MirrorOcorrenciaRow[]).map((row) => ({
+      OSE_dscMotivoPausa: row.ose_dsc_motivo_pausa,
+      OSE_dscSituacaoOcorrencia: row.ose_dsc_situacao_ocorrencia,
+    }));
   } catch {
     return [];
   }
