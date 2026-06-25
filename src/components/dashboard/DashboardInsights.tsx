@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { DadosComerciais, Filters } from "@/types/comercial";
+import type { Registro, Filters } from "@/types/comercial";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { KPICard } from "@/components/bi/KPICard";
 import { Badge } from "@/components/ui/badge";
@@ -13,13 +13,13 @@ import {
 } from "@/lib/insightsSentiment";
 import { InsightsObsHistory } from "./insights/InsightsObsHistory";
 
-interface Props {
-  data: DadosComerciais;
+interface DashboardInsightsProps {
+  registros: Registro[];
   filters: Filters;
 }
 
-export const DashboardInsights = ({ data, filters }: Props) => {
-  const filtered = useMemo(() => filterRegistros(data.registrosRecentes, filters), [data, filters]);
+export const DashboardInsights = ({ registros, filters }: DashboardInsightsProps) => {
+  const filtered = useMemo(() => filterRegistros(registros, filters), [registros, filters]);
   const allObs = useMemo(() => filtered.map((r) => r.obs || "").join(" "), [filtered]);
 
   const obsWithContent = useMemo(

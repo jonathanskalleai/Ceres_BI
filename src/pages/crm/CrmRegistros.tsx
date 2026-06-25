@@ -5,7 +5,7 @@ import { DashboardRegistros } from "@/components/dashboard/DashboardRegistros";
 import { useRegistrosRecentes } from "@/hooks/useComercialRpc";
 import { Skeleton } from "@/components/ui/skeleton";
 import { mapRegistroRecente } from "@/lib/comercialMappers";
-import type { DadosComerciais, Filters } from "@/types/comercial";
+import type { Filters } from "@/types/comercial";
 
 export default function CrmRegistros() {
   const { dateRange, cidade, tipoAcao } = useNegociosFilter();
@@ -29,20 +29,10 @@ export default function CrmRegistros() {
     enabled,
   });
 
-  const data = useMemo<DadosComerciais>(() => {
-    const registrosRecentes = (registrosRpc ?? []).map(mapRegistroRecente);
-    return {
-      kpis: { totalRegistros: registrosRecentes.length, totalClientes: 0, totalConsultores: 0, totalPipeline: 0, totalVisitas: 0, totalCidades: 0 },
-      vendedores: [],
-      regioes: [],
-      evolucaoGlobal: [],
-      tiposContato: {},
-      tiposAcao: {},
-      registrosRecentes,
-      listaVendedores: [],
-      listaCidades: [],
-    };
-  }, [registrosRpc]);
+  const registros = useMemo(
+    () => (registrosRpc ?? []).map(mapRegistroRecente),
+    [registrosRpc],
+  );
 
   if (isLoading) {
     return (
@@ -53,5 +43,5 @@ export default function CrmRegistros() {
     );
   }
 
-  return <DashboardRegistros data={data} filters={filters} />;
+  return <DashboardRegistros registros={registros} filters={filters} />;
 }

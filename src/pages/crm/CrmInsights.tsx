@@ -4,23 +4,8 @@ import { useRegistrosRecentes } from "@/hooks/useComercialRpc";
 import { useNegociosFilter } from "@/contexts/NegociosFilterContext";
 import { toISODate } from "@/lib/dateUtils";
 import { mapRegistroRecente } from "@/lib/comercialMappers";
-import type { DadosComerciais, Filters } from "@/types/comercial";
+import type { Filters } from "@/types/comercial";
 import { Skeleton } from "@/components/ui/skeleton";
-
-/** Minimal DadosComerciais shell — DashboardInsights only reads registrosRecentes */
-function buildData(registros: ReturnType<typeof mapRegistroRecente>[]): DadosComerciais {
-  return {
-    kpis: { totalRegistros: registros.length, totalClientes: 0, totalConsultores: 0, totalPipeline: 0, totalVisitas: 0, totalCidades: 0 },
-    vendedores: [],
-    regioes: [],
-    evolucaoGlobal: [],
-    tiposContato: {},
-    tiposAcao: {},
-    registrosRecentes: registros,
-    listaVendedores: [],
-    listaCidades: [],
-  };
-}
 
 export default function CrmInsights() {
   const { dateRange, cidade, tipoAcao } = useNegociosFilter();
@@ -35,8 +20,6 @@ export default function CrmInsights() {
     () => (rpcRegistros ?? []).map(mapRegistroRecente),
     [rpcRegistros],
   );
-
-  const data = useMemo(() => buildData(registros), [registros]);
 
   // Filters for DashboardInsights (date already applied by RPC; pass remaining)
   const filters: Filters = {
@@ -59,5 +42,5 @@ export default function CrmInsights() {
     );
   }
 
-  return <DashboardInsights data={data} filters={filters} />;
+  return <DashboardInsights registros={registros} filters={filters} />;
 }

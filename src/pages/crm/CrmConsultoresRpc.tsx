@@ -4,10 +4,9 @@ import { DashboardConsultores } from "@/components/dashboard/DashboardConsultore
 import { useRankingVendedoresV2, useRegistrosRecentes } from "@/hooks/useComercialRpc";
 import { useNegociosFilter } from "@/contexts/NegociosFilterContext";
 import { toISODate } from "@/lib/dateUtils";
-import type { Filters } from "@/types/comercial";
+import type { Filters, Vendedor } from "@/types/comercial";
 import { Skeleton } from "@/components/ui/skeleton";
 import { mapRegistroRecente } from "@/lib/comercialMappers";
-import type { DadosComerciais, Vendedor } from "@/types/comercial";
 import type { RpcRankingVendedorV2 } from "@/types/comercialRpc";
 
 /**
@@ -67,33 +66,15 @@ export default function CrmConsultoresRpc() {
     enabled,
   });
 
-  const data = useMemo<DadosComerciais>(() => {
-    const vendedores: Vendedor[] = (rankingRpc ?? []).map(mapVendedor);
-    const registrosRecentes = (registrosRpc ?? []).map(mapRegistroRecente);
+  const vendedores = useMemo<Vendedor[]>(
+    () => (rankingRpc ?? []).map(mapVendedor),
+    [rankingRpc],
+  );
 
-    const listaCidades = Array.from(
-      new Set(registrosRecentes.map((r) => r.cidade).filter(Boolean))
-    );
-
-    return {
-      kpis: {
-        totalRegistros: registrosRecentes.length,
-        totalClientes: vendedores.reduce((s, v) => s + v.clientes, 0),
-        totalConsultores: vendedores.length,
-        totalPipeline: vendedores.reduce((s, v) => s + v.pipeline, 0),
-        totalVisitas: vendedores.reduce((s, v) => s + v.visitas, 0),
-        totalCidades: listaCidades.length,
-      },
-      vendedores,
-      regioes: [],
-      evolucaoGlobal: [],
-      tiposContato: {},
-      tiposAcao: {},
-      registrosRecentes,
-      listaVendedores: vendedores.map((v) => v.nome),
-      listaCidades,
-    };
-  }, [rankingRpc, registrosRpc]);
+  const registros = useMemo(
+    () => (registrosRpc ?? []).map(mapRegistroRecente),
+    [registrosRpc],
+  );
 
   if (loadingRanking || loadingRegistros) {
     return (
@@ -111,7 +92,8 @@ export default function CrmConsultoresRpc() {
 
   return (
     <DashboardConsultores
-      data={data}
+      vendedores={vendedores}
+      registros={registros}
       filters={filters}
       onSelectConsultor={(nome) => navigate(`/crm/consultores/${encodeURIComponent(nome)}`)}
     />

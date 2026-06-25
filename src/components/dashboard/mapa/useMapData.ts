@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { DadosComerciais, Filters, RegiaoSummary, Registro } from "@/types/comercial";
+import type { Filters, RegiaoSummary, Registro } from "@/types/comercial";
 import { MapRegion, ClientePoint, MapViewMode } from "./types";
 
 interface UseMapDataReturn {
@@ -13,24 +13,25 @@ interface UseMapDataReturn {
 }
 
 export function useMapData(
-  data: DadosComerciais,
+  regioes: RegiaoSummary[],
+  registros: Registro[],
   filters: Filters,
   mapView: MapViewMode
 ): UseMapDataReturn {
   const regions = useMemo(() => {
-    let regioes = data.regioes.filter((r: RegiaoSummary) => {
+    let filtered = regioes.filter((r: RegiaoSummary) => {
       if (r.lat == null || r.lng == null) return false;
       if (r.lat === 0 && r.lng === 0) return false;
       if (r.lat < -34 || r.lat > 6 || r.lng < -75 || r.lng > -33) return false;
       return true;
     });
-    if (filters.cidade) regioes = regioes.filter((r) => r.cidade === filters.cidade);
+    if (filters.cidade) filtered = filtered.filter((r) => r.cidade === filters.cidade);
 
-    const maxAcoes = Math.max(...regioes.map((r) => r.totalAcoes), 1);
+    const maxAcoes = Math.max(...filtered.map((r) => r.totalAcoes), 1);
     const p33 = maxAcoes * 0.33;
     const p66 = maxAcoes * 0.66;
 
-    return regioes.map((r: RegiaoSummary) => {
+    return filtered.map((r: RegiaoSummary) => {
       let color: string;
       let level: string;
       if (r.totalAcoes >= p66) {
@@ -55,10 +56,10 @@ export function useMapData(
         level,
       } as MapRegion;
     });
-  }, [data, filters]);
+  }, [regioes, filters]);
 
   const registroPoints = useMemo(() => {
-    let regs = data.registrosRecentes.filter((r: Registro) => r.lat && r.lng);
+    let regs = registros.filter((r: Registro) => r.lat && r.lng);
     if (filters.dateRange?.from)
       regs = regs.filter((r) => r.dtConclusao && r.dtConclusao >= filters.dateRange!.from);
     if (filters.dateRange?.to)
@@ -66,7 +67,7 @@ export function useMapData(
     if (filters.cidade) regs = regs.filter((r) => r.cidade === filters.cidade);
     if (filters.tipoAcao) regs = regs.filter((r) => r.tipoAcao === filters.tipoAcao);
     return regs;
-  }, [data, filters]);
+  }, [registros, filters]);
 
   const clientePoints = useMemo<ClientePoint[]>(() => {
     const grouped = new Map<string, Registro[]>();

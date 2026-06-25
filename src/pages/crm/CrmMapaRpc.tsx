@@ -4,7 +4,7 @@ import { useRankingRegioes, useRegistrosRecentes } from "@/hooks/useComercialRpc
 import { useNegociosFilter } from "@/contexts/NegociosFilterContext";
 import { toISODate } from "@/lib/dateUtils";
 import { mapRegistroRecente } from "@/lib/comercialMappers";
-import type { DadosComerciais, Filters, RegiaoSummary } from "@/types/comercial";
+import type { Filters, RegiaoSummary } from "@/types/comercial";
 import type { RpcRankingRegiao } from "@/types/comercialRpc";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -39,8 +39,8 @@ export default function CrmMapaRpc() {
     enabled,
   });
 
-  const fakeData = useMemo<DadosComerciais>(() => {
-    const regioes: RegiaoSummary[] = (regioesRpc ?? []).map((r: RpcRankingRegiao) => ({
+  const regioes = useMemo<RegiaoSummary[]>(
+    () => (regioesRpc ?? []).map((r: RpcRankingRegiao) => ({
       cidade: r.cidade,
       totalAcoes: r.acoes,
       clientes: r.clientes,
@@ -48,29 +48,14 @@ export default function CrmMapaRpc() {
       visitas: r.visitas,
       lat: r.lat ?? undefined,
       lng: r.lng ?? undefined,
-    }));
+    })),
+    [regioesRpc],
+  );
 
-    const registrosRecentes = (registrosRpc ?? []).map(mapRegistroRecente);
-
-    return {
-      kpis: {
-        totalRegistros: registrosRecentes.length,
-        totalClientes: 0,
-        totalConsultores: 0,
-        totalPipeline: 0,
-        totalVisitas: 0,
-        totalCidades: regioes.length,
-      },
-      vendedores: [],
-      regioes,
-      evolucaoGlobal: [],
-      tiposContato: {},
-      tiposAcao: {},
-      registrosRecentes,
-      listaVendedores: [],
-      listaCidades: regioes.map((r) => r.cidade),
-    };
-  }, [regioesRpc, registrosRpc]);
+  const registros = useMemo(
+    () => (registrosRpc ?? []).map(mapRegistroRecente),
+    [registrosRpc],
+  );
 
   if (loadingRegioes || loadingRegistros) {
     return (
@@ -81,5 +66,5 @@ export default function CrmMapaRpc() {
     );
   }
 
-  return <DashboardMapa data={fakeData} filters={filters} />;
+  return <DashboardMapa regioes={regioes} registros={registros} filters={filters} />;
 }

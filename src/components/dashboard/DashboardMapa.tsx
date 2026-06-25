@@ -1,22 +1,23 @@
 import { useState, useCallback } from "react";
-import { DadosComerciais, Filters } from "@/types/comercial";
+import type { RegiaoSummary, Registro, Filters } from "@/types/comercial";
 import { MapPin, Users } from "lucide-react";
 import { MapKpis, MapView, MapDetailsTable, useMapData } from "./mapa";
 import { MapViewMode, MapRegion, MONO } from "./mapa/types";
 
-interface Props {
-  data: DadosComerciais;
+interface DashboardMapaProps {
+  regioes: RegiaoSummary[];
+  registros: Registro[];
   filters: Filters;
 }
 
-export const DashboardMapa = ({ data, filters }: Props) => {
+export const DashboardMapa = ({ regioes, registros, filters }: DashboardMapaProps) => {
   const [_selectedRegion, setSelectedRegion] = useState<MapRegion | null>(null);
   const [mapView, setMapView] = useState<MapViewMode>("clientes");
   const [fullscreen, setFullscreen] = useState(false);
   const toggleFullscreen = useCallback(() => setFullscreen((v) => !v), []);
 
   const { regions, registroPoints, clientePoints, alta, media, baixa, center } =
-    useMapData(data, filters, mapView);
+    useMapData(regioes, registros, filters, mapView);
 
   return (
     <div className="p-6 space-y-6">

@@ -1,30 +1,29 @@
 import { useState, useMemo, useEffect } from "react";
-import { DadosComerciais, Registro } from "@/types/comercial";
+import type { Registro, Filters } from "@/types/comercial";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Search, Edit2, Check, X } from "lucide-react";
-import { Filters } from "@/types/comercial";
 import { filterRegistros } from "@/lib/filterUtils";
 
-interface Props {
-  data: DadosComerciais;
+interface DashboardRegistrosProps {
+  registros: Registro[];
   filters: Filters;
 }
 
 const formatCurrency = (v: number) => v > 0 ? `R$ ${(v / 1e3).toFixed(0)}K` : "-";
 
-export const DashboardRegistros = ({ data, filters }: Props) => {
+export const DashboardRegistros = ({ registros, filters }: DashboardRegistrosProps) => {
   const [search, setSearch] = useState("");
   const [nrFilter, setNrFilter] = useState("");
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
-  const [records, setRecords] = useState<Registro[]>(data.registrosRecentes);
+  const [records, setRecords] = useState<Registro[]>(registros);
   const [editValues, setEditValues] = useState<Partial<Registro>>({});
 
   useEffect(() => {
-    setRecords(data.registrosRecentes);
-  }, [data.registrosRecentes]);
+    setRecords(registros);
+  }, [registros]);
 
   const filtered = useMemo(() => {
     let result = filterRegistros(records, filters);

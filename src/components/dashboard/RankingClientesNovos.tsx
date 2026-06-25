@@ -1,12 +1,11 @@
 import { useState, useMemo } from "react";
-import { DadosComerciais, Registro, Filters } from "@/types/comercial";
+import type { Registro, Filters } from "@/types/comercial";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronUp, Users, MapPin, Filter } from "lucide-react";
 import { hasActiveFilters } from "@/lib/filterUtils";
 
-interface Props {
-  data: DadosComerciais;
+interface RankingClientesNovosProps {
   registros: Registro[];
   filters?: Filters;
 }
@@ -27,7 +26,7 @@ const formatDate = (d: string) => {
 
 const medals = ["🥇", "🥈", "🥉"];
 
-export const RankingClientesNovos = ({ data, registros, filters }: Props) => {
+export const RankingClientesNovos = ({ registros, filters }: RankingClientesNovosProps) => {
   const [expandedConsultor, setExpandedConsultor] = useState<string | null>(null);
   const isFiltered = filters ? hasActiveFilters(filters) : false;
 
