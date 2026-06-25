@@ -15,6 +15,30 @@ function unwrapRpc<T>(data: unknown): T {
   return raw as T;
 }
 
+/** Defensive defaults — prevents crash when RPC returns partial object (missing CTEs). */
+const NEGOCIOS_BI_DEFAULTS: RpcNegociosBI = {
+  kpis: {
+    totalNegocios: 0,
+    ganhos: 0,
+    perdidos: 0,
+    andamento: 0,
+    taxaConversao: 0,
+    pipelineAberto: 0,
+    pipelinePerdido: 0,
+    valorGanho: 0,
+    ticketMedioGanho: 0,
+    cicloMedioDias: 0,
+    esforcoMedio: 0,
+  },
+  funilPorEtapa: [],
+  porOrigem: [],
+  motivosPerda: [],
+  evolucaoMensal: [],
+  rankingConsultor: [],
+  velocidadeFunil: [],
+  duracaoMediaTotal: 0,
+};
+
 /**
  * Calls rpc_negocios_bi — returns aggregated business deal metrics as JSON.
  */
@@ -28,7 +52,12 @@ export async function fetchNegociosBI(
 
   const { data, error } = await supabase.rpc("rpc_negocios_bi", params);
   if (error) throw new Error(`rpc_negocios_bi: ${error.message}`);
-  return unwrapRpc<RpcNegociosBI>(data);
+  const raw = unwrapRpc<Partial<RpcNegociosBI>>(data);
+  return {
+    ...NEGOCIOS_BI_DEFAULTS,
+    ...raw,
+    kpis: { ...NEGOCIOS_BI_DEFAULTS.kpis, ...raw.kpis },
+  };
 }
 
 /**
