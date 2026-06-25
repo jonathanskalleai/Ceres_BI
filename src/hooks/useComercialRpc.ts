@@ -137,8 +137,8 @@ export function useRankingVendedoresV2({ from, to, limit, enabled = true }: UseR
 // ─── Registros Recentes ───────────────────────────────────────────────────────
 
 interface UseRegistrosRecentesOptions {
-  from: string;
-  to: string;
+  from?: string;
+  to?: string;
   vendedor?: string;
   cidade?: string;
   limit?: number;
@@ -147,10 +147,10 @@ interface UseRegistrosRecentesOptions {
 
 export function useRegistrosRecentes({ from, to, vendedor, cidade, limit, enabled = true }: UseRegistrosRecentesOptions) {
   return useQuery<RpcRegistroRecente[], Error>({
-    queryKey: ["rpc", "registros-recentes", from, to, vendedor ?? null, cidade ?? null, limit ?? null],
-    queryFn: () => fetchRegistrosRecentes(from, to, vendedor, cidade, limit),
+    queryKey: ["rpc", "registros-recentes", from ?? null, to ?? null, vendedor ?? null, cidade ?? null, limit ?? null],
+    queryFn: () => fetchRegistrosRecentes(from || "", to || "", vendedor, cidade, limit),
     staleTime: STALE_TIME,
     placeholderData: keepPreviousData,
-    enabled: enabled && !!from && !!to,
+    enabled,
   });
 }

@@ -120,7 +120,10 @@ export async function fetchRegistrosRecentes(
   cidade?: string,
   limit?: number,
 ): Promise<RpcRegistroRecente[]> {
-  const params: Record<string, unknown> = { p_from: from, p_to: to };
+  const params: Record<string, unknown> = {
+    p_from: from || null,
+    p_to: to || null,
+  };
   if (vendedor) params.p_vendedor = vendedor;
   if (cidade) params.p_cidade = cidade;
   if (limit != null) params.p_limit = limit;

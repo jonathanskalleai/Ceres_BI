@@ -90,11 +90,20 @@ export default function CrmCriticos() {
     enabled,
   });
 
-  // Fetch ALL registros (no city filter) — needed to compute diasSemContato accurately
+  // Fetch ALL registros with a wide date window (2 years back) — needed to compute
+  // diasSemContato accurately. If we use the UI date filter (current month), clients
+  // contacted recently won't appear as critical (diasSemContato would never reach 90+).
+  const wideFrom = useMemo(() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 2);
+    return d.toISOString().slice(0, 10);
+  }, []);
+  const wideTo = useMemo(() => new Date().toISOString().slice(0, 10), []);
+
   const { data: registrosRpc, isLoading: loadingRegistros } = useRegistrosRecentes({
-    from,
-    to,
-    enabled,
+    from: wideFrom,
+    to: wideTo,
+    limit: 5000,
   });
 
   const rpcData = useMemo<DadosComerciais>(() => {
