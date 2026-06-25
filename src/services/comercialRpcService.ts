@@ -5,6 +5,8 @@ import type {
   RpcEvolucaoMensal,
   RpcRankingRegiao,
   RpcClienteVendedor,
+  RpcRankingVendedorV2,
+  RpcRegistroRecente,
 } from "@/types/comercialRpc";
 
 /**
@@ -90,4 +92,40 @@ export async function fetchClientesPorVendedor(
   });
   if (error) throw new Error(`rpc_clientes_por_vendedor: ${error.message}`);
   return (data ?? []) as RpcClienteVendedor[];
+}
+
+/**
+ * Calls rpc_ranking_vendedores_v2 — expanded ranking with negocios, conversao, crm_quality.
+ */
+export async function fetchRankingVendedoresV2(
+  from: string,
+  to: string,
+  limit?: number,
+): Promise<RpcRankingVendedorV2[]> {
+  const params: Record<string, unknown> = { p_from: from, p_to: to };
+  if (limit != null) params.p_limit = limit;
+
+  const { data, error } = await supabase.rpc("rpc_ranking_vendedores_v2", params);
+  if (error) throw new Error(`rpc_ranking_vendedores_v2: ${error.message}`);
+  return (data ?? []) as RpcRankingVendedorV2[];
+}
+
+/**
+ * Calls rpc_registros_recentes — recent CRM actions with optional filters.
+ */
+export async function fetchRegistrosRecentes(
+  from: string,
+  to: string,
+  vendedor?: string,
+  cidade?: string,
+  limit?: number,
+): Promise<RpcRegistroRecente[]> {
+  const params: Record<string, unknown> = { p_from: from, p_to: to };
+  if (vendedor) params.p_vendedor = vendedor;
+  if (cidade) params.p_cidade = cidade;
+  if (limit != null) params.p_limit = limit;
+
+  const { data, error } = await supabase.rpc("rpc_registros_recentes", params);
+  if (error) throw new Error(`rpc_registros_recentes: ${error.message}`);
+  return (data ?? []) as RpcRegistroRecente[];
 }

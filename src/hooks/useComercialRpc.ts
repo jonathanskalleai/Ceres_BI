@@ -5,6 +5,8 @@ import {
   fetchEvolucaoMensal,
   fetchRankingRegioes,
   fetchClientesPorVendedor,
+  fetchRankingVendedoresV2,
+  fetchRegistrosRecentes,
 } from "@/services/comercialRpcService";
 import type {
   RpcKpisComercial,
@@ -12,6 +14,8 @@ import type {
   RpcEvolucaoMensal,
   RpcRankingRegiao,
   RpcClienteVendedor,
+  RpcRankingVendedorV2,
+  RpcRegistroRecente,
 } from "@/types/comercialRpc";
 
 const STALE_TIME = 5 * 60_000; // 5 minutes
@@ -108,5 +112,45 @@ export function useClientesPorVendedor({ vendedor, from, to, enabled = true }: U
     staleTime: STALE_TIME,
     placeholderData: keepPreviousData,
     enabled: enabled && !!vendedor,
+  });
+}
+
+// ─── Ranking Vendedores V2 (expanded) ───────────────────────────────────────
+
+interface UseRankingVendedoresV2Options {
+  from: string;
+  to: string;
+  limit?: number;
+  enabled?: boolean;
+}
+
+export function useRankingVendedoresV2({ from, to, limit, enabled = true }: UseRankingVendedoresV2Options) {
+  return useQuery<RpcRankingVendedorV2[], Error>({
+    queryKey: ["rpc", "ranking-vendedores-v2", from, to, limit ?? null],
+    queryFn: () => fetchRankingVendedoresV2(from, to, limit),
+    staleTime: STALE_TIME,
+    placeholderData: keepPreviousData,
+    enabled: enabled && !!from && !!to,
+  });
+}
+
+// ─── Registros Recentes ───────────────────────────────────────────────────────
+
+interface UseRegistrosRecentesOptions {
+  from: string;
+  to: string;
+  vendedor?: string;
+  cidade?: string;
+  limit?: number;
+  enabled?: boolean;
+}
+
+export function useRegistrosRecentes({ from, to, vendedor, cidade, limit, enabled = true }: UseRegistrosRecentesOptions) {
+  return useQuery<RpcRegistroRecente[], Error>({
+    queryKey: ["rpc", "registros-recentes", from, to, vendedor ?? null, cidade ?? null, limit ?? null],
+    queryFn: () => fetchRegistrosRecentes(from, to, vendedor, cidade, limit),
+    staleTime: STALE_TIME,
+    placeholderData: keepPreviousData,
+    enabled: enabled && !!from && !!to,
   });
 }

@@ -51,6 +51,35 @@ export interface RpcClienteVendedor {
   dias_sem_contato: number;
 }
 
+/** Row from rpc_ranking_vendedores_v2 — SETOF (expanded with negocios, conversao, crm_quality) */
+export interface RpcRankingVendedorV2 {
+  vendedor: string;
+  acoes: number;
+  visitas: number;
+  clientes: number;
+  pipeline: number;
+  negocios: number;
+  conversao: number;   // ganhos / (ganhos + perdidos) * 100, or 0
+  crm_quality: number; // acoes_com_obs / total_acoes * 100
+}
+
+/** Row from rpc_registros_recentes — SETOF */
+export interface RpcRegistroRecente {
+  cliente: string;
+  cidade: string;
+  vendedor: string;
+  tipo_contato: string;
+  tipo_acao: string;
+  negocio_valor: number | null;
+  negocio_etapa: string | null;
+  dt_conclusao: string;
+  obs: string | null;
+  lat: number | null;
+  lng: number | null;
+  status: string | null;
+  nro_negocio: string | null;
+}
+
 /** Common params shared by most RPCs */
 export interface ComercialRpcDateParams {
   p_from: string; // ISO date YYYY-MM-DD
