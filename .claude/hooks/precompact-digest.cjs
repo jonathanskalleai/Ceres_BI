@@ -13,9 +13,37 @@
 
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 const TIMEOUT_MS = 8000;
 const timeout = setTimeout(() => process.exit(0), TIMEOUT_MS);
+
+// Captura barata do estado de trabalho para recuperacao pos-compactacao.
+// Tudo silencioso: qualquer falha vira string vazia, nunca quebra o hook.
+function sh(cmd, cwd) {
+  try {
+    return execSync(cmd, { cwd, encoding: 'utf8', timeout: 3000, stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+  } catch {
+    return '';
+  }
+}
+
+function gitState(cwd) {
+  const branch = sh('git rev-parse --abbrev-ref HEAD', cwd);
+  if (!branch) return ''; // nao e repo git
+  const lastCommit = sh('git log -1 --pretty=format:"%h %s"', cwd);
+  const status = sh('git status --porcelain', cwd)
+    .split('\n').filter(Boolean).slice(0, 20).join('\n');
+  const lines = ['## Estado Git (no momento da compactacao)', ''];
+  lines.push(`- **Branch:** ${branch}`);
+  if (lastCommit) lines.push(`- **Ultimo commit:** ${lastCommit}`);
+  if (status) {
+    lines.push('- **Arquivos com mudancas nao commitadas:**', '', '```', status, '```');
+  } else {
+    lines.push('- **Working tree:** limpo (sem mudancas pendentes)');
+  }
+  return lines.join('\n') + '\n';
+}
 
 function readStdin() {
   return new Promise((resolve) => {
@@ -63,9 +91,11 @@ async function main() {
     `**Compactado em:** ${now}`,
     `**Trigger:** ${trigger}`,
     '',
+    gitState(cwd),
     '## Instrucao para nova sessao',
     '',
-    'Este arquivo marca uma compactacao de contexto.',
+    'Este arquivo marca uma compactacao de contexto. Use o estado git acima',
+    'para reconstruir rapidamente onde o trabalho parou (arquivos em andamento).',
     'Verifique `.aivoux/handoffs/latest.yaml` para contexto do ultimo agente ativo.',
     'Use `/aivoux/router` para continuar o trabalho normalmente.',
     handoffNote,

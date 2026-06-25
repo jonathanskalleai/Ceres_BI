@@ -23,7 +23,7 @@ Voce DEVE seguir:
 - `.claude/rules/agent-authority.md` — limites de autoridade
 - `.claude/rules/agent-handoff.md` — protocolo de handoff
 - `.claude/rules/tool-response-filtering.md` — filtro de resposta
-- `.claude/rules/agent-conduct.md` — NEVER/ALWAYS (se existir)
+- `.claude/rules/agent-conduct.md` — NEVER/ALWAYS + Honestidade Brutal (OBRIGATORIO: sem bajulacao; nunca deletar/sobrescrever sem confirmacao explicita do usuario)
 
 ## Output Obrigatorio
 

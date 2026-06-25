@@ -1,0 +1,78 @@
+name: define-kpis
+version: 1.0.0
+description: "Definir KPIs completos do domínio Ceres Agro"
+
+trigger: "Quando há necessidade de definir ou revisar KPIs de negócio"
+
+inputs:
+  - PRD/requisitos de negócio
+  - Dados disponíveis no banco
+  - Contexto de equipe (vendas, gestão)
+  - Screenshots de dashboards atuais
+
+outputs:
+  - docs/kpis-agro.md (data dictionary)
+  - Hook specs (para @dev implementar)
+  - Dashboard specs (para @bi-visualizer)
+
+steps:
+  - name: discovery
+    description: "Levantar contexto de negócio"
+    actions:
+      - Identificar áreas: Máquinas, Peças, Visitas, Ações
+      - Listar stakeholders e suas necessidades
+      - Mapear decisões baseadas em dados
+
+  - name: kpi_identification
+    description: "Identificar KPIs por área"
+    actions:
+      - Definir KPIs quantitativos (monetários, contagens)
+      - Definir KPIs qualitativos (taxas, índices)
+      - Priorizar por impacto no negócio
+
+  - name: kpi_definition
+    description: "Documentar definição de cada KPI"
+    template: |
+      ## [Nome do KPI]
+      - **Categoria:** [Máquinas/Peças/Visitas/Ações]
+      - **Definição:** [Como é calculado]
+      - **Fórmula:** [SQL/formula]
+      - **Fonte:** [Tabela/Campo]
+      - **Formato:** [Moeda/Percentual/Inteiro]
+      - **Tendência:** [Mostrar variação? Sim/Não]
+      - **Thresholds:** [Verde/Amarelo/Vermelho]
+      - **Stakeholder:** [Quem usa]
+
+  - name: validation
+    description: "Validar definições com contexto"
+    actions:
+      - Verificar se dados existem no banco
+      - Confirmar se fórmula faz sentido
+      - Ajustar baseado em limitações técnicas
+
+  - name: handoff
+    description: "Entregar para próximo agente"
+    actions:
+      - Passar specs para @bi-visualizer (visual)
+      - Passar specs para @dev (implementação)
+
+examples:
+  - |
+    ## Receita Máquinas
+    - **Categoria:** Máquinas
+    - **Definição:** Soma do valor de negócios ganhos do tipo máquina
+    - **Fórmula:** SUM(n.valor) WHERE n.tipo = 'maquina' AND n.conclusao = 'ganho'
+    - **Fonte:** negocios.valor
+    - **Formato:** currency_BRL
+    - **Tendência:** Sim (vs período anterior)
+    - **Thresholds:** > R$ 500k verde, R$ 200k-500k amarelo, < R$ 200k vermelho
+
+  - |
+    ## Taxa Conversão Visitas
+    - **Categoria:** Visitas
+    - **Definição:** Percentual de visitas que geraram negócio
+    - **Fórmula:** COUNT(negocios.created WHERE created_after_visita) / COUNT(visitas) * 100
+    - **Fonte:** visitas + negocios
+    - **Formato:** percentage
+    - **Tendência:** Sim
+    - **Thresholds:** > 50% verde, 30-50% amarelo, < 30% vermelho

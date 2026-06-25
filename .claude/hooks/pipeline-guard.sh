@@ -45,8 +45,8 @@ case "$TOOL" in
     print_warning
     ;;
   Write)
-    # Write em paths internos do AIVOUX e permitido pro router (meta-comandos *tier, marker)
-    if echo "$INPUT" | grep -qE '\.aivoux/(\.session-tier|\.pipeline-active|handoffs/|telemetry/)'; then
+    # Write em paths internos do AIVOUX e permitido pro router (marker, handoffs, telemetry)
+    if echo "$INPUT" | grep -qE '\.aivoux/(\.pipeline-active|handoffs/|telemetry/)'; then
       exit 0
     fi
     print_warning

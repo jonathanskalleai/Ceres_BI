@@ -13,6 +13,11 @@
       "Grep",
       "NotebookEdit",
       "Bash(git pull:*)",
+      "Bash(ssh root@178.238.235.203:*)",
+      "Bash(docker build:*)",
+      "Bash(docker run:*)",
+      "Bash(pip install:*)",
+      "Bash(/opt/etl/venv/bin/pip:*)",
       "Skill(*)"
     ],
     "deny": [
@@ -70,6 +75,15 @@
             "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/secret-scan.sh\""
           }
         ]
+      },
+      {
+        "matcher": "Bash|Write|Edit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/delete-guard.sh\""
+          }
+        ]
       }
     ],
     "PostToolUse": [
@@ -79,6 +93,15 @@
           {
             "type": "command",
             "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/telemetry.sh\" tool"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/quality-guard.sh\""
           }
         ]
       }

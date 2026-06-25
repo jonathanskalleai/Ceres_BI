@@ -7,33 +7,15 @@ project:
 # - true: Router executa pipeline end-to-end automaticamente sem pausar
 yolo_mode: true
 
-# Plan Mode (3 tiers: Opus planning, Sonnet execution, Haiku scan/docs)
+# Plan Mode — TODOS os agentes em Opus (exceto scribe em Haiku). Sem tiers.
 # Router usa Claude Code Task tool para spawnar cada agente com o modelo
-# correto automaticamente — SEM precisar rodar /model opus-plan manualmente.
-#
-# Planning agents (Opus):         @analyst, @pm, @architect, @ux
-# Execution agents (Sonnet):      @dev, @qa, @devops, @data-engineer
-# Scan/Docs agents (Haiku):       @scribe (documentacao + context scan)
+# correto automaticamente (enforced via frontmatter do subagent).
 plan_mode:
   enabled: true
   planning_model: opus            # opus | sonnet | haiku
-  execution_model: sonnet         # sonnet | opus | haiku
+  execution_model: opus           # opus | sonnet | haiku
   scribe_model: haiku             # haiku para docs/scan (eficiencia)
   auto_switch: true               # router faz switch automatico via Task tool
-
-# Model Tier — dois perfis de custo/qualidade, trocaveis via *tier no router
-# - premium (default): planning em Opus, execution em Sonnet, scribe em Haiku
-# - economy: tudo que era Opus vira Sonnet (planning tambem). Sonnet/Haiku
-#   nao mudam. Usar quando a demanda nao precisa do raciocinio profundo de Opus.
-#
-# Override em tempo de sessao:
-#   /aivoux/router *tier           # mostra tier atual
-#   /aivoux/router *tier economy   # troca para economy nesta sessao
-#   /aivoux/router *tier premium   # volta para premium nesta sessao
-#   /aivoux/router *tier reset     # remove override e usa o default daqui
-#
-# O override fica em .aivoux/.session-tier (gitignored, TTL 4h).
-model_tier: premium               # premium | economy
 
 # Context Scan (PASSO 0 do router)
 # Router le o estado do projeto antes de planejar/executar qualquer coisa.
@@ -86,10 +68,11 @@ quality_gates:
   coderabbit: false
 
 # 12 Best Practices (coding standards)
-# Quando true, @dev aplica e @qa valida durante reviews
+# Quando true, @dev aplica, @reviewer barra estrutura e @qa valida
 coding_standards:
   enforce: true
-  max_component_lines: 250
+  max_component_lines: 300        # HARD gate — FAIL acima (qa/reviewer/quality-guard hook)
+  component_meta_lines: 200       # meta ideal para codigo novo
   max_any_usage: 0                # 0 = proibido any sem justificativa
   min_test_coverage: 80           # % minima para logica critica
   enforce_a11y: true              # WCAG 2.1 AA
@@ -107,6 +90,19 @@ coderabbit:
 context_watch:
   enabled: true
   warn_at: 20
+
+# Context Rehydration — salva estado cognitivo e re-injeta apos compactacao
+# Evita perda de contexto quando a janela enche ou usuario faz /clear.
+# save_at: turno para primeira instrucao de save (antes do warn_at)
+# save_interval: re-salva a cada N turnos apos save_at
+# auto_inject: injeta digest automaticamente no primeiro prompt pos-compactacao
+# stale_hours: ignora digest mais velho que N horas (evita confusao)
+context_rehydration:
+  enabled: true
+  save_at: 12
+  save_interval: 8
+  auto_inject: true
+  stale_hours: 2
 
 dev:
   stories_location: docs/stories

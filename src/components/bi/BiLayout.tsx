@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom";
-import { NegociosFilterProvider } from "@/contexts/NegociosFilterContext";
+import { NegociiosFilterProvider } from "@/contexts/NegociosFilterContext";
 import { BiTopbarPortal } from "./BiTopbarPortal";
+import BiDebugOverlay from "./debug/BiDebugOverlay";
 
 /**
  * Layout wrapper for all BI and Tools pages.
@@ -8,9 +9,10 @@ import { BiTopbarPortal } from "./BiTopbarPortal";
  */
 export default function BiLayout() {
   return (
-    <NegociosFilterProvider>
+    <NegociiosFilterProvider>
       <BiTopbarPortal />
       <Outlet />
-    </NegociosFilterProvider>
+      <BiDebugOverlay />
+    </NegociiosFilterProvider>
   );
 }

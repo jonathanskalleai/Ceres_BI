@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { VOUX_COLORS, VOUX_PALETTE, niceTicks, fmtCompact } from "./svgGeometry";
 
 export interface SvgLineSeries {
@@ -37,6 +38,10 @@ export function SvgLine({
   onLeave,
   hoveredIdx,
 }: SvgLineProps) {
+  // Unique per-instance ID — must be declared before any early return (Rules of Hooks).
+  // Prevents gradient ID collisions when multiple SvgLine components render simultaneously.
+  const instanceId = useRef(Math.random().toString(36).slice(2, 8));
+
   if (width === 0 || series.length === 0) return null;
 
   const padL = 44;
@@ -60,8 +65,8 @@ export function SvgLine({
     padT + plotH - ((v - yMin) / (yMax - yMin)) * plotH;
 
   const ticks = niceTicks(yMin, yMax, 4);
-  // Stable ID scoped to this component dimensions
-  const areaGradId = `svgline-area-${width}-${height}`;
+  // Stable ID scoped to this component instance
+  const areaGradId = `svgline-area-${instanceId.current}`;
 
   return (
     <svg

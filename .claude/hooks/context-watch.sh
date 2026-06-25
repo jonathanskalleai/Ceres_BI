@@ -89,9 +89,11 @@ fi
 if [ "$SHOULD_WARN" -eq 1 ]; then
   printf '[AIVOUX-CONTEXT-WATCH turns=%d]\n' "$TURNS"
   printf 'Apresente este aviso ao usuario antes de processar a demanda:\n'
-  printf '"⚠ Sessao com %d turnos — contexto longo pode aumentar custo e reduzir foco.\n' "$TURNS"
-  printf 'Se esta e uma nova demanda nao relacionada a conversa atual, considere\n'
-  printf 'dar /clear primeiro. Sua demanda sera processada normalmente se continuar."\n'
+  printf '"⚠ Sessao com %d turnos — contexto longo aumenta custo e reduz foco.\n' "$TURNS"
+  printf '  • Nova demanda nao relacionada -> /clear (zera tudo).\n'
+  printf '  • Continuar a MESMA tarefa -> /compact (resume e preserva o essencial,\n'
+  printf '    sem perder o fio). Recomendado quando o trabalho ainda esta em andamento.\n'
+  printf 'Sua demanda sera processada normalmente se continuar sem fazer nada."\n'
 fi
 
 exit 0
