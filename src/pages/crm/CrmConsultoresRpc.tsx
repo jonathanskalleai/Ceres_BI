@@ -4,8 +4,9 @@ import { DashboardConsultores } from "@/components/dashboard/DashboardConsultore
 import { useRankingVendedoresV2, useRegistrosRecentes } from "@/hooks/useComercialRpc";
 import { useComercialDataContext } from "@/contexts/ComercialDataContext";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { DadosComerciais, Vendedor, Registro } from "@/types/comercial";
-import type { RpcRankingVendedorV2, RpcRegistroRecente } from "@/types/comercialRpc";
+import { mapRegistroRecente } from "@/lib/comercialMappers";
+import type { DadosComerciais, Vendedor } from "@/types/comercial";
+import type { RpcRankingVendedorV2 } from "@/types/comercialRpc";
 
 /**
  * Maps a RpcRankingVendedorV2 row to the Vendedor domain shape.
@@ -29,24 +30,6 @@ function mapVendedor(r: RpcRankingVendedorV2): Vendedor {
   };
 }
 
-/** Maps a RpcRegistroRecente row to the Registro domain shape. */
-function mapRegistro(r: RpcRegistroRecente): Registro {
-  return {
-    cliente: r.cliente ?? "",
-    cidade: r.cidade ?? "",
-    vendedor: r.vendedor ?? "",
-    tipoContato: r.tipo_contato ?? "",
-    tipoAcao: r.tipo_acao ?? "",
-    negocioValor: r.negocio_valor ?? 0,
-    negocioEtapa: r.negocio_etapa ?? "",
-    dtConclusao: r.dt_conclusao ?? "",
-    obs: r.obs ?? "",
-    lat: r.lat ?? undefined,
-    lng: r.lng ?? undefined,
-    status: r.status ?? undefined,
-    nroNegocio: r.nro_negocio ?? undefined,
-  };
-}
 
 /**
  * CrmConsultoresRpc — RPC-backed consultores page.
@@ -71,14 +54,13 @@ export default function CrmConsultoresRpc() {
   const { data: registrosRpc, isLoading: loadingRegistros } = useRegistrosRecentes({
     from,
     to,
-    vendedor: filters.cidade ? undefined : undefined, // no vendedor filter at page level
     cidade: filters.cidade || undefined,
     enabled,
   });
 
   const data = useMemo<DadosComerciais>(() => {
     const vendedores: Vendedor[] = (rankingRpc ?? []).map(mapVendedor);
-    const registrosRecentes: Registro[] = (registrosRpc ?? []).map(mapRegistro);
+    const registrosRecentes = (registrosRpc ?? []).map(mapRegistroRecente);
 
     const listaCidades = Array.from(
       new Set(registrosRecentes.map((r) => r.cidade).filter(Boolean))

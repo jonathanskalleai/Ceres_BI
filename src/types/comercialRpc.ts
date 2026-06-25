@@ -79,9 +79,3 @@ export interface RpcRegistroRecente {
   status: string | null;
   nro_negocio: string | null;
 }
-
-/** Common params shared by most RPCs */
-export interface ComercialRpcDateParams {
-  p_from: string; // ISO date YYYY-MM-DD
-  p_to: string;   // ISO date YYYY-MM-DD
-}

@@ -2,8 +2,9 @@ import { useMemo } from "react";
 import { DashboardMapa } from "@/components/dashboard/DashboardMapa";
 import { useRankingRegioes, useRegistrosRecentes } from "@/hooks/useComercialRpc";
 import { useComercialDataContext } from "@/contexts/ComercialDataContext";
-import type { DadosComerciais, RegiaoSummary, Registro } from "@/types/comercial";
-import type { RpcRankingRegiao, RpcRegistroRecente } from "@/types/comercialRpc";
+import { mapRegistroRecente } from "@/lib/comercialMappers";
+import type { DadosComerciais, RegiaoSummary } from "@/types/comercial";
+import type { RpcRankingRegiao } from "@/types/comercialRpc";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
@@ -40,21 +41,7 @@ export default function CrmMapaRpc() {
       lng: r.lng ?? undefined,
     }));
 
-    const registrosRecentes: Registro[] = (registrosRpc ?? []).map((r: RpcRegistroRecente) => ({
-      cliente: r.cliente ?? "",
-      cidade: r.cidade ?? "",
-      vendedor: r.vendedor ?? "",
-      tipoContato: r.tipo_contato ?? "",
-      tipoAcao: r.tipo_acao ?? "",
-      negocioValor: r.negocio_valor ?? 0,
-      negocioEtapa: r.negocio_etapa ?? "",
-      dtConclusao: r.dt_conclusao ?? "",
-      obs: r.obs ?? "",
-      lat: r.lat ?? undefined,
-      lng: r.lng ?? undefined,
-      status: r.status ?? undefined,
-      nroNegocio: r.nro_negocio ?? undefined,
-    }));
+    const registrosRecentes = (registrosRpc ?? []).map(mapRegistroRecente);
 
     return {
       kpis: {
