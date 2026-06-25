@@ -29,11 +29,11 @@ AS $$
     COALESCE(
       (SELECT array_agg(c ORDER BY c)
        FROM (
-         SELECT DISTINCT aco_cidadecliente AS c
+         SELECT DISTINCT emp_cidade AS c
          FROM mirror.crm_acoes
          WHERE aco_dthconclusao::date BETWEEN p_from AND p_to
-           AND aco_cidadecliente IS NOT NULL
-           AND aco_cidadecliente <> ''
+           AND emp_cidade IS NOT NULL
+           AND emp_cidade <> ''
        ) sub),
       ARRAY[]::text[]
     )
