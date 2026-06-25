@@ -8,8 +8,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { LoginPage } from "@/components/auth/LoginPage";
 import { AppShell } from "@/components/layout/AppShell";
-import { ComercialDataProvider } from "@/contexts/ComercialDataContext";
 import BiLayout from "./components/bi/BiLayout";
+import CrmLayout from "./components/crm/CrmLayout";
 import NotFound from "./pages/NotFound";
 
 // CRM pages (thin wrappers — eager since they're tiny)
@@ -92,8 +92,8 @@ const App = () => (
               {/* Root redirect */}
               <Route index element={<Navigate to="/crm/overview" replace />} />
 
-              {/* CRM — wrapped by ComercialDataProvider */}
-              <Route path="crm" element={<ComercialDataProvider />}>
+              {/* CRM — wrapped by CrmLayout (shared filter context + topbar portal) */}
+              <Route path="crm" element={<CrmLayout />}>
                 <Route path="overview" element={<CrmOverview />} />
                 <Route path="consultores" element={<CrmConsultores />} />
                 <Route path="consultores/:vendedor" element={<CrmConsultorDetail />} />
