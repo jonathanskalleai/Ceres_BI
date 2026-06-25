@@ -17,15 +17,13 @@ interface UseNegociosCrmOptions {
  * Accepts filter params explicitly — works in both CRM and BI contexts.
  */
 export function useNegociosCrm({ dateRange, cidade, vendedor }: UseNegociosCrmOptions) {
-  const from = dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : "";
-  const to = dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : "";
-  const enabled = Boolean(from && to);
+  const from = dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : undefined;
+  const to = dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined;
 
   return useQuery<RpcNegociosCrmResult, Error>({
-    queryKey: ["rpc", "negocios-crm", from, to, cidade || null, vendedor || null],
-    queryFn: () => fetchNegociosCrm(from, to, cidade || undefined, vendedor || undefined),
+    queryKey: ["rpc", "negocios-crm", from ?? null, to ?? null, cidade || null, vendedor || null],
+    queryFn: () => fetchNegociosCrm(from || "", to || "", cidade || undefined, vendedor || undefined),
     staleTime: STALE_TIME,
     placeholderData: keepPreviousData,
-    enabled,
   });
 }

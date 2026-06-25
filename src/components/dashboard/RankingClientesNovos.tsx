@@ -76,7 +76,7 @@ export const RankingClientesNovos = ({ data, registros, filters }: Props) => {
           <Users className="h-5 w-5 text-primary" />
           <CardTitle className="text-sm font-semibold">Ranking — Abertura de Clientes</CardTitle>
         </div>
-        <p className="text-xs text-muted-foreground">
+        <span className="text-xs text-muted-foreground">
           Clientes atendidos por consultor · Clique para expandir
           {isFiltered && (
             <Badge variant="secondary" className="ml-2 text-[10px] gap-1">
@@ -84,7 +84,7 @@ export const RankingClientesNovos = ({ data, registros, filters }: Props) => {
               Filtrado
             </Badge>
           )}
-        </p>
+        </span>
       </CardHeader>
       <CardContent className="space-y-1">
         {ranking.slice(0, 5).map((cons, idx) => {
