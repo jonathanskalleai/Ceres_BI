@@ -223,8 +223,8 @@ BEGIN
       os.os_fstatus,
       os.os_dthabertura,
       os.os_dthencerramento,
-      os.emp_cod_filial,
-      os.tos_cod_tipo_os,
+      os.emp_codfilial,
+      os.tos_codtipoos,
       CASE
         WHEN LOWER(COALESCE(os.os_fstatus, '')) LIKE '%fechad%' THEN 'fechada'
         WHEN LOWER(COALESCE(os.os_fstatus, '')) LIKE '%abert%' THEN 'aberta'
@@ -299,12 +299,12 @@ BEGIN
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
       SELECT
-        COALESCE(NULLIF(TRIM(emp_cod_filial), ''), 'Sem filial') AS name,
+        COALESCE(NULLIF(TRIM(emp_codfilial), ''), 'Sem filial') AS name,
         ROUND(AVG(dias_resolucao)::numeric, 1) AS "diasMedio",
         COUNT(*) AS qtd
       FROM base
       WHERE dias_resolucao IS NOT NULL
-      GROUP BY COALESCE(NULLIF(TRIM(emp_cod_filial), ''), 'Sem filial')
+      GROUP BY COALESCE(NULLIF(TRIM(emp_codfilial), ''), 'Sem filial')
       ORDER BY AVG(dias_resolucao) DESC
       LIMIT 10
     ) sub
@@ -314,12 +314,12 @@ BEGIN
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
       SELECT
-        COALESCE(NULLIF(TRIM(tos_cod_tipo_os), ''), 'Sem tipo') AS name,
+        COALESCE(NULLIF(TRIM(tos_codtipoos), ''), 'Sem tipo') AS name,
         ROUND(AVG(dias_resolucao)::numeric, 1) AS "diasMedio",
         COUNT(*) AS qtd
       FROM base
       WHERE dias_resolucao IS NOT NULL
-      GROUP BY COALESCE(NULLIF(TRIM(tos_cod_tipo_os), ''), 'Sem tipo')
+      GROUP BY COALESCE(NULLIF(TRIM(tos_codtipoos), ''), 'Sem tipo')
       ORDER BY AVG(dias_resolucao) DESC
       LIMIT 10
     ) sub
@@ -406,11 +406,11 @@ BEGIN
     SELECT
       dn.ngo_vendedores AS vendedor,
       dn.ngo_numero,
-      COUNT(a.aco_id_acao) AS visitas
+      COUNT(a.aco_idacao) AS visitas
     FROM deduped_negocios dn
     LEFT JOIN mirror.crm_acoes a
-      ON a.ngo_nro_negocio = dn.ngo_numero
-      AND LOWER(COALESCE(a.aco_tipo_contato, '')) LIKE '%visit%'
+      ON a.ngo_nronegocio = dn.ngo_numero
+      AND LOWER(COALESCE(a.aco_tipocontato, '')) LIKE '%visit%'
     WHERE dn.status_class = 'ganho'
     GROUP BY dn.ngo_vendedores, dn.ngo_numero
   ),
@@ -485,7 +485,7 @@ BEGIN
       p.pqm_grupo,
       p.pqm_modelo,
       p.pqm_ano,
-      COALESCE(p.pqm_qtd_maquinas, 1) AS qtd,
+      COALESCE(p.pqm_qtdmaquinas, 1) AS qtd,
       CASE
         WHEN UPPER(COALESCE(p.pqm_marca, '')) IN ('CASE', 'CASE IH', 'NEW HOLLAND', 'IVECO')
         THEN true
@@ -577,11 +577,11 @@ $$;
 -- Indexes for new RPCs (IF NOT EXISTS — idempotent)
 -------------------------------------------------------------------------------
 
-CREATE INDEX IF NOT EXISTS idx_acoes_ngo_nro_negocio
-  ON mirror.crm_acoes (ngo_nro_negocio);
+CREATE INDEX IF NOT EXISTS idx_acoes_ngo_nronegocio
+  ON mirror.crm_acoes (ngo_nronegocio);
 
-CREATE INDEX IF NOT EXISTS idx_acoes_tipo_contato
-  ON mirror.crm_acoes (aco_tipo_contato);
+CREATE INDEX IF NOT EXISTS idx_acoes_tipocontato
+  ON mirror.crm_acoes (aco_tipocontato);
 
 CREATE INDEX IF NOT EXISTS idx_parque_ano
   ON mirror.cliente_parque_maquinas (pqm_ano);
