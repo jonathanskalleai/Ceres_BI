@@ -280,3 +280,15 @@ export interface ParqueRenovacaoItem {
 export interface RpcParqueRenovacaoBI {
   frotaRenovacao: ParqueRenovacaoItem[];
 }
+
+// ─── rpc_etl_status ─────────────────────────────────────────────────────────
+
+export interface EtlSyncStatus {
+  table_name: string;
+  source_view: string;
+  rows_synced: number;
+  last_sync_at: string;
+  status: string;
+  error_message: string | null;
+  minutes_since_sync: number;
+}

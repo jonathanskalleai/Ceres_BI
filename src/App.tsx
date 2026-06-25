@@ -34,6 +34,7 @@ const BiOperacional = lazy(() => import("./pages/bi/BiOperacional"));
 const BiAdmin = lazy(() => import("./pages/bi/BiAdmin"));
 const BiAcoes = lazy(() => import("./pages/bi/BiAcoes"));
 const BiInteligencia = lazy(() => import("./pages/bi/BiInteligencia"));
+const BiEtlMonitor = lazy(() => import("./pages/bi/BiEtlMonitor"));
 
 // Tools pages
 const ToolsExplorer = lazy(() => import("./pages/tools/ToolsExplorer"));
@@ -118,6 +119,7 @@ const App = () => (
                 <Route path="admin" element={<LazySuspense><BiAdmin /></LazySuspense>} />
                 <Route path="acoes" element={<LazySuspense><BiAcoes /></LazySuspense>} />
                 <Route path="inteligencia" element={<LazySuspense><BiInteligencia /></LazySuspense>} />
+                <Route path="etl-monitor" element={<LazySuspense><BiEtlMonitor /></LazySuspense>} />
               </Route>
 
               {/* Tools — same filter layout */}

@@ -32,6 +32,7 @@ const MODULE_ROUTES: Record<string, string> = {
   'bi.operacional': '/bi/operacional',
   'bi.admin': '/bi/admin',
   'bi.acoes': '/bi/acoes',
+  'bi.etl-monitor': '/bi/etl-monitor',
   'tools.explorer': '/tools/explorer',
   'tools.performance': '/tools/performance',
   'admin.users': '/admin/users',
