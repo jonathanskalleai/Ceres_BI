@@ -1,8 +1,10 @@
-import { useComercialDataContext } from '@/contexts/ComercialDataContext';
-import { DashboardMapa } from '@/components/dashboard/DashboardMapa';
+import CrmMapaRpc from './CrmMapaRpc';
 
+/**
+ * CrmMapa — now delegates to the RPC-based implementation.
+ * The old client-side aggregation via ComercialDataContext is preserved
+ * in DashboardMapa but no longer used here.
+ */
 export default function CrmMapa() {
-  const { data, allData, filters } = useComercialDataContext();
-
-  return <DashboardMapa data={allData ?? data} filters={filters} />;
+  return <CrmMapaRpc />;
 }
