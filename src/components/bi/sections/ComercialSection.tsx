@@ -2,15 +2,15 @@ import {
   Briefcase, Percent, DollarSign, Trophy, Clock, Wallet,
 } from "lucide-react";
 import { type DateRange } from "react-day-picker";
-import { useNegociosBI } from "@/hooks/bi/useNegociosBI";
-import { useFunilData } from "@/hooks/bi/useFunilData";
+import { useNegociosBIRpc } from "@/hooks/bi/useNegociosBIRpc";
 import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { HorizontalBarChart, VerticalBarChart, LineChart } from "@/components/bi/charts";
 import { CHART_COLORS, POSITIVE_COLOR, NEGATIVE_COLOR } from "@/lib/chartTheme";
-import { formatBRL, formatBRLShort, formatDias, formatMonthYear } from "@/lib/dateUtils";
+import { formatBRL, formatDias, formatMonthYear, toISODate } from "@/lib/dateUtils";
 
-import { type CategoriaFilter } from "@/lib/categoriaFunil";
+import { type CategoriaFilter, CATEGORIA_ALL, getFunisByCategoria, FUNIL_ALL } from "@/lib/categoriaFunil";
+import type { RpcNegociosBI } from "@/types/biRpc";
 
 interface Props {
   active: boolean;
@@ -21,9 +21,29 @@ interface Props {
 
 const pct = (v: number) => `${v.toFixed(1)}%`;
 
+function resolveFunis(categoria?: CategoriaFilter, funil?: string): string[] | undefined {
+  if (funil && funil !== FUNIL_ALL) return [funil];
+  if (categoria && categoria !== CATEGORIA_ALL) return getFunisByCategoria(categoria);
+  return undefined;
+}
+
+const EMPTY_AGG: RpcNegociosBI = {
+  kpis: { totalNegocios: 0, ganhos: 0, perdidos: 0, andamento: 0, taxaConversao: 0, pipelineAberto: 0, pipelinePerdido: 0, valorGanho: 0, ticketMedioGanho: 0, cicloMedioDias: 0, esforcoMedio: 0 },
+  funilPorEtapa: [], porOrigem: [], motivosPerda: [], evolucaoMensal: [], rankingConsultor: [],
+  velocidadeFunil: [], duracaoMediaTotal: 0,
+};
+
 export default function ComercialSection({ active, dateRange, categoria, funil }: Props) {
-  const { agg, isLoading } = useNegociosBI(active, dateRange, categoria, funil);
-  const { agg: funil_, isLoading: funilLoading } = useFunilData(active);
+  const from = toISODate(dateRange?.from);
+  const to = toISODate(dateRange?.to ?? dateRange?.from);
+  const funis = resolveFunis(categoria, funil);
+
+  const { data: agg = EMPTY_AGG, isLoading } = useNegociosBIRpc({
+    from,
+    to,
+    funis,
+    enabled: active && !!from && !!to,
+  });
   const { kpis } = agg;
 
   return (
@@ -131,10 +151,10 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
         <ChartCard
           title="Velocidade do Funil — Gargalos"
           description="Tempo medio (dias) que negocios permanecem em cada etapa"
-          loading={funilLoading}
+          loading={isLoading}
         >
           <HorizontalBarChart
-            data={funil_.velocidadePorEtapa.map(item => ({
+            data={agg.velocidadeFunil.map(item => ({
               name: item.name,
               diasMedio: item.diasMedio,
               qtd: item.qtd

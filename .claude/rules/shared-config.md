@@ -38,6 +38,12 @@ Aplicaveis conforme escopo (ver matrix em `security-standards.md`):
 9. **RLS check** (quando ha schema novo) - tabelas Supabase com RLS habilitado
 10. **Headers check** (deploy) - HTTPS + HSTS + CSP configurados antes de release
 
+## Change & Deploy Safety Gates
+
+11. **Environment preflight** (mutacao remota) - repo/branch/host/DB ALVO confirmados antes de push/SSH/SQL (ver `change-safety.md` A)
+12. **Mental-model confirm** (dados/semantica ambigua) - modelo + blast radius confirmados antes de editar (ver `change-safety.md` B)
+13. **Deploy boot + smoke** (deploy) - servico sobe + processa payload real + SHA no remoto antes de DONE (ver `deploy-safety.md`)
+
 ## 12 Best Practices
 
 Quando `coding_standards.enforce: true` (default), @dev aplica e @qa valida:
@@ -45,7 +51,7 @@ Quando `coding_standards.enforce: true` (default), @dev aplica e @qa valida:
 1. **DRY** - Evitar duplicacao
 2. **Dead Code** - Remover codigo nao usado
 3. **TypeScript** - Sem `any` injustificado
-4. **Component Size** - <250 linhas (configuravel)
+4. **Component Size** - <300 linhas (HARD gate, FAIL acima; meta <200) — @reviewer + quality-guard hook
 5. **State Mgmt** - Sem prop drilling >2 niveis
 6. **React Hooks** - Rules e deps corretas
 7. **Logic/UI** - Separacao clara
@@ -66,7 +72,8 @@ Detalhes completos em `.claude/rules/coding-standards.md`.
 
 ### Plan Mode (`plan_mode.enabled: true`, default)
 - Agentes de planejamento (@pm, @architect, @analyst, @ux) usam Opus
-- Agentes de execucao (@dev, @qa, @devops, @data-engineer) usam Sonnet
+- Agentes de execucao (@dev, @qa, @devops, @data-engineer) usam Opus
+- Scribe usa Haiku
 - Auto-switch via `plan_mode.auto_switch: true`
 
 ### Story Mode (`story_mode: false`, default)

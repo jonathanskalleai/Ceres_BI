@@ -1,5 +1,5 @@
 import { createPortal } from "react-dom";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +16,8 @@ import {
   CATEGORIA_OPTIONS,
   getFunilOptions,
 } from "@/lib/categoriaFunil";
-import { useComercialData } from "@/hooks/useComercialData";
+import { toISODate } from "@/lib/dateUtils";
+import { useListasFiltrosRpc } from "@/hooks/useListasFiltrosRpc";
 
 /**
  * Renders BI filters inside the AppShell topbar via React Portal.
@@ -47,17 +48,13 @@ export function BiTopbarPortal() {
 
   const funilOptions = getFunilOptions(categoria);
 
-  // Derive vendedor/cidade options from data
-  const { allData } = useComercialData(categoria, funil);
-  const vendedorOptions = useMemo(() => {
-    if (!allData) return [];
-    return allData.listaVendedores;
-  }, [allData]);
+  // Fetch filter lists from server-side RPC (no client-side aggregation)
+  const from = toISODate(dateRange?.from) ?? "";
+  const to = toISODate(dateRange?.to ?? dateRange?.from) ?? "";
+  const { data: listas } = useListasFiltrosRpc({ from, to, enabled: !!from && !!to });
 
-  const cidadeOptions = useMemo(() => {
-    if (!allData) return [];
-    return allData.listaCidades;
-  }, [allData]);
+  const vendedorOptions = listas?.vendedores ?? [];
+  const cidadeOptions = listas?.cidades ?? [];
 
   if (!container) return null;
 

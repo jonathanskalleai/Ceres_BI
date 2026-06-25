@@ -2,10 +2,10 @@ import { ClipboardList, Eye } from "lucide-react";
 import { KPICard } from "@/components/bi/KPICard";
 import { fmtNum, isEmpty } from "@/lib/formatters";
 import { SectionEyebrow } from "@/components/bi/SectionEyebrow";
-import type { usePainelKPIs } from "@/hooks/bi/usePainelKPIs";
+import type { PainelKPIs } from "@/hooks/bi/usePainelKPIsRpc";
 
 interface Props {
-  kpis: ReturnType<typeof usePainelKPIs>["kpis"];
+  kpis: PainelKPIs;
   loading: boolean;
 }
 

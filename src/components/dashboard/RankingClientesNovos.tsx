@@ -1,12 +1,11 @@
 import { useState, useMemo } from "react";
-import { DadosComerciais, Registro, Filters } from "@/types/comercial";
+import type { Registro, Filters } from "@/types/comercial";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronUp, Users, MapPin, Filter } from "lucide-react";
 import { hasActiveFilters } from "@/lib/filterUtils";
 
-interface Props {
-  data: DadosComerciais;
+interface RankingClientesNovosProps {
   registros: Registro[];
   filters?: Filters;
 }
@@ -27,7 +26,7 @@ const formatDate = (d: string) => {
 
 const medals = ["🥇", "🥈", "🥉"];
 
-export const RankingClientesNovos = ({ data, registros, filters }: Props) => {
+export const RankingClientesNovos = ({ registros, filters }: RankingClientesNovosProps) => {
   const [expandedConsultor, setExpandedConsultor] = useState<string | null>(null);
   const isFiltered = filters ? hasActiveFilters(filters) : false;
 
@@ -76,7 +75,7 @@ export const RankingClientesNovos = ({ data, registros, filters }: Props) => {
           <Users className="h-5 w-5 text-primary" />
           <CardTitle className="text-sm font-semibold">Ranking — Abertura de Clientes</CardTitle>
         </div>
-        <p className="text-xs text-muted-foreground">
+        <span className="text-xs text-muted-foreground">
           Clientes atendidos por consultor · Clique para expandir
           {isFiltered && (
             <Badge variant="secondary" className="ml-2 text-[10px] gap-1">
@@ -84,7 +83,7 @@ export const RankingClientesNovos = ({ data, registros, filters }: Props) => {
               Filtrado
             </Badge>
           )}
-        </p>
+        </span>
       </CardHeader>
       <CardContent className="space-y-1">
         {ranking.slice(0, 5).map((cons, idx) => {

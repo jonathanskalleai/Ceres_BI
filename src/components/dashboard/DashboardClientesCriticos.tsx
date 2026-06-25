@@ -1,34 +1,19 @@
 import { useMemo } from "react";
-import { DadosComerciais, Filters, Registro } from "@/types/comercial";
 import { Target } from "lucide-react";
 import { BarChart } from "@/components/bi/charts";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { ClienteCriticoCard } from "@/components/dashboard/ClienteCriticoCard";
-
-interface Props {
-  data: DadosComerciais;
-  filters: Filters;
-}
-
-interface ClienteCritico {
-  nome: string;
-  cidade: string;
-  vendedor: string;
-  diasSemContato: number;
-  pipeline: number;
-  totalAcoes: number;
-  visitas: number;
-  ultimaData: string;
-  ultimaObs: string;
-  ultimoTipoAcao: string;
-  historico: Registro[];
-}
+import type { ClienteCriticoView } from "@/pages/crm/CrmCriticos";
 
 interface SugestaoAcao {
   acao: string;
   argumentacao: string;
   prioridade: "CRÍTICA" | "ALTA" | "MÉDIA";
   borderColor: string;
+}
+
+interface Props {
+  criticos: ClienteCriticoView[];
 }
 
 const CARD_BASE =
@@ -41,7 +26,7 @@ const MONO: React.CSSProperties = {
 const formatCurrency = (v: number) =>
   v >= 1e6 ? `R$ ${(v / 1e6).toFixed(1)}M` : v >= 1e3 ? `R$ ${(v / 1e3).toFixed(0)}K` : `R$ ${v.toFixed(0)}`;
 
-const getSugestaoAcao = (c: ClienteCritico): SugestaoAcao => {
+const getSugestaoAcao = (c: ClienteCriticoView): SugestaoAcao => {
   if (c.diasSemContato > 180 && c.pipeline > 500000) {
     return {
       acao: "Visita presencial urgente + proposta atualizada",
@@ -80,46 +65,7 @@ const getSugestaoAcao = (c: ClienteCritico): SugestaoAcao => {
 
 const FAIXA_COLORS = ["var(--voux-accent)", "var(--voux-warning)", "var(--voux-danger)", "#dc2626"];
 
-export const DashboardClientesCriticos = ({ data, filters }: Props) => {
-  const criticos = useMemo(() => {
-    const clienteMap = new Map<string, ClienteCritico>();
-
-    for (const v of data.vendedores) {
-      for (const c of v.topClientes) {
-        if (c.diasSemContato < 90) continue;
-        if (filters.cidade && c.cidade !== filters.cidade) continue;
-        const key = `${c.nome}|${v.nome}`;
-        if (!clienteMap.has(key)) {
-          const historico = data.registrosRecentes.filter(
-            (r) => r.cliente === c.nome && r.vendedor === v.nome
-          );
-          const ultimoReg = historico[0];
-          clienteMap.set(key, {
-            nome: c.nome,
-            cidade: c.cidade,
-            vendedor: v.nome,
-            diasSemContato: c.diasSemContato,
-            pipeline: c.negocioValor,
-            totalAcoes: c.acoes,
-            visitas: c.visitas,
-            ultimaData: ultimoReg?.dtConclusao || "—",
-            ultimaObs: ultimoReg?.obs || "Sem observações registradas",
-            ultimoTipoAcao: ultimoReg?.tipoAcao || "—",
-            historico,
-          });
-        }
-      }
-    }
-
-    let result = Array.from(clienteMap.values());
-
-    if (filters.tipoAcao) {
-      result = result.filter((c) => c.historico.some((r) => r.tipoAcao === filters.tipoAcao));
-    }
-
-    return result.sort((a, b) => b.pipeline - a.pipeline || b.diasSemContato - a.diasSemContato);
-  }, [data, filters]);
-
+export const DashboardClientesCriticos = ({ criticos }: Props) => {
   const totalPipelineEmRisco = criticos.reduce((sum, c) => sum + c.pipeline, 0);
 
   const porVendedor = useMemo(() => {
@@ -152,99 +98,17 @@ export const DashboardClientesCriticos = ({ data, filters }: Props) => {
     <div className="p-6 space-y-6">
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div
-          className={CARD_BASE}
-          style={{
-            background: "linear-gradient(to bottom, var(--voux-card-from), var(--voux-card-to))",
-            borderColor: "var(--voux-card-border)",
-            boxShadow: "var(--voux-card-shadow)",
-            borderLeft: "3px solid var(--voux-danger)",
-          }}
-        >
-          <p className="text-[10px] tracking-[0.22em] uppercase mb-3" style={{ ...MONO, color: "var(--voux-text-faint)" }}>
-            CLIENTES CRÍTICOS
-          </p>
-          <p className="text-[28px] font-bold leading-none tracking-[-0.02em]" style={{ color: "var(--voux-danger)" }}>
-            {criticos.length}
-          </p>
-          <p className="text-[11px] mt-2" style={{ ...MONO, color: "var(--voux-text-faint)" }}>
-            sem contato &gt;90 dias
-          </p>
-        </div>
-
-        <div
-          className={CARD_BASE}
-          style={{
-            background: "linear-gradient(to bottom, var(--voux-card-from), var(--voux-card-to))",
-            borderColor: "var(--voux-card-border)",
-            boxShadow: "var(--voux-card-shadow)",
-            borderLeft: "3px solid var(--voux-warning)",
-          }}
-        >
-          <p className="text-[10px] tracking-[0.22em] uppercase mb-3" style={{ ...MONO, color: "var(--voux-text-faint)" }}>
-            PIPELINE EM RISCO
-          </p>
-          <p className="text-[28px] font-bold leading-none tracking-[-0.02em]" style={{ color: "var(--voux-warning)" }}>
-            {formatCurrency(totalPipelineEmRisco)}
-          </p>
-          <p className="text-[11px] mt-2" style={{ ...MONO, color: "var(--voux-text-faint)" }}>
-            valor total em aberto
-          </p>
-        </div>
-
-        <div
-          className={CARD_BASE}
-          style={{
-            background: "linear-gradient(to bottom, var(--voux-card-from), var(--voux-card-to))",
-            borderColor: "var(--voux-card-border)",
-            boxShadow: "var(--voux-card-shadow)",
-            borderLeft: "3px solid var(--voux-accent)",
-          }}
-        >
-          <p className="text-[10px] tracking-[0.22em] uppercase mb-3" style={{ ...MONO, color: "var(--voux-text-faint)" }}>
-            MÉDIA DIAS S/ CONTATO
-          </p>
-          <p className="text-[28px] font-bold leading-none tracking-[-0.02em]" style={{ color: "var(--voux-text-primary)" }}>
-            {mediaDias}
-          </p>
-          <p className="text-[11px] mt-2" style={{ ...MONO, color: "var(--voux-text-faint)" }}>
-            dias em média
-          </p>
-        </div>
-
-        <div
-          className={CARD_BASE}
-          style={{
-            background: "linear-gradient(to bottom, var(--voux-card-from), var(--voux-card-to))",
-            borderColor: "var(--voux-card-border)",
-            boxShadow: "var(--voux-card-shadow)",
-            borderLeft: "3px solid var(--voux-danger)",
-          }}
-        >
-          <p className="text-[10px] tracking-[0.22em] uppercase mb-3" style={{ ...MONO, color: "var(--voux-text-faint)" }}>
-            ACIMA DE 180 DIAS
-          </p>
-          <p className="text-[28px] font-bold leading-none tracking-[-0.02em]" style={{ color: "var(--voux-danger)" }}>
-            {acima180}
-          </p>
-          <p className="text-[11px] mt-2" style={{ ...MONO, color: "var(--voux-text-faint)" }}>
-            clientes críticos
-          </p>
-        </div>
+        <KpiCard label="CLIENTES CRÍTICOS" value={criticos.length} sub="sem contato >90 dias" accent="var(--voux-danger)" />
+        <KpiCard label="PIPELINE EM RISCO" value={formatCurrency(totalPipelineEmRisco)} sub="valor total em aberto" accent="var(--voux-warning)" />
+        <KpiCard label="MÉDIA DIAS S/ CONTATO" value={mediaDias} sub="dias em média" accent="var(--voux-accent)" textColor="var(--voux-text-primary)" />
+        <KpiCard label="ACIMA DE 180 DIAS" value={acima180} sub="clientes críticos" accent="var(--voux-danger)" />
       </div>
 
       {/* Charts */}
       <div className="grid lg:grid-cols-2 gap-6">
         <ChartCard title="Distribuição por Faixa de Inatividade" label="INATIVIDADE" height={220}>
-          <BarChart
-            data={faixas.map((f) => ({ name: f.name, value: f.value }))}
-            layout="vertical"
-            keys={["value"]}
-            height={220}
-            itemColors={FAIXA_COLORS}
-          />
+          <BarChart data={faixas} layout="vertical" keys={["value"]} height={220} itemColors={FAIXA_COLORS} />
         </ChartCard>
-
         <ChartCard title="Clientes Críticos por Consultor" label="POR CONSULTOR" height={220}>
           <BarChart
             data={porVendedor.map((v) => ({ name: v.vendedor, count: v.count }))}
@@ -266,7 +130,7 @@ export const DashboardClientesCriticos = ({ data, filters }: Props) => {
         {criticos.slice(0, 50).map((c) => (
           <ClienteCriticoCard
             key={`${c.nome}|${c.vendedor}`}
-            c={c}
+            c={{ ...c, historico: [] }}
             sugestao={getSugestaoAcao(c)}
           />
         ))}
@@ -280,3 +144,34 @@ export const DashboardClientesCriticos = ({ data, filters }: Props) => {
     </div>
   );
 };
+
+/** Reusable KPI card */
+function KpiCard({ label, value, sub, accent, textColor }: {
+  label: string;
+  value: string | number;
+  sub: string;
+  accent: string;
+  textColor?: string;
+}) {
+  return (
+    <div
+      className={CARD_BASE}
+      style={{
+        background: "linear-gradient(to bottom, var(--voux-card-from), var(--voux-card-to))",
+        borderColor: "var(--voux-card-border)",
+        boxShadow: "var(--voux-card-shadow)",
+        borderLeft: `3px solid ${accent}`,
+      }}
+    >
+      <p className="text-[10px] tracking-[0.22em] uppercase mb-3" style={{ ...MONO, color: "var(--voux-text-faint)" }}>
+        {label}
+      </p>
+      <p className="text-[28px] font-bold leading-none tracking-[-0.02em]" style={{ color: textColor ?? accent }}>
+        {value}
+      </p>
+      <p className="text-[11px] mt-2" style={{ ...MONO, color: "var(--voux-text-faint)" }}>
+        {sub}
+      </p>
+    </div>
+  );
+}

@@ -1,26 +1,26 @@
 import { useMemo } from "react";
-import { DadosComerciais } from "@/types/comercial";
+import type { RegiaoSummary, Registro, Filters } from "@/types/comercial";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart } from "@/components/bi/charts";
 import { Badge } from "@/components/ui/badge";
-import { Filters } from "@/types/comercial";
 import { filterRegistros, hasActiveFilters } from "@/lib/filterUtils";
 
-interface Props {
-  data: DadosComerciais;
+interface DashboardRegioesProps {
+  regioes: RegiaoSummary[];
+  registros: Registro[];
   filters: Filters;
 }
 
 const formatCurrency = (v: number) =>
   v >= 1e6 ? `R$ ${(v / 1e6).toFixed(1)}M` : `R$ ${(v / 1e3).toFixed(0)}K`;
 
-export const DashboardRegioes = ({ data, filters }: Props) => {
+export const DashboardRegioes = ({ regioes, registros, filters }: DashboardRegioesProps) => {
   const isFiltered = hasActiveFilters(filters);
 
-  const regioes = useMemo(() => {
-    if (!isFiltered) return [...data.regioes];
+  const regioesData = useMemo(() => {
+    if (!isFiltered) return [...regioes];
 
-    const filtered = filterRegistros(data.registrosRecentes, filters);
+    const filtered = filterRegistros(registros, filters);
     const map = new Map<string, { totalAcoes: number; clientes: Set<string>; pipeline: number; visitas: number }>();
     for (const r of filtered) {
       if (!r.cidade) continue;
@@ -34,7 +34,7 @@ export const DashboardRegioes = ({ data, filters }: Props) => {
     return Array.from(map.entries())
       .map(([cidade, s]) => ({ cidade, totalAcoes: s.totalAcoes, clientes: s.clientes.size, pipeline: s.pipeline, visitas: s.visitas }))
       .sort((a, b) => b.pipeline - a.pipeline);
-  }, [data, filters, isFiltered]);
+  }, [regioes, registros, filters, isFiltered]);
 
   return (
     <div className="p-6 space-y-6">
@@ -42,7 +42,7 @@ export const DashboardRegioes = ({ data, filters }: Props) => {
         <h2 className="text-2xl font-bold text-foreground">Análise Regional</h2>
         <p className="text-sm text-muted-foreground">
           Performance por região e oportunidades
-          {isFiltered && <span className="ml-2 text-primary font-medium">({regioes.length} regiões filtradas)</span>}
+          {isFiltered && <span className="ml-2 text-primary font-medium">({regioesData.length} regiões filtradas)</span>}
         </p>
       </div>
 
@@ -52,7 +52,7 @@ export const DashboardRegioes = ({ data, filters }: Props) => {
         </CardHeader>
         <CardContent>
           <BarChart
-            data={regioes.slice(0, 20).map((r) => ({ name: r.cidade, pipeline: r.pipeline }))}
+            data={regioesData.slice(0, 20).map((r) => ({ name: r.cidade, pipeline: r.pipeline }))}
             layout="horizontal"
             keys={["pipeline"]}
             height={400}
@@ -62,7 +62,7 @@ export const DashboardRegioes = ({ data, filters }: Props) => {
       </Card>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {regioes.slice(0, 15).map((r, i) => (
+        {regioesData.slice(0, 15).map((r, i) => (
           <Card key={r.cidade} className="border-0 shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">

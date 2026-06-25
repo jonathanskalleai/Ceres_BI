@@ -1,10 +1,16 @@
 import { Users, UserCheck, UserPlus, Globe, Briefcase, Building2 } from "lucide-react";
 import { type DateRange } from "react-day-picker";
-import { useAdminData } from "@/hooks/bi/useAdminData";
+import { useAdminBIRpc } from "@/hooks/bi/useAdminBIRpc";
 import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { HorizontalBarChart, PieChartWithLabels, BrazilHeatmap } from "@/components/bi/charts";
 import { CHART_COLORS, POSITIVE_COLOR } from "@/lib/chartTheme";
+import type { RpcAdminBI } from "@/types/biRpc";
+
+const EMPTY: RpcAdminBI = {
+  kpis: { totalClientes: 0, prospects: 0, ativos: 0, ufsCobertas: 0, consultoresCarteira: 0, empresas: 0 },
+  prospectVsAtivo: [], porTipoCliente: [], porUF: [], porConsultor: [],
+};
 
 interface Props {
   active: boolean;
@@ -12,7 +18,8 @@ interface Props {
 }
 
 export default function AdminSection({ active, dateRange }: Props) {
-  const { agg, isLoading } = useAdminData(active);
+  const { data, isLoading } = useAdminBIRpc({ enabled: active });
+  const agg = data ?? EMPTY;
   const { kpis } = agg;
 
   return (

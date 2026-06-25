@@ -72,3 +72,13 @@ export function getFunilOptions(categoria: CategoriaFilter): { value: string; la
     ...funis.map((f) => ({ value: f, label: f })),
   ];
 }
+
+/**
+ * Resolve a lista de funis efetiva a partir de categoria + funil individual.
+ * Retorna undefined quando nenhum filtro se aplica (= todos os funis).
+ */
+export function resolveFunis(categoria?: CategoriaFilter, funil?: string): string[] | undefined {
+  if (funil && funil !== FUNIL_ALL) return [funil];
+  if (categoria && categoria !== CATEGORIA_ALL) return getFunisByCategoria(categoria);
+  return undefined;
+}

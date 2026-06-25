@@ -1,4 +1,5 @@
 import { useState, Suspense, lazy } from 'react';
+import { startOfMonth, endOfMonth } from 'date-fns';
 import { type DateRange } from 'react-day-picker';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -18,7 +19,10 @@ function SectionFallback() {
 }
 
 export default function BiPedidos() {
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(() => ({
+    from: startOfMonth(new Date()),
+    to: endOfMonth(new Date()),
+  }));
 
   return (
     <div className="p-8 space-y-5">

@@ -1,15 +1,15 @@
 import { useMemo, useState } from "react";
-import { DadosComerciais } from "@/types/comercial";
+import type { Vendedor, Registro, Filters } from "@/types/comercial";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Trophy, Sparkles, TrendingUp, Users, DollarSign } from "lucide-react";
-import { Filters } from "@/types/comercial";
 import { filterRegistros, hasActiveFilters } from "@/lib/filterUtils";
 import { ConsultorReportSheet } from "./ConsultorReportSheet";
 import { RankingClientesNovos } from "./RankingClientesNovos";
 import { cn } from "@/lib/utils";
 
-interface Props {
-  data: DadosComerciais;
+interface DashboardConsultoresProps {
+  vendedores: Vendedor[];
+  registros: Registro[];
   filters: Filters;
   onSelectConsultor: (nome: string) => void;
 }
@@ -40,16 +40,16 @@ function CrmBadge({ q }: { q: number }) {
   );
 }
 
-export const DashboardConsultores = ({ data, filters, onSelectConsultor }: Props) => {
+export const DashboardConsultores = ({ vendedores, registros, filters, onSelectConsultor }: DashboardConsultoresProps) => {
   const isFiltered = hasActiveFilters(filters);
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  const vendedores = useMemo(() => {
+  const vendedoresRanked = useMemo(() => {
     if (!isFiltered) {
-      return [...data.vendedores].sort((a, b) => b.pipeline - a.pipeline);
+      return [...vendedores].sort((a, b) => b.pipeline - a.pipeline);
     }
 
-    const filtered = filterRegistros(data.registrosRecentes, filters);
+    const filtered = filterRegistros(registros, filters);
     const map = new Map<string, { acoes: number; pipeline: number; clientes: Set<string>; visitas: number }>();
     for (const r of filtered) {
       if (!map.has(r.vendedor)) map.set(r.vendedor, { acoes: 0, pipeline: 0, clientes: new Set(), visitas: 0 });
@@ -60,28 +60,28 @@ export const DashboardConsultores = ({ data, filters, onSelectConsultor }: Props
       if (r.tipoContato?.toLowerCase().includes("visita")) s.visitas++;
     }
 
-    return data.vendedores
+    return vendedores
       .filter((v) => map.has(v.nome))
       .map((v) => {
         const s = map.get(v.nome)!;
         return { ...v, totalAcoes: s.acoes, pipeline: s.pipeline, clientes: s.clientes.size, visitas: s.visitas };
       })
       .sort((a, b) => b.pipeline - a.pipeline);
-  }, [data, filters, isFiltered]);
+  }, [vendedores, registros, filters, isFiltered]);
 
   const maxVals = useMemo(() => ({
-    acoes: Math.max(...vendedores.map((v) => v.totalAcoes), 1),
-    conv: Math.max(...vendedores.map((v) => v.conversao), 1),
-    pipe: Math.max(...vendedores.map((v) => v.pipeline), 1),
-    cli: Math.max(...vendedores.map((v) => v.clientes), 1),
-    vis: Math.max(...vendedores.map((v) => v.visitas), 1),
-  }), [vendedores]);
+    acoes: Math.max(...vendedoresRanked.map((v) => v.totalAcoes), 1),
+    conv: Math.max(...vendedoresRanked.map((v) => v.conversao), 1),
+    pipe: Math.max(...vendedoresRanked.map((v) => v.pipeline), 1),
+    cli: Math.max(...vendedoresRanked.map((v) => v.clientes), 1),
+    vis: Math.max(...vendedoresRanked.map((v) => v.visitas), 1),
+  }), [vendedoresRanked]);
 
-  const scored = useMemo(() => vendedores.map((v) => ({
+  const scored = useMemo(() => vendedoresRanked.map((v) => ({
     ...v,
     score: (v.totalAcoes / maxVals.acoes * 25 + v.conversao / maxVals.conv * 25 +
       v.pipeline / maxVals.pipe * 25 + v.clientes / maxVals.cli * 15 + v.visitas / maxVals.vis * 10),
-  })).sort((a, b) => b.score - a.score), [vendedores, maxVals]);
+  })).sort((a, b) => b.score - a.score), [vendedoresRanked, maxVals]);
 
   const top5 = scored.slice(0, 5);
   const rankLabel = ["01", "02", "03", "04", "05"];
@@ -93,7 +93,7 @@ export const DashboardConsultores = ({ data, filters, onSelectConsultor }: Props
         <div>
           {isFiltered && (
             <p className="text-xs font-mono" style={{ color: "var(--voux-text-faint)" }}>
-              {vendedores.length} consultores filtrados
+              {vendedoresRanked.length} consultores filtrados
             </p>
           )}
         </div>
@@ -110,7 +110,7 @@ export const DashboardConsultores = ({ data, filters, onSelectConsultor }: Props
         </Button>
       </div>
 
-      <ConsultorReportSheet open={sheetOpen} onOpenChange={setSheetOpen} data={data} />
+      <ConsultorReportSheet open={sheetOpen} onOpenChange={setSheetOpen} vendedores={vendedores} />
 
       {/* Top 5 ranking */}
       {top5.length > 0 && (
@@ -161,8 +161,7 @@ export const DashboardConsultores = ({ data, filters, onSelectConsultor }: Props
 
       {/* Ranking de Abertura de Clientes */}
       <RankingClientesNovos
-        data={data}
-        registros={isFiltered ? filterRegistros(data.registrosRecentes, filters) : data.registrosRecentes}
+        registros={isFiltered ? filterRegistros(registros, filters) : registros}
         filters={filters}
       />
 

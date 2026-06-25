@@ -1,10 +1,10 @@
 import { Clock, ClipboardList, Target } from "lucide-react";
 import { KPICard } from "@/components/bi/KPICard";
 import { fmtDias, fmtNum, fmtPct, isEmpty } from "@/lib/formatters";
-import type { useCrossKPIs } from "@/hooks/bi/useCrossKPIs";
+import type { CrossKPIs } from "@/hooks/bi/useCrossKPIsRpc";
 
 interface Props {
-  crossKpis: ReturnType<typeof useCrossKPIs>["kpis"];
+  crossKpis: CrossKPIs;
   loading: boolean;
 }
 

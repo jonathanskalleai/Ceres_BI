@@ -1,9 +1,9 @@
 import { useNegociosFilter } from "@/contexts/NegociosFilterContext";
-import { usePainelKPIs } from "@/hooks/bi/usePainelKPIs";
-import { usePedidosKPIs } from "@/hooks/bi/usePedidosKPIs";
-import { useClientesKPIs } from "@/hooks/bi/useClientesKPIs";
-import { useServicosKPIs } from "@/hooks/bi/useServicosKPIs";
-import { useCrossKPIs } from "@/hooks/bi/useCrossKPIs";
+import { usePainelKPIsRpc } from "@/hooks/bi/usePainelKPIsRpc";
+import { usePedidosKPIsRpc } from "@/hooks/bi/usePedidosKPIsRpc";
+import { useClientesKPIsRpc } from "@/hooks/bi/useClientesKPIsRpc";
+import { useServicosKPIsRpc } from "@/hooks/bi/useServicosKPIsRpc";
+import { useCrossKPIsRpc } from "@/hooks/bi/useCrossKPIsRpc";
 import { PainelNegociosSection } from "@/components/bi/painel/PainelNegociosSection";
 import { PainelValoresSection } from "@/components/bi/painel/PainelValoresSection";
 import { PainelCrossSection } from "@/components/bi/painel/PainelCrossSection";
@@ -14,11 +14,11 @@ import { PainelAcoesSection } from "@/components/bi/painel/PainelAcoesSection";
 
 export default function BiPainel() {
   const { dateRange, categoria, funil, vendedor, cidade } = useNegociosFilter();
-  const { kpis, isLoading } = usePainelKPIs(dateRange, categoria, funil, vendedor || undefined, cidade || undefined);
-  const { kpis: pedKpis, isLoading: pedLoading } = usePedidosKPIs(dateRange, categoria, funil);
-  const { kpis: cliKpis, isLoading: cliLoading } = useClientesKPIs(dateRange);
-  const { kpis: svcKpis, isLoading: svcLoading } = useServicosKPIs(dateRange);
-  const { kpis: crossKpis, isLoading: crossLoading } = useCrossKPIs(dateRange, categoria, funil);
+  const { kpis, isLoading } = usePainelKPIsRpc(dateRange, categoria, funil, vendedor || undefined, cidade || undefined);
+  const { kpis: pedKpis, isLoading: pedLoading } = usePedidosKPIsRpc(dateRange, categoria, funil);
+  const { kpis: cliKpis, isLoading: cliLoading } = useClientesKPIsRpc(dateRange);
+  const { kpis: svcKpis, isLoading: svcLoading } = useServicosKPIsRpc(dateRange);
+  const { kpis: crossKpis, isLoading: crossLoading } = useCrossKPIsRpc(dateRange, categoria, funil);
 
   const anyLoading = isLoading || pedLoading || cliLoading || svcLoading || crossLoading;
 

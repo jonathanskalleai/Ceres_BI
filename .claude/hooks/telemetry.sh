@@ -28,33 +28,14 @@ TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 # jq is optional — if missing, log minimal event
 has_jq() { command -v jq >/dev/null 2>&1; }
 
-# ---------- TIER (cached per session) ----------
+# ---------- TIER ----------
+# Sem tiers — todos Opus (scribe Haiku). Mantido como campo fixo por compat.
 get_tier() {
-  local tier_file="$PROJECT_DIR/.aivoux/.session-tier"
-  local config_file="$PROJECT_DIR/.aivoux/config.yaml"
-  local tier=""
-
-  # 1. Session override
-  if [ -f "$tier_file" ]; then
-    tier=$(grep -E "^tier:" "$tier_file" 2>/dev/null | head -1 | sed -E 's/^tier:[[:space:]]*//;s/#.*$//;s/[[:space:]]+$//')
-  fi
-
-  # 2. Config
-  if [ -z "$tier" ] && [ -f "$config_file" ]; then
-    tier=$(grep -E "^model_tier:" "$config_file" 2>/dev/null | head -1 | sed -E 's/^model_tier:[[:space:]]*//;s/#.*$//;s/[[:space:]]+$//')
-  fi
-
-  # 3. Default
-  [ -z "$tier" ] && tier="premium"
-
-  echo "$tier"
+  echo "premium"
 }
 
 # ---------- SUBAGENT_TYPE → AGENT + MODEL ----------
-# aivoux-architect → @architect / opus
-# aivoux-architect-economy → @architect / sonnet
-# aivoux-dev → @dev / sonnet
-# aivoux-scribe → @scribe / haiku
+# Todos os agentes rodam Opus, exceto scribe (Haiku). Sem variantes economy.
 derive_agent_and_model() {
   local st="$1"
   local agent="" model=""
@@ -64,15 +45,12 @@ derive_agent_and_model() {
     aivoux-pm)                  agent="@pm";            model="opus" ;;
     aivoux-architect)           agent="@architect";     model="opus" ;;
     aivoux-ux)                  agent="@ux";            model="opus" ;;
-    aivoux-analyst-economy)     agent="@analyst";       model="sonnet" ;;
-    aivoux-pm-economy)          agent="@pm";            model="sonnet" ;;
-    aivoux-architect-economy)   agent="@architect";     model="sonnet" ;;
-    aivoux-ux-economy)          agent="@ux";            model="sonnet" ;;
-    aivoux-dev)                 agent="@dev";           model="sonnet" ;;
-    aivoux-qa)                  agent="@qa";            model="sonnet" ;;
-    aivoux-devops)              agent="@devops";        model="sonnet" ;;
-    aivoux-data-engineer)       agent="@data-engineer"; model="sonnet" ;;
-    aivoux-squad-creator)       agent="@squad-creator"; model="sonnet" ;;
+    aivoux-dev)                 agent="@dev";           model="opus" ;;
+    aivoux-reviewer)            agent="@reviewer";      model="opus" ;;
+    aivoux-qa)                  agent="@qa";            model="opus" ;;
+    aivoux-devops)              agent="@devops";        model="opus" ;;
+    aivoux-data-engineer)       agent="@data-engineer"; model="opus" ;;
+    aivoux-squad-creator)       agent="@squad-creator"; model="opus" ;;
     aivoux-scribe)              agent="@scribe";        model="haiku" ;;
   esac
 

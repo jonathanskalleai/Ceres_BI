@@ -6,28 +6,28 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Users, User, Sparkles, Loader2, Search, CheckSquare } from "lucide-react";
-import { DadosComerciais } from "@/types/comercial";
+import type { Vendedor } from "@/types/comercial";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { generateConsultoresReport } from "@/lib/generateConsultoresReport";
 
-interface Props {
+interface ConsultorReportSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  data: DadosComerciais;
+  vendedores: Vendedor[];
 }
 
 const formatCurrency = (v: number) =>
   v >= 1e6 ? `R$ ${(v / 1e6).toFixed(1)}M` : `R$ ${(v / 1e3).toFixed(0)}K`;
 
-export const ConsultorReportSheet = ({ open, onOpenChange, data }: Props) => {
+export const ConsultorReportSheet = ({ open, onOpenChange, vendedores }: ConsultorReportSheetProps) => {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
   const [generating, setGenerating] = useState(false);
 
   const allConsultores = useMemo(
-    () => [...data.vendedores].sort((a, b) => a.nome.localeCompare(b.nome)),
-    [data.vendedores]
+    () => [...vendedores].sort((a, b) => a.nome.localeCompare(b.nome)),
+    [vendedores]
   );
 
   const filtered = useMemo(
@@ -89,9 +89,10 @@ export const ConsultorReportSheet = ({ open, onOpenChange, data }: Props) => {
       }
       toast({ title: "Relatório(s) gerado(s)!", description: "O download do PDF foi iniciado." });
       onOpenChange(false);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Report error:", err);
-      toast({ title: "Erro ao gerar relatório", description: err.message || "Tente novamente em instantes.", variant: "destructive" });
+      const message = err instanceof Error ? err.message : "Tente novamente em instantes.";
+      toast({ title: "Erro ao gerar relatório", description: message, variant: "destructive" });
     } finally {
       setGenerating(false);
     }

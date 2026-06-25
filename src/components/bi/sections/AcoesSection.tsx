@@ -1,12 +1,20 @@
 import { useMemo } from "react";
 import { ClipboardList, MapPin, Users, Eye, UserCheck, Tag } from "lucide-react";
 import { type DateRange } from "react-day-picker";
-import { useAcoesBI } from "@/hooks/bi/useAcoesBI";
+import { useAcoesBIRpc } from "@/hooks/bi/useAcoesBIRpc";
 import { useNegociosFilter } from "@/contexts/NegociosFilterContext";
 import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { HorizontalBarChart, VerticalBarChart, PieChartWithLabels } from "@/components/bi/charts";
 import { CHART_COLORS } from "@/lib/chartTheme";
+import { toISODate } from "@/lib/dateUtils";
+import type { RpcAcoesBI } from "@/types/biRpc";
+
+const EMPTY: RpcAcoesBI = {
+  kpis: { totalAcoes: 0, cidades: 0, consultores: 0, visitas: 0, clientes: 0, tiposAcaoDistintos: 0 },
+  porVendedor: [], porCidade: [], porMes: [], porDiaSemana: [],
+  porTipoAcao: [], porTipoContato: [], listaAnos: [],
+};
 
 interface Props {
   active: boolean;
@@ -16,23 +24,20 @@ interface Props {
 }
 
 export default function AcoesSection({ active, dateRange, categoria, funil }: Props) {
-  // Filtros vêm exclusivamente do topbar global (NegociosFilterContext) — sem barra duplicada.
   const { vendedor, cidade } = useNegociosFilter();
 
-  const filters = useMemo(
-    () => ({
-      ano: "",
-      mes: "",
-      vendedor: vendedor || "",
-      tipoAcao: "",
-      cidade: cidade || "",
-      dateRange,
-    }),
-    [vendedor, cidade, dateRange],
-  );
+  const from = useMemo(() => toISODate(dateRange?.from), [dateRange?.from]);
+  const to = useMemo(() => toISODate(dateRange?.to ?? dateRange?.from), [dateRange?.to, dateRange?.from]);
 
-  const { kpis, porVendedor, porCidade, porMes, porDiaSemana, porTipoAcao, porTipoContato, isLoading } =
-    useAcoesBI(active, filters, categoria, funil);
+  const { data, isLoading } = useAcoesBIRpc({
+    from,
+    to,
+    vendedor: vendedor || undefined,
+    cidade: cidade || undefined,
+    enabled: active,
+  });
+
+  const { kpis, porVendedor, porCidade, porMes, porDiaSemana, porTipoAcao, porTipoContato } = data ?? EMPTY;
 
   return (
     <div className="space-y-6 pt-2">

@@ -56,14 +56,16 @@ o @qa valida no review, e o @architect considera no design.
 **Principio:** Componentes grandes sao dificeis de testar, entender e reusar.
 
 **Aplicar:**
-- **Gate obrigatorio: <500 linhas por componente** (incluindo imports)
-- **Meta ideal: <250 linhas** — para codigo novo, buscar esse limite
-- Se ultrapassar 500, quebrar em sub-componentes antes de entregar
+- **Gate obrigatorio (HARD): <300 linhas por arquivo/componente** (incluindo imports).
+  Ultrapassar = FAIL no `@reviewer`/`@qa` e aviso do hook `quality-guard`. Sem excecoes silenciosas.
+- **Meta ideal: <200 linhas** — para codigo novo, buscar esse limite
+- Se aproximar de 300, quebrar em sub-componentes/hooks/utils ANTES de entregar — nao depois
 - Cada componente tem uma responsabilidade clara (Single Responsibility)
 - Extrair logica complexa para custom hooks
 - Componentes "container" (logica) separados de "presentational" (UI)
 
 **Anti-padrao:** `Dashboard.tsx` com 800 linhas fazendo fetch, transforms, e renderizacao.
+**Anti-padrao:** entregar arquivo de 290 linhas "porque ainda passa" em vez de quebrar cedo.
 
 ---
 
@@ -212,7 +214,7 @@ Antes de marcar tarefa como completa, validar:
 - [ ] DRY: nao ha duplicacao com codigo existente
 - [ ] Sem dead code (imports/funcoes nao usadas removidos)
 - [ ] TypeScript estrito (sem `any` injustificado)
-- [ ] Componentes <500 linhas (gate); meta <250 para codigo novo
+- [ ] Componentes <300 linhas (HARD gate, FAIL acima); meta <200 para codigo novo
 - [ ] Estado bem gerenciado (sem prop drilling excessivo)
 - [ ] Hooks corretos (deps completas, sem violacao de regras)
 - [ ] Logica separada de presentacao
