@@ -1,10 +1,10 @@
 import { Users, Wrench, Target } from "lucide-react";
 import { KPICard } from "@/components/bi/KPICard";
 import { fmtNum, fmtPct, isEmpty } from "@/lib/formatters";
-import type { useClientesKPIs } from "@/hooks/bi/useClientesKPIs";
+import type { ClientesKPIs } from "@/types/clientesKpis";
 
 interface Props {
-  cliKpis: ReturnType<typeof useClientesKPIs>["kpis"];
+  cliKpis: ClientesKPIs;
   loading: boolean;
 }
 

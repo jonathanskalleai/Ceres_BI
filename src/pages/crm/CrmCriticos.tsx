@@ -10,7 +10,7 @@ import type { RpcRankingVendedorV2 } from "@/types/comercialRpc";
 
 /**
  * Builds topClientes per vendedor from flat registros.
- * Replicates the logic from aggregateComercial.ts (diasSemContato = days since last contact).
+ * Computes diasSemContato = days since last contact per client.
  */
 function buildTopClientes(
   registros: { cliente: string; cidade: string; vendedor: string; tipoContato: string; negocioValor: number; dtConclusao: string }[]

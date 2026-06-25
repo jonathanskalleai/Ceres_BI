@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { useComercialData } from "@/hooks/useComercialData";
-import { useNegociosData } from "@/hooks/useNegociosData";
+import { usePerformanceData } from "@/hooks/usePerformanceData";
 import { usePerformanceMetrics } from "@/hooks/usePerformanceMetrics";
-import { Filters } from "@/types/comercial";
+import type { Filters } from "@/types/comercial";
 import { fmtBRL, fmtPct } from "@/lib/formatters";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -16,19 +15,29 @@ import { BigCard, MetricCard, SectionTitle } from "@/components/performance/Perf
 import { StrategicMessage } from "@/components/performance/StrategicMessage";
 import { ActionPlan } from "@/components/performance/ActionPlan";
 
-const emptyFilters: Filters = { cidade: "", tipoAcao: "", categoria: "", funil: "", dateRange: undefined };
+const DEFAULT_FROM = "2026-01-01";
+const DEFAULT_TO = "2026-12-31";
+const MESES_ANO = 12;
+
+const emptyFilters: Filters = { cidade: "", tipoAcao: "", categoria: "", funil: "", dateRange: { from: DEFAULT_FROM, to: DEFAULT_TO } };
 
 const PerformanceComercial = () => {
   const navigate = useNavigate();
-  const { data, isLoading: loadingCRM, error: errorCRM } = useComercialData();
   const [filters, setFilters] = useState<Filters>(emptyFilters);
   const [activeTab, setActiveTab] = useState<"dashboard" | "apresentacao">("dashboard");
-  const { summary: negociosSummary, isLoading: loadingNeg, error: errorNeg } = useNegociosData(filters);
   const { metaAnual: META_ANUAL } = useMeta(2026);
-  const metrics = usePerformanceMetrics(negociosSummary, data, filters, META_ANUAL);
 
-  const isLoading = loadingCRM || loadingNeg;
-  const error = errorCRM || errorNeg;
+  const from = filters.dateRange?.from || DEFAULT_FROM;
+  const to = filters.dateRange?.to || DEFAULT_TO;
+
+  const { negociosSummaryInput, crmData, negociosSummaryFull, isLoading, loadingRaw, error } = usePerformanceData({
+    from,
+    to,
+    cidade: filters.cidade || undefined,
+    apresentacaoActive: activeTab === "apresentacao",
+  });
+
+  const metrics = usePerformanceMetrics(negociosSummaryInput, crmData, filters, META_ANUAL);
 
   if (error) {
     return (
@@ -54,7 +63,6 @@ const PerformanceComercial = () => {
   }
 
   const riskColor = metrics.pctAtingido >= 70 ? "hsl(152,69%,40%)" : metrics.pctAtingido >= 40 ? "hsl(38,92%,50%)" : "hsl(0,84%,60%)";
-  const MESES_ANO = 12;
 
   return (
     <div className="min-h-screen bg-[hsl(222,47%,6%)] text-[hsl(210,40%,96%)] flex flex-col">
@@ -87,7 +95,7 @@ const PerformanceComercial = () => {
               </SelectTrigger>
               <SelectContent className="bg-[hsl(222,47%,9%)] border-[hsl(217,33%,17%)]">
                 <SelectItem value="all">Todas Regioes</SelectItem>
-                {(data?.listaCidades || []).sort().map(c => (
+                {(crmData?.listaCidades || []).sort().map(c => (
                   <SelectItem key={c} value={c}>{c}</SelectItem>
                 ))}
               </SelectContent>
@@ -97,9 +105,13 @@ const PerformanceComercial = () => {
       </div>
 
       {/* Content */}
-      {activeTab === "apresentacao" && negociosSummary && data ? (
+      {activeTab === "apresentacao" && negociosSummaryFull && crmData ? (
         <div className="flex-1">
-          <Apresentacao2026 crmData={data} negData={negociosSummary} />
+          <Apresentacao2026 crmData={crmData} negData={negociosSummaryFull} />
+        </div>
+      ) : activeTab === "apresentacao" && loadingRaw ? (
+        <div className="flex-1 flex items-center justify-center">
+          <Skeleton className="h-64 w-96 bg-[hsl(217,33%,17%)]" />
         </div>
       ) : (
       <div className="p-6 space-y-8 max-w-[1600px] mx-auto overflow-auto flex-1">

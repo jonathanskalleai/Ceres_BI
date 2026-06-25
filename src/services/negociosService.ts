@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { NegocioRow } from "@/hooks/useNegociosData";
+import type { NegocioRow } from "@/types/negociosSummary";
 
 interface MirrorNegocio {
   ngo_numero: string;

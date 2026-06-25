@@ -1,6 +1,6 @@
 import { type DateRange } from "react-day-picker";
 import { useAdminBIRpc } from "@/hooks/bi/useAdminBIRpc";
-import type { KPIWithPrev, ClientesKPIs, UseClientesKPIsResult } from "@/hooks/bi/useClientesKPIs";
+import type { KPIWithPrev, ClientesKPIs, UseClientesKPIsResult } from "@/types/clientesKpis";
 
 function neutralKPI(value: number): KPIWithPrev {
   return { value, previousValue: 0, trend: "neutral" };

@@ -14,13 +14,14 @@ export interface Metrics {
   totalRecebido: number; totalUsado: number; projecaoRecebido: number; pctUsadoSobreVenda: number; pctRecebidoSobreVenda: number;
 }
 
-interface NegociosSummary {
+interface NegociosSummaryInput {
   totalValor: number;
+  totalRecebido: number;
+  totalUsado: number;
   evolucaoMensal: Array<{ mes: string }>;
   taxaConversao: number;
   emAndamento: number;
   porConsultor: Array<{ nome: string; total: number; conversao: number }>;
-  registros: Array<{ recebido?: number; pdo_vlr_recurso_proprio?: number }>;
 }
 
 const MESES_ANO = 12;
@@ -29,7 +30,7 @@ const REALIZADO_FALLBACK = 6_300_000;
 const fmtPct = (v: number) => `${v.toFixed(1)}%`;
 
 export function usePerformanceMetrics(
-  negociosSummary: NegociosSummary | null | undefined,
+  negociosSummary: NegociosSummaryInput | null | undefined,
   data: DadosComerciais | null | undefined,
   filters: Filters,
   metaAnual: number,
@@ -47,8 +48,8 @@ export function usePerformanceMetrics(
     const projecaoAnual = mediaAtual * MESES_ANO;
     const noRitmo = mediaAtual >= (metaAnual / MESES_ANO);
 
-    const totalRecebido = negociosSummary.registros.reduce((s, r) => s + (r.recebido || 0), 0);
-    const totalUsado = negociosSummary.registros.reduce((s, r) => s + (r.pdo_vlr_recurso_proprio || 0), 0);
+    const totalRecebido = negociosSummary.totalRecebido;
+    const totalUsado = negociosSummary.totalUsado;
     const projecaoRecebido = mesesPassados > 0 ? (totalRecebido / mesesPassados) * MESES_ANO : 0;
     const pctUsadoSobreVenda = realizado > 0 ? (totalUsado / realizado) * 100 : 0;
     const pctRecebidoSobreVenda = realizado > 0 ? (totalRecebido / realizado) * 100 : 0;

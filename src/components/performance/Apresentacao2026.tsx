@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { DadosComerciais } from "@/types/comercial";
-import { NegociosSummary } from "@/hooks/useNegociosData";
+import { NegociosSummary } from "@/types/negociosSummary";
 import { isAdminUser } from "@/lib/adminUsers";
 import {
   ChevronLeft, ChevronRight, Maximize, Minimize, Trophy, Target,
