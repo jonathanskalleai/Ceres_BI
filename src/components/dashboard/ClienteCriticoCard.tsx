@@ -12,7 +12,7 @@ interface ClienteCritico {
   ultimaData: string;
   ultimaObs: string;
   ultimoTipoAcao: string;
-  historico: Registro[];
+  historico?: Registro[];
 }
 
 interface SugestaoAcao {
@@ -144,13 +144,13 @@ export function ClienteCriticoCard({ c, sugestao }: Props) {
           </div>
 
           {/* History */}
-          {c.historico.length > 0 && (
+          {(c.historico?.length ?? 0) > 0 && (
             <div className="mb-3">
               <p className="text-[10px] tracking-[0.22em] uppercase mb-1" style={{ ...MONO, color: "var(--voux-text-faint)" }}>
-                HISTÓRICO ({Math.min(c.historico.length, 5)} ÚLTIMOS REGISTROS)
+                HISTÓRICO ({Math.min(c.historico!.length, 5)} ÚLTIMOS REGISTROS)
               </p>
               <div className="space-y-1">
-                {c.historico.slice(0, 5).map((h, i) => (
+                {c.historico!.slice(0, 5).map((h, i) => (
                   <div key={i} className="flex items-center gap-2 text-[11px]" style={{ ...MONO, color: "var(--voux-text-faint)" }}>
                     <span className="shrink-0">{h.dtConclusao}</span>
                     <span

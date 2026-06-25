@@ -1,133 +1,63 @@
 import { useMemo } from "react";
 import { useNegociosFilter } from "@/contexts/NegociosFilterContext";
-import { toISODate } from "@/lib/dateUtils";
+import { useClientesCriticos } from "@/hooks/useClientesCriticos";
+import type { RpcClienteCritico } from "@/hooks/useClientesCriticos";
 import { DashboardClientesCriticos } from "@/components/dashboard/DashboardClientesCriticos";
-import { useRankingVendedoresV2, useRegistrosRecentes } from "@/hooks/useComercialRpc";
 import { Skeleton } from "@/components/ui/skeleton";
-import { mapRegistroRecente } from "@/lib/comercialMappers";
-import type { DadosComerciais, Filters, Vendedor, TopCliente } from "@/types/comercial";
-import type { RpcRankingVendedorV2 } from "@/types/comercialRpc";
 
-/**
- * Builds topClientes per vendedor from flat registros.
- * Computes diasSemContato = days since last contact per client.
- */
-function buildTopClientes(
-  registros: { cliente: string; cidade: string; vendedor: string; tipoContato: string; negocioValor: number; dtConclusao: string }[]
-): Map<string, TopCliente[]> {
-  const now = Date.now();
-  const vMap = new Map<string, Map<string, { acoes: number; visitas: number; negocioValor: number; diasSemContato: number; cidade: string }>>();
+/** Threshold: clients with no contact beyond this many days are "critical" */
+const DIAS_LIMITE = 90;
 
-  for (const r of registros) {
-    if (!r.vendedor || !r.cliente) continue;
-    if (!vMap.has(r.vendedor)) vMap.set(r.vendedor, new Map());
-    const clienteMap = vMap.get(r.vendedor)!;
-    if (!clienteMap.has(r.cliente)) {
-      clienteMap.set(r.cliente, { acoes: 0, visitas: 0, negocioValor: 0, diasSemContato: 999, cidade: r.cidade });
-    }
-    const c = clienteMap.get(r.cliente)!;
-    c.acoes++;
-    if (r.tipoContato?.toLowerCase().includes("visita")) c.visitas++;
-    c.negocioValor += r.negocioValor;
-    if (r.dtConclusao) {
-      const days = Math.floor((now - new Date(r.dtConclusao).getTime()) / 86400000);
-      if (days >= 0 && days < c.diasSemContato) c.diasSemContato = days;
-    }
-  }
-
-  const result = new Map<string, TopCliente[]>();
-  for (const [vendedor, clienteMap] of vMap) {
-    result.set(
-      vendedor,
-      Array.from(clienteMap.entries()).map(([nome, c]) => ({
-        nome,
-        cidade: c.cidade,
-        acoes: c.acoes,
-        visitas: c.visitas,
-        negocioValor: c.negocioValor,
-        diasSemContato: c.diasSemContato,
-      }))
-    );
-  }
-  return result;
+export interface ClienteCriticoView {
+  nome: string;
+  cidade: string;
+  vendedor: string;
+  diasSemContato: number;
+  pipeline: number;
+  totalAcoes: number;
+  visitas: number;
+  ultimaData: string;
+  ultimaObs: string;
+  ultimoTipoAcao: string;
 }
 
-function mapVendedorWithClientes(r: RpcRankingVendedorV2, topClientes: TopCliente[]): Vendedor {
+function mapRpcToView(r: RpcClienteCritico): ClienteCriticoView {
   return {
-    nome: r.vendedor,
-    totalAcoes: Number(r.acoes),
-    visitas: Number(r.visitas),
-    clientes: Number(r.clientes),
-    pipeline: Number(r.pipeline),
-    negocios: Number(r.negocios),
-    conversao: r.conversao,
-    crmQuality: r.crm_quality,
-    evolucao: [],
-    topClientes,
-    regioes: [],
-    tiposAcao: {},
+    nome: r.cli_nome,
+    cidade: r.emp_cidade ?? "",
+    vendedor: r.aco_vendedor ?? "",
+    diasSemContato: r.dias_sem_contato,
+    pipeline: Number(r.pipeline) || 0,
+    totalAcoes: Number(r.total_acoes) || 0,
+    visitas: Number(r.total_visitas) || 0,
+    ultimaData: r.ultima_acao_data ?? "—",
+    ultimaObs: r.ultima_obs ?? "Sem observações registradas",
+    ultimoTipoAcao: r.ultimo_tipo_acao ?? "—",
   };
 }
 
 export default function CrmCriticos() {
-  const { dateRange, cidade, tipoAcao } = useNegociosFilter();
+  const { cidade, tipoAcao } = useNegociosFilter();
 
-  const from = toISODate(dateRange?.from) ?? "";
-  const to = toISODate(dateRange?.to) ?? "";
-  const enabled = !!from && !!to;
-
-  const filters: Filters = {
-    cidade,
-    tipoAcao,
-    categoria: "",
-    funil: "",
-    dateRange: from && to ? { from, to } : undefined,
-  };
-
-  const { data: rankingRpc, isLoading: loadingRanking } = useRankingVendedoresV2({
-    from,
-    to,
-    enabled,
+  const { data: rpcData, isLoading } = useClientesCriticos({
+    diasLimite: DIAS_LIMITE,
   });
 
-  // Fetch ALL registros with a wide date window (2 years back) — needed to compute
-  // diasSemContato accurately. If we use the UI date filter (current month), clients
-  // contacted recently won't appear as critical (diasSemContato would never reach 90+).
-  const wideFrom = useMemo(() => {
-    const d = new Date();
-    d.setFullYear(d.getFullYear() - 2);
-    return d.toISOString().slice(0, 10);
-  }, []);
-  const wideTo = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const criticos = useMemo(() => {
+    if (!rpcData) return [];
+    let items = rpcData.map(mapRpcToView);
 
-  const { data: registrosRpc, isLoading: loadingRegistros } = useRegistrosRecentes({
-    from: wideFrom,
-    to: wideTo,
-    limit: 5000,
-  });
+    if (cidade) {
+      items = items.filter((c) => c.cidade === cidade);
+    }
+    if (tipoAcao) {
+      items = items.filter((c) => c.ultimoTipoAcao === tipoAcao);
+    }
 
-  const rpcData = useMemo<DadosComerciais>(() => {
-    const registrosRecentes = (registrosRpc ?? []).map(mapRegistroRecente);
-    const topClientesMap = buildTopClientes(registrosRecentes);
+    return items.sort((a, b) => b.pipeline - a.pipeline || b.diasSemContato - a.diasSemContato);
+  }, [rpcData, cidade, tipoAcao]);
 
-    const vendedores: Vendedor[] = (rankingRpc ?? []).map((r) =>
-      mapVendedorWithClientes(r, topClientesMap.get(r.vendedor) ?? [])
-    );
-
-    return {
-      kpis: { totalRegistros: registrosRecentes.length, totalClientes: 0, totalConsultores: vendedores.length, totalPipeline: 0, totalVisitas: 0, totalCidades: 0 },
-      vendedores,
-      regioes: [],
-      evolucaoGlobal: [],
-      tiposContato: {},
-      tiposAcao: {},
-      registrosRecentes,
-      listaVendedores: vendedores.map((v) => v.nome),
-      listaCidades: [],
-    };
-  }, [rankingRpc, registrosRpc]);
-
-  if (loadingRanking || loadingRegistros) {
+  if (isLoading) {
     return (
       <div className="p-6 space-y-4">
         <Skeleton className="h-8 w-48" />
@@ -141,5 +71,5 @@ export default function CrmCriticos() {
     );
   }
 
-  return <DashboardClientesCriticos data={rpcData} filters={filters} />;
+  return <DashboardClientesCriticos criticos={criticos} />;
 }
