@@ -7,7 +7,7 @@ import { DashboardNegociosMensais } from '@/components/dashboard/DashboardNegoci
 import type { Filters, DadosComerciais } from '@/types/comercial';
 
 /**
- * CRM Negocios page — migrated to RPC-backed data (Onda 5).
+ * CRM Negocios page — RPC-backed data.
  * Uses useNegociosFilter for shared filter state and useRegistrosRecentes
  * for the cross-reference charts in NegociosCharts.
  */

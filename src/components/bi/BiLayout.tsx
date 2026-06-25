@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import { NegociiosFilterProvider } from "@/contexts/NegociosFilterContext";
+import { NegociosFilterProvider } from "@/contexts/NegociosFilterContext";
 import { BiTopbarPortal } from "./BiTopbarPortal";
 import BiDebugOverlay from "./debug/BiDebugOverlay";
 
@@ -9,10 +9,10 @@ import BiDebugOverlay from "./debug/BiDebugOverlay";
  */
 export default function BiLayout() {
   return (
-    <NegociiosFilterProvider>
+    <NegociosFilterProvider>
       <BiTopbarPortal />
       <Outlet />
       <BiDebugOverlay />
-    </NegociiosFilterProvider>
+    </NegociosFilterProvider>
   );
 }

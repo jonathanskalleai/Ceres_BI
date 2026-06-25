@@ -12,7 +12,7 @@ import {
   FUNIL_ALL,
 } from "@/lib/categoriaFunil";
 
-interface NegociiosFilterState {
+interface NegociosFilterState {
   dateRange: DateRange | undefined;
   categoria: CategoriaFilter;
   funil: string;
@@ -21,7 +21,7 @@ interface NegociiosFilterState {
   tipoAcao: string;
 }
 
-interface NegociiosFilterContextValue extends NegociiosFilterState {
+interface NegociosFilterContextValue extends NegociosFilterState {
   setDateRange: (range: DateRange | undefined) => void;
   setCategoria: (cat: CategoriaFilter) => void;
   setFunil: (funil: string) => void;
@@ -32,9 +32,9 @@ interface NegociiosFilterContextValue extends NegociiosFilterState {
   hasActiveFilter: boolean;
 }
 
-const NegociiosFilterContext = createContext<NegociiosFilterContextValue | null>(null);
+const NegociosFilterContext = createContext<NegociosFilterContextValue | null>(null);
 
-export function NegociiosFilterProvider({ children }: { children: ReactNode }) {
+export function NegociosFilterProvider({ children }: { children: ReactNode }) {
   const [dateRange, setDateRange] = useState<DateRange | undefined>(() => currentMonthRange());
   const [categoria, setCategoria_] = useState<CategoriaFilter>(CATEGORIA_ALL);
   const [funil, setFunil] = useState<string>(FUNIL_ALL);
@@ -66,7 +66,7 @@ export function NegociiosFilterProvider({ children }: { children: ReactNode }) {
     tipoAcao !== "";
 
   return (
-    <NegociiosFilterContext.Provider
+    <NegociosFilterContext.Provider
       value={{
         dateRange,
         categoria,
@@ -85,14 +85,14 @@ export function NegociiosFilterProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
-    </NegociiosFilterContext.Provider>
+    </NegociosFilterContext.Provider>
   );
 }
 
-export function useNegociosFilter(): NegociiosFilterContextValue {
-  const ctx = useContext(NegociiosFilterContext);
+export function useNegociosFilter(): NegociosFilterContextValue {
+  const ctx = useContext(NegociosFilterContext);
   if (!ctx) {
-    throw new Error("useNegociosFilter must be used within NegociiosFilterProvider");
+    throw new Error("useNegociosFilter must be used within NegociosFilterProvider");
   }
   return ctx;
 }

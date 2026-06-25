@@ -7,22 +7,13 @@ import { mapRegistroRecente } from "@/lib/comercialMappers";
 import { fetchNegociosMensais } from "@/services/negociosService";
 import type { DadosComerciais, Vendedor } from "@/types/comercial";
 import type { NegociosSummary, NegocioRow } from "@/types/negociosSummary";
+import type { NegociosSummaryInput } from "@/types/performanceTypes";
 
 interface PerformanceDataOptions {
   from: string;
   to: string;
   cidade?: string;
   apresentacaoActive: boolean;
-}
-
-interface NegociosSummaryInput {
-  totalValor: number;
-  totalRecebido: number;
-  totalUsado: number;
-  evolucaoMensal: Array<{ mes: string }>;
-  taxaConversao: number;
-  emAndamento: number;
-  porConsultor: Array<{ nome: string; total: number; conversao: number }>;
 }
 
 function aggregateNegociosRows(rows: NegocioRow[]): NegociosSummary {

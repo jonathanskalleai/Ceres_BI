@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { isAdminUser } from "@/lib/adminUsers";
 import { filterRegistros } from "@/lib/filterUtils";
 import type { DadosComerciais, Filters } from "@/types/comercial";
+import type { NegociosSummaryInput } from "@/types/performanceTypes";
 
 interface ClientePotencial { nome: string; acoes: number; valor: number; cidade: string }
 interface RegiaoOportunidade { cidade: string; totalAcoes: number; pipeline: number }
@@ -12,16 +13,6 @@ export interface Metrics {
   clientesPotencial: ClientePotencial[]; regioesOportunidade: RegiaoOportunidade[]; alertas: string[];
   taxaConversao: number; negociosAbertos: number;
   totalRecebido: number; totalUsado: number; projecaoRecebido: number; pctUsadoSobreVenda: number; pctRecebidoSobreVenda: number;
-}
-
-interface NegociosSummaryInput {
-  totalValor: number;
-  totalRecebido: number;
-  totalUsado: number;
-  evolucaoMensal: Array<{ mes: string }>;
-  taxaConversao: number;
-  emAndamento: number;
-  porConsultor: Array<{ nome: string; total: number; conversao: number }>;
 }
 
 const MESES_ANO = 12;

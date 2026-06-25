@@ -35,7 +35,6 @@ function mapVendedor(r: RpcRankingVendedorV2): Vendedor {
 
 /**
  * CrmConsultoresRpc — RPC-backed consultores page.
- * Replaces browser-side aggregation from ComercialDataContext.
  */
 export default function CrmConsultoresRpc() {
   const { dateRange, cidade } = useNegociosFilter();
