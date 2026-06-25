@@ -1,9 +1,10 @@
 import { useMemo } from "react";
 import { DashboardMapa } from "@/components/dashboard/DashboardMapa";
 import { useRankingRegioes, useRegistrosRecentes } from "@/hooks/useComercialRpc";
-import { useComercialDataContext } from "@/contexts/ComercialDataContext";
+import { useNegociosFilter } from "@/contexts/NegociosFilterContext";
+import { toISODate } from "@/lib/dateUtils";
 import { mapRegistroRecente } from "@/lib/comercialMappers";
-import type { DadosComerciais, RegiaoSummary } from "@/types/comercial";
+import type { DadosComerciais, Filters, RegiaoSummary } from "@/types/comercial";
 import type { RpcRankingRegiao } from "@/types/comercialRpc";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -13,10 +14,18 @@ import { Skeleton } from "@/components/ui/skeleton";
  * Uses rpc_registros_recentes for the "clientes" view (individual action points).
  */
 export default function CrmMapaRpc() {
-  const { filters } = useComercialDataContext();
-  const from = filters.dateRange?.from ?? "";
-  const to = filters.dateRange?.to ?? "";
+  const { dateRange, cidade, tipoAcao } = useNegociosFilter();
+  const from = toISODate(dateRange?.from) ?? "";
+  const to = toISODate(dateRange?.to) ?? "";
   const enabled = !!from && !!to;
+
+  const filters: Filters = {
+    cidade,
+    tipoAcao,
+    categoria: "",
+    funil: "",
+    dateRange: from && to ? { from, to } : undefined,
+  };
 
   const { data: regioesRpc, isLoading: loadingRegioes } = useRankingRegioes({
     from,

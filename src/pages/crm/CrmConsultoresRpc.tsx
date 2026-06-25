@@ -2,7 +2,9 @@ import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardConsultores } from "@/components/dashboard/DashboardConsultores";
 import { useRankingVendedoresV2, useRegistrosRecentes } from "@/hooks/useComercialRpc";
-import { useComercialDataContext } from "@/contexts/ComercialDataContext";
+import { useNegociosFilter } from "@/contexts/NegociosFilterContext";
+import { toISODate } from "@/lib/dateUtils";
+import type { Filters } from "@/types/comercial";
 import { Skeleton } from "@/components/ui/skeleton";
 import { mapRegistroRecente } from "@/lib/comercialMappers";
 import type { DadosComerciais, Vendedor } from "@/types/comercial";
@@ -36,12 +38,20 @@ function mapVendedor(r: RpcRankingVendedorV2): Vendedor {
  * Replaces browser-side aggregation from ComercialDataContext.
  */
 export default function CrmConsultoresRpc() {
-  const { filters } = useComercialDataContext();
+  const { dateRange, cidade } = useNegociosFilter();
   const navigate = useNavigate();
 
-  const from = filters.dateRange?.from ?? "";
-  const to = filters.dateRange?.to ?? "";
+  const from = toISODate(dateRange?.from) ?? "";
+  const to = toISODate(dateRange?.to) ?? "";
   const enabled = !!from && !!to;
+
+  const filters: Filters = {
+    cidade: cidade,
+    tipoAcao: "",
+    categoria: "",
+    funil: "",
+    dateRange: from && to ? { from, to } : undefined,
+  };
 
   const { data: rankingRpc, isLoading: loadingRanking } = useRankingVendedoresV2({
     from,
@@ -54,7 +64,7 @@ export default function CrmConsultoresRpc() {
   const { data: registrosRpc, isLoading: loadingRegistros } = useRegistrosRecentes({
     from,
     to,
-    cidade: filters.cidade || undefined,
+    cidade: cidade || undefined,
     enabled,
   });
 

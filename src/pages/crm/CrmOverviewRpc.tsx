@@ -5,8 +5,9 @@ import { Users, MapPin, TrendingUp, Eye, DollarSign, BarChart3 } from "lucide-re
 import { BarChart, LineChart, PieChart } from "@/components/bi/charts";
 import { InfoTooltip } from "@/components/ui/InfoTooltip";
 import type { PieChartData } from "@/components/bi/charts";
-import { formatMonthYear } from "@/lib/dateUtils";
-import { useComercialDataContext } from "@/contexts/ComercialDataContext";
+import { formatMonthYear, toISODate } from "@/lib/dateUtils";
+import { useNegociosFilter } from "@/contexts/NegociosFilterContext";
+import { useNavigate } from "react-router-dom";
 import {
   useKpisComercial,
   useRankingVendedores,
@@ -22,9 +23,10 @@ const formatCurrency = (v: number) =>
  * Uses the same visual layout as DashboardOverview but fetches pre-aggregated data.
  */
 export default function CrmOverviewRpc() {
-  const { filters, handleSelectConsultor } = useComercialDataContext();
-  const from = filters.dateRange?.from ?? "";
-  const to = filters.dateRange?.to ?? "";
+  const { dateRange } = useNegociosFilter();
+  const navigate = useNavigate();
+  const from = toISODate(dateRange?.from) ?? "";
+  const to = toISODate(dateRange?.to) ?? "";
   const hasDateRange = !!from && !!to;
 
   // ─── RPC hooks ───────────────────────────────────────────────────────
@@ -139,7 +141,7 @@ export default function CrmOverviewRpc() {
               height={280}
               loading={rankLoading}
               tooltipFormatter={(v) => `${v} acoes`}
-              onBarClick={(datum) => handleSelectConsultor(String(datum.full))}
+              onBarClick={(datum) => navigate(`/crm/consultores/${encodeURIComponent(String(datum.full))}`)}
             />
           </CardContent>
         </Card>
