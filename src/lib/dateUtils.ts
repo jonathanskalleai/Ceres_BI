@@ -1,3 +1,5 @@
+import { type DateRange } from "react-day-picker";
+
 /**
  * Extrai "YYYY-MM" de uma string de data ISO (ex: "2024-03-15" → "2024-03").
  * Compartilhado por hooks de agregacao para evitar duplicacao (DRY).
@@ -70,4 +72,26 @@ export function toISODate(d: Date | undefined): string | undefined {
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
+}
+
+/**
+ * Deriva o periodo anterior ("mesmo periodo, 1 ano atras") a partir de um DateRange.
+ * Usado para analise comparativa nos KPICards. Retorna undefined se nao houver `from`.
+ */
+export function getPreviousPeriod(dateRange: DateRange | undefined): DateRange | undefined {
+  if (!dateRange?.from) return undefined;
+  const from = new Date(dateRange.from);
+  from.setFullYear(from.getFullYear() - 1);
+  const to = dateRange.to ? new Date(dateRange.to) : new Date(dateRange.from);
+  to.setFullYear(to.getFullYear() - 1);
+  return { from, to };
+}
+
+export type Trend = "up" | "down" | "neutral";
+
+/** Compara valor atual vs anterior e retorna a direcao da tendencia. */
+export function calcTrend(atual: number, anterior: number): Trend {
+  if (atual > anterior) return "up";
+  if (atual < anterior) return "down";
+  return "neutral";
 }
