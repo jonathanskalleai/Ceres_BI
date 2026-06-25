@@ -22,7 +22,7 @@ export function useNegociosCrm({ dateRange, cidade, vendedor }: UseNegociosCrmOp
 
   return useQuery<RpcNegociosCrmResult, Error>({
     queryKey: ["rpc", "negocios-crm", from ?? null, to ?? null, cidade || null, vendedor || null],
-    queryFn: () => fetchNegociosCrm(from || "", to || "", cidade || undefined, vendedor || undefined),
+    queryFn: () => fetchNegociosCrm(from, to, cidade || undefined, vendedor || undefined),
     staleTime: STALE_TIME,
     placeholderData: keepPreviousData,
   });
