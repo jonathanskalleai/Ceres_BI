@@ -108,7 +108,7 @@ export function KPICard({
       ) : (
         <>
           <div
-            className="text-2xl sm:text-[28px] md:text-[32px] font-semibold leading-none tracking-[-0.02em] tabular-nums truncate"
+            className="text-2xl sm:text-[28px] md:text-[32px] font-semibold leading-none tracking-[-0.02em] tabular-nums"
             style={{ color: accentColor || "var(--voux-text-heading)" }}
             title={String(value)}
           >

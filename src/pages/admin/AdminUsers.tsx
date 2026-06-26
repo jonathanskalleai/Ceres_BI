@@ -114,10 +114,10 @@ export default function AdminUsers() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="font-display text-2xl text-ink-50 tracking-tight">
+          <h2 className="font-display text-2xl text-foreground tracking-tight">
             Gerenciar Usuarios
           </h2>
-          <p className="text-sm text-ink-300 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             {users.length} usuario{users.length !== 1 && 's'} cadastrado{users.length !== 1 && 's'}
           </p>
         </div>
@@ -150,10 +150,10 @@ export default function AdminUsers() {
           {users.map((u) => (
             <div
               key={u.id}
-              className="flex items-center gap-4 rounded-xl bg-ink-900 border border-ink-700/50 px-5 py-4 hover:border-ink-600/60 transition-colors"
+              className="flex items-center gap-4 rounded-xl bg-card border border-border px-5 py-4 hover:border-border transition-colors"
             >
               {/* Avatar */}
-              <div className="flex-shrink-0 h-10 w-10 rounded-full bg-ink-800 flex items-center justify-center text-xs font-mono uppercase text-ink-200 tracking-wider">
+              <div className="flex-shrink-0 h-10 w-10 rounded-full bg-muted flex items-center justify-center text-xs font-mono uppercase text-muted-foreground tracking-wider">
                 {u.avatar_url ? (
                   <img
                     src={u.avatar_url}
@@ -168,14 +168,14 @@ export default function AdminUsers() {
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-ink-50 truncate">
+                  <span className="text-sm font-medium text-foreground truncate">
                     {u.full_name || 'Sem nome'}
                   </span>
                   <Badge
                     className={
                       u.role === 'admin'
                         ? 'bg-champagne-400/20 text-champagne-400 border-champagne-400/30 text-[10px]'
-                        : 'bg-ink-700/50 text-ink-300 border-ink-600/50 text-[10px]'
+                        : 'bg-secondary text-muted-foreground border-border text-[10px]'
                     }
                   >
                     {u.role}
@@ -186,7 +186,7 @@ export default function AdminUsers() {
                     </Badge>
                   )}
                 </div>
-                <p className="text-xs text-ink-400 mt-0.5 truncate">
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">
                   {emails[u.id] || u.id}
                 </p>
               </div>
@@ -199,7 +199,7 @@ export default function AdminUsers() {
                     variant="ghost"
                     size="sm"
                     onClick={() => setPermissionsTarget(u)}
-                    className="text-ink-400 hover:text-champagne-400 h-8 w-8 p-0"
+                    className="text-muted-foreground hover:text-champagne-400 h-8 w-8 p-0"
                     title="Editar permissoes"
                   >
                     <Key className="h-4 w-4" />
@@ -212,7 +212,7 @@ export default function AdminUsers() {
                     variant="ghost"
                     size="sm"
                     onClick={() => setConfirmAction({ user: u, action: 'role' })}
-                    className="text-ink-400 hover:text-champagne-400 h-8 w-8 p-0"
+                    className="text-muted-foreground hover:text-champagne-400 h-8 w-8 p-0"
                     title={u.role === 'admin' ? 'Remover admin' : 'Tornar admin'}
                   >
                     <UserCog className="h-4 w-4" />
@@ -225,7 +225,7 @@ export default function AdminUsers() {
                     variant="ghost"
                     size="sm"
                     onClick={() => setConfirmAction({ user: u, action: 'toggle' })}
-                    className={`h-8 w-8 p-0 ${u.is_active ? 'text-ink-400 hover:text-red-400' : 'text-ink-400 hover:text-green-400'}`}
+                    className={`h-8 w-8 p-0 ${u.is_active ? 'text-muted-foreground hover:text-red-400' : 'text-muted-foreground hover:text-green-400'}`}
                     title={u.is_active ? 'Desativar' : 'Ativar'}
                   >
                     {u.is_active ? <ShieldOff className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
@@ -262,9 +262,9 @@ export default function AdminUsers() {
         open={!!confirmAction}
         onOpenChange={(open) => { if (!open) setConfirmAction(null); }}
       >
-        <AlertDialogContent className="bg-ink-900 border-ink-700 text-ink-50">
+        <AlertDialogContent className="bg-card border-border text-foreground">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-ink-50">
+            <AlertDialogTitle className="text-foreground">
               {confirmAction?.action === 'toggle'
                 ? confirmAction.user.is_active
                   ? 'Desativar usuario?'
@@ -275,7 +275,7 @@ export default function AdminUsers() {
                     : 'Tornar admin?'
                   : ''}
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-ink-300">
+            <AlertDialogDescription className="text-muted-foreground">
               {confirmAction?.action === 'toggle' && confirmAction.user.is_active
                 ? `${confirmAction.user.full_name} nao podera mais acessar o sistema.`
                 : confirmAction?.action === 'toggle'
@@ -286,7 +286,7 @@ export default function AdminUsers() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-ink-800 text-ink-200 border-ink-600 hover:bg-ink-700">
+            <AlertDialogCancel className="bg-muted text-muted-foreground border-input hover:bg-accent">
               Cancelar
             </AlertDialogCancel>
             <AlertDialogAction
