@@ -1,15 +1,10 @@
 import { useMemo } from "react";
 import { type DateRange } from "react-day-picker";
-import { toISODate, getPreviousPeriod, calcTrend } from "@/lib/dateUtils";
+import { toISODate, getPreviousPeriod } from "@/lib/dateUtils";
+import { makeKPI, type KPIWithPrev } from "@/lib/kpiUtils";
 import { usePedidosBIRpc } from "@/hooks/bi/usePedidosBIRpc";
 
-type Trend = "up" | "down" | "neutral";
-
-export interface KPIWithPrev {
-  value: number;
-  previousValue: number;
-  trend: Trend;
-}
+export type { KPIWithPrev };
 
 export interface PedidosKPIsResult {
   faturamento: KPIWithPrev;
@@ -21,10 +16,6 @@ export interface PedidosKPIsResult {
 export interface UsePedidosKPIsResult {
   kpis: PedidosKPIsResult;
   isLoading: boolean;
-}
-
-function makeKPI(atual: number, anterior: number): KPIWithPrev {
-  return { value: atual, previousValue: anterior, trend: calcTrend(atual, anterior) };
 }
 
 /**

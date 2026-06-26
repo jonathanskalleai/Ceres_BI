@@ -2,19 +2,10 @@ import { useMemo } from "react";
 import { type DateRange } from "react-day-picker";
 import { type CategoriaFilter, resolveFunis } from "@/lib/categoriaFunil";
 import { toISODate, calcTrend, getPreviousPeriod, type Trend } from "@/lib/dateUtils";
+import { makeKPI, type KPIWithPrev } from "@/lib/kpiUtils";
 import { useNegociosBIRpc } from "@/hooks/bi/useNegociosBIRpc";
 import { useAcoesBIRpc } from "@/hooks/bi/useAcoesBIRpc";
 import { useOperacionalBIRpc } from "@/hooks/bi/useOperacionalBIRpc";
-
-// ---------------------------------------------------------------------------
-// Types (migrated from usePainelKPIs.ts — canonical source now)
-// ---------------------------------------------------------------------------
-
-interface KPIWithPrev {
-  value: number;
-  previousValue: number;
-  trend: Trend;
-}
 
 export interface PainelKPIs {
   // Negocios
@@ -38,10 +29,6 @@ export interface PainelKPIs {
 export interface UsePainelResult {
   kpis: PainelKPIs;
   isLoading: boolean;
-}
-
-function makeKPI(atual: number, anterior: number): KPIWithPrev {
-  return { value: atual, previousValue: anterior, trend: calcTrend(atual, anterior) };
 }
 
 /**

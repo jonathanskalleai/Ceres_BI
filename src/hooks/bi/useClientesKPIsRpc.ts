@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { type DateRange } from "react-day-picker";
 import { useAdminBIRpc } from "@/hooks/bi/useAdminBIRpc";
 import { useProdutosBIRpc } from "@/hooks/bi/useProdutosBIRpc";
@@ -23,19 +24,22 @@ export function useClientesKPIsRpc(
   const { data, isLoading: l1 } = useAdminBIRpc({ cidade });
   const { data: produtos, isLoading: l2 } = useProdutosBIRpc(true);
 
-  const kpis: ClientesKPIs = data
-    ? {
+  const kpis = useMemo((): ClientesKPIs => {
+    if (data) {
+      return {
         clientesAtivos: neutralKPI(data.kpis.ativos),
         prospects: neutralKPI(data.kpis.prospects),
         parqueMaquinas: neutralKPI(produtos.kpis.totalMaquinas),
         coberturaComercial: neutralKPI(0), // Needs dedicated RPC
-      }
-    : {
-        clientesAtivos: neutralKPI(0),
-        prospects: neutralKPI(0),
-        parqueMaquinas: neutralKPI(0),
-        coberturaComercial: neutralKPI(0),
       };
+    }
+    return {
+      clientesAtivos: neutralKPI(0),
+      prospects: neutralKPI(0),
+      parqueMaquinas: neutralKPI(0),
+      coberturaComercial: neutralKPI(0),
+    };
+  }, [data, produtos]);
 
   return { kpis, isLoading: l1 || l2 };
 }

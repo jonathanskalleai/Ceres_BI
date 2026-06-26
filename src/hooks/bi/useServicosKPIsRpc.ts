@@ -1,17 +1,9 @@
 import { useMemo } from "react";
 import { type DateRange } from "react-day-picker";
-import { toISODate, getPreviousPeriod, calcTrend } from "@/lib/dateUtils";
+import { toISODate, getPreviousPeriod } from "@/lib/dateUtils";
+import { makeKPI, makeKPIInverted } from "@/lib/kpiUtils";
 import { useServicosBIRpc } from "@/hooks/bi/useServicosBIRpc";
 import type { KPIWithPrev, ServicosKPIsResult, UseServicosKPIsReturn } from "@/hooks/bi/useServicosKPIs";
-
-function makeKPI(atual: number, anterior: number): KPIWithPrev {
-  return { value: atual, previousValue: anterior, trend: calcTrend(atual, anterior) };
-}
-
-/** Inverted: lower current = "up" (good). Used for resolution time. */
-function makeKPIInverted(atual: number, anterior: number): KPIWithPrev {
-  return { value: atual, previousValue: anterior, trend: calcTrend(anterior, atual) };
-}
 
 /**
  * RPC-backed Serviços KPIs with previous-period comparison.

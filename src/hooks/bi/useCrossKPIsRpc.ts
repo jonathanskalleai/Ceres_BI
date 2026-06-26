@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { type DateRange } from "react-day-picker";
-import { toISODate, getPreviousPeriod, calcTrend } from "@/lib/dateUtils";
+import { toISODate, getPreviousPeriod } from "@/lib/dateUtils";
+import { makeKPI, makeKPIInverted, type KPIWithPrev } from "@/lib/kpiUtils";
 import { type CategoriaFilter, resolveFunis } from "@/lib/categoriaFunil";
 import { useNegociosBIRpc } from "@/hooks/bi/useNegociosBIRpc";
 import { usePedidosBIRpc } from "@/hooks/bi/usePedidosBIRpc";
@@ -9,13 +10,7 @@ import { usePedidosBIRpc } from "@/hooks/bi/usePedidosBIRpc";
 // Types
 // ---------------------------------------------------------------------------
 
-type Trend = "up" | "down" | "neutral";
-
-export interface KPIWithPrev {
-  value: number;
-  previousValue: number;
-  trend: Trend;
-}
+export type { KPIWithPrev };
 
 export interface CrossKPIs {
   cicloMedioVendas: KPIWithPrev;
@@ -27,15 +22,6 @@ export interface CrossKPIs {
 export interface UseCrossKPIsResult {
   kpis: CrossKPIs;
   isLoading: boolean;
-}
-
-function makeKPI(atual: number, anterior: number): KPIWithPrev {
-  return { value: atual, previousValue: anterior, trend: calcTrend(atual, anterior) };
-}
-
-/** Inverted: lower current = better (ciclo, esforço). */
-function makeKPIInverted(atual: number, anterior: number): KPIWithPrev {
-  return { value: atual, previousValue: anterior, trend: calcTrend(anterior, atual) };
 }
 
 /**
@@ -78,34 +64,34 @@ export function useCrossKPIsRpc(
     enabled: !!prevFrom && !!prevTo,
   });
 
-  let kpis: CrossKPIs;
+  const kpis = useMemo((): CrossKPIs => {
+    if (negData && pedData) {
+      const ganhos = negData.kpis.ganhos || 1;
+      const conversao = Math.min((pedData.kpis.total / ganhos) * 100, 100);
+      const consultores = negData.rankingConsultor?.length || 1;
+      const receitaPorConsultor = negData.kpis.valorGanho / consultores;
 
-  if (negData && pedData) {
-    const ganhos = negData.kpis.ganhos || 1;
-    const conversao = Math.min((pedData.kpis.total / ganhos) * 100, 100);
-    const consultores = negData.rankingConsultor?.length || 1;
-    const receitaPorConsultor = negData.kpis.valorGanho / consultores;
+      // Previous values
+      const prevGanhos = negPrev?.kpis.ganhos || 1;
+      const prevConversao = Math.min(((pedPrev?.kpis.total ?? 0) / prevGanhos) * 100, 100);
+      const prevConsultores = negPrev?.rankingConsultor?.length || 1;
+      const prevReceita = (negPrev?.kpis.valorGanho ?? 0) / prevConsultores;
 
-    // Previous values
-    const prevGanhos = negPrev?.kpis.ganhos || 1;
-    const prevConversao = Math.min(((pedPrev?.kpis.total ?? 0) / prevGanhos) * 100, 100);
-    const prevConsultores = negPrev?.rankingConsultor?.length || 1;
-    const prevReceita = (negPrev?.kpis.valorGanho ?? 0) / prevConsultores;
+      return {
+        cicloMedioVendas: makeKPIInverted(negData.kpis.cicloMedioDias, negPrev?.kpis.cicloMedioDias ?? 0),
+        esforcoMedio: makeKPIInverted(negData.kpis.esforcoMedio, negPrev?.kpis.esforcoMedio ?? 0),
+        conversaoPedidoNegocio: makeKPI(conversao, prevConversao),
+        receitaPorConsultor: makeKPI(receitaPorConsultor, prevReceita),
+      };
+    }
 
-    kpis = {
-      cicloMedioVendas: makeKPIInverted(negData.kpis.cicloMedioDias, negPrev?.kpis.cicloMedioDias ?? 0),
-      esforcoMedio: makeKPIInverted(negData.kpis.esforcoMedio, negPrev?.kpis.esforcoMedio ?? 0),
-      conversaoPedidoNegocio: makeKPI(conversao, prevConversao),
-      receitaPorConsultor: makeKPI(receitaPorConsultor, prevReceita),
-    };
-  } else {
-    kpis = {
+    return {
       cicloMedioVendas: makeKPI(0, 0),
       esforcoMedio: makeKPI(0, 0),
       conversaoPedidoNegocio: makeKPI(0, 0),
       receitaPorConsultor: makeKPI(0, 0),
     };
-  }
+  }, [negData, pedData, negPrev, pedPrev]);
 
   return { kpis, isLoading: l1 || l2 || l3 || l4 };
 }
