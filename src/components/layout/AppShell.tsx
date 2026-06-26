@@ -4,15 +4,14 @@ import { AppSidebar } from '@/components/layout/AppSidebar';
 
 /** Map route prefix to section label + title */
 const ROUTE_META: Record<string, { section: string; title: string }> = {
-  '/crm/overview': { section: 'COMERCIAL CRM', title: 'Visao Geral' },
-  '/crm/consultores': { section: 'COMERCIAL CRM', title: 'Consultores' },
-  '/crm/regioes': { section: 'COMERCIAL CRM', title: 'Regioes' },
-  '/crm/registros': { section: 'COMERCIAL CRM', title: 'Registros' },
-  '/crm/criticos': { section: 'COMERCIAL CRM', title: 'Clientes Criticos' },
-  '/crm/mapa': { section: 'COMERCIAL CRM', title: 'Mapa de Acoes' },
-  '/crm/insights': { section: 'COMERCIAL CRM', title: 'Observacoes' },
-  '/crm/negocios': { section: 'COMERCIAL CRM', title: 'Negocios' },
-  '/crm/administrativo': { section: 'COMERCIAL CRM', title: 'Administrativo' },
+  '/crm/overview': { section: 'COMERCIAL', title: 'Painel Comercial' },
+  '/crm/consultores': { section: 'COMERCIAL', title: 'Equipe' },
+  '/crm/registros': { section: 'COMERCIAL', title: 'Atividades' },
+  '/crm/mapa': { section: 'COMERCIAL', title: 'Mapa de Cobertura' },
+  '/crm/negocios': { section: 'COMERCIAL', title: 'Pipeline' },
+  '/crm/criticos': { section: 'COMERCIAL', title: 'Clientes sem Contato' },
+  '/crm/insights': { section: 'COMERCIAL', title: 'Notas de Campo' },
+  '/crm/administrativo': { section: 'COMERCIAL', title: 'Gestao Interna' },
   '/bi/painel': { section: 'BI ANALYTICS', title: 'Visao Geral' },
   '/bi/comercial': { section: 'BI ANALYTICS', title: 'Negocios' },
   '/bi/pedidos': { section: 'BI ANALYTICS', title: 'Pedidos' },
@@ -21,9 +20,8 @@ const ROUTE_META: Record<string, { section: string; title: string }> = {
   '/bi/operacional': { section: 'BI ANALYTICS', title: 'Produtividade Tecnica' },
   '/bi/admin': { section: 'BI ANALYTICS', title: 'Carteira de Clientes' },
   '/bi/acoes': { section: 'BI ANALYTICS', title: 'Acoes' },
-  '/bi/inteligencia': { section: 'BI ANALYTICS', title: 'Inteligencia' },
-  '/tools/explorer': { section: 'FERRAMENTAS', title: 'Explorador de Views' },
-  '/tools/performance': { section: 'FERRAMENTAS', title: 'Performance 2026' },
+  '/tools/explorer': { section: 'FERRAMENTAS', title: 'Explorador de Dados' },
+  '/tools/performance': { section: 'FERRAMENTAS', title: 'Relatorio Anual' },
   '/admin/users': { section: 'ADMINISTRACAO', title: 'Usuarios' },
   '/admin/profile': { section: 'ADMINISTRACAO', title: 'Meu Perfil' },
 };
@@ -39,7 +37,7 @@ function resolveRouteMeta(pathname: string): { section: string; title: string } 
 
   // Consultor detail special case
   if (pathname.startsWith('/crm/consultores/')) {
-    return { section: 'COMERCIAL CRM', title: 'Detalhe Consultor' };
+    return { section: 'COMERCIAL', title: 'Detalhe Consultor' };
   }
 
   return { section: 'CERES BI', title: 'Dashboard' };
