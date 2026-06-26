@@ -91,7 +91,7 @@ const App = () => (
               }
             >
               {/* Root redirect */}
-              <Route index element={<Navigate to="/crm/overview" replace />} />
+              <Route index element={<Navigate to="/bi/painel" replace />} />
 
               {/* CRM — wrapped by CrmLayout (shared filter context + topbar portal) */}
               <Route path="crm" element={<CrmLayout />}>
