@@ -18,7 +18,6 @@ function makeKPIInverted(atual: number, anterior: number): KPIWithPrev {
  */
 export function useServicosKPIsRpc(
   dateRange: DateRange | undefined,
-  cidade?: string,
 ): UseServicosKPIsReturn {
   const from = toISODate(dateRange?.from) ?? "";
   const to = toISODate(dateRange?.to ?? dateRange?.from) ?? "";
@@ -27,11 +26,10 @@ export function useServicosKPIsRpc(
   const prevFrom = toISODate(prevRange?.from) ?? "";
   const prevTo = toISODate(prevRange?.to ?? prevRange?.from) ?? "";
 
-  const { data: atual, isLoading: l1 } = useServicosBIRpc({ from, to, cidade });
+  const { data: atual, isLoading: l1 } = useServicosBIRpc({ from, to });
   const { data: anterior, isLoading: l2 } = useServicosBIRpc({
     from: prevFrom,
     to: prevTo,
-    cidade,
     enabled: !!prevFrom && !!prevTo,
   });
 

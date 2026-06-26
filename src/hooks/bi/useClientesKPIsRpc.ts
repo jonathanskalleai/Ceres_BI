@@ -18,9 +18,8 @@ function neutralKPI(value: number): KPIWithPrev {
  */
 export function useClientesKPIsRpc(
   _dateRange: DateRange | undefined,
-  cidade?: string,
 ): UseClientesKPIsResult {
-  const { data, isLoading: l1 } = useAdminBIRpc({ cidade });
+  const { data, isLoading: l1 } = useAdminBIRpc();
   const { data: produtos, isLoading: l2 } = useProdutosBIRpc(true);
 
   const kpis: ClientesKPIs = data

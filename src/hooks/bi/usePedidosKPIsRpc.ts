@@ -34,8 +34,6 @@ export function usePedidosKPIsRpc(
   dateRange: DateRange | undefined,
   _categoria?: string,
   _funil?: string,
-  vendedor?: string,
-  cidade?: string,
 ): UsePedidosKPIsResult {
   const from = toISODate(dateRange?.from) ?? "";
   const to = toISODate(dateRange?.to ?? dateRange?.from) ?? "";
@@ -44,12 +42,10 @@ export function usePedidosKPIsRpc(
   const prevFrom = toISODate(prevRange?.from) ?? "";
   const prevTo = toISODate(prevRange?.to ?? prevRange?.from) ?? "";
 
-  const { data: atual, isLoading: l1 } = usePedidosBIRpc({ from, to, vendedor, cidade });
+  const { data: atual, isLoading: l1 } = usePedidosBIRpc({ from, to });
   const { data: anterior, isLoading: l2 } = usePedidosBIRpc({
     from: prevFrom,
     to: prevTo,
-    vendedor,
-    cidade,
     enabled: !!prevFrom && !!prevTo,
   });
 

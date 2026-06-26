@@ -72,8 +72,6 @@ export function usePainelKPIsRpc(
     from: fromAtual,
     to: toAtual,
     funis,
-    vendedor,
-    cidade,
     enabled: !!fromAtual && !!toAtual,
   });
 
@@ -82,8 +80,6 @@ export function usePainelKPIsRpc(
     from: fromAnterior,
     to: toAnterior,
     funis,
-    vendedor,
-    cidade,
     enabled: !!fromAnterior && !!toAnterior,
   });
 

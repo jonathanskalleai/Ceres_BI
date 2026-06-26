@@ -48,14 +48,10 @@ export async function fetchNegociosBI(
   from: string,
   to: string,
   funis?: string[],
-  vendedor?: string,
-  cidade?: string,
 ): Promise<RpcNegociosBI> {
   try {
     const params: Record<string, unknown> = { p_from: from, p_to: to };
     if (funis && funis.length > 0) params.p_funis = funis;
-    if (vendedor) params.p_vendedor = vendedor;
-    if (cidade) params.p_cidade = cidade;
 
     const { data, error } = await supabase.rpc("rpc_negocios_bi", params);
     if (error) throw new Error(error.message);
@@ -76,15 +72,12 @@ export async function fetchNegociosBI(
 export async function fetchPedidosBI(
   from: string,
   to: string,
-  vendedor?: string,
-  cidade?: string,
 ): Promise<RpcPedidosBI> {
   try {
-    const params: Record<string, unknown> = { p_from: from, p_to: to };
-    if (vendedor) params.p_vendedor = vendedor;
-    if (cidade) params.p_cidade = cidade;
-
-    const { data, error } = await supabase.rpc("rpc_pedidos_bi", params);
+    const { data, error } = await supabase.rpc("rpc_pedidos_bi", {
+      p_from: from,
+      p_to: to,
+    });
     if (error) throw new Error(error.message);
     return unwrapRpc<RpcPedidosBI>(data);
   } catch (err) {
@@ -98,13 +91,12 @@ export async function fetchPedidosBI(
 export async function fetchServicosBI(
   from: string,
   to: string,
-  cidade?: string,
 ): Promise<RpcServicosBI> {
   try {
-    const params: Record<string, unknown> = { p_from: from, p_to: to };
-    if (cidade) params.p_cidade = cidade;
-
-    const { data, error } = await supabase.rpc("rpc_servicos_bi", params);
+    const { data, error } = await supabase.rpc("rpc_servicos_bi", {
+      p_from: from,
+      p_to: to,
+    });
     if (error) throw new Error(error.message);
     return unwrapRpc<RpcServicosBI>(data);
   } catch (err) {
@@ -114,14 +106,11 @@ export async function fetchServicosBI(
 
 /**
  * Calls rpc_admin_bi — returns aggregated carteira/client metrics as JSON.
- * Optional cidade filter (static table, no date filter).
+ * No params (static table, no date filter).
  */
-export async function fetchAdminBI(cidade?: string): Promise<RpcAdminBI> {
+export async function fetchAdminBI(): Promise<RpcAdminBI> {
   try {
-    const params: Record<string, unknown> = {};
-    if (cidade) params.p_cidade = cidade;
-
-    const { data, error } = await supabase.rpc("rpc_admin_bi", params);
+    const { data, error } = await supabase.rpc("rpc_admin_bi");
     if (error) throw new Error(error.message);
     return unwrapRpc<RpcAdminBI>(data);
   } catch (err) {
