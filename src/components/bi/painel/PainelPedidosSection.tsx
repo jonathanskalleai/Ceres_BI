@@ -19,7 +19,7 @@ export function PainelPedidosSection({ pedKpis, loading }: Props) {
           previousValue={fmtBRLKpi(pedKpis.faturamento.previousValue)}
           trend={pedKpis.faturamento.trend}
           loading={loading}
-          accentColor="var(--voux-success, #4ade80)"
+          accentColor="var(--voux-success)"
           formula="SUM(valor pedido) WHERE aprovado"
         />
       )}

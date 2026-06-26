@@ -25,9 +25,9 @@ function DeltaBadge({ previousValue, trend, invertTrend }: { previousValue: stri
   const isNegative = invertTrend ? trend === "up" : trend === "down";
 
   const color = isPositive
-    ? "var(--voux-success, #4ade80)"
+    ? "var(--voux-success)"
     : isNegative
-      ? "var(--voux-danger, #f87171)"
+      ? "var(--voux-danger)"
       : "var(--voux-text-muted)";
 
   return (

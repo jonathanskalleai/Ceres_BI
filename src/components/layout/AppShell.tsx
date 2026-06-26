@@ -5,6 +5,7 @@ import { AppSidebar } from '@/components/layout/AppSidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 
 /** Map route prefix to section label + title */
 const ROUTE_META: Record<string, { section: string; title: string }> = {
@@ -116,7 +117,9 @@ export function AppShell() {
       <main className="flex-1 overflow-auto flex flex-col">
         <AppShellTopbar section={meta.section} title={meta.title} onMenuClick={isMobile ? () => setMobileOpen(true) : undefined} />
         <div className="flex-1 overflow-auto">
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </div>
       </main>
     </div>

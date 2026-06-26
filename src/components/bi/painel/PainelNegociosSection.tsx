@@ -32,7 +32,7 @@ export function PainelNegociosSection({ kpis, loading }: Props) {
           previousValue={fmtNum(kpis.ganhos.previousValue)}
           trend={kpis.ganhos.trend}
           loading={loading}
-          accentColor="var(--voux-success, #4ade80)"
+          accentColor="var(--voux-success)"
           formula="COUNT WHERE conclusao = ganho"
         />
       )}
@@ -45,7 +45,7 @@ export function PainelNegociosSection({ kpis, loading }: Props) {
           trend={kpis.perdidos.trend}
           invertTrend
           loading={loading}
-          accentColor="var(--voux-danger, #f87171)"
+          accentColor="var(--voux-danger)"
           formula="COUNT WHERE conclusao = perda"
         />
       )}

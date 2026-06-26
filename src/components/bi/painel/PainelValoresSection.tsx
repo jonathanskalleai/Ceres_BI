@@ -23,7 +23,7 @@ export function PainelValoresSection({ kpis, crossKpis, loading }: Props) {
           previousValue={fmtBRLKpi(kpis.valorGanho.previousValue)}
           trend={kpis.valorGanho.trend}
           loading={loading}
-          accentColor="var(--voux-success, #4ade80)"
+          accentColor="var(--voux-success)"
           formula="SUM(valor) dos negocios ganhos"
         />
       )}
@@ -36,7 +36,7 @@ export function PainelValoresSection({ kpis, crossKpis, loading }: Props) {
           trend={kpis.valorPerdido.trend}
           invertTrend
           loading={loading}
-          accentColor="var(--voux-danger, #f87171)"
+          accentColor="var(--voux-danger)"
           formula="SUM(valor) dos negocios perdidos"
         />
       )}
