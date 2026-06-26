@@ -7,7 +7,7 @@ import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { HorizontalBarChart, VerticalBarChart, PieChartWithLabels } from "@/components/bi/charts";
 import { CHART_COLORS } from "@/lib/chartTheme";
-import { toISODate } from "@/lib/dateUtils";
+import { toISODate, getPreviousPeriod, calcTrend } from "@/lib/dateUtils";
 import type { RpcAcoesBI } from "@/types/biRpc";
 
 const EMPTY: RpcAcoesBI = {
@@ -37,7 +37,20 @@ export default function AcoesSection({ active, dateRange, categoria, funil }: Pr
     enabled: active,
   });
 
+  // Periodo anterior (mesmo intervalo, 1 ano atras) para analise comparativa
+  const prevRange = useMemo(() => getPreviousPeriod(dateRange), [dateRange]);
+  const fromPrev = useMemo(() => toISODate(prevRange?.from), [prevRange?.from]);
+  const toPrev = useMemo(() => toISODate(prevRange?.to ?? prevRange?.from), [prevRange?.to, prevRange?.from]);
+  const { data: dataPrev } = useAcoesBIRpc({
+    from: fromPrev,
+    to: toPrev,
+    vendedor: vendedor || undefined,
+    cidade: cidade || undefined,
+    enabled: active && !!fromPrev,
+  });
+
   const { kpis, porVendedor, porCidade, porMes, porDiaSemana, porTipoAcao, porTipoContato } = data ?? EMPTY;
+  const kpisPrev = (dataPrev ?? EMPTY).kpis;
 
   return (
     <div className="space-y-6 pt-2">
@@ -45,12 +58,18 @@ export default function AcoesSection({ active, dateRange, categoria, funil }: Pr
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <KPICard title="Total de Acoes" value={kpis.totalAcoes.toLocaleString("pt-BR")} icon={ClipboardList} loading={isLoading} />
-        <KPICard title="Cidades Atendidas" value={kpis.cidades.toLocaleString("pt-BR")} icon={MapPin} loading={isLoading} />
-        <KPICard title="Consultores Ativos" value={kpis.consultores.toLocaleString("pt-BR")} icon={Users} loading={isLoading} />
-        <KPICard title="Total de Visitas" value={kpis.visitas.toLocaleString("pt-BR")} icon={Eye} loading={isLoading} />
-        <KPICard title="Clientes Unicos" value={kpis.clientes.toLocaleString("pt-BR")} icon={UserCheck} loading={isLoading} />
-        <KPICard title="Tipos de Acao" value={kpis.tiposAcaoDistintos.toLocaleString("pt-BR")} icon={Tag} loading={isLoading} />
+        <KPICard title="Total de Acoes" value={kpis.totalAcoes.toLocaleString("pt-BR")} icon={ClipboardList} loading={isLoading}
+          previousValue={kpisPrev.totalAcoes.toLocaleString("pt-BR")} trend={calcTrend(kpis.totalAcoes, kpisPrev.totalAcoes)} />
+        <KPICard title="Cidades Atendidas" value={kpis.cidades.toLocaleString("pt-BR")} icon={MapPin} loading={isLoading}
+          previousValue={kpisPrev.cidades.toLocaleString("pt-BR")} trend={calcTrend(kpis.cidades, kpisPrev.cidades)} />
+        <KPICard title="Consultores Ativos" value={kpis.consultores.toLocaleString("pt-BR")} icon={Users} loading={isLoading}
+          previousValue={kpisPrev.consultores.toLocaleString("pt-BR")} trend={calcTrend(kpis.consultores, kpisPrev.consultores)} />
+        <KPICard title="Total de Visitas" value={kpis.visitas.toLocaleString("pt-BR")} icon={Eye} loading={isLoading}
+          previousValue={kpisPrev.visitas.toLocaleString("pt-BR")} trend={calcTrend(kpis.visitas, kpisPrev.visitas)} />
+        <KPICard title="Clientes Unicos" value={kpis.clientes.toLocaleString("pt-BR")} icon={UserCheck} loading={isLoading}
+          previousValue={kpisPrev.clientes.toLocaleString("pt-BR")} trend={calcTrend(kpis.clientes, kpisPrev.clientes)} />
+        <KPICard title="Tipos de Acao" value={kpis.tiposAcaoDistintos.toLocaleString("pt-BR")} icon={Tag} loading={isLoading}
+          previousValue={kpisPrev.tiposAcaoDistintos.toLocaleString("pt-BR")} trend={calcTrend(kpis.tiposAcaoDistintos, kpisPrev.tiposAcaoDistintos)} />
       </div>
 
       {/* Charts */}

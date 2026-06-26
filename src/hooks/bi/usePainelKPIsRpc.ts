@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { type DateRange } from "react-day-picker";
 import { type CategoriaFilter, resolveFunis } from "@/lib/categoriaFunil";
-import { toISODate } from "@/lib/dateUtils";
+import { toISODate, calcTrend, getPreviousPeriod, type Trend } from "@/lib/dateUtils";
 import { useNegociosBIRpc } from "@/hooks/bi/useNegociosBIRpc";
 import { useAcoesBIRpc } from "@/hooks/bi/useAcoesBIRpc";
 import { useOperacionalData } from "@/hooks/bi/useOperacionalData";
@@ -9,8 +9,6 @@ import { useOperacionalData } from "@/hooks/bi/useOperacionalData";
 // ---------------------------------------------------------------------------
 // Types (migrated from usePainelKPIs.ts — canonical source now)
 // ---------------------------------------------------------------------------
-
-type Trend = "up" | "down" | "neutral";
 
 interface KPIWithPrev {
   value: number;
@@ -42,33 +40,8 @@ export interface UsePainelResult {
   isLoading: boolean;
 }
 
-function calcTrend(atual: number, anterior: number): Trend {
-  if (atual > anterior) return "up";
-  if (atual < anterior) return "down";
-  return "neutral";
-}
-
 function makeKPI(atual: number, anterior: number): KPIWithPrev {
   return { value: atual, previousValue: anterior, trend: calcTrend(atual, anterior) };
-}
-
-/**
- * Derives a DateRange for the previous year based on the current dateRange.
- */
-function getPreviousDateRange(dateRange: DateRange | undefined): DateRange | undefined {
-  if (!dateRange?.from) {
-    const now = new Date();
-    const curYear = now.getFullYear();
-    return {
-      from: new Date(curYear - 1, 0, 1),
-      to: new Date(curYear - 1, 11, 31),
-    };
-  }
-  const from = new Date(dateRange.from);
-  from.setFullYear(from.getFullYear() - 1);
-  const to = dateRange.to ? new Date(dateRange.to) : new Date(dateRange.from);
-  to.setFullYear(to.getFullYear() - 1);
-  return { from, to };
 }
 
 /**
@@ -83,7 +56,7 @@ export function usePainelKPIsRpc(
   vendedor?: string,
   cidade?: string,
 ): UsePainelResult {
-  const prevDateRange = useMemo(() => getPreviousDateRange(dateRange), [dateRange]);
+  const prevDateRange = useMemo(() => getPreviousPeriod(dateRange), [dateRange]);
 
   // Current + previous date ISO strings
   const fromAtual = useMemo(() => toISODate(dateRange?.from), [dateRange?.from]);

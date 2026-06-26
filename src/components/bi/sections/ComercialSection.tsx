@@ -7,7 +7,7 @@ import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { HorizontalBarChart, VerticalBarChart, LineChart } from "@/components/bi/charts";
 import { CHART_COLORS, POSITIVE_COLOR, NEGATIVE_COLOR } from "@/lib/chartTheme";
-import { formatBRL, formatDias, formatMonthYear, toISODate } from "@/lib/dateUtils";
+import { formatBRL, formatDias, formatMonthYear, toISODate, getPreviousPeriod, calcTrend } from "@/lib/dateUtils";
 
 import { type CategoriaFilter, CATEGORIA_ALL, getFunisByCategoria, FUNIL_ALL } from "@/lib/categoriaFunil";
 import type { RpcNegociosBI } from "@/types/biRpc";
@@ -46,6 +46,18 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
   });
   const { kpis } = agg;
 
+  // Periodo anterior (mesmo intervalo, 1 ano atras) para analise comparativa
+  const prevRange = getPreviousPeriod(dateRange);
+  const fromPrev = toISODate(prevRange?.from);
+  const toPrev = toISODate(prevRange?.to ?? prevRange?.from);
+  const { data: aggPrev } = useNegociosBIRpc({
+    from: fromPrev,
+    to: toPrev,
+    funis,
+    enabled: active && !!fromPrev && !!toPrev,
+  });
+  const kpisPrev = aggPrev?.kpis ?? EMPTY_AGG.kpis;
+
   return (
     <div className="space-y-6 pt-4">
       <div className="flex justify-end mb-2">
@@ -60,36 +72,52 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
         <KPICard
           title="Negocios" value={kpis.totalNegocios.toLocaleString("pt-BR")}
           icon={Briefcase} loading={isLoading}
+          previousValue={kpisPrev.totalNegocios.toLocaleString("pt-BR")}
+          trend={calcTrend(kpis.totalNegocios, kpisPrev.totalNegocios)}
           hint={`${kpis.ganhos} ganhos · ${kpis.perdidos} perdidos · ${kpis.andamento} em aberto`}
         />
         <KPICard
           title="Taxa de Conversao" value={pct(kpis.taxaConversao)}
           icon={Percent} loading={isLoading}
+          previousValue={pct(kpisPrev.taxaConversao)}
+          trend={calcTrend(kpis.taxaConversao, kpisPrev.taxaConversao)}
           hint="ganhos / (ganhos + perdidos)"
         />
         <KPICard
           title="Pipeline Aberto" value={formatBRL(kpis.pipelineAberto)}
           icon={Wallet} loading={isLoading}
+          previousValue={formatBRL(kpisPrev.pipelineAberto)}
+          trend={calcTrend(kpis.pipelineAberto, kpisPrev.pipelineAberto)}
           hint="valor em negocios em andamento"
         />
         <KPICard
           title="Pipeline Perdido" value={formatBRL(kpis.pipelinePerdido)}
           icon={Wallet} loading={isLoading}
+          previousValue={formatBRL(kpisPrev.pipelinePerdido)}
+          trend={calcTrend(kpis.pipelinePerdido, kpisPrev.pipelinePerdido)}
+          invertTrend
           hint="valor em negocios perdidos"
         />
         <KPICard
           title="Valor Ganho" value={formatBRL(kpis.valorGanho)}
           icon={DollarSign} loading={isLoading}
+          previousValue={formatBRL(kpisPrev.valorGanho)}
+          trend={calcTrend(kpis.valorGanho, kpisPrev.valorGanho)}
           hint={`ticket medio ${formatBRL(kpis.ticketMedioGanho)}`}
         />
         <KPICard
           title="Ciclo de Vendas" value={formatDias(kpis.cicloMedioDias)}
           icon={Clock} loading={isLoading}
+          previousValue={formatDias(kpisPrev.cicloMedioDias)}
+          trend={calcTrend(kpis.cicloMedioDias, kpisPrev.cicloMedioDias)}
+          invertTrend
           hint="media nos negocios concluidos"
         />
         <KPICard
           title="Esforco Medio" value={kpis.esforcoMedio.toFixed(1)}
           icon={Trophy} loading={isLoading}
+          previousValue={kpisPrev.esforcoMedio.toFixed(1)}
+          trend={calcTrend(kpis.esforcoMedio, kpisPrev.esforcoMedio)}
           hint="acoes por negocio"
         />
       </div>

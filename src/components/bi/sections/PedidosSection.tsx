@@ -5,7 +5,7 @@ import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { HorizontalBarChart, PieChartWithLabels, LineChart } from "@/components/bi/charts";
 import { CHART_COLORS, POSITIVE_COLOR } from "@/lib/chartTheme";
-import { formatBRL, formatMonthYear, toISODate } from "@/lib/dateUtils";
+import { formatBRL, formatMonthYear, toISODate, getPreviousPeriod, calcTrend } from "@/lib/dateUtils";
 import type { RpcPedidosBI } from "@/types/biRpc";
 
 interface Props {
@@ -30,15 +30,32 @@ export default function PedidosSection({ active, dateRange }: Props) {
   });
   const { kpis } = agg;
 
+  // Periodo anterior (mesmo intervalo, 1 ano atras) para analise comparativa
+  const prevRange = getPreviousPeriod(dateRange);
+  const fromPrev = toISODate(prevRange?.from);
+  const toPrev = toISODate(prevRange?.to ?? prevRange?.from);
+  const { data: aggPrev } = usePedidosBIRpc({
+    from: fromPrev,
+    to: toPrev,
+    enabled: active && !!fromPrev && !!toPrev,
+  });
+  const kpisPrev = aggPrev?.kpis ?? EMPTY_AGG.kpis;
+
   return (
     <div className="space-y-6 pt-4">
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <KPICard title="Total Pedidos" value={kpis.total.toLocaleString("pt-BR")} icon={ShoppingCart} loading={isLoading} />
-        <KPICard title="Faturamento (Aprovado)" value={formatBRL(kpis.faturamento)} icon={DollarSign} loading={isLoading} hint="receita de pedidos aprovados" />
-        <KPICard title="Ticket Medio" value={formatBRL(kpis.ticketMedio)} icon={TrendingUp} loading={isLoading} hint="por pedido aprovado" />
-        <KPICard title="Taxa de Aprovacao" value={`${kpis.percentAprovado.toFixed(1)}%`} icon={Percent} loading={isLoading} />
-        <KPICard title="% Financiado" value={`${kpis.percentFinanciado.toFixed(1)}%`} icon={CreditCard} loading={isLoading} hint="vs recurso proprio" />
-        <KPICard title="Valor Cancelado" value={formatBRL(kpis.valorCancelado)} icon={XCircle} loading={isLoading} hint="pedidos cancelados" />
+        <KPICard title="Total Pedidos" value={kpis.total.toLocaleString("pt-BR")} icon={ShoppingCart} loading={isLoading}
+          previousValue={kpisPrev.total.toLocaleString("pt-BR")} trend={calcTrend(kpis.total, kpisPrev.total)} />
+        <KPICard title="Faturamento (Aprovado)" value={formatBRL(kpis.faturamento)} icon={DollarSign} loading={isLoading} hint="receita de pedidos aprovados"
+          previousValue={formatBRL(kpisPrev.faturamento)} trend={calcTrend(kpis.faturamento, kpisPrev.faturamento)} />
+        <KPICard title="Ticket Medio" value={formatBRL(kpis.ticketMedio)} icon={TrendingUp} loading={isLoading} hint="por pedido aprovado"
+          previousValue={formatBRL(kpisPrev.ticketMedio)} trend={calcTrend(kpis.ticketMedio, kpisPrev.ticketMedio)} />
+        <KPICard title="Taxa de Aprovacao" value={`${kpis.percentAprovado.toFixed(1)}%`} icon={Percent} loading={isLoading}
+          previousValue={`${kpisPrev.percentAprovado.toFixed(1)}%`} trend={calcTrend(kpis.percentAprovado, kpisPrev.percentAprovado)} />
+        <KPICard title="% Financiado" value={`${kpis.percentFinanciado.toFixed(1)}%`} icon={CreditCard} loading={isLoading} hint="vs recurso proprio"
+          previousValue={`${kpisPrev.percentFinanciado.toFixed(1)}%`} trend={calcTrend(kpis.percentFinanciado, kpisPrev.percentFinanciado)} />
+        <KPICard title="Valor Cancelado" value={formatBRL(kpis.valorCancelado)} icon={XCircle} loading={isLoading} hint="pedidos cancelados"
+          previousValue={formatBRL(kpisPrev.valorCancelado)} trend={calcTrend(kpis.valorCancelado, kpisPrev.valorCancelado)} invertTrend />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
