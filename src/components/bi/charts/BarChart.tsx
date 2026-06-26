@@ -110,7 +110,7 @@ export default function BarChart({
   // ── Horizontal layout ───────────────────────────────────────────────────────
   if (layout === "horizontal") {
     return (
-      <ChartFrame loading={loading} isEmpty={isEmpty} height={height}>
+      <ChartFrame loading={loading} isEmpty={isEmpty} height={height} ariaLabel={`Gráfico de barras: ${keys.join(", ")}`}>
         <div ref={containerRef} style={{ width: "100%", position: "relative" }}>
           {keys.map((key, ki) => {
             const color = resolveColor(ki, 0, palette, itemColors);
@@ -196,7 +196,7 @@ export default function BarChart({
     // Stacked: render as grouped SvgBarV sections stacked (simplified for v1)
     // Each key becomes its own row of bars rendered below each other
     return (
-      <ChartFrame loading={loading} isEmpty={isEmpty} height={height}>
+      <ChartFrame loading={loading} isEmpty={isEmpty} height={height} ariaLabel={`Gráfico de barras empilhadas: ${keys.join(", ")}`}>
         <div ref={containerRef} style={{ width: "100%", position: "relative" }}>
           {keys.map((key, ki) => {
             const color = resolveColor(ki, 0, palette, itemColors);
@@ -258,7 +258,7 @@ export default function BarChart({
 
   // Grouped / single-key vertical
   return (
-    <ChartFrame loading={loading} isEmpty={isEmpty} height={height}>
+    <ChartFrame loading={loading} isEmpty={isEmpty} height={height} ariaLabel={`Gráfico de barras: ${keys.join(", ")}`}>
       <div ref={containerRef} style={{ width: "100%", position: "relative" }}>
         {/* Single-series legend when seriesLabels is provided */}
         {keys.length === 1 && seriesLabels && seriesLabels[keys[0]] && (

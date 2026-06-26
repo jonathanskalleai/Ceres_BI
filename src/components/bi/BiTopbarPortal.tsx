@@ -65,6 +65,7 @@ export function BiTopbarPortal() {
       <Select
         value={categoria}
         onValueChange={(v) => setCategoria(v as CategoriaFilter)}
+        aria-label="Filtro de categoria"
       >
         <SelectTrigger className="h-7 w-full sm:w-[160px] text-[11px] bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]">
           <SelectValue placeholder="Categoria" />
@@ -78,7 +79,7 @@ export function BiTopbarPortal() {
         </SelectContent>
       </Select>
 
-      <Select value={funil} onValueChange={setFunil}>
+      <Select value={funil} onValueChange={setFunil} aria-label="Filtro de funil">
         <SelectTrigger className="h-7 w-full sm:w-[160px] text-[11px] bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]">
           <SelectValue placeholder="Funil" />
         </SelectTrigger>
@@ -91,7 +92,7 @@ export function BiTopbarPortal() {
         </SelectContent>
       </Select>
 
-      <Select value={vendedor || "__all__"} onValueChange={(v) => setVendedor(v === "__all__" ? "" : v)}>
+      <Select value={vendedor || "__all__"} onValueChange={(v) => setVendedor(v === "__all__" ? "" : v)} aria-label="Filtro de vendedor">
         <SelectTrigger className="h-7 w-full sm:w-[150px] text-[11px] bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]">
           <SelectValue placeholder="Vendedor" />
         </SelectTrigger>
@@ -103,7 +104,7 @@ export function BiTopbarPortal() {
         </SelectContent>
       </Select>
 
-      <Select value={cidade || "__all__"} onValueChange={(v) => setCidade(v === "__all__" ? "" : v)}>
+      <Select value={cidade || "__all__"} onValueChange={(v) => setCidade(v === "__all__" ? "" : v)} aria-label="Filtro de cidade">
         <SelectTrigger className="h-7 w-full sm:w-[150px] text-[11px] bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]">
           <SelectValue placeholder="Cidade" />
         </SelectTrigger>

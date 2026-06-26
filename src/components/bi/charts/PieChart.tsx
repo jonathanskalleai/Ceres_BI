@@ -58,7 +58,7 @@ export default function PieChart({
     : fmtCompact(total);
 
   return (
-    <ChartFrame loading={loading} isEmpty={!data.length} height={height} rounded="full">
+    <ChartFrame loading={loading} isEmpty={!data.length} height={height} rounded="full" ariaLabel={`Gráfico de pizza: ${data.map((d) => d.name).join(", ")}`}>
       <div
         ref={containerRef}
         style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}
