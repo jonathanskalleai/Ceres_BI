@@ -13,13 +13,17 @@ export async function fetchListasFiltros(
   from: string,
   to: string,
 ): Promise<ListasFiltrosResult> {
-  const { data, error } = await supabase.rpc("rpc_listas_filtros", {
-    p_from: from,
-    p_to: to,
-  });
-  if (error) throw new Error(`rpc_listas_filtros: ${error.message}`);
+  try {
+    const { data, error } = await supabase.rpc("rpc_listas_filtros", {
+      p_from: from,
+      p_to: to,
+    });
+    if (error) throw new Error(error.message);
 
-  // RPC returns a single JSON object
-  const raw = Array.isArray(data) ? data[0] : data;
-  return (raw ?? { vendedores: [], cidades: [] }) as ListasFiltrosResult;
+    // RPC returns a single JSON object
+    const raw = Array.isArray(data) ? data[0] : data;
+    return (raw ?? { vendedores: [], cidades: [] }) as ListasFiltrosResult;
+  } catch (err) {
+    throw new Error(`[listasFiltrosRpcService.fetchListasFiltros] ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
 }

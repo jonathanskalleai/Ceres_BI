@@ -63,7 +63,7 @@ const getSugestaoAcao = (c: ClienteCriticoView): SugestaoAcao => {
   };
 };
 
-const FAIXA_COLORS = ["var(--voux-accent)", "var(--voux-warning)", "var(--voux-danger)", "#dc2626"];
+const FAIXA_COLORS = ["var(--voux-accent)", "var(--voux-warning)", "var(--voux-danger)", "var(--voux-danger)"];
 
 export const DashboardClientesCriticos = ({ criticos }: Props) => {
   const totalPipelineEmRisco = criticos.reduce((sum, c) => sum + c.pipeline, 0);
@@ -115,7 +115,7 @@ export const DashboardClientesCriticos = ({ criticos }: Props) => {
             layout="horizontal"
             keys={["count"]}
             height={220}
-            colors={["#c97565"]}
+            colors={["var(--voux-danger)"]}
           />
         </ChartCard>
       </div>

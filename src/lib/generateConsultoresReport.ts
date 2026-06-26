@@ -1,4 +1,4 @@
-import jsPDF from "jspdf";
+import type jsPDF from "jspdf";
 
 const COLORS = {
   primary: [30, 64, 175] as [number, number, number],
@@ -23,7 +23,60 @@ function formatDate(d: string): string {
   return `${day}/${m}/${y}`;
 }
 
-export function generateConsultoresReport(report: any) {
+interface ConsultorStats {
+  nome?: string;
+  negocios: number;
+  valorTotal: number;
+  ganhos: number;
+  perdidos: number;
+  emAndamento: number;
+  visitasCRM: number;
+  taxaConversao: number;
+  visitas: number;
+  eficiencia: number;
+}
+
+interface ReportStats {
+  individual?: string;
+  periodo: { inicio: string; fim: string };
+  totais: ConsultorStats;
+  consultores: ConsultorStats[];
+}
+
+interface ReportAnalise {
+  nome?: string;
+  classificacao?: string;
+  analise?: string;
+  pontos_fortes?: string[];
+  pontos_fracos?: string[];
+}
+
+interface ConsultoresReport {
+  _stats: ReportStats;
+  resumo_executivo?: {
+    visao_geral?: string;
+    destaques_positivos?: string[];
+    destaques_negativos?: string[];
+    conclusoes?: string[];
+  };
+  analise_consultores?: ReportAnalise[];
+  pontos_atencao?: { severidade?: string; titulo: string; descricao: string }[];
+  oportunidades?: { titulo: string; descricao: string }[];
+  insights_ia?: {
+    padroes?: string[];
+    tendencias?: string[];
+    previsoes?: string[];
+  };
+  recomendacoes?: { prioridade?: string; titulo: string; descricao: string }[];
+  plano_acao?: {
+    acoes_gestor?: string[];
+    acoes_consultores?: string[];
+    prioridades_curto_prazo?: string[];
+  };
+}
+
+export async function generateConsultoresReport(report: ConsultoresReport) {
+  const { default: jsPDF } = await import("jspdf");
   const pdf = new jsPDF("p", "mm", "a4");
   const pageW = 210;
   const marginL = 15;

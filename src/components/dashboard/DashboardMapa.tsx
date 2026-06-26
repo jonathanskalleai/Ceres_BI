@@ -1,8 +1,10 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, lazy, Suspense } from "react";
 import type { RegiaoSummary, Registro, Filters } from "@/types/comercial";
 import { MapPin, Users } from "lucide-react";
-import { MapKpis, MapView, MapDetailsTable, useMapData } from "./mapa";
+import { MapKpis, MapDetailsTable, useMapData } from "./mapa";
 import { MapViewMode, MapRegion, MONO } from "./mapa/types";
+
+const LazyMapView = lazy(() => import("./mapa/MapView"));
 
 interface DashboardMapaProps {
   regioes: RegiaoSummary[];
@@ -67,16 +69,18 @@ export const DashboardMapa = ({ regioes, registros, filters }: DashboardMapaProp
       />
 
       {/* Map (inline + fullscreen) */}
-      <MapView
-        mapView={mapView}
-        setMapView={setMapView}
-        clientePoints={clientePoints}
-        regions={regions}
-        center={center}
-        fullscreen={fullscreen}
-        toggleFullscreen={toggleFullscreen}
-        onRegionClick={setSelectedRegion}
-      />
+      <Suspense fallback={<div className="h-[520px] rounded-[20px] animate-pulse" style={{ background: "var(--voux-skeleton)" }} />}>
+        <LazyMapView
+          mapView={mapView}
+          setMapView={setMapView}
+          clientePoints={clientePoints}
+          regions={regions}
+          center={center}
+          fullscreen={fullscreen}
+          toggleFullscreen={toggleFullscreen}
+          onRegionClick={setSelectedRegion}
+        />
+      </Suspense>
 
       {/* Details table */}
       <MapDetailsTable

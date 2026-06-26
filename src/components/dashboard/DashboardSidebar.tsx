@@ -166,7 +166,7 @@ export const DashboardSidebar = ({ currentView, onNavigate, lastUpdated }: Props
           <div
             className="flex-shrink-0 w-9 h-9 rounded-[10px] flex items-center justify-center text-[20px] italic text-[var(--voux-card-to)] font-bold"
             style={{
-              background: "linear-gradient(135deg, var(--voux-accent), #927142)",
+              background: "linear-gradient(135deg, var(--voux-accent), var(--voux-champagne-600))",
               boxShadow: "0 0 24px rgba(212,184,150,0.18), 0 0 1px rgba(212,184,150,0.5)",
               fontFamily: "var(--voux-font-display)",
             }}

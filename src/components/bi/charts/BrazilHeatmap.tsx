@@ -95,6 +95,7 @@ export default function BrazilHeatmap({
         text: ["Mais", "Menos"],
         textStyle: { color: vars.axisText, fontSize: 11 },
         inRange: {
+          // heatmap scale — no VOUX token equivalent (green intensity gradient)
           color: isDark
             ? ["#2a3215", "#3d5a1e", "#5a8c14", "#26a503"]
             : ["#e2daca", "#a8b88a", "#6b8e23", "#425a02"],
@@ -110,6 +111,7 @@ export default function BrazilHeatmap({
           roam: false,
           emphasis: {
             label: { show: true, color: vars.tooltipText, fontSize: 12 },
+            // heatmap scale — no VOUX token equivalent (green highlight)
             itemStyle: { areaColor: isDark ? "#5a8c14" : "#6b8e23" },
           },
           itemStyle: {

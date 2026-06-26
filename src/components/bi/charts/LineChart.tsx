@@ -124,7 +124,7 @@ export default function LineChart({
                   width: 8,
                   height: 8,
                   borderRadius: "50%",
-                  background: s.color ?? "#c8b99a",
+                  background: s.color ?? "var(--voux-champagne-400)",
                   flexShrink: 0,
                   display: "inline-block",
                 }}

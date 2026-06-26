@@ -49,17 +49,21 @@ export async function fetchNegociosBI(
   to: string,
   funis?: string[],
 ): Promise<RpcNegociosBI> {
-  const params: Record<string, unknown> = { p_from: from, p_to: to };
-  if (funis && funis.length > 0) params.p_funis = funis;
+  try {
+    const params: Record<string, unknown> = { p_from: from, p_to: to };
+    if (funis && funis.length > 0) params.p_funis = funis;
 
-  const { data, error } = await supabase.rpc("rpc_negocios_bi", params);
-  if (error) throw new Error(`rpc_negocios_bi: ${error.message}`);
-  const raw = unwrapRpc<Partial<RpcNegociosBI>>(data);
-  return {
-    ...NEGOCIOS_BI_DEFAULTS,
-    ...raw,
-    kpis: { ...NEGOCIOS_BI_DEFAULTS.kpis, ...raw.kpis },
-  };
+    const { data, error } = await supabase.rpc("rpc_negocios_bi", params);
+    if (error) throw new Error(error.message);
+    const raw = unwrapRpc<Partial<RpcNegociosBI>>(data);
+    return {
+      ...NEGOCIOS_BI_DEFAULTS,
+      ...raw,
+      kpis: { ...NEGOCIOS_BI_DEFAULTS.kpis, ...raw.kpis },
+    };
+  } catch (err) {
+    throw new Error(`[biRpcService.fetchNegociosBI] ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
 }
 
 /**
@@ -69,12 +73,16 @@ export async function fetchPedidosBI(
   from: string,
   to: string,
 ): Promise<RpcPedidosBI> {
-  const { data, error } = await supabase.rpc("rpc_pedidos_bi", {
-    p_from: from,
-    p_to: to,
-  });
-  if (error) throw new Error(`rpc_pedidos_bi: ${error.message}`);
-  return unwrapRpc<RpcPedidosBI>(data);
+  try {
+    const { data, error } = await supabase.rpc("rpc_pedidos_bi", {
+      p_from: from,
+      p_to: to,
+    });
+    if (error) throw new Error(error.message);
+    return unwrapRpc<RpcPedidosBI>(data);
+  } catch (err) {
+    throw new Error(`[biRpcService.fetchPedidosBI] ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
 }
 
 /**
@@ -84,12 +92,16 @@ export async function fetchServicosBI(
   from: string,
   to: string,
 ): Promise<RpcServicosBI> {
-  const { data, error } = await supabase.rpc("rpc_servicos_bi", {
-    p_from: from,
-    p_to: to,
-  });
-  if (error) throw new Error(`rpc_servicos_bi: ${error.message}`);
-  return unwrapRpc<RpcServicosBI>(data);
+  try {
+    const { data, error } = await supabase.rpc("rpc_servicos_bi", {
+      p_from: from,
+      p_to: to,
+    });
+    if (error) throw new Error(error.message);
+    return unwrapRpc<RpcServicosBI>(data);
+  } catch (err) {
+    throw new Error(`[biRpcService.fetchServicosBI] ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
 }
 
 /**
@@ -97,9 +109,13 @@ export async function fetchServicosBI(
  * No params (static table, no date filter).
  */
 export async function fetchAdminBI(): Promise<RpcAdminBI> {
-  const { data, error } = await supabase.rpc("rpc_admin_bi");
-  if (error) throw new Error(`rpc_admin_bi: ${error.message}`);
-  return unwrapRpc<RpcAdminBI>(data);
+  try {
+    const { data, error } = await supabase.rpc("rpc_admin_bi");
+    if (error) throw new Error(error.message);
+    return unwrapRpc<RpcAdminBI>(data);
+  } catch (err) {
+    throw new Error(`[biRpcService.fetchAdminBI] ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
 }
 
 /**
@@ -112,16 +128,20 @@ export async function fetchAcoesBI(params: {
   tipoAcao?: string;
   cidade?: string;
 }): Promise<RpcAcoesBI> {
-  const rpcParams: Record<string, unknown> = {};
-  if (params.from) rpcParams.p_from = params.from;
-  if (params.to) rpcParams.p_to = params.to;
-  if (params.vendedor) rpcParams.p_vendedor = params.vendedor;
-  if (params.tipoAcao) rpcParams.p_tipo_acao = params.tipoAcao;
-  if (params.cidade) rpcParams.p_cidade = params.cidade;
+  try {
+    const rpcParams: Record<string, unknown> = {};
+    if (params.from) rpcParams.p_from = params.from;
+    if (params.to) rpcParams.p_to = params.to;
+    if (params.vendedor) rpcParams.p_vendedor = params.vendedor;
+    if (params.tipoAcao) rpcParams.p_tipo_acao = params.tipoAcao;
+    if (params.cidade) rpcParams.p_cidade = params.cidade;
 
-  const { data, error } = await supabase.rpc("rpc_acoes_bi", rpcParams);
-  if (error) throw new Error(`rpc_acoes_bi: ${error.message}`);
-  return unwrapRpc<RpcAcoesBI>(data);
+    const { data, error } = await supabase.rpc("rpc_acoes_bi", rpcParams);
+    if (error) throw new Error(error.message);
+    return unwrapRpc<RpcAcoesBI>(data);
+  } catch (err) {
+    throw new Error(`[biRpcService.fetchAcoesBI] ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
 }
 
 /**
@@ -132,12 +152,16 @@ export async function fetchInteligenciaEsforcoBI(
   to: string,
   funis?: string[] | null,
 ): Promise<RpcInteligenciaEsforcoBI> {
-  const params: Record<string, unknown> = { p_from: from, p_to: to };
-  if (funis && funis.length > 0) params.p_funis = funis;
+  try {
+    const params: Record<string, unknown> = { p_from: from, p_to: to };
+    if (funis && funis.length > 0) params.p_funis = funis;
 
-  const { data, error } = await supabase.rpc("rpc_inteligencia_esforco_bi", params);
-  if (error) throw new Error(`rpc_inteligencia_esforco_bi: ${error.message}`);
-  return unwrapRpc<RpcInteligenciaEsforcoBI>(data);
+    const { data, error } = await supabase.rpc("rpc_inteligencia_esforco_bi", params);
+    if (error) throw new Error(error.message);
+    return unwrapRpc<RpcInteligenciaEsforcoBI>(data);
+  } catch (err) {
+    throw new Error(`[biRpcService.fetchInteligenciaEsforcoBI] ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
 }
 
 /**
@@ -146,29 +170,39 @@ export async function fetchInteligenciaEsforcoBI(
 export async function fetchParqueRenovacaoBI(
   cutoffAnos?: number,
 ): Promise<RpcParqueRenovacaoBI> {
-  const { data, error } = await supabase.rpc("rpc_parque_renovacao_bi", {
-    p_cutoff_anos: cutoffAnos ?? 5,
-  });
-  if (error) throw new Error(`rpc_parque_renovacao_bi: ${error.message}`);
-  return unwrapRpc<RpcParqueRenovacaoBI>(data);
+  try {
+    const { data, error } = await supabase.rpc("rpc_parque_renovacao_bi", {
+      p_cutoff_anos: cutoffAnos ?? 5,
+    });
+    if (error) throw new Error(error.message);
+    return unwrapRpc<RpcParqueRenovacaoBI>(data);
+  } catch (err) {
+    throw new Error(`[biRpcService.fetchParqueRenovacaoBI] ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
 }
 
 /**
  * Calls rpc_operacional_bi — returns aggregated technician productivity metrics.
- * No date params (aggregates all data in mirror.tecnico_tempo + mirror.agenda_servico).
  */
 export async function fetchOperacionalBI(): Promise<RpcOperacionalBI> {
-  const { data, error } = await supabase.rpc("rpc_operacional_bi");
-  if (error) throw new Error(`rpc_operacional_bi: ${error.message}`);
-  return unwrapRpc<RpcOperacionalBI>(data);
+  try {
+    const { data, error } = await supabase.rpc("rpc_operacional_bi");
+    if (error) throw new Error(error.message);
+    return unwrapRpc<RpcOperacionalBI>(data);
+  } catch (err) {
+    throw new Error(`[biRpcService.fetchOperacionalBI] ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
 }
 
 /**
  * Calls rpc_produtos_bi — returns aggregated installed base (parque) metrics.
- * No date params (aggregates all data in mirror.cliente_parque_maquinas).
  */
 export async function fetchProdutosBI(): Promise<RpcProdutosBI> {
-  const { data, error } = await supabase.rpc("rpc_produtos_bi");
-  if (error) throw new Error(`rpc_produtos_bi: ${error.message}`);
-  return unwrapRpc<RpcProdutosBI>(data);
+  try {
+    const { data, error } = await supabase.rpc("rpc_produtos_bi");
+    if (error) throw new Error(error.message);
+    return unwrapRpc<RpcProdutosBI>(data);
+  } catch (err) {
+    throw new Error(`[biRpcService.fetchProdutosBI] ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
 }
