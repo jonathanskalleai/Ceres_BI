@@ -8,6 +8,7 @@ import { ChartCard } from "@/components/bi/ChartCard";
 import { HorizontalBarChart, VerticalBarChart, LineChart } from "@/components/bi/charts";
 import { CHART_COLORS, POSITIVE_COLOR, NEGATIVE_COLOR } from "@/lib/chartTheme";
 import { formatBRL, formatDias, formatMonthYear, toISODate, getPreviousPeriod, calcTrend } from "@/lib/dateUtils";
+import { fmtBRLKpi } from "@/lib/formatters";
 
 import { type CategoriaFilter, CATEGORIA_ALL, getFunisByCategoria, FUNIL_ALL } from "@/lib/categoriaFunil";
 import type { RpcNegociosBI } from "@/types/biRpc";
@@ -84,24 +85,24 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
           hint="ganhos / (ganhos + perdidos)"
         />
         <KPICard
-          title="Pipeline Aberto" value={formatBRL(kpis.pipelineAberto)}
+          title="Pipeline Aberto" value={fmtBRLKpi(kpis.pipelineAberto)}
           icon={Wallet} loading={isLoading}
-          previousValue={formatBRL(kpisPrev.pipelineAberto)}
+          previousValue={fmtBRLKpi(kpisPrev.pipelineAberto)}
           trend={calcTrend(kpis.pipelineAberto, kpisPrev.pipelineAberto)}
           hint="valor em negocios em andamento"
         />
         <KPICard
-          title="Pipeline Perdido" value={formatBRL(kpis.pipelinePerdido)}
+          title="Pipeline Perdido" value={fmtBRLKpi(kpis.pipelinePerdido)}
           icon={Wallet} loading={isLoading}
-          previousValue={formatBRL(kpisPrev.pipelinePerdido)}
+          previousValue={fmtBRLKpi(kpisPrev.pipelinePerdido)}
           trend={calcTrend(kpis.pipelinePerdido, kpisPrev.pipelinePerdido)}
           invertTrend
           hint="valor em negocios perdidos"
         />
         <KPICard
-          title="Valor Ganho" value={formatBRL(kpis.valorGanho)}
+          title="Valor Ganho" value={fmtBRLKpi(kpis.valorGanho)}
           icon={DollarSign} loading={isLoading}
-          previousValue={formatBRL(kpisPrev.valorGanho)}
+          previousValue={fmtBRLKpi(kpisPrev.valorGanho)}
           trend={calcTrend(kpis.valorGanho, kpisPrev.valorGanho)}
           hint={`ticket medio ${formatBRL(kpis.ticketMedioGanho)}`}
         />
