@@ -34,7 +34,24 @@ fora de transacao com ROLLBACK. Toda mutacao → Agent tool.
 
 ---
 
-## PASSO 0 — Modelos
+## PASSO 0 — Obsidian + Modelos
+
+### 0.A — Obsidian: Ler contexto (OBRIGATORIO, antes de QUALQUER acao)
+
+**ANTES de diagnosticar, classificar ou spawnar agente**, executar:
+
+```
+mcp__mcp-tools-istefox__get_vault_file({ path: "Log-Sessoes-Ceres.md" })
+```
+
+- Se retornar conteudo: ler decisoes e problemas anteriores, dizer ao usuario em
+  1 frase o que esta retomando, e prosseguir.
+- Se retornar vazio/erro: prosseguir normalmente (primeira sessao ou vault vazio).
+
+**Sem essa leitura, NAO prosseguir para PASSO 1.** Este gate existe porque o modelo
+"esquece" instrucoes soft no meio de pipelines longos — entao e gate, nao sugestao.
+
+### 0.B — Modelos
 
 Sem tiers. **TODOS os agentes rodam Opus**, exceto `scribe` (Haiku). O modelo e
 enforced via frontmatter de cada subagent — voce NUNCA passa `model` no Agent call.
@@ -172,7 +189,29 @@ ao usuario** — nao emite "PASS_PENDING".
 
 ---
 
-## PASSO 5 — Final
+## PASSO 5 — Obsidian + Final
+
+### 5.A — Obsidian: Registrar decisoes/problemas (OBRIGATORIO antes do ✓)
+
+**ANTES de emitir o bloco ✓**, registrar no Obsidian via:
+
+```
+mcp__mcp-tools-istefox__patch_vault_file({
+  path: "Log-Sessoes-Ceres.md",
+  content: "... entrada na secao apropriada ..."
+})
+```
+
+Registrar quando QUALQUER destes ocorreu na sessao:
+- Bug critico resolvido (ou causado e revertido)
+- Decisao arquitetural tomada
+- Problema encontrado (ex: PostgREST nao resolve overload no Swarm)
+- Mudanca de schema/RPC/modelo de dados
+
+Se a sessao foi trivial (1 fix de CSS, typo) e nao gerou aprendizado: pular.
+**Se gerou aprendizado e NAO registrou: o ✓ final NAO pode ser emitido.**
+
+### 5.B — Bloco Final
 
 **OBRIGATORIO se houve ▶ no inicio** — fechar com este bloco literal antes de qualquer comentario livre:
 
