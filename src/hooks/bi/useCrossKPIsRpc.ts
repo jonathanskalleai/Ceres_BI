@@ -46,6 +46,8 @@ export function useCrossKPIsRpc(
   dateRange: DateRange | undefined,
   categoria: CategoriaFilter,
   funil: string,
+  vendedor?: string,
+  cidade?: string,
 ): UseCrossKPIsResult {
   const from = toISODate(dateRange?.from) ?? "";
   const to = toISODate(dateRange?.to ?? dateRange?.from) ?? "";
@@ -56,19 +58,23 @@ export function useCrossKPIsRpc(
   const prevTo = toISODate(prevRange?.to ?? prevRange?.from) ?? "";
 
   // Current period
-  const { data: negData, isLoading: l1 } = useNegociosBIRpc({ from, to, funis });
-  const { data: pedData, isLoading: l2 } = usePedidosBIRpc({ from, to });
+  const { data: negData, isLoading: l1 } = useNegociosBIRpc({ from, to, funis, vendedor, cidade });
+  const { data: pedData, isLoading: l2 } = usePedidosBIRpc({ from, to, vendedor, cidade });
 
   // Previous period
   const { data: negPrev, isLoading: l3 } = useNegociosBIRpc({
     from: prevFrom,
     to: prevTo,
     funis,
+    vendedor,
+    cidade,
     enabled: !!prevFrom && !!prevTo,
   });
   const { data: pedPrev, isLoading: l4 } = usePedidosBIRpc({
     from: prevFrom,
     to: prevTo,
+    vendedor,
+    cidade,
     enabled: !!prevFrom && !!prevTo,
   });
 
