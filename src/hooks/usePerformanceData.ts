@@ -16,7 +16,7 @@ interface PerformanceDataOptions {
   apresentacaoActive: boolean;
 }
 
-function aggregateNegociosRows(rows: NegocioRow[]): NegociosSummary {
+export function aggregateNegociosRows(rows: NegocioRow[]): NegociosSummary {
   const ganhos = rows.filter((r) => r.ngo_conclusao === "Ganho");
   const emAndamento = rows.filter((r) => r.ngo_conclusao === "Em andamento");
   const totalValor = rows.reduce((s, r) => s + r.valor_pedido, 0);
