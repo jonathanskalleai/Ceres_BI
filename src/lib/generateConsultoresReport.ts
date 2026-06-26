@@ -1,79 +1,7 @@
-import type jsPDF from "jspdf";
+import type { ConsultoresReport } from "@/types/consultorReport";
+import { COLORS, formatCurrency, formatDate } from "@/lib/report/reportConstants";
 
-const COLORS = {
-  primary: [30, 64, 175] as [number, number, number],
-  success: [22, 163, 74] as [number, number, number],
-  warning: [202, 138, 4] as [number, number, number],
-  danger: [220, 38, 38] as [number, number, number],
-  dark: [30, 41, 59] as [number, number, number],
-  muted: [100, 116, 139] as [number, number, number],
-  bg: [248, 250, 252] as [number, number, number],
-  white: [255, 255, 255] as [number, number, number],
-  lightBg: [241, 245, 249] as [number, number, number],
-};
-
-function formatCurrency(v: number): string {
-  if (v >= 1e6) return `R$ ${(v / 1e6).toFixed(2)}M`;
-  if (v >= 1e3) return `R$ ${(v / 1e3).toFixed(0)}K`;
-  return `R$ ${v.toFixed(0)}`;
-}
-
-function formatDate(d: string): string {
-  const [y, m, day] = d.split("-");
-  return `${day}/${m}/${y}`;
-}
-
-interface ConsultorStats {
-  nome?: string;
-  negocios: number;
-  valorTotal: number;
-  ganhos: number;
-  perdidos: number;
-  emAndamento: number;
-  visitasCRM: number;
-  taxaConversao: number;
-  visitas: number;
-  eficiencia: number;
-}
-
-interface ReportStats {
-  individual?: string;
-  periodo: { inicio: string; fim: string };
-  totais: ConsultorStats;
-  consultores: ConsultorStats[];
-}
-
-interface ReportAnalise {
-  nome?: string;
-  classificacao?: string;
-  analise?: string;
-  pontos_fortes?: string[];
-  pontos_fracos?: string[];
-}
-
-interface ConsultoresReport {
-  _stats: ReportStats;
-  resumo_executivo?: {
-    visao_geral?: string;
-    destaques_positivos?: string[];
-    destaques_negativos?: string[];
-    conclusoes?: string[];
-  };
-  analise_consultores?: ReportAnalise[];
-  pontos_atencao?: { severidade?: string; titulo: string; descricao: string }[];
-  oportunidades?: { titulo: string; descricao: string }[];
-  insights_ia?: {
-    padroes?: string[];
-    tendencias?: string[];
-    previsoes?: string[];
-  };
-  recomendacoes?: { prioridade?: string; titulo: string; descricao: string }[];
-  plano_acao?: {
-    acoes_gestor?: string[];
-    acoes_consultores?: string[];
-    prioridades_curto_prazo?: string[];
-  };
-}
+export type { ConsultorStats, ReportStats, ReportAnalise, ConsultoresReport } from "@/types/consultorReport";
 
 export async function generateConsultoresReport(report: ConsultoresReport) {
   const { default: jsPDF } = await import("jspdf");
@@ -199,7 +127,6 @@ export async function generateConsultoresReport(report: ConsultoresReport) {
 
   const headers = ["#", "Consultor", "Negócios", "Volume", "Ganhos", "Conv.%", "Visitas", "Efic.%"];
   const colW = [8, 40, 18, 28, 16, 16, 16, 16];
-  // Header
   pdf.setFillColor(...COLORS.primary);
   pdf.roundedRect(marginL, y, contentW, 7, 1, 1, "F");
   pdf.setTextColor(...COLORS.white);
@@ -224,7 +151,7 @@ export async function generateConsultoresReport(report: ConsultoresReport) {
     pdf.setFontSize(7);
     pdf.setFont("helvetica", "normal");
     cx = marginL + 2;
-    const medals = ["🥇", "🥈", "🥉"];
+    const medals = ["\u{1F947}", "\u{1F948}", "\u{1F949}"];
     const rank = ri < 3 ? medals[ri] : `${ri + 1}`;
     const vals = [rank, c.nome?.split(" ").slice(0, 2).join(" ") || "", String(c.negocios), formatCurrency(c.valorTotal), String(c.ganhos), `${c.taxaConversao}%`, String(c.visitas), `${c.eficiencia}%`];
     for (let i = 0; i < vals.length; i++) {
@@ -237,7 +164,7 @@ export async function generateConsultoresReport(report: ConsultoresReport) {
 
   // ===== SECTION 1: RESUMO EXECUTIVO =====
   const re = report.resumo_executivo;
-  sectionTitle("📊", "1. RESUMO EXECUTIVO");
+  sectionTitle("\u{1F4CA}", "1. RESUMO EXECUTIVO");
   if (re?.visao_geral) paragraph(re.visao_geral);
   if (re?.destaques_positivos?.length) {
     pdf.setFontSize(9); pdf.setFont("helvetica", "bold"); pdf.text("Destaques Positivos:", marginL, y); y += 5;
@@ -253,7 +180,7 @@ export async function generateConsultoresReport(report: ConsultoresReport) {
   }
 
   // ===== SECTION 2: ANÁLISE POR CONSULTOR =====
-  sectionTitle("👨‍💼", "2. ANÁLISE DE PERFORMANCE DOS CONSULTORES");
+  sectionTitle("\u{1F468}\u{200D}\u{1F4BC}", "2. ANÁLISE DE PERFORMANCE DOS CONSULTORES");
   const analise = report.analise_consultores || [];
   for (const c of analise) {
     checkPage(25);
@@ -282,7 +209,7 @@ export async function generateConsultoresReport(report: ConsultoresReport) {
   }
 
   // ===== SECTION 3: PONTOS DE ATENÇÃO =====
-  sectionTitle("⚠️", "3. PONTOS DE ATENÇÃO");
+  sectionTitle("\u{26A0}\u{FE0F}", "3. PONTOS DE ATENÇÃO");
   for (const p of (report.pontos_atencao || [])) {
     checkPage(12);
     const sevColor = p.severidade === "alta" ? COLORS.danger : p.severidade === "media" ? COLORS.warning : COLORS.muted;
@@ -293,7 +220,7 @@ export async function generateConsultoresReport(report: ConsultoresReport) {
   }
 
   // ===== SECTION 4: OPORTUNIDADES =====
-  sectionTitle("💡", "4. OPORTUNIDADES IDENTIFICADAS");
+  sectionTitle("\u{1F4A1}", "4. OPORTUNIDADES IDENTIFICADAS");
   for (const o of (report.oportunidades || [])) {
     checkPage(12);
     pdf.setFontSize(9); pdf.setFont("helvetica", "bold"); pdf.setTextColor(...COLORS.primary);
@@ -303,7 +230,7 @@ export async function generateConsultoresReport(report: ConsultoresReport) {
   }
 
   // ===== SECTION 5: INSIGHTS IA =====
-  sectionTitle("🧠", "5. INSIGHTS INTELIGENTES (IA)");
+  sectionTitle("\u{1F9E0}", "5. INSIGHTS INTELIGENTES (IA)");
   const ins = report.insights_ia;
   if (ins?.padroes?.length) {
     pdf.setFontSize(9); pdf.setFont("helvetica", "bold"); pdf.text("Padrões Identificados:", marginL, y); y += 5;
@@ -319,7 +246,7 @@ export async function generateConsultoresReport(report: ConsultoresReport) {
   }
 
   // ===== SECTION 6: RECOMENDAÇÕES =====
-  sectionTitle("🎯", "6. RECOMENDAÇÕES ESTRATÉGICAS");
+  sectionTitle("\u{1F3AF}", "6. RECOMENDAÇÕES ESTRATÉGICAS");
   for (const r of (report.recomendacoes || [])) {
     checkPage(12);
     const prColor = r.prioridade === "alta" ? COLORS.danger : r.prioridade === "media" ? COLORS.warning : COLORS.muted;
@@ -331,7 +258,7 @@ export async function generateConsultoresReport(report: ConsultoresReport) {
   }
 
   // ===== SECTION 7: PLANO DE AÇÃO =====
-  sectionTitle("📲", "7. PLANO DE AÇÃO");
+  sectionTitle("\u{1F4F2}", "7. PLANO DE AÇÃO");
   const pa = report.plano_acao;
   if (pa?.acoes_gestor?.length) {
     pdf.setFontSize(9); pdf.setFont("helvetica", "bold"); pdf.text("Ações para o Gestor:", marginL, y); y += 5;
@@ -356,6 +283,6 @@ export async function generateConsultoresReport(report: ConsultoresReport) {
     pdf.text(`Página ${i}/${totalPages}`, pageW - marginR, 290, { align: "right" });
   }
 
-  const suffix = isIndividual ? stats.individual.replace(/\s+/g, "_") : "Consultores";
+  const suffix = isIndividual ? stats.individual!.replace(/\s+/g, "_") : "Consultores";
   pdf.save(`Relatorio_${suffix}_${periodo.fim}.pdf`);
 }
