@@ -173,7 +173,7 @@ export default function BarChart({
                       visible: true,
                       x,
                       y,
-                      content: `<div style="font-size:10px;color:${VOUX_COLORS.inkMuted};margin-bottom:3px;text-transform:uppercase;letter-spacing:0.1em">${keyLabel}</div><div style="font-size:13px;color:${VOUX_COLORS.ink}"><strong>${label}</strong>: ${formatted}</div>`,
+                      content: `<div style="font-size:10px;color:var(--voux-tooltip-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.1em">${keyLabel}</div><div style="font-size:13px;color:var(--voux-tooltip-text)"><strong>${label}</strong>: ${formatted}</div>`,
                     });
                   }}
                   onBarLeave={() => setTooltip((t) => ({ ...t, visible: false }))}
@@ -242,7 +242,7 @@ export default function BarChart({
                       visible: true,
                       x,
                       y,
-                      content: `<div style="font-size:10px;color:${VOUX_COLORS.inkMuted};margin-bottom:3px;text-transform:uppercase;letter-spacing:0.1em">${keyLabel}</div><div style="font-size:13px;color:${VOUX_COLORS.ink}"><strong>${label}</strong>: ${formatted}</div>`,
+                      content: `<div style="font-size:10px;color:var(--voux-tooltip-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.1em">${keyLabel}</div><div style="font-size:13px;color:var(--voux-tooltip-text)"><strong>${label}</strong>: ${formatted}</div>`,
                     });
                   }}
                   onBarLeave={() => setTooltip((t) => ({ ...t, visible: false }))}
@@ -331,7 +331,7 @@ export default function BarChart({
                     visible: true,
                     x,
                     y,
-                    content: `<div style="font-size:10px;color:${VOUX_COLORS.inkMuted};margin-bottom:3px;text-transform:uppercase;letter-spacing:0.1em">${keyLabel}</div><div style="font-size:13px;color:${VOUX_COLORS.ink}"><strong>${label}</strong>: ${formatted}</div>`,
+                    content: `<div style="font-size:10px;color:var(--voux-tooltip-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.1em">${keyLabel}</div><div style="font-size:13px;color:var(--voux-tooltip-text)"><strong>${label}</strong>: ${formatted}</div>`,
                   });
                 }}
                 onBarLeave={() => setTooltip((t) => ({ ...t, visible: false }))}

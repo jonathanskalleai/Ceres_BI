@@ -69,10 +69,10 @@ export const DashboardInsights = ({ registros, filters }: DashboardInsightsProps
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KPICard title="Obs. com Conteúdo"    value={obsWithContent.length.toString()} icon={MessageSquareText} accentColor="#3b82f6" />
+        <KPICard title="Obs. com Conteúdo"    value={obsWithContent.length.toString()} icon={MessageSquareText} accentColor="var(--voux-info)" />
         <KPICard title="Menções Positivas"     value={totalPos.toString()}              icon={ThumbsUp}          accentColor={COLORS_POS} />
         <KPICard title="Menções Negativas"     value={totalNeg.toString()}              icon={ThumbsDown}        accentColor={COLORS_NEG} />
-        <KPICard title="Produtos Identificados" value={products.length.toString()}      icon={Package}           accentColor="#eab308" />
+        <KPICard title="Produtos Identificados" value={products.length.toString()}      icon={Package}           accentColor="var(--voux-warning)" />
       </div>
 
       <Card className="border-0 shadow-sm">

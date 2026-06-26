@@ -25,7 +25,6 @@ UPDATE public.app_modules SET label = 'Gestao Interna',         sort_order = 8, 
 -- ============================================================
 -- 3. Remove crm.regioes (no page exists for it)
 -- ============================================================
-DELETE FROM public.role_modules     WHERE module_id = 'crm.regioes';
 DELETE FROM public.user_permissions  WHERE module_id = 'crm.regioes';
 DELETE FROM public.app_modules       WHERE id        = 'crm.regioes';
 

@@ -1,5 +1,6 @@
+import { useMemo } from "react";
 import { type DateRange } from "react-day-picker";
-import { toISODate } from "@/lib/dateUtils";
+import { toISODate, getPreviousPeriod, calcTrend } from "@/lib/dateUtils";
 import { usePedidosBIRpc } from "@/hooks/bi/usePedidosBIRpc";
 
 type Trend = "up" | "down" | "neutral";
@@ -22,16 +23,12 @@ export interface UsePedidosKPIsResult {
   isLoading: boolean;
 }
 
-function neutralKPI(value: number): KPIWithPrev {
-  return { value, previousValue: 0, trend: "neutral" };
+function makeKPI(atual: number, anterior: number): KPIWithPrev {
+  return { value: atual, previousValue: anterior, trend: calcTrend(atual, anterior) };
 }
 
 /**
- * RPC-backed replacement for usePedidosKPIs.
- * Fetches KPIs from rpc_pedidos_bi (server-side aggregation) instead of
- * pulling all rows and computing client-side.
- *
- * Trend is hardcoded to "neutral" since RPCs don't return previous-period data yet.
+ * RPC-backed Pedidos KPIs with previous-period comparison.
  */
 export function usePedidosKPIsRpc(
   dateRange: DateRange | undefined,
@@ -41,21 +38,30 @@ export function usePedidosKPIsRpc(
   const from = toISODate(dateRange?.from) ?? "";
   const to = toISODate(dateRange?.to ?? dateRange?.from) ?? "";
 
-  const { data, isLoading } = usePedidosBIRpc({ from, to });
+  const prevRange = useMemo(() => getPreviousPeriod(dateRange), [dateRange]);
+  const prevFrom = toISODate(prevRange?.from) ?? "";
+  const prevTo = toISODate(prevRange?.to ?? prevRange?.from) ?? "";
 
-  const kpis: PedidosKPIsResult = data
+  const { data: atual, isLoading: l1 } = usePedidosBIRpc({ from, to });
+  const { data: anterior, isLoading: l2 } = usePedidosBIRpc({
+    from: prevFrom,
+    to: prevTo,
+    enabled: !!prevFrom && !!prevTo,
+  });
+
+  const kpis: PedidosKPIsResult = atual
     ? {
-        faturamento: neutralKPI(data.kpis.faturamento),
-        totalPedidos: neutralKPI(data.kpis.total),
-        taxaAprovacao: neutralKPI(data.kpis.percentAprovado),
-        mixFinanciamento: neutralKPI(data.kpis.percentFinanciado),
+        faturamento: makeKPI(atual.kpis.faturamento, anterior?.kpis.faturamento ?? 0),
+        totalPedidos: makeKPI(atual.kpis.total, anterior?.kpis.total ?? 0),
+        taxaAprovacao: makeKPI(atual.kpis.percentAprovado, anterior?.kpis.percentAprovado ?? 0),
+        mixFinanciamento: makeKPI(atual.kpis.percentFinanciado, anterior?.kpis.percentFinanciado ?? 0),
       }
     : {
-        faturamento: neutralKPI(0),
-        totalPedidos: neutralKPI(0),
-        taxaAprovacao: neutralKPI(0),
-        mixFinanciamento: neutralKPI(0),
+        faturamento: makeKPI(0, 0),
+        totalPedidos: makeKPI(0, 0),
+        taxaAprovacao: makeKPI(0, 0),
+        mixFinanciamento: makeKPI(0, 0),
       };
 
-  return { kpis, isLoading };
+  return { kpis, isLoading: l1 || l2 };
 }

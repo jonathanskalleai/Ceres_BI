@@ -7,6 +7,8 @@ import type {
   RpcAcoesBI,
   RpcInteligenciaEsforcoBI,
   RpcParqueRenovacaoBI,
+  RpcOperacionalBI,
+  RpcProdutosBI,
 } from "@/types/biRpc";
 
 /** Unwrap Supabase RPC response — single-JSON RPCs may return wrapped in array. */
@@ -149,4 +151,24 @@ export async function fetchParqueRenovacaoBI(
   });
   if (error) throw new Error(`rpc_parque_renovacao_bi: ${error.message}`);
   return unwrapRpc<RpcParqueRenovacaoBI>(data);
+}
+
+/**
+ * Calls rpc_operacional_bi — returns aggregated technician productivity metrics.
+ * No date params (aggregates all data in mirror.tecnico_tempo + mirror.agenda_servico).
+ */
+export async function fetchOperacionalBI(): Promise<RpcOperacionalBI> {
+  const { data, error } = await supabase.rpc("rpc_operacional_bi");
+  if (error) throw new Error(`rpc_operacional_bi: ${error.message}`);
+  return unwrapRpc<RpcOperacionalBI>(data);
+}
+
+/**
+ * Calls rpc_produtos_bi — returns aggregated installed base (parque) metrics.
+ * No date params (aggregates all data in mirror.cliente_parque_maquinas).
+ */
+export async function fetchProdutosBI(): Promise<RpcProdutosBI> {
+  const { data, error } = await supabase.rpc("rpc_produtos_bi");
+  if (error) throw new Error(`rpc_produtos_bi: ${error.message}`);
+  return unwrapRpc<RpcProdutosBI>(data);
 }

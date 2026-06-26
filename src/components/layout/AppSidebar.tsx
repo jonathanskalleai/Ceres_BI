@@ -15,6 +15,11 @@ import { SidebarNavItem } from './SidebarNavItem';
 import type { NavItem } from './SidebarNavItem';
 import type { AppModule } from '@/types/auth';
 
+export interface AppSidebarProps {
+  /** Called after a nav item is clicked (used by mobile Sheet to close) */
+  onNavClick?: () => void;
+}
+
 /** Map of module_id to route path */
 const MODULE_ROUTES: Record<string, string> = {
   'crm.overview': '/crm/overview',
@@ -78,7 +83,7 @@ function buildNavItems(modules: AppModule[]): NavItem[] {
   return items;
 }
 
-export function AppSidebar() {
+export function AppSidebar({ onNavClick }: AppSidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { isDark, toggle: toggleTheme } = useTheme();
@@ -90,6 +95,7 @@ export function AppSidebar() {
 
   const handleItemClick = (item: NavItem) => {
     navigate(item.route);
+    onNavClick?.();
   };
 
   const isActive = (item: NavItem): boolean => {
@@ -101,9 +107,9 @@ export function AppSidebar() {
       <aside
         className={cn(
           'shrink-0 flex flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200',
-          collapsed ? 'w-[56px]' : 'w-[252px]',
+          onNavClick ? 'w-full' : (collapsed ? 'w-[56px]' : 'w-[252px]'),
         )}
-        style={{ height: '100vh', position: 'sticky', top: 0, overflowY: 'auto' }}
+        style={onNavClick ? { height: '100%', overflowY: 'auto' } : { height: '100vh', position: 'sticky', top: 0, overflowY: 'auto' }}
       >
         {/* Brand */}
         <div

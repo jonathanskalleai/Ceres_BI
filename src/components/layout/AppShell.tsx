@@ -1,6 +1,10 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { Menu } from 'lucide-react';
 import { AppSidebar } from '@/components/layout/AppSidebar';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 /** Map route prefix to section label + title */
 const ROUTE_META: Record<string, { section: string; title: string }> = {
@@ -46,9 +50,10 @@ function resolveRouteMeta(pathname: string): { section: string; title: string } 
 interface AppShellTopbarProps {
   section: string;
   title: string;
+  onMenuClick?: () => void;
 }
 
-function AppShellTopbar({ section: _section, title }: AppShellTopbarProps) {
+function AppShellTopbar({ section: _section, title, onMenuClick }: AppShellTopbarProps) {
   return (
     <header
       className="flex items-center justify-between gap-3 md:gap-5 px-4 sm:px-6 lg:px-10 py-3 md:py-4 lg:py-5 shrink-0"
@@ -59,7 +64,16 @@ function AppShellTopbar({ section: _section, title }: AppShellTopbarProps) {
         zIndex: 20,
       }}
     >
-      <div className="flex flex-col gap-1 min-w-0 flex-1">
+      <div className="flex items-center gap-3 min-w-0 flex-1">
+        {onMenuClick && (
+          <button
+            onClick={onMenuClick}
+            className="shrink-0 p-1.5 -ml-1 rounded-lg text-foreground/70 hover:text-foreground hover:bg-accent transition-colors"
+            aria-label="Abrir menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+        )}
         <h1
           className="text-[20px] md:text-[26px] leading-tight tracking-[-0.012em]"
           style={{ fontFamily: 'var(--voux-font-display)', margin: 0, color: 'var(--voux-text-heading)' }}
@@ -77,12 +91,30 @@ function AppShellTopbar({ section: _section, title }: AppShellTopbarProps) {
 export function AppShell() {
   const location = useLocation();
   const meta = useMemo(() => resolveRouteMeta(location.pathname), [location.pathname]);
+  const isMobile = useIsMobile();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Close mobile sheet on route change
+  const pathnameRef = location.pathname;
+  useMemo(() => { setMobileOpen(false); }, [pathnameRef]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      <AppSidebar />
+      {/* Desktop sidebar */}
+      {!isMobile && <AppSidebar />}
+
+      {/* Mobile sidebar in Sheet */}
+      {isMobile && (
+        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+          <SheetContent side="left" className="p-0 w-[272px] bg-sidebar border-sidebar-border">
+            <VisuallyHidden><SheetTitle>Menu de navegação</SheetTitle></VisuallyHidden>
+            <AppSidebar onNavClick={() => setMobileOpen(false)} />
+          </SheetContent>
+        </Sheet>
+      )}
+
       <main className="flex-1 overflow-auto flex flex-col">
-        <AppShellTopbar section={meta.section} title={meta.title} />
+        <AppShellTopbar section={meta.section} title={meta.title} onMenuClick={isMobile ? () => setMobileOpen(true) : undefined} />
         <div className="flex-1 overflow-auto">
           <Outlet />
         </div>

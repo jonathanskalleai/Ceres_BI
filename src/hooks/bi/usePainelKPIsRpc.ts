@@ -4,7 +4,7 @@ import { type CategoriaFilter, resolveFunis } from "@/lib/categoriaFunil";
 import { toISODate, calcTrend, getPreviousPeriod, type Trend } from "@/lib/dateUtils";
 import { useNegociosBIRpc } from "@/hooks/bi/useNegociosBIRpc";
 import { useAcoesBIRpc } from "@/hooks/bi/useAcoesBIRpc";
-import { useOperacionalData } from "@/hooks/bi/useOperacionalData";
+import { useOperacionalBIRpc } from "@/hooks/bi/useOperacionalBIRpc";
 
 // ---------------------------------------------------------------------------
 // Types (migrated from usePainelKPIs.ts — canonical source now)
@@ -101,8 +101,8 @@ export function usePainelKPIsRpc(
     enabled: true,
   });
 
-  // Operacional (single period — no historical comparison available from SQL Server)
-  const { agg: opData, isLoading: opLoad } = useOperacionalData(true);
+  // Operacional (single period — no historical comparison available)
+  const { data: opData, isLoading: opLoad } = useOperacionalBIRpc(true);
 
   const kpis = useMemo((): PainelKPIs => {
     const naKpis = negAtual?.kpis;
