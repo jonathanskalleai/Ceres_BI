@@ -59,7 +59,7 @@ export default function PedidosSection({ active, dateRange }: Props) {
         <ChartCard
           title="Evolucao Mensal do Faturamento"
           description="Receita aprovada e numero de pedidos por mes"
-          infoTooltip="Por data do pedido"
+          infoTooltip="Por data de ganho (fechamento do negocio)"
           loading={isLoading}
         >
           <div className="h-full">
