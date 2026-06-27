@@ -1,22 +1,33 @@
-import { defineConfig } from "vite";
+import { defineConfig, type PluginOption } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
-import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
-  server: {
-    host: "::",
-    port: 8080,
-    hmr: {
-      overlay: false,
+// lovable-tagger is a dev-only tool and is not a production dependency, so it is
+// loaded lazily and only in development mode. This keeps production builds
+// (e.g. the Docker image) working without the package installed.
+export default defineConfig(async ({ mode }) => {
+  const plugins: PluginOption[] = [react()];
+
+  if (mode === "development") {
+    const { componentTagger } = await import("lovable-tagger");
+    plugins.push(componentTagger());
+  }
+
+  return {
+    server: {
+      host: "::",
+      port: 8080,
+      hmr: {
+        overlay: false,
+      },
     },
-  },
-  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
+    plugins,
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "./src"),
+      },
+      dedupe: ["react", "react-dom", "react/jsx-runtime"],
     },
-    dedupe: ["react", "react-dom", "react/jsx-runtime"],
-  },
-}));
+  };
+});
