@@ -1,0 +1,25 @@
+# Docker Swarm stack for Ceres BI (single-node swarm, local image — no registry).
+# Traefik (v3.5) terminates TLS and routes by Host. Labels MUST live under
+# deploy.labels because the Traefik provider is providers.swarm (service labels).
+version: "3.8"
+
+services:
+  web:
+    image: ceresbi:latest
+    networks:
+      - redeinterna
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.ceresbi.entrypoints=websecure"
+        - "traefik.http.routers.ceresbi.rule=Host(`ceresbi.vouxconsultoria.com.br`)"
+        - "traefik.http.routers.ceresbi.tls=true"
+        - "traefik.http.routers.ceresbi.tls.certresolver=letsencryptresolver"
+        - "traefik.http.services.ceresbi.loadbalancer.server.port=80"
+
+networks:
+  redeinterna:
+    external: true
