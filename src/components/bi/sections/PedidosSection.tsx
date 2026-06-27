@@ -7,18 +7,14 @@ import { HorizontalBarChart, PieChartWithLabels, LineChart } from "@/components/
 import { CHART_COLORS, POSITIVE_COLOR } from "@/lib/chartTheme";
 import { formatBRL, formatMonthYear, toISODate, getPreviousPeriod, calcTrend } from "@/lib/dateUtils";
 import { fmtBRLKpi } from "@/lib/formatters";
-import type { RpcPedidosBI } from "@/types/biRpc";
+import { PEDIDOS_BI_DEFAULTS } from "@/services/bi/biRpcService";
 
 interface Props {
   active: boolean;
   dateRange?: DateRange;
 }
 
-const EMPTY_AGG: RpcPedidosBI = {
-  kpis: { total: 0, faturamento: 0, ticketMedio: 0, percentAprovado: 0, percentFinanciado: 0, valorCancelado: 0 },
-  evolucaoMensal: [], porSituacao: [], mixPagamento: [], porVendedor: [], porCidade: [],
-  porGrupoProduto: [], porMarcaProduto: [],
-};
+const EMPTY_AGG = PEDIDOS_BI_DEFAULTS;
 
 export default function PedidosSection({ active, dateRange }: Props) {
   const from = toISODate(dateRange?.from);

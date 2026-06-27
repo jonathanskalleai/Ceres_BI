@@ -2,6 +2,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type {
   RpcNegociosBI,
   RpcPedidosBI,
+  PedidosGrupoProdutoItem,
+  PedidosMarcaProdutoItem,
   RpcServicosBI,
   RpcAdminBI,
   RpcAcoesBI,
@@ -71,7 +73,26 @@ export async function fetchNegociosBI(
 }
 
 /**
+ * Defensive defaults — prevents crash when RPC returns partial object (missing CTEs).
+ * Exported so the section component reuses it as its empty-state baseline (DRY).
+ */
+export const PEDIDOS_BI_DEFAULTS: RpcPedidosBI = {
+  kpis: { total: 0, faturamento: 0, ticketMedio: 0, percentAprovado: 0, percentFinanciado: 0, valorCancelado: 0 },
+  evolucaoMensal: [],
+  porSituacao: [],
+  mixPagamento: [],
+  porVendedor: [],
+  porCidade: [],
+  porGrupoProduto: [],
+  porMarcaProduto: [],
+};
+
+/**
  * Calls rpc_pedidos_bi — returns aggregated order metrics as JSON.
+ *
+ * The deployed RPC still emits `grupoProduto`/`marcaProduto` (no `por` prefix);
+ * the canonical contract is `porGrupoProduto`/`porMarcaProduto`. We accept both
+ * here so the product charts render now and stay correct after the DB redeploy.
  */
 export async function fetchPedidosBI(
   from: string,
@@ -86,7 +107,19 @@ export async function fetchPedidosBI(
 
     const { data, error } = await supabase.rpc("rpc_pedidos_bi", params);
     if (error) throw new Error(error.message);
-    return unwrapRpc<RpcPedidosBI>(data);
+    const raw = unwrapRpc<
+      Partial<RpcPedidosBI> & {
+        grupoProduto?: PedidosGrupoProdutoItem[];
+        marcaProduto?: PedidosMarcaProdutoItem[];
+      }
+    >(data);
+    return {
+      ...PEDIDOS_BI_DEFAULTS,
+      ...raw,
+      kpis: { ...PEDIDOS_BI_DEFAULTS.kpis, ...raw.kpis },
+      porGrupoProduto: raw.porGrupoProduto ?? raw.grupoProduto ?? [],
+      porMarcaProduto: raw.porMarcaProduto ?? raw.marcaProduto ?? [],
+    };
   } catch (err) {
     throw new Error(`[biRpcService.fetchPedidosBI] ${err instanceof Error ? err.message : "Unknown error"}`);
   }

@@ -1,11 +1,25 @@
 -- Migration: Propagar filtros p_cidade/p_vendedor para RPCs de BI
 -- Autor: @dev (Dex)
 -- Data: 2026-06-26
--- Motivo: Painel BI precisa filtrar todos os cards por cidade e vendedor,
---         não apenas rpc_acoes_bi que já aceita esses params.
+-- Motivo: Painel BI precisa filtrar todos os cards por cidade e vendedor.
+-- Base: funcoes VIVAS do banco (nao a versao antiga do 20260623).
+-- Diferencas vs migration anterior: v_to LEAST fix, ngo_datacadastro no WHERE,
+--   ORDER BY com ctid, CTEs velocidade+duracao_total, JOIN crm_negocios em pedidos,
+--   pdo_codigointerno, CTEs grupo_produto+marca_produto.
 
 -------------------------------------------------------------------------------
--- RPC 1: rpc_negocios_bi — adiciona p_cidade (emp_cidade) e p_vendedor (ngo_vendedores)
+-- DROP old signatures to avoid overloads (CREATE OR REPLACE does NOT replace
+-- if the argument list changes — it creates a new overload instead).
+-------------------------------------------------------------------------------
+DROP FUNCTION IF EXISTS public.rpc_negocios_bi(date, date, text[]);
+DROP FUNCTION IF EXISTS public.rpc_pedidos_bi(date, date);
+DROP FUNCTION IF EXISTS public.rpc_servicos_bi(date, date);
+DROP FUNCTION IF EXISTS public.rpc_admin_bi();
+
+-------------------------------------------------------------------------------
+-- RPC 1: rpc_negocios_bi
+-- Adiciona: p_cidade (emp_cidade), p_vendedor (ngo_vendedores)
+-- Base LIVE: v_to LEAST, ngo_datacadastro, ORDER BY ctid, CTEs velocidade+duracao_total
 -------------------------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION public.rpc_negocios_bi(
@@ -22,6 +36,7 @@ SECURITY DEFINER
 AS $$
 DECLARE
   result json;
+  v_to date := LEAST(p_to, CURRENT_DATE);
 BEGIN
   WITH deduped AS (
     SELECT DISTINCT ON (n.ngo_numero)
@@ -43,11 +58,11 @@ BEGIN
         ELSE 'andamento'
       END AS status_class
     FROM mirror.crm_negocios n
-    WHERE n.ngo_datafechamento::date BETWEEN p_from AND p_to
+    WHERE n.ngo_datacadastro::date BETWEEN p_from AND v_to
       AND (p_funis IS NULL OR n.ngo_funil = ANY(p_funis))
       AND (p_cidade IS NULL OR n.emp_cidade = p_cidade)
       AND (p_vendedor IS NULL OR n.ngo_vendedores = p_vendedor)
-    ORDER BY n.ngo_numero, n.ngo_datacadastro DESC NULLS LAST
+    ORDER BY n.ngo_numero, n.ngo_datacadastro DESC NULLS LAST, n.ngo_vlrtotalnegociado DESC NULLS LAST, n.ctid
   ),
   -- KPIs
   kpi_agg AS (
@@ -120,17 +135,17 @@ BEGIN
       LIMIT 8
     ) sub
   ),
-  -- Evolucao mensal (last 12)
+  -- Evolucao mensal
   evolucao AS (
     SELECT COALESCE(json_agg(row_to_json(sub) ORDER BY sub.name), '[]'::json) AS val
     FROM (
       SELECT
-        TO_CHAR(ngo_datafechamento::date, 'YYYY-MM') AS name,
+        TO_CHAR(ngo_datacadastro::date, 'YYYY-MM') AS name,
         COUNT(*) AS novos,
         COALESCE(SUM(ngo_vlrtotalnegociado), 0)::numeric AS "valorCriado"
       FROM deduped
-      GROUP BY TO_CHAR(ngo_datafechamento::date, 'YYYY-MM')
-      ORDER BY TO_CHAR(ngo_datafechamento::date, 'YYYY-MM')
+      GROUP BY TO_CHAR(ngo_datacadastro::date, 'YYYY-MM')
+      ORDER BY TO_CHAR(ngo_datacadastro::date, 'YYYY-MM')
     ) sub
   ),
   -- Ranking consultor (top 10)
@@ -149,6 +164,33 @@ BEGIN
       ORDER BY COALESCE(SUM(ngo_vlrtotalnegociado) FILTER (WHERE status_class = 'ganho'), 0) DESC
       LIMIT 10
     ) sub
+  ),
+  -- Velocidade do funil (tempo medio por etapa, ganhos)
+  velocidade AS (
+    SELECT COALESCE(json_agg(row_to_json(sub) ORDER BY sub.ordem), '[]'::json) AS val
+    FROM (
+      SELECT
+        ngo_etapa AS name,
+        ROUND(AVG(ngo_ciclovendas)::numeric, 1) AS dias,
+        COUNT(*) AS qtd,
+        ROW_NUMBER() OVER (ORDER BY AVG(ngo_ciclovendas) NULLS LAST) AS ordem
+      FROM deduped
+      WHERE status_class = 'ganho' AND ngo_ciclovendas > 0 AND ngo_etapa IS NOT NULL
+      GROUP BY ngo_etapa
+    ) sub
+  ),
+  -- Duracao total (distribuicao de ciclo de vendas dos ganhos)
+  duracao_total AS (
+    SELECT json_build_array(
+      json_build_object('name', '0-7 dias', 'value', COUNT(*) FILTER (WHERE ngo_ciclovendas BETWEEN 0 AND 7)),
+      json_build_object('name', '8-15 dias', 'value', COUNT(*) FILTER (WHERE ngo_ciclovendas BETWEEN 8 AND 15)),
+      json_build_object('name', '16-30 dias', 'value', COUNT(*) FILTER (WHERE ngo_ciclovendas BETWEEN 16 AND 30)),
+      json_build_object('name', '31-60 dias', 'value', COUNT(*) FILTER (WHERE ngo_ciclovendas BETWEEN 31 AND 60)),
+      json_build_object('name', '61-90 dias', 'value', COUNT(*) FILTER (WHERE ngo_ciclovendas BETWEEN 61 AND 90)),
+      json_build_object('name', '90+ dias', 'value', COUNT(*) FILTER (WHERE ngo_ciclovendas > 90))
+    ) AS val
+    FROM deduped
+    WHERE status_class = 'ganho' AND ngo_ciclovendas > 0
   )
   SELECT json_build_object(
     'kpis', (SELECT val FROM kpis),
@@ -156,7 +198,9 @@ BEGIN
     'porOrigem', (SELECT val FROM origens),
     'motivosPerda', (SELECT val FROM motivos),
     'evolucaoMensal', (SELECT val FROM evolucao),
-    'rankingConsultor', (SELECT val FROM ranking)
+    'rankingConsultor', (SELECT val FROM ranking),
+    'velocidadeFunil', (SELECT val FROM velocidade),
+    'duracaoTotal', (SELECT val FROM duracao_total)
   ) INTO result;
 
   RETURN result;
@@ -165,7 +209,10 @@ $$;
 
 
 -------------------------------------------------------------------------------
--- RPC 2: rpc_pedidos_bi — adiciona p_cidade (emp_cidade) e p_vendedor (pdo_vendedor)
+-- RPC 2: rpc_pedidos_bi
+-- Adiciona: p_cidade (emp_cidade), p_vendedor (pdo_vendedor)
+-- Base LIVE: JOIN crm_negocios, filtro ngo_conclusao ganho, pdo_codigointerno,
+--   CTEs grupo_produto + marca_produto
 -------------------------------------------------------------------------------
 
 CREATE OR REPLACE FUNCTION public.rpc_pedidos_bi(
@@ -191,10 +238,13 @@ BEGIN
       p.pdo_dthpedido,
       p.pdo_vendedor,
       p.pdo_cidadeufentrega,
+      p.pdo_codigointerno,
       LOWER(COALESCE(p.pdo_situacaopedido, '')) LIKE '%aprovado%' AS is_aprovado,
       LOWER(COALESCE(p.pdo_situacaopedido, '')) LIKE '%cancel%' AS is_cancelado
     FROM mirror.crm_pedidos p
+    INNER JOIN mirror.crm_negocios n ON n.ngo_numero = p.ngo_numero
     WHERE p.pdo_dthpedido::date BETWEEN p_from AND p_to
+      AND LOWER(COALESCE(n.ngo_conclusao, '')) LIKE '%ganh%'
       AND (p_cidade IS NULL OR p.emp_cidade = p_cidade)
       AND (p_vendedor IS NULL OR p.pdo_vendedor = p_vendedor)
   ),
@@ -285,6 +335,30 @@ BEGIN
       ORDER BY SUM(pdo_vlrpedido) DESC
       LIMIT 10
     ) sub
+  ),
+  -- Por grupo de produto (top 10, aprovados)
+  grupo_produto AS (
+    SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
+    FROM (
+      SELECT pdo_codigointerno AS name, COALESCE(SUM(pdo_vlrpedido), 0)::numeric AS value
+      FROM base
+      WHERE is_aprovado AND pdo_codigointerno IS NOT NULL
+      GROUP BY pdo_codigointerno
+      ORDER BY SUM(pdo_vlrpedido) DESC
+      LIMIT 10
+    ) sub
+  ),
+  -- Por marca (top 10, aprovados)
+  marca_produto AS (
+    SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
+    FROM (
+      SELECT pdo_codigointerno AS name, COUNT(*) AS value
+      FROM base
+      WHERE is_aprovado AND pdo_codigointerno IS NOT NULL
+      GROUP BY pdo_codigointerno
+      ORDER BY COUNT(*) DESC
+      LIMIT 10
+    ) sub
   )
   SELECT json_build_object(
     'kpis', (SELECT val FROM kpis),
@@ -292,7 +366,9 @@ BEGIN
     'porSituacao', (SELECT val FROM situacao),
     'mixPagamento', (SELECT val FROM mix),
     'porVendedor', (SELECT val FROM vendedores),
-    'porCidade', (SELECT val FROM cidades)
+    'porCidade', (SELECT val FROM cidades),
+    'porGrupoProduto', (SELECT val FROM grupo_produto),
+    'porMarcaProduto', (SELECT val FROM marca_produto)
   ) INTO result;
 
   RETURN result;
@@ -381,7 +457,7 @@ BEGIN
     FROM base
     WHERE dias_resolucao IS NOT NULL
   ),
-  -- Evolucao aberturas (last 12 meses)
+  -- Evolucao aberturas
   evolucao AS (
     SELECT COALESCE(json_agg(row_to_json(sub) ORDER BY sub.name), '[]'::json) AS val
     FROM (
