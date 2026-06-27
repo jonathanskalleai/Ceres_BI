@@ -10,14 +10,21 @@
 --   a. Dedupe do negocio: crm_negocios tem ngo_numero DUPLICADO (238 grupos). O
 --      INNER JOIN direto multiplicava linhas de pedido (fan-out) inflando
 --      contagem/faturamento. Trocado por JOIN contra subselect DISTINCT ON
---      (ngo_numero), mesma convencao da rpc_negocios_bi.
+--      (ngo_numero) ordenado por ngo_datafechamento DESC (a versao ganha mais
+--      recente vence) — segue o padrao DISTINCT ON da rpc_negocios_bi, mas com
+--      criterio de ordenacao proprio (datafechamento, nao datacadastro).
 --      Smoke test (read-only, banco vivo): pedidos de negocio ganho passam de
 --      832 linhas (join sem dedupe) para 749 (DISTINCT ON) -> 83 linhas de
 --      fan-out eliminadas.
 --   b. Filtro de data: WHERE n.ngo_datafechamento::date BETWEEN p_from AND p_to
 --      (era p.pdo_dthpedido::date). Demais filtros mantidos.
 --   c. Evolucao mensal agrupada por ngo_datafechamento (era pdo_dthpedido).
---   d. Chaves json porGrupoProduto/porMarcaProduto mantidas (nao regredir).
+--   d. grupo_produto/marca_produto: CORRIGIDO bug herdado do 20260626 — agrupavam
+--      por pdo_codigointerno (ID do PEDIDO), entao o 'name' saia como id de pedido,
+--      nao grupo/marca. Agora agregam de mirror.crm_pedidos_item (pdo_itemgrupo /
+--      pdo_itemmarca), join via pdo_codigointerno -> base. Saida {name, valor, qtd}
+--      conforme PedidosGrupoProdutoItem/PedidosMarcaProdutoItem (src/types/biRpc.ts).
+--      Chaves json porGrupoProduto/porMarcaProduto mantidas.
 --
 -- Impacto medido em junho/2026 (smoke test read-only contra banco vivo):
 --   BEFORE (por pdo_dthpedido): 18 pedidos / R$ 2.570.040,00 (aprovados)
@@ -42,8 +49,9 @@ DECLARE
   result json;
 BEGIN
   WITH negocios_dedup AS (
-    -- 1 linha por negocio. Mesma convencao da rpc_negocios_bi: a versao mais
-    -- recente por data de fechamento vence (ctid como ultimo desempate estavel).
+    -- 1 linha por negocio (padrao DISTINCT ON da rpc_negocios_bi). Criterio de
+    -- ordenacao proprio: a versao ganha mais recente por ngo_datafechamento vence
+    -- (ngo_dataatualizacao e ctid como desempates estaveis).
     SELECT DISTINCT ON (n.ngo_numero)
       n.ngo_numero,
       n.ngo_conclusao,
@@ -161,27 +169,37 @@ BEGIN
       LIMIT 10
     ) sub
   ),
-  -- Por grupo de produto (top 10, aprovados)
+  -- Por grupo de produto (top 10) — itens de pedidos VENDIDOS (negocio ganho na
+  -- janela + aprovado). Fonte: mirror.crm_pedidos_item; vinculo via pdo_codigointerno.
+  -- valor = SUM(qtde * vlr unitario) (nao ha total pre-calculado na tabela de itens).
   grupo_produto AS (
-    SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
+    SELECT COALESCE(json_agg(row_to_json(sub) ORDER BY sub.valor DESC), '[]'::json) AS val
     FROM (
-      SELECT pdo_codigointerno AS name, COALESCE(SUM(pdo_vlrpedido), 0)::numeric AS value
-      FROM base
-      WHERE is_aprovado AND pdo_codigointerno IS NOT NULL
-      GROUP BY pdo_codigointerno
-      ORDER BY SUM(pdo_vlrpedido) DESC
+      SELECT
+        i.pdo_itemgrupo AS name,
+        COALESCE(SUM(COALESCE(i.pdo_itemqtde, 0) * COALESCE(i.pdo_itemvlrunitario, 0)), 0)::numeric AS valor,
+        COALESCE(SUM(i.pdo_itemqtde), 0)::numeric AS qtd
+      FROM mirror.crm_pedidos_item i
+      INNER JOIN base b ON b.pdo_codigointerno = i.pdo_codigointerno
+      WHERE b.is_aprovado AND i.pdo_itemgrupo IS NOT NULL
+      GROUP BY i.pdo_itemgrupo
+      ORDER BY valor DESC
       LIMIT 10
     ) sub
   ),
-  -- Por marca (top 10, aprovados)
+  -- Por marca (top 10) — mesma fonte/escopo, agrupado por marca do item.
   marca_produto AS (
-    SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
+    SELECT COALESCE(json_agg(row_to_json(sub) ORDER BY sub.valor DESC), '[]'::json) AS val
     FROM (
-      SELECT pdo_codigointerno AS name, COUNT(*) AS value
-      FROM base
-      WHERE is_aprovado AND pdo_codigointerno IS NOT NULL
-      GROUP BY pdo_codigointerno
-      ORDER BY COUNT(*) DESC
+      SELECT
+        i.pdo_itemmarca AS name,
+        COALESCE(SUM(COALESCE(i.pdo_itemqtde, 0) * COALESCE(i.pdo_itemvlrunitario, 0)), 0)::numeric AS valor,
+        COALESCE(SUM(i.pdo_itemqtde), 0)::numeric AS qtd
+      FROM mirror.crm_pedidos_item i
+      INNER JOIN base b ON b.pdo_codigointerno = i.pdo_codigointerno
+      WHERE b.is_aprovado AND i.pdo_itemmarca IS NOT NULL
+      GROUP BY i.pdo_itemmarca
+      ORDER BY valor DESC
       LIMIT 10
     ) sub
   )
