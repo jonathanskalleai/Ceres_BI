@@ -176,6 +176,25 @@ export default function PedidosSection({ active, dateRange }: Props) {
             colors={[CHART_COLORS[4]]}
           />
         </ChartCard>
+
+        <ChartCard
+          title="Itens Mais Vendidos — Marca"
+          description="Valor vendido por marca de produto (itens dos pedidos)"
+          loading={isLoading}
+        >
+          <HorizontalBarChart
+            data={agg.porMarcaProduto.map(item => ({
+              name: item.name,
+              valor: item.valor,
+              qtd: item.qtd
+            }))}
+            keys={['valor']}
+            seriesLabels={{ valor: "Valor Vendido" }}
+            title=""
+            tooltipFormatter={(value, d) => `${formatBRL(value)} (${d?.qtd ?? 0} un)`}
+            colors={[CHART_COLORS[5]]}
+          />
+        </ChartCard>
       </div>
     </div>
   );
