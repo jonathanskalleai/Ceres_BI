@@ -30,4 +30,10 @@ docker build -t "${IMAGE_TAG}" .
 echo "==> Deploying stack ${STACK_NAME}..."
 docker stack deploy -c docker-stack.yml "${STACK_NAME}"
 
+# Single-node swarm uses a local :latest image with no registry digest, so
+# `docker stack deploy` will NOT roll a rebuilt image (same tag, no new digest).
+# Force the running task to pick up the freshly built image.
+echo "==> Forcing rollout of rebuilt image..."
+docker service update --image "${IMAGE_TAG}" --force "${STACK_NAME}_web"
+
 echo "==> Done. Check rollout with: docker stack services ${STACK_NAME}"
