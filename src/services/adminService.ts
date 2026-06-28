@@ -104,6 +104,9 @@ export async function createUser(
   fullName: string,
   role: 'admin' | 'normal',
 ): Promise<{ userId: string | null; error: string | null }> {
+  // Save admin session before signUp replaces it
+  const { data: { session: adminSession } } = await supabase.auth.getSession();
+
   // signUp creates the auth user; DB trigger should create profile
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -112,6 +115,14 @@ export async function createUser(
       data: { full_name: fullName },
     },
   });
+
+  // Restore admin session immediately (signUp replaces it with new user's session)
+  if (adminSession) {
+    await supabase.auth.setSession({
+      access_token: adminSession.access_token,
+      refresh_token: adminSession.refresh_token,
+    });
+  }
 
   if (error) return { userId: null, error: error.message };
 
