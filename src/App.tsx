@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { ModuleGuard } from "@/components/auth/ModuleGuard";
 import { LoginPage } from "@/components/auth/LoginPage";
 import { AppShell } from "@/components/layout/AppShell";
 import BiLayout from "./components/bi/BiLayout";
@@ -95,37 +96,37 @@ const App = () => (
 
               {/* CRM — wrapped by CrmLayout (shared filter context + topbar portal) */}
               <Route path="crm" element={<CrmLayout />}>
-                <Route path="overview" element={<CrmOverview />} />
-                <Route path="consultores" element={<CrmConsultores />} />
-                <Route path="consultores/:vendedor" element={<CrmConsultorDetail />} />
-                
-                <Route path="registros" element={<CrmRegistros />} />
-                <Route path="criticos" element={<CrmCriticos />} />
-                <Route path="mapa" element={<CrmMapa />} />
-                <Route path="insights" element={<CrmInsights />} />
-                <Route path="negocios" element={<CrmNegocios />} />
-                <Route path="administrativo" element={<CrmAdministrativo />} />
+                <Route path="overview" element={<ModuleGuard moduleId="crm.overview"><CrmOverview /></ModuleGuard>} />
+                <Route path="consultores" element={<ModuleGuard moduleId="crm.consultores"><CrmConsultores /></ModuleGuard>} />
+                <Route path="consultores/:vendedor" element={<ModuleGuard moduleId="crm.consultores"><CrmConsultorDetail /></ModuleGuard>} />
+
+                <Route path="registros" element={<ModuleGuard moduleId="crm.registros"><CrmRegistros /></ModuleGuard>} />
+                <Route path="criticos" element={<ModuleGuard moduleId="crm.criticos"><CrmCriticos /></ModuleGuard>} />
+                <Route path="mapa" element={<ModuleGuard moduleId="crm.mapa"><CrmMapa /></ModuleGuard>} />
+                <Route path="insights" element={<ModuleGuard moduleId="crm.insights"><CrmInsights /></ModuleGuard>} />
+                <Route path="negocios" element={<ModuleGuard moduleId="crm.negocios"><CrmNegocios /></ModuleGuard>} />
+                <Route path="administrativo" element={<ModuleGuard moduleId="crm.administrativo"><CrmAdministrativo /></ModuleGuard>} />
               </Route>
 
               {/* BI — wrapped by BiLayout (shared filter context + topbar portal) */}
               <Route path="bi" element={<BiLayout />}>
                 <Route index element={<Navigate to="painel" replace />} />
-                <Route path="painel" element={<LazySuspense><BiPainel /></LazySuspense>} />
-                <Route path="comercial" element={<LazySuspense><BiComercial /></LazySuspense>} />
-                <Route path="pedidos" element={<LazySuspense><BiPedidos /></LazySuspense>} />
-                <Route path="produtos" element={<LazySuspense><BiProdutos /></LazySuspense>} />
-                <Route path="servicos" element={<LazySuspense><BiServicos /></LazySuspense>} />
-                <Route path="operacional" element={<LazySuspense><BiOperacional /></LazySuspense>} />
-                <Route path="admin" element={<LazySuspense><BiAdmin /></LazySuspense>} />
-                <Route path="acoes" element={<LazySuspense><BiAcoes /></LazySuspense>} />
-                <Route path="inteligencia" element={<LazySuspense><BiInteligencia /></LazySuspense>} />
-                <Route path="etl-monitor" element={<LazySuspense><BiEtlMonitor /></LazySuspense>} />
+                <Route path="painel" element={<ModuleGuard moduleId="bi.painel"><LazySuspense><BiPainel /></LazySuspense></ModuleGuard>} />
+                <Route path="comercial" element={<ModuleGuard moduleId="bi.comercial"><LazySuspense><BiComercial /></LazySuspense></ModuleGuard>} />
+                <Route path="pedidos" element={<ModuleGuard moduleId="bi.pedidos"><LazySuspense><BiPedidos /></LazySuspense></ModuleGuard>} />
+                <Route path="produtos" element={<ModuleGuard moduleId="bi.produtos"><LazySuspense><BiProdutos /></LazySuspense></ModuleGuard>} />
+                <Route path="servicos" element={<ModuleGuard moduleId="bi.servicos"><LazySuspense><BiServicos /></LazySuspense></ModuleGuard>} />
+                <Route path="operacional" element={<ModuleGuard moduleId="bi.operacional"><LazySuspense><BiOperacional /></LazySuspense></ModuleGuard>} />
+                <Route path="admin" element={<ModuleGuard moduleId="bi.admin"><LazySuspense><BiAdmin /></LazySuspense></ModuleGuard>} />
+                <Route path="acoes" element={<ModuleGuard moduleId="bi.acoes"><LazySuspense><BiAcoes /></LazySuspense></ModuleGuard>} />
+                <Route path="inteligencia" element={<ModuleGuard moduleId="bi.inteligencia"><LazySuspense><BiInteligencia /></LazySuspense></ModuleGuard>} />
+                <Route path="etl-monitor" element={<ModuleGuard moduleId="bi.etl-monitor"><LazySuspense><BiEtlMonitor /></LazySuspense></ModuleGuard>} />
               </Route>
 
               {/* Tools — same filter layout */}
               <Route path="tools" element={<BiLayout />}>
-                <Route path="explorer" element={<LazySuspense><ToolsExplorer /></LazySuspense>} />
-                <Route path="performance" element={<LazySuspense><ToolsPerformance /></LazySuspense>} />
+                <Route path="explorer" element={<ModuleGuard moduleId="tools.explorer"><LazySuspense><ToolsExplorer /></LazySuspense></ModuleGuard>} />
+                <Route path="performance" element={<ModuleGuard moduleId="tools.performance"><LazySuspense><ToolsPerformance /></LazySuspense></ModuleGuard>} />
               </Route>
 
               {/* Admin */}

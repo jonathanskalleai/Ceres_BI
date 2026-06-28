@@ -21,7 +21,7 @@ export interface AppSidebarProps {
 }
 
 /** Map of module_id to route path */
-const MODULE_ROUTES: Record<string, string> = {
+export const MODULE_ROUTES: Record<string, string> = {
   'crm.overview': '/crm/overview',
   'crm.consultores': '/crm/consultores',
   'crm.registros': '/crm/registros',
@@ -38,6 +38,7 @@ const MODULE_ROUTES: Record<string, string> = {
   'bi.operacional': '/bi/operacional',
   'bi.admin': '/bi/admin',
   'bi.acoes': '/bi/acoes',
+  'bi.inteligencia': '/bi/inteligencia',
   'bi.etl-monitor': '/bi/etl-monitor',
   'tools.explorer': '/tools/explorer',
   'tools.performance': '/tools/performance',
