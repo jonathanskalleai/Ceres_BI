@@ -8,6 +8,8 @@ interface UseNegociosBIOptions {
   from: string;
   to: string;
   funis?: string[];
+  vendedor?: string;
+  cidade?: string;
   enabled?: boolean;
 }
 
@@ -20,11 +22,13 @@ export function useNegociosBIRpc({
   from,
   to,
   funis,
+  vendedor,
+  cidade,
   enabled = true,
 }: UseNegociosBIOptions) {
   return useQuery<RpcNegociosBI, Error>({
-    queryKey: ["rpc", "negocios-bi", from, to, funis ?? null],
-    queryFn: () => fetchNegociosBI(from, to, funis),
+    queryKey: ["rpc", "negocios-bi", from, to, funis ?? null, vendedor ?? null, cidade ?? null],
+    queryFn: () => fetchNegociosBI(from, to, funis, vendedor, cidade),
     staleTime: STALE_TIME,
     placeholderData: keepPreviousData,
     enabled: enabled && !!from && !!to,

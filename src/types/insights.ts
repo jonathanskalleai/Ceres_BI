@@ -42,9 +42,9 @@ export interface Insight {
   dashboard_id: string;
   sql_query: string;
   generated_at: Date;
-  applied_filters: Record<string, any>;
-  linked_entities: Record<string, any>;
-  kpi_references: Record<string, any>;
+  applied_filters: Record<string, unknown>;
+  linked_entities: Record<string, unknown>;
+  kpi_references: Record<string, unknown>;
   recommendation?: string;
   is_active: boolean;
   is_relevant: boolean;
@@ -70,7 +70,7 @@ export interface ColumnMetadata {
   is_primary_key: boolean;
   nullable: boolean;
   description?: string;
-  sample_values?: any[];
+  sample_values?: unknown[];
 }
 
 export interface DashboardDefinition {
@@ -105,7 +105,7 @@ export interface KPISuggestion {
 
 export interface ChartTypeSchema {
   type: ChartType;
-  options: Record<string, any>;
+  options: Record<string, unknown>;
   color_scheme?: string;
   dimensions?: string[];
 }
@@ -185,7 +185,7 @@ export interface InsightFilters {
 export interface QueryRequest {
   view: string;
   columns?: string[];
-  filters?: Record<string, any>;
+  filters?: Record<string, unknown>;
   groupBy?: string[];
   orderBy?: string[];
   limit?: number;
@@ -199,7 +199,7 @@ export interface QueryRequest {
 }
 
 export interface QueryResponse {
-  data: any[];
+  data: unknown[];
   total?: number;
   columns: string[];
   query?: string;

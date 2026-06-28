@@ -24,7 +24,7 @@ function MapMarkers({
     return (
       <>
         {clientePoints.map((c) => (
-          <Marker key={c.cliente} position={[c.lat, c.lng]} icon={createPinIcon("#c8b99a")}>
+          <Marker key={c.cliente} position={[c.lat, c.lng]} icon={createPinIcon("var(--voux-champagne-400)")}>
             <LTooltip direction="top" offset={[0, -42]}>
               <div className="text-xs"><strong>{c.cliente}</strong><br />{c.cidade} · {c.totalAcoes} ações</div>
             </LTooltip>
@@ -207,3 +207,5 @@ function FullscreenOverlay({
     </div>
   );
 }
+
+export default MapView;

@@ -23,8 +23,8 @@ const CARD_BASE =
 function CrmBadge({ q }: { q: number }) {
   const grade = q >= 70 ? "A" : q >= 50 ? "B" : q >= 30 ? "C" : "D";
   const colors: Record<string, string> = {
-    A: "border-[#4ade80] text-[#4ade80]",
-    B: "border-[#facc15] text-[#facc15]",
+    A: "border-[var(--voux-success)] text-[var(--voux-success)]",
+    B: "border-[var(--voux-warning)] text-[var(--voux-warning)]",
     C: "border-[var(--voux-warning)] text-[var(--voux-warning)]",
     D: "border-[var(--voux-danger)] text-[var(--voux-danger)]",
   };

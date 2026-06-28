@@ -15,10 +15,10 @@ import { PainelAcoesSection } from "@/components/bi/painel/PainelAcoesSection";
 export default function BiPainel() {
   const { dateRange, categoria, funil, vendedor, cidade } = useNegociosFilter();
   const { kpis, isLoading } = usePainelKPIsRpc(dateRange, categoria, funil, vendedor || undefined, cidade || undefined);
-  const { kpis: pedKpis, isLoading: pedLoading } = usePedidosKPIsRpc(dateRange, categoria, funil);
-  const { kpis: cliKpis, isLoading: cliLoading } = useClientesKPIsRpc(dateRange);
-  const { kpis: svcKpis, isLoading: svcLoading } = useServicosKPIsRpc(dateRange);
-  const { kpis: crossKpis, isLoading: crossLoading } = useCrossKPIsRpc(dateRange, categoria, funil);
+  const { kpis: pedKpis, isLoading: pedLoading } = usePedidosKPIsRpc(dateRange, categoria, funil, vendedor || undefined, cidade || undefined);
+  const { kpis: cliKpis, isLoading: cliLoading } = useClientesKPIsRpc(dateRange, cidade || undefined);
+  const { kpis: svcKpis, isLoading: svcLoading } = useServicosKPIsRpc(dateRange, cidade || undefined);
+  const { kpis: crossKpis, isLoading: crossLoading } = useCrossKPIsRpc(dateRange, categoria, funil, vendedor || undefined, cidade || undefined);
 
   const anyLoading = isLoading || pedLoading || cliLoading || svcLoading || crossLoading;
 

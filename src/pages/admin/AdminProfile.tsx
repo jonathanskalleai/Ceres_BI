@@ -94,7 +94,7 @@ export default function AdminProfile() {
     <div className="p-6 md:p-10 max-w-2xl mx-auto">
       {/* Header with avatar */}
       <div className="flex items-center gap-5 mb-10">
-        <div className="h-16 w-16 rounded-full bg-ink-800 border border-ink-700 flex items-center justify-center text-lg font-mono uppercase text-ink-200 tracking-wider flex-shrink-0">
+        <div className="h-16 w-16 rounded-full bg-muted border border-border flex items-center justify-center text-lg font-mono uppercase text-muted-foreground tracking-wider flex-shrink-0">
           {profile?.avatar_url ? (
             <img
               src={profile.avatar_url}
@@ -106,51 +106,51 @@ export default function AdminProfile() {
           )}
         </div>
         <div>
-          <h2 className="font-display text-2xl text-ink-50 tracking-tight">
+          <h2 className="font-display text-2xl text-foreground tracking-tight">
             Meu Perfil
           </h2>
-          <p className="text-sm text-ink-400 mt-0.5">
+          <p className="text-sm text-muted-foreground mt-0.5">
             {user?.email}
           </p>
         </div>
       </div>
 
       {/* Profile form */}
-      <section className="rounded-xl bg-ink-900 border border-ink-700/50 p-6 mb-6">
+      <section className="rounded-xl bg-card border border-border p-6 mb-6">
         <h3 className="text-[10px] font-mono uppercase tracking-[0.22em] text-champagne-400 mb-4">
           Informacoes pessoais
         </h3>
 
         <form onSubmit={handleSaveProfile} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="profile-name" className="text-ink-200 text-xs font-mono uppercase tracking-[0.22em]">
+            <Label htmlFor="profile-name" className="text-muted-foreground text-xs font-mono uppercase tracking-[0.22em]">
               Nome completo
             </Label>
             <Input
               id="profile-name"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="bg-ink-850 border-ink-600 text-ink-50"
+              className="bg-muted border-input text-foreground"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="profile-email" className="text-ink-200 text-xs font-mono uppercase tracking-[0.22em]">
+            <Label htmlFor="profile-email" className="text-muted-foreground text-xs font-mono uppercase tracking-[0.22em]">
               Email
             </Label>
             <Input
               id="profile-email"
               value={user?.email ?? ''}
               disabled
-              className="bg-ink-850 border-ink-600 text-ink-400 cursor-not-allowed"
+              className="bg-muted border-input text-muted-foreground cursor-not-allowed"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label className="text-ink-200 text-xs font-mono uppercase tracking-[0.22em]">
+            <Label className="text-muted-foreground text-xs font-mono uppercase tracking-[0.22em]">
               Papel
             </Label>
-            <div className="text-sm text-ink-200 bg-ink-850 border border-ink-600 rounded-md px-3 py-2">
+            <div className="text-sm text-muted-foreground bg-muted border border-input rounded-md px-3 py-2">
               {profile?.role === 'admin' ? 'Administrador' : 'Normal'}
             </div>
           </div>
@@ -169,14 +169,14 @@ export default function AdminProfile() {
       </section>
 
       {/* Password form */}
-      <section className="rounded-xl bg-ink-900 border border-ink-700/50 p-6">
+      <section className="rounded-xl bg-card border border-border p-6">
         <h3 className="text-[10px] font-mono uppercase tracking-[0.22em] text-champagne-400 mb-4">
           Alterar senha
         </h3>
 
         <form onSubmit={handleChangePassword} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="new-password" className="text-ink-200 text-xs font-mono uppercase tracking-[0.22em]">
+            <Label htmlFor="new-password" className="text-muted-foreground text-xs font-mono uppercase tracking-[0.22em]">
               Nova senha
             </Label>
             <Input
@@ -185,12 +185,12 @@ export default function AdminProfile() {
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="Min. 6 caracteres"
-              className="bg-ink-850 border-ink-600 text-ink-50 placeholder:text-ink-400"
+              className="bg-muted border-input text-foreground placeholder:text-muted-foreground"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="confirm-password" className="text-ink-200 text-xs font-mono uppercase tracking-[0.22em]">
+            <Label htmlFor="confirm-password" className="text-muted-foreground text-xs font-mono uppercase tracking-[0.22em]">
               Confirmar senha
             </Label>
             <Input
@@ -199,7 +199,7 @@ export default function AdminProfile() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Repita a nova senha"
-              className="bg-ink-850 border-ink-600 text-ink-50 placeholder:text-ink-400"
+              className="bg-muted border-input text-foreground placeholder:text-muted-foreground"
             />
           </div>
 

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import {
-  LayoutDashboard, Users, MapPin, Table2, AlertTriangle, MessageSquareText,
-  Map, Handshake, ClipboardList, Zap, Database, BarChart3, Settings,
-  Sun, Moon, TrendingUp, Package, Wrench, Activity, ChevronDown, ChevronRight,
+  LayoutDashboard, Users, Table2, AlertTriangle, MessageSquareText,
+  Map, Handshake, ClipboardList, Zap, Database, BarChart3,
+  Sun, Moon, ChevronDown, ChevronRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -33,32 +33,31 @@ interface NavGroup {
 const NAV_GROUPS: NavGroup[] = [
   {
     id: "comercial",
-    label: "COMERCIAL CRM",
+    label: "COMERCIAL",
     items: [
-      { id: "overview",         label: "Visão Geral",          icon: LayoutDashboard,   num: "01" },
-      { id: "consultores",      label: "Consultores",           icon: Users,             num: "02" },
-      { id: "regioes",          label: "Regiões",               icon: MapPin,            num: "03" },
-      { id: "registros",        label: "Registros",             icon: Table2,            num: "04" },
-      { id: "criticos",         label: "Clientes Críticos",     icon: AlertTriangle,     num: "05" },
-      { id: "mapa",             label: "Mapa de Ações",         icon: Map,               num: "06" },
-      { id: "insights",         label: "Observações",           icon: MessageSquareText, num: "07" },
-      { id: "negocios-mensais", label: "Negócios",              icon: Handshake,         num: "08" },
-      { id: "administrativo",   label: "Administrativo",        icon: ClipboardList,     num: "09" },
+      { id: "overview",         label: "Painel Comercial",      icon: LayoutDashboard,   num: "01" },
+      { id: "consultores",      label: "Equipe",                icon: Users,             num: "02" },
+      { id: "registros",        label: "Atividades",            icon: Table2,            num: "03" },
+      { id: "mapa",             label: "Mapa de Cobertura",     icon: Map,               num: "04" },
+      { id: "negocios-mensais", label: "Pipeline",              icon: Handshake,         num: "05" },
+      { id: "criticos",         label: "Clientes sem Contato",  icon: AlertTriangle,     num: "06" },
+      { id: "insights",         label: "Notas de Campo",        icon: MessageSquareText, num: "07" },
+      { id: "administrativo",   label: "Gestao Interna",        icon: ClipboardList,     num: "08" },
     ],
   },
   {
     id: "bi",
     label: "BI ANALYTICS",
     items: [
-      { id: "dashboard-bi", label: "Dashboard BI", icon: BarChart3, num: "10" },
+      { id: "dashboard-bi", label: "Dashboard BI", icon: BarChart3, num: "09" },
     ],
   },
   {
     id: "ferramentas",
     label: "FERRAMENTAS",
     items: [
-      { id: "view-explorer", label: "Explorador de Views",  icon: Database, num: "11" },
-      { id: "performance",   label: "Performance 2026",     icon: Zap, num: "12", isRoute: true, routePath: "/performance" },
+      { id: "view-explorer", label: "Explorador de Dados",  icon: Database, num: "10" },
+      { id: "performance",   label: "Relatorio Anual",      icon: Zap, num: "11", isRoute: true, routePath: "/performance" },
     ],
   },
 ];
@@ -167,7 +166,7 @@ export const DashboardSidebar = ({ currentView, onNavigate, lastUpdated }: Props
           <div
             className="flex-shrink-0 w-9 h-9 rounded-[10px] flex items-center justify-center text-[20px] italic text-[var(--voux-card-to)] font-bold"
             style={{
-              background: "linear-gradient(135deg, var(--voux-accent), #927142)",
+              background: "linear-gradient(135deg, var(--voux-accent), var(--voux-champagne-600))",
               boxShadow: "0 0 24px rgba(212,184,150,0.18), 0 0 1px rgba(212,184,150,0.5)",
               fontFamily: "var(--voux-font-display)",
             }}

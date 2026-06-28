@@ -9,51 +9,69 @@ import {
   MetricComparison
 } from "@/types/insights";
 
+/** Shared fetch wrapper — validates response and provides contextual error. */
+async function fetchJson<T>(url: string, caller: string, init?: RequestInit): Promise<T> {
+  try {
+    const response = await fetch(url, init);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    return await response.json() as T;
+  } catch (err) {
+    throw new Error(`[insightsService.${caller}] ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
+}
+
+/** Fire-and-forget fetch wrapper for void endpoints. */
+async function fetchVoid(url: string, caller: string, init?: RequestInit): Promise<void> {
+  try {
+    const response = await fetch(url, init);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+  } catch (err) {
+    throw new Error(`[insightsService.${caller}] ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
+}
+
 export const insightsService = {
   // Dashboard Definitions
   async getDashboardDefinitions(): Promise<DashboardDefinition[]> {
-    const response = await fetch('/api/insights/dashboards');
-    return response.json();
+    return fetchJson('/api/insights/dashboards', 'getDashboardDefinitions');
   },
 
   async getDashboardById(id: string): Promise<DashboardDefinition> {
-    const response = await fetch(`/api/insights/dashboards/${id}`);
-    return response.json();
+    return fetchJson(`/api/insights/dashboards/${id}`, 'getDashboardById');
   },
 
   async createDashboard(dashboard: Omit<DashboardDefinition, 'last_analyzed'>): Promise<DashboardDefinition> {
-    const response = await fetch('/api/insights/dashboards', {
+    return fetchJson('/api/insights/dashboards', 'createDashboard', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(dashboard)
     });
-    return response.json();
   },
 
   async updateDashboard(id: string, dashboard: Partial<DashboardDefinition>): Promise<DashboardDefinition> {
-    const response = await fetch(`/api/insights/dashboards/${id}`, {
+    return fetchJson(`/api/insights/dashboards/${id}`, 'updateDashboard', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(dashboard)
     });
-    return response.json();
   },
 
   // KPI Suggestions
   async getKPISuggestions(dashboardId?: string): Promise<KPISuggestion[]> {
     const params = dashboardId ? `?dashboardId=${dashboardId}` : '';
-    const response = await fetch(`/api/insights/kpis${params}`);
-    return response.json();
+    return fetchJson(`/api/insights/kpis${params}`, 'getKPISuggestions');
   },
 
   async getKPIById(id: string): Promise<KPISuggestion> {
-    const response = await fetch(`/api/insights/kpis/${id}`);
-    return response.json();
+    return fetchJson(`/api/insights/kpis/${id}`, 'getKPIById');
   },
 
   async getKPITrends(kpiId: string, period: string): Promise<MetricComparison[]> {
-    const response = await fetch(`/api/insights/kpis/${kpiId}/trends?period=${period}`);
-    return response.json();
+    return fetchJson(`/api/insights/kpis/${kpiId}/trends?period=${period}`, 'getKPITrends');
   },
 
   // Insights
@@ -69,31 +87,24 @@ export const insightsService = {
         params.append('endDate', filters.dateRange.end.toISOString());
       }
     }
-
-    const response = await fetch(`/api/insights/insights?${params}`);
-    return response.json();
+    return fetchJson(`/api/insights/insights?${params}`, 'getInsights');
   },
 
   async getInsightById(id: string): Promise<Insight> {
-    const response = await fetch(`/api/insights/insights/${id}`);
-    return response.json();
+    return fetchJson(`/api/insights/insights/${id}`, 'getInsightById');
   },
 
   async dismissInsight(id: string): Promise<void> {
-    await fetch(`/api/insights/insights/${id}/dismiss`, {
-      method: 'POST'
-    });
+    return fetchVoid(`/api/insights/insights/${id}/dismiss`, 'dismissInsight', { method: 'POST' });
   },
 
   async dismissAllInsights(category?: string): Promise<void> {
     const params = category ? `?category=${category}` : '';
-    await fetch(`/api/insights/insights/dismiss-all${params}`, {
-      method: 'POST'
-    });
+    return fetchVoid(`/api/insights/insights/dismiss-all${params}`, 'dismissAllInsights', { method: 'POST' });
   },
 
   async markInsightAsRelevant(id: string, relevant: boolean): Promise<void> {
-    await fetch(`/api/insights/insights/${id}/relevance`, {
+    return fetchVoid(`/api/insights/insights/${id}/relevance`, 'markInsightAsRelevant', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ relevant })
@@ -102,44 +113,44 @@ export const insightsService = {
 
   // View Relationships
   async getViewRelationships(): Promise<ViewRelationship[]> {
-    const response = await fetch('/api/insights/view-relationships');
-    return response.json();
+    return fetchJson('/api/insights/view-relationships', 'getViewRelationships');
   },
 
   async getViewRelationshipByViews(source: string, target: string): Promise<ViewRelationship | null> {
-    const response = await fetch(`/api/insights/view-relationships/${source}/${target}`);
-    if (response.status === 404) return null;
-    return response.json();
+    try {
+      const response = await fetch(`/api/insights/view-relationships/${source}/${target}`);
+      if (response.status === 404) return null;
+      if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      return await response.json() as ViewRelationship;
+    } catch (err) {
+      throw new Error(`[insightsService.getViewRelationshipByViews] ${err instanceof Error ? err.message : "Unknown error"}`);
+    }
   },
 
   async createViewRelationship(relationship: Omit<ViewRelationship, 'id' | 'created_at'>): Promise<ViewRelationship> {
-    const response = await fetch('/api/insights/view-relationships', {
+    return fetchJson('/api/insights/view-relationships', 'createViewRelationship', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(relationship)
     });
-    return response.json();
   },
 
   // Analytics
   async getAnalytics(period: 'day' | 'week' | 'month' | 'quarter' | 'year' = 'month') {
-    const response = await fetch(`/api/insights/analytics?period=${period}`);
-    return response.json();
+    return fetchJson(`/api/insights/analytics?period=${period}`, 'getAnalytics');
   },
 
   async getInsightCategories(): Promise<{ [key: string]: number }> {
-    const response = await fetch('/api/insights/categories');
-    return response.json();
+    return fetchJson('/api/insights/categories', 'getInsightCategories');
   },
 
   async getDashboardCategories(): Promise<{ [key: string]: number }> {
-    const response = await fetch('/api/insights/dashboard-categories');
-    return response.json();
+    return fetchJson('/api/insights/dashboard-categories', 'getDashboardCategories');
   },
 
   // Bulk operations
   async bulkDismissInsights(insightIds: string[]): Promise<void> {
-    await fetch('/api/insights/insights/bulk-dismiss', {
+    return fetchVoid('/api/insights/insights/bulk-dismiss', 'bulkDismissInsights', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ insightIds })
@@ -147,7 +158,7 @@ export const insightsService = {
   },
 
   async bulkMarkInsightsAsRelevant(insightIds: string[], relevant: boolean): Promise<void> {
-    await fetch('/api/insights/insights/bulk-relevance', {
+    return fetchVoid('/api/insights/insights/bulk-relevance', 'bulkMarkInsightsAsRelevant', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ insightIds, relevant })
@@ -163,8 +174,7 @@ export const insightsService = {
     dashboards_count: number;
     views_count: number;
   }> {
-    const response = await fetch('/api/insights/health');
-    return response.json();
+    return fetchJson('/api/insights/health', 'getHealthCheck');
   },
 
   // Agent Analysis Status
@@ -175,27 +185,20 @@ export const insightsService = {
     last_analysis_run?: Date;
     next_analysis_scheduled?: Date;
   }> {
-    const response = await fetch('/api/insights/analysis-status');
-    return response.json();
+    return fetchJson('/api/insights/analysis-status', 'getAgentAnalysisStatus');
   },
 
   // Trigger analysis
   async triggerFullAnalysis(): Promise<void> {
-    await fetch('/api/insights/analyze', {
-      method: 'POST'
-    });
+    return fetchVoid('/api/insights/analyze', 'triggerFullAnalysis', { method: 'POST' });
   },
 
   async triggerDashboardAnalysis(dashboardId: string): Promise<void> {
-    await fetch(`/api/insights/analyze-dashboard/${dashboardId}`, {
-      method: 'POST'
-    });
+    return fetchVoid(`/api/insights/analyze-dashboard/${dashboardId}`, 'triggerDashboardAnalysis', { method: 'POST' });
   },
 
   async triggerInsightGeneration(): Promise<void> {
-    await fetch('/api/insights/generate-insights', {
-      method: 'POST'
-    });
+    return fetchVoid('/api/insights/generate-insights', 'triggerInsightGeneration', { method: 'POST' });
   }
 };
 

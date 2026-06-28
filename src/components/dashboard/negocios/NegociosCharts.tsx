@@ -119,7 +119,7 @@ export function NegociosCharts({ summary, evolucaoMensal, porConsultor, porRegia
               data={conclusaoData.map((d): PieChartData => ({ id: d.name, name: d.name, value: d.value }))}
               height={220}
               enableLabels
-              colors={["#26a503", "#3b82f6", "#ef4444"]}
+              colors={["var(--voux-success)", "var(--voux-info)", "var(--voux-danger)"]}
             />
           </CardContent>
         </Card>

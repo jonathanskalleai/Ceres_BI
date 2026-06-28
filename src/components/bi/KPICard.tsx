@@ -25,9 +25,9 @@ function DeltaBadge({ previousValue, trend, invertTrend }: { previousValue: stri
   const isNegative = invertTrend ? trend === "up" : trend === "down";
 
   const color = isPositive
-    ? "var(--voux-success, #4ade80)"
+    ? "var(--voux-success)"
     : isNegative
-      ? "var(--voux-danger, #f87171)"
+      ? "var(--voux-danger)"
       : "var(--voux-text-muted)";
 
   return (
@@ -108,7 +108,14 @@ export function KPICard({
       ) : (
         <>
           <div
-            className="text-2xl sm:text-[28px] md:text-[32px] font-semibold leading-none tracking-[-0.02em] tabular-nums truncate"
+            className={cn(
+              "font-semibold leading-none tracking-[-0.02em] tabular-nums",
+              String(value).length > 14
+                ? "text-lg sm:text-xl md:text-2xl"
+                : String(value).length > 10
+                  ? "text-xl sm:text-2xl md:text-[28px]"
+                  : "text-2xl sm:text-[28px] md:text-[32px]",
+            )}
             style={{ color: accentColor || "var(--voux-text-heading)" }}
             title={String(value)}
           >

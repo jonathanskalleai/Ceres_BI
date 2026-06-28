@@ -12,12 +12,14 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
 
   if (isLoading) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-ink-950">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-champagne-400 border-t-transparent" />
-          <span className="font-mono text-xs uppercase tracking-[0.22em] text-ink-300">
-            Carregando...
-          </span>
+      <div className="dark">
+        <div className="flex h-screen w-screen items-center justify-center bg-background">
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-champagne-400 border-t-transparent" />
+            <span className="font-mono text-xs uppercase tracking-[0.22em] text-muted-foreground">
+              Carregando...
+            </span>
+          </div>
         </div>
       </div>
     );

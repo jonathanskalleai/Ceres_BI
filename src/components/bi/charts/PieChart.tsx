@@ -58,7 +58,7 @@ export default function PieChart({
     : fmtCompact(total);
 
   return (
-    <ChartFrame loading={loading} isEmpty={!data.length} height={height} rounded="full">
+    <ChartFrame loading={loading} isEmpty={!data.length} height={height} rounded="full" ariaLabel={`Gráfico de pizza: ${data.map((d) => d.name).join(", ")}`}>
       <div
         ref={containerRef}
         style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}
@@ -78,7 +78,7 @@ export default function PieChart({
                 visible: true,
                 x,
                 y,
-                content: `<div style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:${d.color};display:inline-block"></span><span style="color:var(--voux-text-muted)">${d.label}</span></div><div style="margin-top:4px;color:var(--voux-text-primary)"><strong>${formatted}</strong> <span style="color:var(--voux-text-faint)">(${pct}%)</span></div>`,
+                content: `<div style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:${d.color};display:inline-block"></span><span style="color:var(--voux-tooltip-muted)">${d.label}</span></div><div style="margin-top:4px;color:var(--voux-tooltip-text)"><strong>${formatted}</strong> <span style="color:var(--voux-tooltip-muted)">(${pct}%)</span></div>`,
               });
             }}
             onSegmentLeave={() => setTooltip((t) => ({ ...t, visible: false }))}

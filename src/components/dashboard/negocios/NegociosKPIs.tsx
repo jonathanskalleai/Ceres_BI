@@ -49,21 +49,21 @@ export function NegociosKPIs({ summary }: Props) {
           value={fmtCurrencyShort(summary.totalRecebido)}
           icon={Wallet}
           hint="Entrada efetiva de caixa"
-          accentColor="#22c55e"
+          accentColor="var(--voux-success)"
         />
         <KPICard
           title="Total de Usado"
           value={fmtCurrencyShort(summary.totalUsado)}
           icon={ArrowDownUp}
           hint="Equipamentos usados recebidos"
-          accentColor="#f97316"
+          accentColor="var(--voux-warning)"
         />
         <KPICard
           title="% Usado sobre Venda"
           value={`${summary.percentUsado.toFixed(1)}%`}
           icon={Percent}
           hint={usadoClassification === "healthy" ? "5-10% ideal" : usadoClassification === "warning" ? "10-16% atencao" : ">16% critico"}
-          accentColor={usadoClassification === "healthy" ? "#22c55e" : usadoClassification === "warning" ? "#eab308" : "#ef4444"}
+          accentColor={usadoClassification === "healthy" ? "var(--voux-success)" : usadoClassification === "warning" ? "var(--voux-warning)" : "var(--voux-danger)"}
         />
       </div>
     </>

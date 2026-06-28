@@ -1,5 +1,4 @@
-import { useMemo, useState } from "react";
-import { Registro, Filters } from "@/types/comercial";
+import { Registro } from "@/types/comercial";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { KPICard } from "@/components/bi/KPICard";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +12,7 @@ import {
   Calendar, MapPin, FileText, ChevronDown, ChevronUp
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useDashboardAdminDetail, truncateObs } from "./useDashboardAdminDetail";
 
 interface Props {
   nome: string;
@@ -21,55 +21,12 @@ interface Props {
 }
 
 export const DashboardAdminDetail = ({ nome, registros, onBack }: Props) => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [tipoAcaoFilter, setTipoAcaoFilter] = useState("all");
-  const [expandedRow, setExpandedRow] = useState<number | null>(null);
-
-  const tiposAcao = useMemo(() => {
-    const set = new Set<string>();
-    registros.forEach((r) => r.tipoAcao && set.add(r.tipoAcao));
-    return Array.from(set).sort();
-  }, [registros]);
-
-  const filtered = useMemo(() => {
-    let result = registros;
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      result = result.filter(
-        (r) =>
-          r.cliente?.toLowerCase().includes(term) ||
-          r.obs?.toLowerCase().includes(term) ||
-          r.cidade?.toLowerCase().includes(term)
-      );
-    }
-    if (tipoAcaoFilter !== "all") {
-      result = result.filter((r) => r.tipoAcao === tipoAcaoFilter);
-    }
-    return result.sort((a, b) => (b.dtConclusao || "").localeCompare(a.dtConclusao || ""));
-  }, [registros, searchTerm, tipoAcaoFilter]);
-
-  const stats = useMemo(() => {
-    const visitas = registros.filter((r) => r.tipoContato?.toLowerCase().includes("visita")).length;
-    const clientes = new Set(registros.map((r) => r.cliente).filter(Boolean)).size;
-    const cidades = new Set(registros.map((r) => r.cidade).filter(Boolean)).size;
-    const tiposCount: Record<string, number> = {};
-    registros.forEach((r) => {
-      if (r.tipoAcao) tiposCount[r.tipoAcao] = (tiposCount[r.tipoAcao] || 0) + 1;
-    });
-    const clienteAcoes: Record<string, number> = {};
-    registros.forEach((r) => {
-      if (r.cliente) clienteAcoes[r.cliente] = (clienteAcoes[r.cliente] || 0) + 1;
-    });
-    const topClientes = Object.entries(clienteAcoes)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 8);
-    return { visitas, clientes, cidades, tiposCount, topClientes };
-  }, [registros]);
-
-  const truncateObs = (obs: string | undefined, max = 80) => {
-    if (!obs) return "—";
-    return obs.length > max ? obs.slice(0, max) + "…" : obs;
-  };
+  const {
+    searchTerm, setSearchTerm,
+    tipoAcaoFilter, setTipoAcaoFilter,
+    expandedRow, setExpandedRow,
+    tiposAcao, filtered, stats,
+  } = useDashboardAdminDetail(registros);
 
   return (
     <div className="p-6 space-y-6">

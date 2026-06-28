@@ -1,8 +1,10 @@
 import { Cpu, Users, Layers, Tag } from "lucide-react";
 import { type DateRange } from "react-day-picker";
-import { useProdutosData } from "@/hooks/bi/useProdutosData";
+import { useProdutosBIRpc } from "@/hooks/bi/useProdutosBIRpc";
+import { useQueryClient } from "@tanstack/react-query";
 import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
+import { BiErrorState } from "@/components/bi/BiErrorState";
 import { HorizontalBarChart, PieChartWithLabels } from "@/components/bi/charts";
 import { CHART_COLORS } from "@/lib/chartTheme";
 
@@ -12,8 +14,20 @@ interface Props {
 }
 
 export default function ProdutosSection({ active, dateRange }: Props) {
-  const { agg, isLoading } = useProdutosData(active);
-  const { kpis } = agg;
+  const { data, isLoading, error } = useProdutosBIRpc(active);
+  const queryClient = useQueryClient();
+  const { kpis } = data;
+
+  if (error && !isLoading) {
+    return (
+      <div className="pt-4">
+        <BiErrorState
+          message="Erro ao carregar dados de produtos"
+          onRetry={() => queryClient.invalidateQueries({ queryKey: ["bi-produtos-rpc"] })}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pt-4">
@@ -27,7 +41,7 @@ export default function ProdutosSection({ active, dateRange }: Props) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <ChartCard title="Base Instalada por Grupo" description="Quantidade de maquinas por tipo de equipamento" loading={isLoading}>
           <PieChartWithLabels
-            data={agg.porGrupo.map(item => ({ id: item.name, value: item.value, name: item.name }))}
+            data={data.porGrupo.map(item => ({ id: item.name, value: item.value, name: item.name }))}
             title=""
             colors={CHART_COLORS}
           />
@@ -35,7 +49,7 @@ export default function ProdutosSection({ active, dateRange }: Props) {
 
         <ChartCard title="Base Instalada por Marca" description="Top 10 marcas no parque dos clientes" loading={isLoading}>
           <HorizontalBarChart
-            data={agg.porMarca.map(item => ({ name: item.name, value: item.value }))}
+            data={data.porMarca.map(item => ({ name: item.name, value: item.value }))}
             keys={['value']}
             seriesLabels={{ value: "Máquinas" }}
             title=""
@@ -45,7 +59,7 @@ export default function ProdutosSection({ active, dateRange }: Props) {
 
         <ChartCard title="Top Modelos no Parque" description="Modelos mais presentes na base instalada" loading={isLoading}>
           <HorizontalBarChart
-            data={agg.topModelos.map(item => ({ name: item.name, value: item.value }))}
+            data={data.topModelos.map(item => ({ name: item.name, value: item.value }))}
             keys={['value']}
             seriesLabels={{ value: "Máquinas" }}
             title=""

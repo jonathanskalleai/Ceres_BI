@@ -23,6 +23,23 @@ export function fmtDias(value: number): string {
   return `${Math.round(value)} dias`;
 }
 
+/**
+ * Smart KPI currency formatter — abbreviates large values to avoid overflow.
+ * >= 10 mi  → "R$ 12,3 mi"  (1 decimal, no forced)
+ * >= 1 mi   → "R$ 3,2 mi"   (1 decimal, always shown)
+ * < 1 mi    → "R$ 845.200"  (full locale format)
+ */
+export function fmtBRLKpi(value: number): string {
+  const abs = Math.abs(value);
+  if (abs >= 10_000_000) {
+    return `R$ ${(value / 1_000_000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} mi`;
+  }
+  if (abs >= 1_000_000) {
+    return `R$ ${(value / 1_000_000).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} mi`;
+  }
+  return fmtBRL(value);
+}
+
 /** Check if a numeric KPI value is zero/empty (should hide the card) */
 export function isEmpty(v: number): boolean {
   return v === 0 || isNaN(v);

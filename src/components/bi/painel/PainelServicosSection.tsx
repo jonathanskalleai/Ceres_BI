@@ -30,7 +30,7 @@ export function PainelServicosSection({ svcKpis, loading }: Props) {
           previousValue={fmtNum(svcKpis.osFechadas.previousValue)}
           trend={svcKpis.osFechadas.trend}
           loading={loading}
-          accentColor="var(--voux-success, #4ade80)"
+          accentColor="var(--voux-success)"
           formula="COUNT OS encerradas no periodo"
         />
       )}

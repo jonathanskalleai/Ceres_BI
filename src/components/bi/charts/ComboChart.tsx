@@ -104,7 +104,7 @@ function buildOption(
             return tooltipRow("", key, String(pp.color), formatted);
           })
           .join("");
-        return `<div><div style="font-size:12px;color:#dbc9a9;margin-bottom:4px">${axisName}</div>${rows}</div>`;
+        return `<div><div style="font-size:12px;color:var(--voux-tooltip-text);margin-bottom:4px">${axisName}</div>${rows}</div>`;
       },
     },
     xAxis: {

@@ -197,4 +197,11 @@ antes de propor qualquer mudanca. Para audit profundo de tech debt:
 /aivoux/agents/architect
 *brownfield-discover
 ```
+## 🤖 Instruções para o Claude Code (Auto-Registro)
+- Você está conectado ao meu Obsidian via MCP (servidor `mcp-tools-istefox`).
+- O alvo do auto-registro é a nota do vault Obsidian **`Log-Sessoes-Ceres.md`** — NÃO este `CLAUDE.md` de disco (o MCP do Obsidian só enxerga o vault, então não consegue editar arquivos fora dele).
+- **LEITURA (no início de qualquer trabalho no Ceres BI):** antes de agir, leia `Log-Sessoes-Ceres.md` via MCP do Obsidian (`get_vault_file`) para recuperar o contexto das sessões anteriores (decisões arquiteturais e problemas encontrados). Diga ao usuário em 1 frase o que está retomando e siga — não peça para ele repetir. Se a nota estiver vazia ou não existir, apenas prossiga.
+- Sempre que resolver um bug crítico, alterar a arquitetura ou tomar uma decisão importante, use a ferramenta MCP do Obsidian (`patch_vault_file`) para inserir a entrada na seção apropriada de `Log-Sessoes-Ceres.md`.
+- Toda vez que eu disser "Sessão encerrada" ou "Fechar", você DEVE obrigatoriamente fazer um resumo do que foi feito e salvá-lo em `Log-Sessoes-Ceres.md`, na seção `## Decisões Arquiteturais` ou `## Problemas Encontrados`, antes de fechar.
+
 <!-- AIVOUX-END -->

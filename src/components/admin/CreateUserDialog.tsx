@@ -63,16 +63,16 @@ export function CreateUserDialog({ open, onOpenChange, onCreated }: CreateUserDi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-ink-900 border-ink-700 text-ink-50 sm:max-w-md">
+      <DialogContent className="bg-card border-border text-foreground sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-display text-xl text-ink-50">
+          <DialogTitle className="font-display text-xl text-foreground">
             Novo Usuario
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="create-name" className="text-ink-200 text-xs font-mono uppercase tracking-[0.22em]">
+            <Label htmlFor="create-name" className="text-muted-foreground text-xs font-mono uppercase tracking-[0.22em]">
               Nome completo
             </Label>
             <Input
@@ -80,12 +80,12 @@ export function CreateUserDialog({ open, onOpenChange, onCreated }: CreateUserDi
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="Nome Sobrenome"
-              className="bg-ink-850 border-ink-600 text-ink-50 placeholder:text-ink-400"
+              className="bg-muted border-input text-foreground placeholder:text-muted-foreground"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="create-email" className="text-ink-200 text-xs font-mono uppercase tracking-[0.22em]">
+            <Label htmlFor="create-email" className="text-muted-foreground text-xs font-mono uppercase tracking-[0.22em]">
               Email
             </Label>
             <Input
@@ -94,12 +94,12 @@ export function CreateUserDialog({ open, onOpenChange, onCreated }: CreateUserDi
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="usuario@empresa.com"
-              className="bg-ink-850 border-ink-600 text-ink-50 placeholder:text-ink-400"
+              className="bg-muted border-input text-foreground placeholder:text-muted-foreground"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="create-password" className="text-ink-200 text-xs font-mono uppercase tracking-[0.22em]">
+            <Label htmlFor="create-password" className="text-muted-foreground text-xs font-mono uppercase tracking-[0.22em]">
               Senha
             </Label>
             <Input
@@ -108,19 +108,19 @@ export function CreateUserDialog({ open, onOpenChange, onCreated }: CreateUserDi
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Min. 6 caracteres"
-              className="bg-ink-850 border-ink-600 text-ink-50 placeholder:text-ink-400"
+              className="bg-muted border-input text-foreground placeholder:text-muted-foreground"
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="create-role" className="text-ink-200 text-xs font-mono uppercase tracking-[0.22em]">
+            <Label htmlFor="create-role" className="text-muted-foreground text-xs font-mono uppercase tracking-[0.22em]">
               Papel
             </Label>
             <select
               id="create-role"
               value={role}
               onChange={(e) => setRole(e.target.value as 'admin' | 'normal')}
-              className="rounded-md bg-ink-850 border border-ink-600 text-ink-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-champagne-400/40"
+              className="rounded-md bg-muted border border-input text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-champagne-400/40"
             >
               <option value="normal">Normal</option>
               <option value="admin">Admin</option>
@@ -136,7 +136,7 @@ export function CreateUserDialog({ open, onOpenChange, onCreated }: CreateUserDi
               type="button"
               variant="ghost"
               onClick={() => onOpenChange(false)}
-              className="text-ink-300 hover:text-ink-50"
+              className="text-muted-foreground hover:text-foreground"
             >
               Cancelar
             </Button>

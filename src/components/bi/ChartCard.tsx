@@ -26,6 +26,8 @@ export function ChartCard({
 }: ChartCardProps) {
   return (
     <div
+      role="figure"
+      aria-label={title}
       className={cn("rounded-2xl overflow-hidden bg-[var(--surface-raised)]", className)}
       style={{
         border: `1px solid var(--voux-card-border)`,

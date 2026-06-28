@@ -106,14 +106,14 @@ export function UserPermissionsSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="bg-ink-900 border-ink-700 text-ink-50 w-full sm:max-w-md overflow-y-auto"
+        className="bg-card border-border text-foreground w-full sm:max-w-md overflow-y-auto"
       >
         <SheetHeader className="mb-6">
-          <SheetTitle className="font-display text-xl text-ink-50">
+          <SheetTitle className="font-display text-xl text-foreground">
             Permissoes
           </SheetTitle>
           {targetUser && (
-            <p className="text-sm text-ink-300">{targetUser.full_name}</p>
+            <p className="text-sm text-muted-foreground">{targetUser.full_name}</p>
           )}
         </SheetHeader>
 
@@ -138,7 +138,7 @@ export function UserPermissionsSheet({
                       type="checkbox"
                       checked={allSelected}
                       onChange={() => toggleGroup(groupIds)}
-                      className="h-4 w-4 rounded border-ink-500 bg-ink-850 text-champagne-400 focus:ring-champagne-400/40"
+                      className="h-4 w-4 rounded border-input bg-muted text-champagne-400 focus:ring-champagne-400/40"
                     />
                     <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-champagne-400 group-hover:text-champagne-300">
                       {groupLabel}
@@ -149,15 +149,15 @@ export function UserPermissionsSheet({
                     {groupMods.map((mod) => (
                       <label
                         key={mod.id}
-                        className="flex items-center gap-2 cursor-pointer py-1 hover:bg-ink-850 rounded px-2 -mx-2"
+                        className="flex items-center gap-2 cursor-pointer py-1 hover:bg-accent rounded px-2 -mx-2"
                       >
                         <input
                           type="checkbox"
                           checked={selected.has(mod.id)}
                           onChange={() => toggleModule(mod.id)}
-                          className="h-3.5 w-3.5 rounded border-ink-500 bg-ink-850 text-champagne-400 focus:ring-champagne-400/40"
+                          className="h-3.5 w-3.5 rounded border-input bg-muted text-champagne-400 focus:ring-champagne-400/40"
                         />
-                        <span className="text-sm text-ink-200">{mod.label}</span>
+                        <span className="text-sm text-muted-foreground">{mod.label}</span>
                       </label>
                     ))}
                   </div>
@@ -165,11 +165,11 @@ export function UserPermissionsSheet({
               );
             })}
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-ink-700">
+            <div className="flex justify-end gap-3 pt-4 border-t border-border">
               <Button
                 variant="ghost"
                 onClick={() => onOpenChange(false)}
-                className="text-ink-300 hover:text-ink-50"
+                className="text-muted-foreground hover:text-foreground"
               >
                 Cancelar
               </Button>

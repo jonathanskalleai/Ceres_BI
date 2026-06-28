@@ -78,14 +78,14 @@ export const ConsultorReportSheet = ({ open, onOpenChange, vendedores }: Consult
           });
           if (error) throw error;
           if (reportData?.error) throw new Error(reportData.error);
-          generateConsultoresReport(reportData);
+          await generateConsultoresReport(reportData);
         }
       } else {
         const body = consultores?.length === 1 ? { consultor: consultores[0] } : {};
         const { data: reportData, error } = await supabase.functions.invoke("consultores-report", { body });
         if (error) throw error;
         if (reportData?.error) throw new Error(reportData.error);
-        generateConsultoresReport(reportData);
+        await generateConsultoresReport(reportData);
       }
       toast({ title: "Relatório(s) gerado(s)!", description: "O download do PDF foi iniciado." });
       onOpenChange(false);

@@ -25,32 +25,40 @@ export interface QueryResponse<T = Record<string, unknown>> {
 export async function querySqlServer<T = Record<string, unknown>>(
   options: QueryOptions
 ): Promise<QueryResponse<T>> {
-  const { data, error } = await supabase.functions.invoke("query-sqlserver", {
-    body: options,
-  });
+  try {
+    const { data, error } = await supabase.functions.invoke("query-sqlserver", {
+      body: options,
+    });
 
-  if (error) {
-    throw new Error(error.message || "Erro ao consultar SQL Server");
+    if (error) {
+      throw new Error(error.message || "Erro ao consultar SQL Server");
+    }
+
+    if (data?.error) {
+      throw new Error(data.error);
+    }
+
+    return data as QueryResponse<T>;
+  } catch (err) {
+    throw new Error(`[sqlServerApi.querySqlServer] ${err instanceof Error ? err.message : "Unknown error"}`);
   }
-
-  if (data?.error) {
-    throw new Error(data.error);
-  }
-
-  return data as QueryResponse<T>;
 }
 
 async function fetchInBatches<T>(
   promises: (() => Promise<QueryResponse<T>>)[],
   concurrency = 3
 ): Promise<T[]> {
-  const results: T[] = [];
-  for (let i = 0; i < promises.length; i += concurrency) {
-    const batch = promises.slice(i, i + concurrency);
-    const batchResults = await Promise.all(batch.map((fn) => fn()));
-    results.push(...batchResults.flatMap((r) => r.data));
+  try {
+    const results: T[] = [];
+    for (let i = 0; i < promises.length; i += concurrency) {
+      const batch = promises.slice(i, i + concurrency);
+      const batchResults = await Promise.all(batch.map((fn) => fn()));
+      results.push(...batchResults.flatMap((r) => r.data));
+    }
+    return results;
+  } catch (err) {
+    throw new Error(`[sqlServerApi.fetchInBatches] ${err instanceof Error ? err.message : "Unknown error"}`);
   }
-  return results;
 }
 
 export async function fetchAllPages<T = Record<string, unknown>>(
@@ -59,40 +67,44 @@ export async function fetchAllPages<T = Record<string, unknown>>(
   filters?: Record<string, string>,
   advancedFilters?: AdvancedFilter[],
 ): Promise<T[]> {
-  const { total } = await querySqlServer<T>({
-    view,
-    filters,
-    advancedFilters,
-    count_only: true,
-  });
-
-  if (total === 0) return [];
-
-  const pageSize = 3000;
-
-  if (total <= pageSize) {
-    const { data } = await querySqlServer<T>({
+  try {
+    const { total } = await querySqlServer<T>({
       view,
-      columns,
       filters,
       advancedFilters,
-      limit: pageSize,
-      offset: 0,
+      count_only: true,
     });
-    return data;
+
+    if (total === 0) return [];
+
+    const pageSize = 3000;
+
+    if (total <= pageSize) {
+      const { data } = await querySqlServer<T>({
+        view,
+        columns,
+        filters,
+        advancedFilters,
+        limit: pageSize,
+        offset: 0,
+      });
+      return data;
+    }
+
+    const pages = Math.ceil(total / pageSize);
+    const factories = Array.from({ length: pages }, (_, i) =>
+      () => querySqlServer<T>({
+        view,
+        columns,
+        filters,
+        advancedFilters,
+        limit: pageSize,
+        offset: i * pageSize,
+      })
+    );
+
+    return fetchInBatches<T>(factories, 3);
+  } catch (err) {
+    throw new Error(`[sqlServerApi.fetchAllPages] ${err instanceof Error ? err.message : "Unknown error"}`);
   }
-
-  const pages = Math.ceil(total / pageSize);
-  const factories = Array.from({ length: pages }, (_, i) =>
-    () => querySqlServer<T>({
-      view,
-      columns,
-      filters,
-      advancedFilters,
-      limit: pageSize,
-      offset: i * pageSize,
-    })
-  );
-
-  return fetchInBatches<T>(factories, 3);
 }

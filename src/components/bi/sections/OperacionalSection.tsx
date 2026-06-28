@@ -1,8 +1,10 @@
 import { Users, Route, Activity, Coffee, Calendar, CheckCircle } from "lucide-react";
 import { type DateRange } from "react-day-picker";
-import { useOperacionalData } from "@/hooks/bi/useOperacionalData";
+import { useOperacionalBIRpc } from "@/hooks/bi/useOperacionalBIRpc";
+import { useQueryClient } from "@tanstack/react-query";
 import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
+import { BiErrorState } from "@/components/bi/BiErrorState";
 import { HorizontalBarChart, VerticalBarChart, PieChart, PieChartWithLabels } from "@/components/bi/charts";
 import { CHART_COLORS, POSITIVE_COLOR, NEGATIVE_COLOR } from "@/lib/chartTheme";
 
@@ -14,8 +16,20 @@ interface Props {
 const pct = (v: number) => `${v.toFixed(1)}%`;
 
 export default function OperacionalSection({ active, dateRange }: Props) {
-  const { agg, isLoading } = useOperacionalData(active);
-  const { kpis } = agg;
+  const { data, isLoading, error } = useOperacionalBIRpc(active);
+  const queryClient = useQueryClient();
+  const { kpis } = data;
+
+  if (error && !isLoading) {
+    return (
+      <div className="pt-4">
+        <BiErrorState
+          message="Erro ao carregar dados operacionais"
+          onRetry={() => queryClient.invalidateQueries({ queryKey: ["bi-operacional-rpc"] })}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pt-4">
@@ -36,7 +50,7 @@ export default function OperacionalSection({ active, dateRange }: Props) {
           height={300}
         >
           <HorizontalBarChart
-            data={agg.utilizacaoPorTecnico}
+            data={data.utilizacaoPorTecnico}
             keys={['atendimento', 'deslocamento', 'ocioso']}
             title=""
             tooltipFormatter={(v: number) => `${Math.round(v)}%`}
@@ -46,7 +60,7 @@ export default function OperacionalSection({ active, dateRange }: Props) {
 
         <ChartCard title="KM Rodado por Tecnico" description="Distancia percorrida em atendimentos de campo" loading={isLoading} height={300}>
           <HorizontalBarChart
-            data={agg.kmPorTecnico.map(item => ({ name: item.name, value: item.value }))}
+            data={data.kmPorTecnico.map(item => ({ name: item.name, value: item.value }))}
             keys={['value']}
             seriesLabels={{ value: "KM" }}
             title=""
@@ -57,7 +71,7 @@ export default function OperacionalSection({ active, dateRange }: Props) {
 
         <ChartCard title="Agenda por Status" description="Situacao dos agendamentos de servico" loading={isLoading}>
           <PieChartWithLabels
-            data={agg.agendaPorStatus.map(item => ({ id: item.name, value: item.value, name: item.name }))}
+            data={data.agendaPorStatus.map(item => ({ id: item.name, value: item.value, name: item.name }))}
             title=""
             colors={CHART_COLORS}
           />
@@ -65,7 +79,7 @@ export default function OperacionalSection({ active, dateRange }: Props) {
 
         <ChartCard title="Agenda por Tipo de Servico" description="Tipos de atendimento agendados" loading={isLoading}>
           <HorizontalBarChart
-            data={agg.agendaPorTipo.map(item => ({ name: item.name, value: item.value }))}
+            data={data.agendaPorTipo.map(item => ({ name: item.name, value: item.value }))}
             keys={['value']}
             seriesLabels={{ value: "Agendamentos" }}
             title=""

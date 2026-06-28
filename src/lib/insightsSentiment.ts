@@ -51,10 +51,10 @@ export function rankKeywords(counts: Record<string, number>): Array<{ name: stri
     .map(([name, value]) => ({ name, value }));
 }
 
-export const COLORS_POS = "hsl(152, 69%, 40%)";
-export const COLORS_NEG = "hsl(0, 84%, 60%)";
+export const COLORS_POS = "var(--voux-success)";
+export const COLORS_NEG = "var(--voux-danger)";
 export const INSIGHT_CHART_COLORS = [
-  "#3b82f6", "#26a503", "#f59e0b",
-  "#a855f7", "#ef4444", "#0ea5e9",
-  "#ec4899", "#eab308",
+  "var(--voux-info)", "var(--voux-success)", "var(--voux-warning)",
+  "hsl(var(--chart-6))", "var(--voux-danger)", "hsl(var(--chart-4))",
+  "hsl(var(--chart-3))", "hsl(var(--chart-1))",
 ];

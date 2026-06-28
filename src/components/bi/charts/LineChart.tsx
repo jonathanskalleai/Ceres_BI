@@ -124,7 +124,7 @@ export default function LineChart({
                   width: 8,
                   height: 8,
                   borderRadius: "50%",
-                  background: s.color ?? "#c8b99a",
+                  background: s.color ?? "var(--voux-champagne-400)",
                   flexShrink: 0,
                   display: "inline-block",
                 }}
@@ -153,14 +153,14 @@ export default function LineChart({
                   if (v == null) return "";
                   const c = s.color ?? palette[si % palette.length];
                   const formatted = tooltipFormatter ? tooltipFormatter(v) : fmtCompact(v);
-                  return `<div style="display:flex;align-items:center;gap:6px;margin-top:3px"><span style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0;display:inline-block"></span><span style="color:var(--voux-text-muted);font-size:11px">${s.name}: <strong style="color:var(--voux-text-primary)">${formatted}</strong></span></div>`;
+                  return `<div style="display:flex;align-items:center;gap:6px;margin-top:3px"><span style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0;display:inline-block"></span><span style="color:var(--voux-tooltip-muted);font-size:11px">${s.name}: <strong style="color:var(--voux-tooltip-text)">${formatted}</strong></span></div>`;
                 })
                 .join("");
               setTooltip({
                 visible: true,
                 x,
                 y,
-                content: `<div style="font-size:10px;color:var(--voux-text-faint);letter-spacing:0.08em;margin-bottom:4px">${label}</div>${rows}`,
+                content: `<div style="font-size:10px;color:var(--voux-tooltip-muted);letter-spacing:0.08em;margin-bottom:4px">${label}</div>${rows}`,
               });
             }}
             onLeave={() => {

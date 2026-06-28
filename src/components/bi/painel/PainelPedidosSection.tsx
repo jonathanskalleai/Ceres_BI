@@ -1,6 +1,6 @@
 import { DollarSign, FileCheck, ShieldCheck, Percent } from "lucide-react";
 import { KPICard } from "@/components/bi/KPICard";
-import { fmtBRL, fmtNum, fmtPct, isEmpty } from "@/lib/formatters";
+import { fmtBRLKpi, fmtNum, fmtPct, isEmpty } from "@/lib/formatters";
 import type { PedidosKPIsResult } from "@/hooks/bi/usePedidosKPIsRpc";
 
 interface Props {
@@ -14,12 +14,12 @@ export function PainelPedidosSection({ pedKpis, loading }: Props) {
       {(loading || !isEmpty(pedKpis.faturamento.value)) && (
         <KPICard
           title="Faturamento"
-          value={fmtBRL(pedKpis.faturamento.value)}
+          value={fmtBRLKpi(pedKpis.faturamento.value)}
           icon={DollarSign}
-          previousValue={fmtBRL(pedKpis.faturamento.previousValue)}
+          previousValue={fmtBRLKpi(pedKpis.faturamento.previousValue)}
           trend={pedKpis.faturamento.trend}
           loading={loading}
-          accentColor="var(--voux-success, #4ade80)"
+          accentColor="var(--voux-success)"
           formula="SUM(valor pedido) WHERE aprovado"
         />
       )}

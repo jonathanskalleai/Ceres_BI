@@ -9,6 +9,8 @@ interface ChartFrameProps {
   /** Altura em px; quando omitido, preenche 100% do container pai. */
   height?: number;
   rounded?: "lg" | "full";
+  /** Accessible label for the chart region */
+  ariaLabel?: string;
   children: ReactNode;
 }
 
@@ -23,6 +25,7 @@ export function ChartFrame({
   emptyMessage = "Sem dados para este período",
   height,
   rounded = "lg",
+  ariaLabel,
   children,
 }: ChartFrameProps) {
   const style = { height: height ?? "100%", width: "100%" } as const;
@@ -50,7 +53,12 @@ export function ChartFrame({
   }
 
   return (
-    <div className="w-full" style={{ ...style, overflowX: "auto", overflowY: "hidden", minWidth: 0 }}>
+    <div
+      role="img"
+      aria-label={ariaLabel}
+      className="w-full"
+      style={{ ...style, overflowX: "auto", overflowY: "hidden", minWidth: 0 }}
+    >
       {children}
     </div>
   );

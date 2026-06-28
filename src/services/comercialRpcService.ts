@@ -17,16 +17,18 @@ export async function fetchKpisComercial(
   to: string,
   vendedor?: string,
 ): Promise<RpcKpisComercial> {
-  const params: Record<string, unknown> = { p_from: from, p_to: to };
-  if (vendedor) params.p_vendedor = vendedor;
+  try {
+    const params: Record<string, unknown> = { p_from: from, p_to: to };
+    if (vendedor) params.p_vendedor = vendedor;
 
-  const { data, error } = await supabase.rpc("rpc_kpis_comercial", params);
-  if (error) throw new Error(`rpc_kpis_comercial: ${error.message}`);
+    const { data, error } = await supabase.rpc("rpc_kpis_comercial", params);
+    if (error) throw new Error(error.message);
 
-  // The RPC returns a single JSON value; Supabase client may wrap it in an array
-  // depending on the return type definition. Normalize:
-  const raw = Array.isArray(data) ? data[0] : data;
-  return raw as RpcKpisComercial;
+    const raw = Array.isArray(data) ? data[0] : data;
+    return raw as RpcKpisComercial;
+  } catch (err) {
+    throw new Error(`[comercialRpcService.fetchKpisComercial] ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
 }
 
 /**
@@ -37,12 +39,16 @@ export async function fetchRankingVendedores(
   to: string,
   limit?: number,
 ): Promise<RpcRankingVendedor[]> {
-  const params: Record<string, unknown> = { p_from: from, p_to: to };
-  if (limit != null) params.p_limit = limit;
+  try {
+    const params: Record<string, unknown> = { p_from: from, p_to: to };
+    if (limit != null) params.p_limit = limit;
 
-  const { data, error } = await supabase.rpc("rpc_ranking_vendedores", params);
-  if (error) throw new Error(`rpc_ranking_vendedores: ${error.message}`);
-  return (data ?? []) as RpcRankingVendedor[];
+    const { data, error } = await supabase.rpc("rpc_ranking_vendedores", params);
+    if (error) throw new Error(error.message);
+    return (data ?? []) as RpcRankingVendedor[];
+  } catch (err) {
+    throw new Error(`[comercialRpcService.fetchRankingVendedores] ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
 }
 
 /**
@@ -53,12 +59,16 @@ export async function fetchEvolucaoMensal(
   to: string,
   vendedor?: string,
 ): Promise<RpcEvolucaoMensal[]> {
-  const params: Record<string, unknown> = { p_from: from, p_to: to };
-  if (vendedor) params.p_vendedor = vendedor;
+  try {
+    const params: Record<string, unknown> = { p_from: from, p_to: to };
+    if (vendedor) params.p_vendedor = vendedor;
 
-  const { data, error } = await supabase.rpc("rpc_evolucao_mensal", params);
-  if (error) throw new Error(`rpc_evolucao_mensal: ${error.message}`);
-  return (data ?? []) as RpcEvolucaoMensal[];
+    const { data, error } = await supabase.rpc("rpc_evolucao_mensal", params);
+    if (error) throw new Error(error.message);
+    return (data ?? []) as RpcEvolucaoMensal[];
+  } catch (err) {
+    throw new Error(`[comercialRpcService.fetchEvolucaoMensal] ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
 }
 
 /**
@@ -69,12 +79,16 @@ export async function fetchRankingRegioes(
   to: string,
   limit?: number,
 ): Promise<RpcRankingRegiao[]> {
-  const params: Record<string, unknown> = { p_from: from, p_to: to };
-  if (limit != null) params.p_limit = limit;
+  try {
+    const params: Record<string, unknown> = { p_from: from, p_to: to };
+    if (limit != null) params.p_limit = limit;
 
-  const { data, error } = await supabase.rpc("rpc_ranking_regioes", params);
-  if (error) throw new Error(`rpc_ranking_regioes: ${error.message}`);
-  return (data ?? []) as RpcRankingRegiao[];
+    const { data, error } = await supabase.rpc("rpc_ranking_regioes", params);
+    if (error) throw new Error(error.message);
+    return (data ?? []) as RpcRankingRegiao[];
+  } catch (err) {
+    throw new Error(`[comercialRpcService.fetchRankingRegioes] ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
 }
 
 /**
@@ -85,13 +99,17 @@ export async function fetchClientesPorVendedor(
   from: string,
   to: string,
 ): Promise<RpcClienteVendedor[]> {
-  const { data, error } = await supabase.rpc("rpc_clientes_por_vendedor", {
-    p_vendedor: vendedor,
-    p_from: from,
-    p_to: to,
-  });
-  if (error) throw new Error(`rpc_clientes_por_vendedor: ${error.message}`);
-  return (data ?? []) as RpcClienteVendedor[];
+  try {
+    const { data, error } = await supabase.rpc("rpc_clientes_por_vendedor", {
+      p_vendedor: vendedor,
+      p_from: from,
+      p_to: to,
+    });
+    if (error) throw new Error(error.message);
+    return (data ?? []) as RpcClienteVendedor[];
+  } catch (err) {
+    throw new Error(`[comercialRpcService.fetchClientesPorVendedor] ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
 }
 
 /**
@@ -102,12 +120,16 @@ export async function fetchRankingVendedoresV2(
   to: string,
   limit?: number,
 ): Promise<RpcRankingVendedorV2[]> {
-  const params: Record<string, unknown> = { p_from: from, p_to: to };
-  if (limit != null) params.p_limit = limit;
+  try {
+    const params: Record<string, unknown> = { p_from: from, p_to: to };
+    if (limit != null) params.p_limit = limit;
 
-  const { data, error } = await supabase.rpc("rpc_ranking_vendedores_v2", params);
-  if (error) throw new Error(`rpc_ranking_vendedores_v2: ${error.message}`);
-  return (data ?? []) as RpcRankingVendedorV2[];
+    const { data, error } = await supabase.rpc("rpc_ranking_vendedores_v2", params);
+    if (error) throw new Error(error.message);
+    return (data ?? []) as RpcRankingVendedorV2[];
+  } catch (err) {
+    throw new Error(`[comercialRpcService.fetchRankingVendedoresV2] ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
 }
 
 /**
@@ -120,15 +142,19 @@ export async function fetchRegistrosRecentes(
   cidade?: string,
   limit?: number,
 ): Promise<RpcRegistroRecente[]> {
-  const params: Record<string, unknown> = {
-    p_from: from || null,
-    p_to: to || null,
-  };
-  if (vendedor) params.p_vendedor = vendedor;
-  if (cidade) params.p_cidade = cidade;
-  if (limit != null) params.p_limit = limit;
+  try {
+    const params: Record<string, unknown> = {
+      p_from: from || null,
+      p_to: to || null,
+    };
+    if (vendedor) params.p_vendedor = vendedor;
+    if (cidade) params.p_cidade = cidade;
+    if (limit != null) params.p_limit = limit;
 
-  const { data, error } = await supabase.rpc("rpc_registros_recentes", params);
-  if (error) throw new Error(`rpc_registros_recentes: ${error.message}`);
-  return (data ?? []) as RpcRegistroRecente[];
+    const { data, error } = await supabase.rpc("rpc_registros_recentes", params);
+    if (error) throw new Error(error.message);
+    return (data ?? []) as RpcRegistroRecente[];
+  } catch (err) {
+    throw new Error(`[comercialRpcService.fetchRegistrosRecentes] ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
 }

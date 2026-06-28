@@ -6,18 +6,15 @@ import { ChartCard } from "@/components/bi/ChartCard";
 import { HorizontalBarChart, PieChartWithLabels, LineChart } from "@/components/bi/charts";
 import { CHART_COLORS, POSITIVE_COLOR } from "@/lib/chartTheme";
 import { formatBRL, formatMonthYear, toISODate, getPreviousPeriod, calcTrend } from "@/lib/dateUtils";
-import type { RpcPedidosBI } from "@/types/biRpc";
+import { fmtBRLKpi } from "@/lib/formatters";
+import { PEDIDOS_BI_DEFAULTS } from "@/services/bi/biRpcService";
 
 interface Props {
   active: boolean;
   dateRange?: DateRange;
 }
 
-const EMPTY_AGG: RpcPedidosBI = {
-  kpis: { total: 0, faturamento: 0, ticketMedio: 0, percentAprovado: 0, percentFinanciado: 0, valorCancelado: 0 },
-  evolucaoMensal: [], porSituacao: [], mixPagamento: [], porVendedor: [], porCidade: [],
-  porGrupoProduto: [], porMarcaProduto: [],
-};
+const EMPTY_AGG = PEDIDOS_BI_DEFAULTS;
 
 export default function PedidosSection({ active, dateRange }: Props) {
   const from = toISODate(dateRange?.from);
@@ -46,23 +43,23 @@ export default function PedidosSection({ active, dateRange }: Props) {
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <KPICard title="Total Pedidos" value={kpis.total.toLocaleString("pt-BR")} icon={ShoppingCart} loading={isLoading}
           previousValue={kpisPrev.total.toLocaleString("pt-BR")} trend={calcTrend(kpis.total, kpisPrev.total)} />
-        <KPICard title="Faturamento (Aprovado)" value={formatBRL(kpis.faturamento)} icon={DollarSign} loading={isLoading} hint="receita de pedidos aprovados"
-          previousValue={formatBRL(kpisPrev.faturamento)} trend={calcTrend(kpis.faturamento, kpisPrev.faturamento)} />
-        <KPICard title="Ticket Medio" value={formatBRL(kpis.ticketMedio)} icon={TrendingUp} loading={isLoading} hint="por pedido aprovado"
-          previousValue={formatBRL(kpisPrev.ticketMedio)} trend={calcTrend(kpis.ticketMedio, kpisPrev.ticketMedio)} />
+        <KPICard title="Faturamento (Aprovado)" value={fmtBRLKpi(kpis.faturamento)} icon={DollarSign} loading={isLoading} hint="receita de pedidos aprovados"
+          previousValue={fmtBRLKpi(kpisPrev.faturamento)} trend={calcTrend(kpis.faturamento, kpisPrev.faturamento)} />
+        <KPICard title="Ticket Medio" value={fmtBRLKpi(kpis.ticketMedio)} icon={TrendingUp} loading={isLoading} hint="por pedido aprovado"
+          previousValue={fmtBRLKpi(kpisPrev.ticketMedio)} trend={calcTrend(kpis.ticketMedio, kpisPrev.ticketMedio)} />
         <KPICard title="Taxa de Aprovacao" value={`${kpis.percentAprovado.toFixed(1)}%`} icon={Percent} loading={isLoading}
           previousValue={`${kpisPrev.percentAprovado.toFixed(1)}%`} trend={calcTrend(kpis.percentAprovado, kpisPrev.percentAprovado)} />
         <KPICard title="% Financiado" value={`${kpis.percentFinanciado.toFixed(1)}%`} icon={CreditCard} loading={isLoading} hint="vs recurso proprio"
           previousValue={`${kpisPrev.percentFinanciado.toFixed(1)}%`} trend={calcTrend(kpis.percentFinanciado, kpisPrev.percentFinanciado)} />
-        <KPICard title="Valor Cancelado" value={formatBRL(kpis.valorCancelado)} icon={XCircle} loading={isLoading} hint="pedidos cancelados"
-          previousValue={formatBRL(kpisPrev.valorCancelado)} trend={calcTrend(kpis.valorCancelado, kpisPrev.valorCancelado)} invertTrend />
+        <KPICard title="Valor Cancelado" value={fmtBRLKpi(kpis.valorCancelado)} icon={XCircle} loading={isLoading} hint="pedidos cancelados"
+          previousValue={fmtBRLKpi(kpisPrev.valorCancelado)} trend={calcTrend(kpis.valorCancelado, kpisPrev.valorCancelado)} invertTrend />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <ChartCard
           title="Evolucao Mensal do Faturamento"
           description="Receita aprovada e numero de pedidos por mes"
-          infoTooltip="Por data do pedido"
+          infoTooltip="Por data de ganho (fechamento do negocio)"
           loading={isLoading}
         >
           <div className="h-full">
@@ -177,6 +174,25 @@ export default function PedidosSection({ active, dateRange }: Props) {
             title=""
             tooltipFormatter={(value, d) => `${formatBRL(value)} (${d?.qtd ?? 0} un)`}
             colors={[CHART_COLORS[4]]}
+          />
+        </ChartCard>
+
+        <ChartCard
+          title="Itens Mais Vendidos — Marca"
+          description="Valor vendido por marca de produto (itens dos pedidos)"
+          loading={isLoading}
+        >
+          <HorizontalBarChart
+            data={agg.porMarcaProduto.map(item => ({
+              name: item.name,
+              valor: item.valor,
+              qtd: item.qtd
+            }))}
+            keys={['valor']}
+            seriesLabels={{ valor: "Valor Vendido" }}
+            title=""
+            tooltipFormatter={(value, d) => `${formatBRL(value)} (${d?.qtd ?? 0} un)`}
+            colors={[CHART_COLORS[5]]}
           />
         </ChartCard>
       </div>
