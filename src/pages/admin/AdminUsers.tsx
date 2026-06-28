@@ -2,6 +2,7 @@ import { Navigate } from 'react-router-dom';
 import { Loader2, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CreateUserDialog } from '@/components/admin/CreateUserDialog';
+import { ChangePasswordDialog } from '@/components/admin/ChangePasswordDialog';
 import { UserPermissionsSheet } from '@/components/admin/UserPermissionsSheet';
 import { UserRow } from '@/components/admin/UserRow';
 import { useAdminUsers } from '@/hooks/useAdminUsers';
@@ -28,6 +29,8 @@ export default function AdminUsers() {
     setCreateOpen,
     permissionsTarget,
     setPermissionsTarget,
+    changePasswordTarget,
+    setChangePasswordTarget,
     confirmAction,
     setConfirmAction,
     handleConfirmAction,
@@ -82,6 +85,8 @@ export default function AdminUsers() {
               email={emails[u.id]}
               currentUserId={currentUserId}
               onPermissions={setPermissionsTarget}
+              onChangePassword={setChangePasswordTarget}
+              onDelete={(target) => setConfirmAction({ user: target, action: 'delete' })}
               onConfirm={setConfirmAction}
             />
           ))}
@@ -95,6 +100,15 @@ export default function AdminUsers() {
         onCreated={() => {
           toast({ title: 'Usuario criado com sucesso' });
           fetchUsers();
+        }}
+      />
+
+      {/* Change password dialog */}
+      <ChangePasswordDialog
+        targetUser={changePasswordTarget}
+        onOpenChange={(open) => { if (!open) setChangePasswordTarget(null); }}
+        onChanged={() => {
+          toast({ title: 'Senha alterada com sucesso' });
         }}
       />
 
@@ -116,24 +130,28 @@ export default function AdminUsers() {
         <AlertDialogContent className="bg-card border-border text-foreground">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground">
-              {confirmAction?.action === 'toggle'
-                ? confirmAction.user.is_active
-                  ? 'Desativar usuario?'
-                  : 'Ativar usuario?'
-                : confirmAction?.action === 'role'
-                  ? confirmAction.user.role === 'admin'
-                    ? 'Remover permissao de admin?'
-                    : 'Tornar admin?'
-                  : ''}
+              {confirmAction?.action === 'delete'
+                ? 'Excluir usuario?'
+                : confirmAction?.action === 'toggle'
+                  ? confirmAction.user.is_active
+                    ? 'Desativar usuario?'
+                    : 'Ativar usuario?'
+                  : confirmAction?.action === 'role'
+                    ? confirmAction.user.role === 'admin'
+                      ? 'Remover permissao de admin?'
+                      : 'Tornar admin?'
+                    : ''}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground">
-              {confirmAction?.action === 'toggle' && confirmAction.user.is_active
-                ? `${confirmAction.user.full_name} nao podera mais acessar o sistema.`
-                : confirmAction?.action === 'toggle'
-                  ? `${confirmAction.user.full_name} podera acessar o sistema novamente.`
-                  : confirmAction?.action === 'role' && confirmAction.user.role !== 'admin'
-                    ? `${confirmAction.user.full_name} tera acesso total ao sistema.`
-                    : `${confirmAction?.user.full_name} perdera acesso administrativo.`}
+              {confirmAction?.action === 'delete'
+                ? `${confirmAction.user.full_name} sera removido permanentemente (conta e perfil). Esta acao nao pode ser desfeita.`
+                : confirmAction?.action === 'toggle' && confirmAction.user.is_active
+                  ? `${confirmAction.user.full_name} nao podera mais acessar o sistema.`
+                  : confirmAction?.action === 'toggle'
+                    ? `${confirmAction.user.full_name} podera acessar o sistema novamente.`
+                    : confirmAction?.action === 'role' && confirmAction.user.role !== 'admin'
+                      ? `${confirmAction.user.full_name} tera acesso total ao sistema.`
+                      : `${confirmAction?.user.full_name} perdera acesso administrativo.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -142,9 +160,13 @@ export default function AdminUsers() {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmAction}
-              className="bg-champagne-400 text-ink-1000 hover:bg-champagne-300"
+              className={
+                confirmAction?.action === 'delete'
+                  ? 'bg-red-600 text-white hover:bg-red-500'
+                  : 'bg-champagne-400 text-ink-1000 hover:bg-champagne-300'
+              }
             >
-              Confirmar
+              {confirmAction?.action === 'delete' ? 'Excluir' : 'Confirmar'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

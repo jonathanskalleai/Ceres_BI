@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { supabaseAdmin } from '@/integrations/supabase/adminClient';
 import type { Profile, AppModule } from '@/types/auth';
 
 // ---------------------------------------------------------------------------
@@ -157,6 +158,29 @@ export async function changePassword(newPassword: string): Promise<{ error: stri
 }
 
 // ---------------------------------------------------------------------------
+// Admin-only operations (require VITE_SUPABASE_SERVICE_ROLE_KEY)
+// ---------------------------------------------------------------------------
+
+/** Delete user completely (auth + profile). Requires VITE_SUPABASE_SERVICE_ROLE_KEY. */
+export async function deleteUser(userId: string): Promise<{ error: string | null }> {
+  if (!supabaseAdmin) return { error: 'Admin API não disponível (SERVICE_ROLE_KEY não configurada)' };
+  const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+  if (error) return { error: error.message };
+  return { error: null };
+}
+
+/** Set a new password for any user. Requires VITE_SUPABASE_SERVICE_ROLE_KEY. */
+export async function adminSetPassword(
+  userId: string,
+  newPassword: string,
+): Promise<{ error: string | null }> {
+  if (!supabaseAdmin) return { error: 'Admin API não disponível (SERVICE_ROLE_KEY não configurada)' };
+  const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, { password: newPassword });
+  if (error) return { error: error.message };
+  return { error: null };
+}
+
+// ---------------------------------------------------------------------------
 // Fetch all modules (used by permissions UI)
 // ---------------------------------------------------------------------------
 
@@ -186,21 +210,22 @@ export async function listModules(): Promise<AppModule[]> {
 export async function getUserEmails(
   userIds: string[],
 ): Promise<Record<string, string>> {
-  // Try fetching from auth.users via admin API
-  // This might not work with anon key; graceful fallback
   const emailMap: Record<string, string> = {};
+  if (!supabaseAdmin) return emailMap;
 
   for (const uid of userIds) {
     try {
-      const { data } = await supabase.auth.admin.getUserById(uid);
+      const { data } = await supabaseAdmin.auth.admin.getUserById(uid);
       if (data?.user?.email) {
         emailMap[uid] = data.user.email;
       }
     } catch {
-      // admin API not available with anon key — skip
-      break;
+      continue;
     }
   }
 
   return emailMap;
 }
+
+// Re-export so UI components can check service-role availability from one place.
+export { hasAdminClient } from '@/integrations/supabase/adminClient';

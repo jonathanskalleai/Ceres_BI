@@ -6,12 +6,13 @@ import {
   toggleUserActive,
   updateProfile,
   getUserEmails,
+  deleteUser,
 } from '@/services/adminService';
 import type { Profile } from '@/types/auth';
 
 export interface ConfirmAction {
   user: Profile;
-  action: 'toggle' | 'role';
+  action: 'toggle' | 'role' | 'delete';
 }
 
 export function useAdminUsers() {
@@ -26,6 +27,7 @@ export function useAdminUsers() {
   // Dialog state
   const [createOpen, setCreateOpen] = useState(false);
   const [permissionsTarget, setPermissionsTarget] = useState<Profile | null>(null);
+  const [changePasswordTarget, setChangePasswordTarget] = useState<Profile | null>(null);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
 
   const fetchUsers = useCallback(async () => {
@@ -82,12 +84,30 @@ export function useAdminUsers() {
     setConfirmAction(null);
   }
 
+  async function handleDeleteUser(targetUser: Profile) {
+    try {
+      const { error: delErr } = await deleteUser(targetUser.id);
+      if (delErr) throw new Error(delErr);
+      toast({ title: 'Usuario excluido' });
+      fetchUsers();
+    } catch (err) {
+      toast({
+        title: 'Erro',
+        description: err instanceof Error ? err.message : 'Erro desconhecido',
+        variant: 'destructive',
+      });
+    }
+    setConfirmAction(null);
+  }
+
   function handleConfirmAction() {
     if (!confirmAction) return;
     if (confirmAction.action === 'toggle') {
       handleToggleActive(confirmAction.user);
-    } else {
+    } else if (confirmAction.action === 'role') {
       handleToggleRole(confirmAction.user);
+    } else {
+      handleDeleteUser(confirmAction.user);
     }
   }
 
@@ -102,6 +122,8 @@ export function useAdminUsers() {
     setCreateOpen,
     permissionsTarget,
     setPermissionsTarget,
+    changePasswordTarget,
+    setChangePasswordTarget,
     confirmAction,
     setConfirmAction,
     handleConfirmAction,
