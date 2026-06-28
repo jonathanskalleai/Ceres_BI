@@ -25,6 +25,7 @@ export function PainelValoresSection({ kpis, crossKpis, loading }: Props) {
           loading={loading}
           accentColor="var(--voux-success)"
           formula="SUM(valor) dos negocios ganhos"
+          dataSource="rpc_negocios_bi › kpis.valorGanho"
         />
       )}
       {(loading || !isEmpty(kpis.valorPerdido.value)) && (
@@ -38,6 +39,7 @@ export function PainelValoresSection({ kpis, crossKpis, loading }: Props) {
           loading={loading}
           accentColor="var(--voux-danger)"
           formula="SUM(valor) dos negocios perdidos"
+          dataSource="rpc_negocios_bi › kpis.pipelinePerdido"
         />
       )}
       {(loading || !isEmpty(kpis.pipelineAberto.value)) && (
@@ -49,6 +51,7 @@ export function PainelValoresSection({ kpis, crossKpis, loading }: Props) {
           trend={kpis.pipelineAberto.trend}
           loading={loading}
           formula="SUM(valor) dos negocios em andamento"
+          dataSource="rpc_negocios_bi › kpis.pipelineAberto"
         />
       )}
       {(loading || !isEmpty(kpis.ticketMedio.value)) && (
@@ -60,6 +63,7 @@ export function PainelValoresSection({ kpis, crossKpis, loading }: Props) {
           trend={kpis.ticketMedio.trend}
           loading={loading}
           formula="valor ganho / qtd ganhos"
+          dataSource="rpc_negocios_bi › kpis.ticketMedioGanho"
         />
       )}
       {(loading || !isEmpty(crossKpis.receitaPorConsultor.value)) && (
@@ -72,6 +76,7 @@ export function PainelValoresSection({ kpis, crossKpis, loading }: Props) {
           loading={loading}
           hint="Media valor ganho por vendedor"
           formula="valor ganho / qtd vendedores com ganho"
+          dataSource="rpc_negocios_bi (cross) › valorGanho/qtdVendedores"
         />
       )}
     </>

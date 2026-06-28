@@ -22,6 +22,7 @@ export function PainelCrossSection({ crossKpis, loading }: Props) {
           loading={loading}
           hint="Media dias ate fechar (ganhos)"
           formula="AVG(dias ate fechar) dos ganhos"
+          dataSource="rpc_negocios_bi (cross) › cicloMedioVendas"
         />
       )}
       {(loading || !isEmpty(crossKpis.esforcoMedio.value)) && (
@@ -35,6 +36,7 @@ export function PainelCrossSection({ crossKpis, loading }: Props) {
           loading={loading}
           hint="Acoes por negocio ganho"
           formula="AVG(qtd acoes) por negocio ganho"
+          dataSource="rpc_negocios_bi + rpc_acoes_bi (cross) › esforcoMedio"
         />
       )}
       {(loading || !isEmpty(crossKpis.conversaoPedidoNegocio.value)) && (
@@ -47,6 +49,7 @@ export function PainelCrossSection({ crossKpis, loading }: Props) {
           loading={loading}
           hint="% ganhos com pedido emitido"
           formula="negocios ganhos com pedido / total ganhos x 100"
+          dataSource="rpc_negocios_bi + rpc_pedidos_bi (cross) › conversaoPedidoNegocio"
         />
       )}
     </>

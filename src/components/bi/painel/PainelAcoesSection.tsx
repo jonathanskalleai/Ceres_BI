@@ -23,6 +23,7 @@ export function PainelAcoesSection({ kpis, loading }: Props) {
             trend={kpis.totalAcoes.trend}
             loading={loading}
             formula="COUNT acoes concluidas no periodo"
+            dataSource="rpc_acoes_bi › kpis.totalAcoes"
           />
         )}
         {(loading || !isEmpty(kpis.totalVisitas.value)) && (
@@ -34,6 +35,7 @@ export function PainelAcoesSection({ kpis, loading }: Props) {
             trend={kpis.totalVisitas.trend}
             loading={loading}
             formula="COUNT acoes tipo visita"
+            dataSource="rpc_acoes_bi › kpis.visitas"
           />
         )}
         {kpis.porTipoAcao
@@ -48,6 +50,7 @@ export function PainelAcoesSection({ kpis, loading }: Props) {
               trend={tipo.trend}
               loading={loading}
               formula={`COUNT acoes tipo ${tipo.name.toLowerCase()}`}
+              dataSource="rpc_acoes_bi › porTipoAcao[]"
             />
           ))}
       </div>

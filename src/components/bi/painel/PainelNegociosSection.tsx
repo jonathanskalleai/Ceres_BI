@@ -22,6 +22,7 @@ export function PainelNegociosSection({ kpis, loading }: Props) {
           trend={kpis.totalNegocios.trend}
           loading={loading}
           formula="COUNT negocios unicos (dedup por numero)"
+          dataSource="rpc_negocios_bi › kpis.totalNegocios"
         />
       )}
       {(loading || !isEmpty(kpis.ganhos.value)) && (
@@ -34,6 +35,7 @@ export function PainelNegociosSection({ kpis, loading }: Props) {
           loading={loading}
           accentColor="var(--voux-success)"
           formula="COUNT WHERE conclusao = ganho"
+          dataSource="rpc_negocios_bi › kpis.ganhos"
         />
       )}
       {(loading || !isEmpty(kpis.perdidos.value)) && (
@@ -47,6 +49,7 @@ export function PainelNegociosSection({ kpis, loading }: Props) {
           loading={loading}
           accentColor="var(--voux-danger)"
           formula="COUNT WHERE conclusao = perda"
+          dataSource="rpc_negocios_bi › kpis.perdidos"
         />
       )}
       {(loading || !isEmpty(kpis.andamento.value)) && (
@@ -58,6 +61,7 @@ export function PainelNegociosSection({ kpis, loading }: Props) {
           trend={kpis.andamento.trend}
           loading={loading}
           formula="COUNT WHERE sem conclusao definitiva"
+          dataSource="rpc_negocios_bi › kpis.andamento"
         />
       )}
       {(loading || !isEmpty(kpis.taxaConversao.value)) && (
@@ -69,6 +73,7 @@ export function PainelNegociosSection({ kpis, loading }: Props) {
           trend={kpis.taxaConversao.trend}
           loading={loading}
           formula="ganhos / (ganhos + perdidos) x 100"
+          dataSource="rpc_negocios_bi › kpis.taxaConversao"
         />
       )}
     </>

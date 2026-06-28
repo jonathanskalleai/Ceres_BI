@@ -39,21 +39,21 @@ export default function ServicosSection({ active, dateRange }: Props) {
     <div className="space-y-6 pt-4">
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <KPICard title="Total OS" value={kpis.totalOS.toLocaleString("pt-BR")} icon={Wrench} loading={isLoading}
-          previousValue={kpisPrev.totalOS.toLocaleString("pt-BR")} trend={calcTrend(kpis.totalOS, kpisPrev.totalOS)} />
+          previousValue={kpisPrev.totalOS.toLocaleString("pt-BR")} trend={calcTrend(kpis.totalOS, kpisPrev.totalOS)} dataSource="rpc_servicos_bi › kpis.totalOS" />
         <KPICard title="OS Abertas" value={kpis.abertas.toLocaleString("pt-BR")} icon={FolderOpen} loading={isLoading} hint="backlog atual"
-          previousValue={kpisPrev.abertas.toLocaleString("pt-BR")} trend={calcTrend(kpis.abertas, kpisPrev.abertas)} invertTrend />
+          previousValue={kpisPrev.abertas.toLocaleString("pt-BR")} trend={calcTrend(kpis.abertas, kpisPrev.abertas)} invertTrend dataSource="rpc_servicos_bi › kpis.abertas" />
         <KPICard title="Taxa de Fechamento" value={`${kpis.taxaFechamento.toFixed(1)}%`} icon={CheckCircle} loading={isLoading}
-          previousValue={`${kpisPrev.taxaFechamento.toFixed(1)}%`} trend={calcTrend(kpis.taxaFechamento, kpisPrev.taxaFechamento)} />
+          previousValue={`${kpisPrev.taxaFechamento.toFixed(1)}%`} trend={calcTrend(kpis.taxaFechamento, kpisPrev.taxaFechamento)} dataSource="rpc_servicos_bi › kpis.taxaFechamento" />
         <KPICard title="Tempo Medio Resolucao" value={formatDias(kpis.tempoMedioResolucao)} icon={Clock} loading={isLoading}
-          previousValue={formatDias(kpisPrev.tempoMedioResolucao)} trend={calcTrend(kpis.tempoMedioResolucao, kpisPrev.tempoMedioResolucao)} invertTrend />
+          previousValue={formatDias(kpisPrev.tempoMedioResolucao)} trend={calcTrend(kpis.tempoMedioResolucao, kpisPrev.tempoMedioResolucao)} invertTrend dataSource="rpc_servicos_bi › kpis.tempoMedioResolucao" />
         <KPICard title="Mediana Resolucao" value={formatDias(kpis.tempoMedianoResolucao)} icon={Timer} loading={isLoading} hint="menos sensivel a outliers"
-          previousValue={formatDias(kpisPrev.tempoMedianoResolucao)} trend={calcTrend(kpis.tempoMedianoResolucao, kpisPrev.tempoMedianoResolucao)} invertTrend />
+          previousValue={formatDias(kpisPrev.tempoMedianoResolucao)} trend={calcTrend(kpis.tempoMedianoResolucao, kpisPrev.tempoMedianoResolucao)} invertTrend dataSource="rpc_servicos_bi › kpis.tempoMedianoResolucao" />
         <KPICard title="Total Ocorrencias" value={kpis.totalOcorrencias.toLocaleString("pt-BR")} icon={AlertCircle} loading={isLoading}
-          previousValue={kpisPrev.totalOcorrencias.toLocaleString("pt-BR")} trend={calcTrend(kpis.totalOcorrencias, kpisPrev.totalOcorrencias)} />
+          previousValue={kpisPrev.totalOcorrencias.toLocaleString("pt-BR")} trend={calcTrend(kpis.totalOcorrencias, kpisPrev.totalOcorrencias)} dataSource="rpc_servicos_bi › kpis.totalOcorrencias" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <ChartCard title="OS por Status" description="Distribuicao entre fechadas, abertas e canceladas" loading={isLoading}>
+        <ChartCard title="OS por Status" description="Distribuicao entre fechadas, abertas e canceladas" dataSource="rpc_servicos_bi › porStatus[]" loading={isLoading}>
           <PieChartWithLabels
             data={agg.porStatus.map(item => ({ id: item.name, value: item.value, name: item.name }))}
             title=""
@@ -61,7 +61,7 @@ export default function ServicosSection({ active, dateRange }: Props) {
           />
         </ChartCard>
 
-        <ChartCard title="Tempo de Resolucao por Faixa" description="Quantas OS sao resolvidas em cada janela de tempo" loading={isLoading}>
+        <ChartCard title="Tempo de Resolucao por Faixa" description="Quantas OS sao resolvidas em cada janela de tempo" dataSource="rpc_servicos_bi › faixasResolucao[]" loading={isLoading}>
           <VerticalBarChart
             data={agg.faixasResolucao.map(item => ({ name: item.name, value: item.value }))}
             keys={['value']}
@@ -71,7 +71,7 @@ export default function ServicosSection({ active, dateRange }: Props) {
           />
         </ChartCard>
 
-        <ChartCard title="Evolucao Mensal de Aberturas" description="Numero de OS abertas por mes" infoTooltip="Por data de abertura da OS" loading={isLoading}>
+        <ChartCard title="Evolucao Mensal de Aberturas" description="Numero de OS abertas por mes" infoTooltip="Por data de abertura da OS" dataSource="rpc_servicos_bi › evolucaoAberturas[]" loading={isLoading}>
           <VerticalBarChart
             data={agg.evolucaoAberturas.map(item => ({ name: formatMonthYear(item.name), value: item.value }))}
             keys={['value']}
@@ -81,7 +81,7 @@ export default function ServicosSection({ active, dateRange }: Props) {
           />
         </ChartCard>
 
-        <ChartCard title="Atividade de Campo — Ocorrencias" description="Deslocamento, atendimento e pausas registradas pelos tecnicos" loading={isLoading}>
+        <ChartCard title="Atividade de Campo — Ocorrencias" description="Deslocamento, atendimento e pausas registradas pelos tecnicos" dataSource="rpc_servicos_bi › situacaoOcorrencias[]" loading={isLoading}>
           <HorizontalBarChart
             data={agg.situacaoOcorrencias.map(item => ({ name: item.name, value: item.value }))}
             keys={['value']}
@@ -91,7 +91,7 @@ export default function ServicosSection({ active, dateRange }: Props) {
           />
         </ChartCard>
 
-        <ChartCard title="Motivos de Pausa" description="Gargalos operacionais (ex: aguardando pecas)" loading={isLoading}>
+        <ChartCard title="Motivos de Pausa" description="Gargalos operacionais (ex: aguardando pecas)" dataSource="rpc_servicos_bi › motivosPausa[]" loading={isLoading}>
           <HorizontalBarChart
             data={agg.motivosPausa.map(item => ({ name: item.name, value: item.value }))}
             keys={['value']}
@@ -101,7 +101,7 @@ export default function ServicosSection({ active, dateRange }: Props) {
           />
         </ChartCard>
 
-        <ChartCard title="Causas de Atendimento Mais Comuns" description="Principais motivos de chamado tecnico" loading={isLoading}>
+        <ChartCard title="Causas de Atendimento Mais Comuns" description="Principais motivos de chamado tecnico" dataSource="rpc_servicos_bi › causasAtendimento[]" loading={isLoading}>
           <HorizontalBarChart
             data={agg.causasAtendimento.map(item => ({ name: item.name, value: item.value }))}
             keys={['value']}

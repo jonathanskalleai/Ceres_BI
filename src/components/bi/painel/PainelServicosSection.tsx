@@ -20,6 +20,7 @@ export function PainelServicosSection({ svcKpis, loading }: Props) {
           trend={svcKpis.osAbertas.trend}
           loading={loading}
           formula="COUNT OS abertas no periodo"
+          dataSource="rpc_servicos_bi › kpis.abertas"
         />
       )}
       {(loading || !isEmpty(svcKpis.osFechadas.value)) && (
@@ -32,6 +33,7 @@ export function PainelServicosSection({ svcKpis, loading }: Props) {
           loading={loading}
           accentColor="var(--voux-success)"
           formula="COUNT OS encerradas no periodo"
+          dataSource="rpc_servicos_bi › kpis.taxaFechamento"
         />
       )}
       {(loading || !isEmpty(svcKpis.tempoMedioResolucao.value)) && (
@@ -45,6 +47,7 @@ export function PainelServicosSection({ svcKpis, loading }: Props) {
           loading={loading}
           hint="Media dias para encerrar OS"
           formula="AVG(encerramento - abertura) em dias"
+          dataSource="rpc_servicos_bi › kpis.tempoMedioResolucao"
         />
       )}
     </>

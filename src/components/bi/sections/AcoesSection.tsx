@@ -59,22 +59,22 @@ export default function AcoesSection({ active, dateRange, categoria, funil }: Pr
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <KPICard title="Total de Acoes" value={kpis.totalAcoes.toLocaleString("pt-BR")} icon={ClipboardList} loading={isLoading}
-          previousValue={kpisPrev.totalAcoes.toLocaleString("pt-BR")} trend={calcTrend(kpis.totalAcoes, kpisPrev.totalAcoes)} />
+          previousValue={kpisPrev.totalAcoes.toLocaleString("pt-BR")} trend={calcTrend(kpis.totalAcoes, kpisPrev.totalAcoes)} dataSource="rpc_acoes_bi › kpis.totalAcoes" />
         <KPICard title="Cidades Atendidas" value={kpis.cidades.toLocaleString("pt-BR")} icon={MapPin} loading={isLoading}
-          previousValue={kpisPrev.cidades.toLocaleString("pt-BR")} trend={calcTrend(kpis.cidades, kpisPrev.cidades)} />
+          previousValue={kpisPrev.cidades.toLocaleString("pt-BR")} trend={calcTrend(kpis.cidades, kpisPrev.cidades)} dataSource="rpc_acoes_bi › kpis.cidades" />
         <KPICard title="Consultores Ativos" value={kpis.consultores.toLocaleString("pt-BR")} icon={Users} loading={isLoading}
-          previousValue={kpisPrev.consultores.toLocaleString("pt-BR")} trend={calcTrend(kpis.consultores, kpisPrev.consultores)} />
+          previousValue={kpisPrev.consultores.toLocaleString("pt-BR")} trend={calcTrend(kpis.consultores, kpisPrev.consultores)} dataSource="rpc_acoes_bi › kpis.consultores" />
         <KPICard title="Total de Visitas" value={kpis.visitas.toLocaleString("pt-BR")} icon={Eye} loading={isLoading}
-          previousValue={kpisPrev.visitas.toLocaleString("pt-BR")} trend={calcTrend(kpis.visitas, kpisPrev.visitas)} />
+          previousValue={kpisPrev.visitas.toLocaleString("pt-BR")} trend={calcTrend(kpis.visitas, kpisPrev.visitas)} dataSource="rpc_acoes_bi › kpis.visitas" />
         <KPICard title="Clientes Unicos" value={kpis.clientes.toLocaleString("pt-BR")} icon={UserCheck} loading={isLoading}
-          previousValue={kpisPrev.clientes.toLocaleString("pt-BR")} trend={calcTrend(kpis.clientes, kpisPrev.clientes)} />
+          previousValue={kpisPrev.clientes.toLocaleString("pt-BR")} trend={calcTrend(kpis.clientes, kpisPrev.clientes)} dataSource="rpc_acoes_bi › kpis.clientes" />
         <KPICard title="Tipos de Acao" value={kpis.tiposAcaoDistintos.toLocaleString("pt-BR")} icon={Tag} loading={isLoading}
-          previousValue={kpisPrev.tiposAcaoDistintos.toLocaleString("pt-BR")} trend={calcTrend(kpis.tiposAcaoDistintos, kpisPrev.tiposAcaoDistintos)} />
+          previousValue={kpisPrev.tiposAcaoDistintos.toLocaleString("pt-BR")} trend={calcTrend(kpis.tiposAcaoDistintos, kpisPrev.tiposAcaoDistintos)} dataSource="rpc_acoes_bi › kpis.tiposAcaoDistintos" />
       </div>
 
       {/* Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <ChartCard title="Acoes por Consultor" description="Top 15 por volume" loading={isLoading}>
+        <ChartCard title="Acoes por Consultor" description="Top 15 por volume" dataSource="rpc_acoes_bi › porVendedor[].acoes" loading={isLoading}>
           <HorizontalBarChart
             data={porVendedor.map((d) => ({ name: d.name, acoes: d.acoes }))}
             keys={["acoes"]}
@@ -84,7 +84,7 @@ export default function AcoesSection({ active, dateRange, categoria, funil }: Pr
           />
         </ChartCard>
 
-        <ChartCard title="Evolucao Mensal de Acoes" description="Quantidade por mes" loading={isLoading}>
+        <ChartCard title="Evolucao Mensal de Acoes" description="Quantidade por mes" dataSource="rpc_acoes_bi › porMes[].acoes" loading={isLoading}>
           <VerticalBarChart
             data={porMes.map((d) => ({ name: d.name, acoes: d.acoes }))}
             keys={["acoes"]}
@@ -94,7 +94,7 @@ export default function AcoesSection({ active, dateRange, categoria, funil }: Pr
           />
         </ChartCard>
 
-        <ChartCard title="Acoes por Cidade" description="Top 15 cidades" loading={isLoading}>
+        <ChartCard title="Acoes por Cidade" description="Top 15 cidades" dataSource="rpc_acoes_bi › porCidade[].acoes" loading={isLoading}>
           <HorizontalBarChart
             data={porCidade.map((d) => ({ name: d.name, acoes: d.acoes }))}
             keys={["acoes"]}
@@ -104,11 +104,11 @@ export default function AcoesSection({ active, dateRange, categoria, funil }: Pr
           />
         </ChartCard>
 
-        <ChartCard title="Distribuicao por Tipo de Acao" description="Proporcao de cada tipo" loading={isLoading}>
+        <ChartCard title="Distribuicao por Tipo de Acao" description="Proporcao de cada tipo" dataSource="rpc_acoes_bi › porTipoAcao[]" loading={isLoading}>
           <PieChartWithLabels data={porTipoAcao} title="" />
         </ChartCard>
 
-        <ChartCard title="Acoes por Dia da Semana" description="Concentracao semanal" loading={isLoading}>
+        <ChartCard title="Acoes por Dia da Semana" description="Concentracao semanal" dataSource="rpc_acoes_bi › porDiaSemana[].acoes" loading={isLoading}>
           <VerticalBarChart
             data={porDiaSemana.map((d) => ({ name: d.name, acoes: d.acoes }))}
             keys={["acoes"]}
@@ -118,7 +118,7 @@ export default function AcoesSection({ active, dateRange, categoria, funil }: Pr
           />
         </ChartCard>
 
-        <ChartCard title="Tipo de Contato" description="Distribuicao dos canais" loading={isLoading}>
+        <ChartCard title="Tipo de Contato" description="Distribuicao dos canais" dataSource="rpc_acoes_bi › porTipoContato[]" loading={isLoading}>
           <PieChartWithLabels data={porTipoContato} title="" />
         </ChartCard>
       </div>

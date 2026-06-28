@@ -76,6 +76,7 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
           previousValue={kpisPrev.totalNegocios.toLocaleString("pt-BR")}
           trend={calcTrend(kpis.totalNegocios, kpisPrev.totalNegocios)}
           hint={`${kpis.ganhos} ganhos · ${kpis.perdidos} perdidos · ${kpis.andamento} em aberto`}
+          dataSource="rpc_negocios_bi › kpis.totalNegocios"
         />
         <KPICard
           title="Taxa de Conversao" value={pct(kpis.taxaConversao)}
@@ -83,6 +84,7 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
           previousValue={pct(kpisPrev.taxaConversao)}
           trend={calcTrend(kpis.taxaConversao, kpisPrev.taxaConversao)}
           hint="ganhos / (ganhos + perdidos)"
+          dataSource="rpc_negocios_bi › kpis.taxaConversao"
         />
         <KPICard
           title="Pipeline Aberto" value={fmtBRLKpi(kpis.pipelineAberto)}
@@ -90,6 +92,7 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
           previousValue={fmtBRLKpi(kpisPrev.pipelineAberto)}
           trend={calcTrend(kpis.pipelineAberto, kpisPrev.pipelineAberto)}
           hint="valor em negocios em andamento"
+          dataSource="rpc_negocios_bi › kpis.pipelineAberto"
         />
         <KPICard
           title="Pipeline Perdido" value={fmtBRLKpi(kpis.pipelinePerdido)}
@@ -98,6 +101,7 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
           trend={calcTrend(kpis.pipelinePerdido, kpisPrev.pipelinePerdido)}
           invertTrend
           hint="valor em negocios perdidos"
+          dataSource="rpc_negocios_bi › kpis.pipelinePerdido"
         />
         <KPICard
           title="Valor Ganho" value={fmtBRLKpi(kpis.valorGanho)}
@@ -105,6 +109,7 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
           previousValue={fmtBRLKpi(kpisPrev.valorGanho)}
           trend={calcTrend(kpis.valorGanho, kpisPrev.valorGanho)}
           hint={`ticket medio ${formatBRL(kpis.ticketMedioGanho)}`}
+          dataSource="rpc_negocios_bi › kpis.valorGanho"
         />
         <KPICard
           title="Ciclo de Vendas" value={formatDias(kpis.cicloMedioDias)}
@@ -113,6 +118,7 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
           trend={calcTrend(kpis.cicloMedioDias, kpisPrev.cicloMedioDias)}
           invertTrend
           hint="media nos negocios concluidos"
+          dataSource="rpc_negocios_bi › kpis.cicloMedioDias"
         />
         <KPICard
           title="Esforco Medio" value={kpis.esforcoMedio.toFixed(1)}
@@ -120,6 +126,7 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
           previousValue={kpisPrev.esforcoMedio.toFixed(1)}
           trend={calcTrend(kpis.esforcoMedio, kpisPrev.esforcoMedio)}
           hint="acoes por negocio"
+          dataSource="rpc_negocios_bi › kpis.esforcoMedio"
         />
       </div>
 
@@ -127,6 +134,7 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
         <ChartCard
           title="Funil de Vendas — Pipeline por Etapa"
           description="Valor em aberto (R$) acumulado em cada etapa do funil"
+          dataSource="rpc_negocios_bi › funilPorEtapa[].valor"
           loading={isLoading}
         >
           <HorizontalBarChart
@@ -142,6 +150,7 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
         <ChartCard
           title="Origem do Lead — Conversao"
           description="Negocios por canal de entrada (ganho / perdido / em aberto)"
+          dataSource="rpc_negocios_bi › porOrigem[].ganhos/perdidos/andamento"
           loading={isLoading}
         >
           <HorizontalBarChart
@@ -161,6 +170,7 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
         <ChartCard
           title="Motivos de Perda — Valor Perdido"
           description="Onde a receita esta vazando (R$ em negocios perdidos)"
+          dataSource="rpc_negocios_bi › motivosPerda[].valor"
           loading={isLoading}
         >
           <HorizontalBarChart
@@ -180,6 +190,7 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
         <ChartCard
           title="Velocidade do Funil — Gargalos"
           description="Tempo medio (dias) que negocios permanecem em cada etapa"
+          dataSource="rpc_negocios_bi › velocidadeFunil[].diasMedio"
           loading={isLoading}
         >
           <HorizontalBarChart
@@ -200,6 +211,7 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
           title="Evolucao Mensal de Negocios"
           description="Novos negocios criados e valor negociado por mes"
           infoTooltip="Por data de cadastro do negócio"
+          dataSource="rpc_negocios_bi › evolucaoMensal[].novos/valorCriado"
           loading={isLoading}
         >
           <div className="h-full">
@@ -231,6 +243,7 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
         <ChartCard
           title="Ranking de Consultores — Valor Ganho"
           description="Top 10 por receita fechada (taxa de conversao no tooltip)"
+          dataSource="rpc_negocios_bi › rankingConsultor[].valorGanho"
           loading={isLoading}
         >
           <HorizontalBarChart

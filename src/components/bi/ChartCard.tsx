@@ -12,6 +12,7 @@ interface ChartCardProps {
   className?: string;
   children: ReactNode;
   label?: string;
+  dataSource?: string;
 }
 
 export function ChartCard({
@@ -23,6 +24,7 @@ export function ChartCard({
   className,
   children,
   label,
+  dataSource,
 }: ChartCardProps) {
   return (
     <div
@@ -60,6 +62,14 @@ export function ChartCard({
             >
               {description}
             </p>
+          )}
+          {dataSource && (
+            <span
+              className="text-[9px] tracking-[0.18em] uppercase mt-0.5"
+              style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)", opacity: 0.7 }}
+            >
+              ⬡ {dataSource}
+            </span>
           )}
         </div>
       </div>

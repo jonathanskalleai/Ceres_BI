@@ -20,6 +20,7 @@ export function PainelClientesSection({ cliKpis, loading }: Props) {
           trend={cliKpis.clientesAtivos.trend}
           loading={loading}
           formula="COUNT carteira WHERE nao prospect"
+          dataSource="rpc_admin_bi › kpis.ativos"
         />
       )}
       {(loading || !isEmpty(cliKpis.prospects.value)) && (
@@ -32,6 +33,7 @@ export function PainelClientesSection({ cliKpis, loading }: Props) {
           loading={loading}
           accentColor="var(--voux-champagne-400, #d4a574)"
           formula="COUNT carteira WHERE prospect = S"
+          dataSource="rpc_admin_bi › kpis.prospects"
         />
       )}
       {(loading || !isEmpty(cliKpis.parqueMaquinas.value)) && (
@@ -43,6 +45,7 @@ export function PainelClientesSection({ cliKpis, loading }: Props) {
           trend={cliKpis.parqueMaquinas.trend}
           loading={loading}
           formula="SUM(qtd maquinas) da base"
+          dataSource="rpc_produtos_bi › kpis.totalMaquinas"
         />
       )}
       {(loading || !isEmpty(cliKpis.coberturaComercial.value)) && (
@@ -55,6 +58,7 @@ export function PainelClientesSection({ cliKpis, loading }: Props) {
           loading={loading}
           hint="% clientes com acao no periodo"
           formula="clientes com acao no periodo / total ativos x 100"
+          dataSource="rpc_admin_bi (pendente RPC dedicado)"
         />
       )}
     </>

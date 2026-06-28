@@ -17,6 +17,7 @@ interface KPICardProps {
   trend?: "up" | "down" | "neutral";
   /** When true, a downward trend is positive (e.g. fewer losses) */
   invertTrend?: boolean;
+  dataSource?: string;
 }
 
 function DeltaBadge({ previousValue, trend, invertTrend }: { previousValue: string | number; trend: "up" | "down" | "neutral"; invertTrend?: boolean }) {
@@ -44,7 +45,7 @@ function DeltaBadge({ previousValue, trend, invertTrend }: { previousValue: stri
 
 export function KPICard({
   title, value, icon: Icon, hint, formula, loading = false, accentColor,
-  previousValue, trend, invertTrend,
+  previousValue, trend, invertTrend, dataSource,
 }: KPICardProps) {
   const [showTooltip, setShowTooltip] = useState(false);
 
@@ -128,6 +129,11 @@ export function KPICard({
           {hint && (
             <p className="text-[11px] mt-1" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-muted)" }}>
               {hint}
+            </p>
+          )}
+          {dataSource && (
+            <p className="text-[9px] mt-1 tracking-[0.18em] uppercase" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)", opacity: 0.7 }}>
+              ⬡ {dataSource}
             </p>
           )}
         </>
