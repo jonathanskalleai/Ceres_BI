@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useClientesPorVendedor, useRegistrosRecentes, useRankingVendedoresV2 } from "@/hooks/useComercialRpc";
+import { useClientesPorVendedor, useRegistrosRecentes, useRankingVendedoresV2, useEvolucaoMensal } from "@/hooks/useComercialRpc";
 import { useNegociosFilter } from "@/contexts/NegociosFilterContext";
 import { toISODate } from "@/lib/dateUtils";
 import { mapRegistroRecente } from "@/lib/comercialMappers";
@@ -33,29 +33,28 @@ export default function CrmConsultorDetail() {
   const { data: clientesRpc, isLoading: loadClientes } = useClientesPorVendedor({ vendedor: nome, from, to, enabled });
   const { data: registrosRpc, isLoading: loadRegistros } = useRegistrosRecentes({ from, to, vendedor: nome, enabled });
   const { data: rankingRpc, isLoading: loadRanking } = useRankingVendedoresV2({ from, to, limit: 50, enabled });
+  // Evolução mensal vem da RPC (12 meses rolling, server-side) — não derivada de [from,to]
+  const { data: evolucaoRpc, isLoading: loadEvolucao } = useEvolucaoMensal({ from, to, vendedor: nome, enabled });
 
   const registros = useMemo(() => (registrosRpc ?? []).map(mapRegistroRecente), [registrosRpc]);
+
+  const evolucao: EvolucaoMensal[] = useMemo(
+    () =>
+      (evolucaoRpc ?? []).map((d) => ({
+        YearMonth: d.mes,
+        acoes: Number(d.acoes),
+        visitas: Number(d.visitas),
+        negocioValor: Number(d.valor),
+        clientes: Number(d.clientes),
+      })),
+    [evolucaoRpc],
+  );
 
   const vendedor: Vendedor | null = useMemo(() => {
     if (!rankingRpc || !clientesRpc) return null;
 
     const v2 = rankingRpc.find((r) => r.vendedor === nome);
     if (!v2) return null;
-
-    // Derive evolucao from registros
-    const evolMap = new Map<string, { acoes: number; visitas: number; negocioValor: number }>();
-    for (const r of registros) {
-      const ym = r.dtConclusao?.slice(0, 7) || "";
-      if (!ym) continue;
-      if (!evolMap.has(ym)) evolMap.set(ym, { acoes: 0, visitas: 0, negocioValor: 0 });
-      const e = evolMap.get(ym)!;
-      e.acoes++;
-      if (r.tipoContato?.toLowerCase().includes("visita")) e.visitas++;
-      e.negocioValor += r.negocioValor;
-    }
-    const evolucao: EvolucaoMensal[] = Array.from(evolMap.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([YearMonth, d]) => ({ YearMonth, ...d }));
 
     // Derive tiposAcao from registros
     const tiposAcao: Record<string, number> = {};
@@ -97,9 +96,9 @@ export default function CrmConsultorDetail() {
       regioes,
       tiposAcao,
     };
-  }, [rankingRpc, clientesRpc, registros, nome]);
+  }, [rankingRpc, clientesRpc, registros, evolucao, nome]);
 
-  const isLoading = loadClientes || loadRegistros || loadRanking;
+  const isLoading = loadClientes || loadRegistros || loadRanking || loadEvolucao;
 
   if (isLoading) {
     return (
