@@ -42,17 +42,17 @@ export default function PedidosSection({ active, dateRange }: Props) {
     <div className="space-y-6 pt-4">
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <KPICard title="Total Pedidos" value={kpis.total.toLocaleString("pt-BR")} icon={ShoppingCart} loading={isLoading}
-          previousValue={kpisPrev.total.toLocaleString("pt-BR")} trend={calcTrend(kpis.total, kpisPrev.total)} dataSource="rpc_pedidos_bi › kpis.total" />
+          previousValue={kpisPrev.total.toLocaleString("pt-BR")} trend={calcTrend(kpis.total, kpisPrev.total)} dataSource="mirror.crm_pedidos · COUNT(*) por pdo_dthpedido" />
         <KPICard title="Faturamento (Aprovado)" value={fmtBRLKpi(kpis.faturamento)} icon={DollarSign} loading={isLoading} hint="receita de pedidos aprovados"
-          previousValue={fmtBRLKpi(kpisPrev.faturamento)} trend={calcTrend(kpis.faturamento, kpisPrev.faturamento)} dataSource="rpc_pedidos_bi › kpis.faturamento" />
+          previousValue={fmtBRLKpi(kpisPrev.faturamento)} trend={calcTrend(kpis.faturamento, kpisPrev.faturamento)} dataSource="mirror.crm_pedidos · SUM(pdo_vlrpedido) WHERE aprovado" />
         <KPICard title="Ticket Medio" value={fmtBRLKpi(kpis.ticketMedio)} icon={TrendingUp} loading={isLoading} hint="por pedido aprovado"
-          previousValue={fmtBRLKpi(kpisPrev.ticketMedio)} trend={calcTrend(kpis.ticketMedio, kpisPrev.ticketMedio)} dataSource="rpc_pedidos_bi › kpis.ticketMedio" />
+          previousValue={fmtBRLKpi(kpisPrev.ticketMedio)} trend={calcTrend(kpis.ticketMedio, kpisPrev.ticketMedio)} dataSource="mirror.crm_pedidos · SUM/COUNT(pdo_vlrpedido) WHERE aprovado" />
         <KPICard title="Taxa de Aprovacao" value={`${kpis.percentAprovado.toFixed(1)}%`} icon={Percent} loading={isLoading}
-          previousValue={`${kpisPrev.percentAprovado.toFixed(1)}%`} trend={calcTrend(kpis.percentAprovado, kpisPrev.percentAprovado)} dataSource="rpc_pedidos_bi › kpis.percentAprovado" />
+          previousValue={`${kpisPrev.percentAprovado.toFixed(1)}%`} trend={calcTrend(kpis.percentAprovado, kpisPrev.percentAprovado)} dataSource="mirror.crm_pedidos · COUNT(aprovado)/COUNT(*) × 100" />
         <KPICard title="% Financiado" value={`${kpis.percentFinanciado.toFixed(1)}%`} icon={CreditCard} loading={isLoading} hint="vs recurso proprio"
-          previousValue={`${kpisPrev.percentFinanciado.toFixed(1)}%`} trend={calcTrend(kpis.percentFinanciado, kpisPrev.percentFinanciado)} dataSource="rpc_pedidos_bi › kpis.percentFinanciado" />
+          previousValue={`${kpisPrev.percentFinanciado.toFixed(1)}%`} trend={calcTrend(kpis.percentFinanciado, kpisPrev.percentFinanciado)} dataSource="mirror.crm_pedidos · COUNT(pdo_vlrfinanciado>0)/COUNT(*) × 100" />
         <KPICard title="Valor Cancelado" value={fmtBRLKpi(kpis.valorCancelado)} icon={XCircle} loading={isLoading} hint="pedidos cancelados"
-          previousValue={fmtBRLKpi(kpisPrev.valorCancelado)} trend={calcTrend(kpis.valorCancelado, kpisPrev.valorCancelado)} invertTrend dataSource="rpc_pedidos_bi › kpis.valorCancelado" />
+          previousValue={fmtBRLKpi(kpisPrev.valorCancelado)} trend={calcTrend(kpis.valorCancelado, kpisPrev.valorCancelado)} invertTrend dataSource="mirror.crm_pedidos · SUM(pdo_vlrpedido) WHERE cancelado" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -60,7 +60,7 @@ export default function PedidosSection({ active, dateRange }: Props) {
           title="Evolucao Mensal do Faturamento"
           description="Receita aprovada e numero de pedidos por mes"
           infoTooltip="Por data de ganho (fechamento do negocio)"
-          dataSource="rpc_pedidos_bi › evolucaoMensal[].faturamento / qtd"
+          dataSource="mirror.crm_pedidos · pdo_dthpedido→YYYY-MM, SUM(pdo_vlrpedido) + COUNT(*)"
           loading={isLoading}
         >
           <div className="h-full">
@@ -92,7 +92,7 @@ export default function PedidosSection({ active, dateRange }: Props) {
         <ChartCard
           title="Mix de Pagamento"
           description="Recurso proprio vs financiado (R$ aprovado)"
-          dataSource="rpc_pedidos_bi › mixPagamento[]"
+          dataSource="mirror.crm_pedidos · SUM(pdo_vlrrecursoproprio) vs SUM(pdo_vlrfinanciado)"
           loading={isLoading}
         >
           <PieChartWithLabels
@@ -108,7 +108,7 @@ export default function PedidosSection({ active, dateRange }: Props) {
         <ChartCard
           title="Valor por Situacao do Pedido"
           description="R$ em cada status (aprovado, cancelado, etc.)"
-          dataSource="rpc_pedidos_bi › porSituacao[].valor"
+          dataSource="mirror.crm_pedidos · pdo_situacaopedido, SUM(pdo_vlrpedido)"
           loading={isLoading}
         >
           <HorizontalBarChart
@@ -128,7 +128,7 @@ export default function PedidosSection({ active, dateRange }: Props) {
         <ChartCard
           title="Ranking Vendedores — Faturamento"
           description="Top 10 por receita aprovada"
-          dataSource="rpc_pedidos_bi › porVendedor[].value"
+          dataSource="mirror.crm_pedidos · pdo_vendedor, SUM(pdo_vlrpedido) WHERE aprovado"
           loading={isLoading}
         >
           <HorizontalBarChart
@@ -147,7 +147,7 @@ export default function PedidosSection({ active, dateRange }: Props) {
         <ChartCard
           title="Top Cidades de Entrega"
           description="Faturamento aprovado por cidade/UF"
-          dataSource="rpc_pedidos_bi › porCidade[].value"
+          dataSource="mirror.crm_pedidos · pdo_cidadeufentrega, SUM(pdo_vlrpedido) WHERE aprovado"
           loading={isLoading}
         >
           <HorizontalBarChart
@@ -166,7 +166,7 @@ export default function PedidosSection({ active, dateRange }: Props) {
         <ChartCard
           title="Itens Mais Vendidos — Grupo"
           description="Valor vendido por grupo de produto (itens dos pedidos)"
-          dataSource="rpc_pedidos_bi › porGrupoProduto[].valor"
+          dataSource="mirror.crm_pedidos · pdo_grupoproduto, SUM(pdo_vlrpedido)"
           loading={isLoading}
         >
           <HorizontalBarChart
@@ -186,7 +186,7 @@ export default function PedidosSection({ active, dateRange }: Props) {
         <ChartCard
           title="Itens Mais Vendidos — Marca"
           description="Valor vendido por marca de produto (itens dos pedidos)"
-          dataSource="rpc_pedidos_bi › porMarcaProduto[].valor"
+          dataSource="mirror.crm_pedidos · pdo_marcaproduto, SUM(pdo_vlrpedido)"
           loading={isLoading}
         >
           <HorizontalBarChart

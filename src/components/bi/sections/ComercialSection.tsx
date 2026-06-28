@@ -76,7 +76,7 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
           previousValue={kpisPrev.totalNegocios.toLocaleString("pt-BR")}
           trend={calcTrend(kpis.totalNegocios, kpisPrev.totalNegocios)}
           hint={`${kpis.ganhos} ganhos · ${kpis.perdidos} perdidos · ${kpis.andamento} em aberto`}
-          dataSource="rpc_negocios_bi › kpis.totalNegocios"
+          dataSource="mirror.crm_negocios · COUNT(DISTINCT ngo_numero) por ngo_datafechamento"
         />
         <KPICard
           title="Taxa de Conversao" value={pct(kpis.taxaConversao)}
@@ -84,7 +84,7 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
           previousValue={pct(kpisPrev.taxaConversao)}
           trend={calcTrend(kpis.taxaConversao, kpisPrev.taxaConversao)}
           hint="ganhos / (ganhos + perdidos)"
-          dataSource="rpc_negocios_bi › kpis.taxaConversao"
+          dataSource="mirror.crm_negocios · ganhos/(ganhos+perdidos)×100 via ngo_conclusao"
         />
         <KPICard
           title="Pipeline Aberto" value={fmtBRLKpi(kpis.pipelineAberto)}
@@ -92,7 +92,7 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
           previousValue={fmtBRLKpi(kpisPrev.pipelineAberto)}
           trend={calcTrend(kpis.pipelineAberto, kpisPrev.pipelineAberto)}
           hint="valor em negocios em andamento"
-          dataSource="rpc_negocios_bi › kpis.pipelineAberto"
+          dataSource="mirror.crm_negocios · SUM(ngo_vlrtotalnegociado) WHERE sem conclusao"
         />
         <KPICard
           title="Pipeline Perdido" value={fmtBRLKpi(kpis.pipelinePerdido)}
@@ -101,7 +101,7 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
           trend={calcTrend(kpis.pipelinePerdido, kpisPrev.pipelinePerdido)}
           invertTrend
           hint="valor em negocios perdidos"
-          dataSource="rpc_negocios_bi › kpis.pipelinePerdido"
+          dataSource="mirror.crm_negocios · SUM(ngo_vlrtotalnegociado) WHERE ngo_conclusao='perdido'"
         />
         <KPICard
           title="Valor Ganho" value={fmtBRLKpi(kpis.valorGanho)}
@@ -109,7 +109,7 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
           previousValue={fmtBRLKpi(kpisPrev.valorGanho)}
           trend={calcTrend(kpis.valorGanho, kpisPrev.valorGanho)}
           hint={`ticket medio ${formatBRL(kpis.ticketMedioGanho)}`}
-          dataSource="rpc_negocios_bi › kpis.valorGanho"
+          dataSource="mirror.crm_negocios · SUM(ngo_vlrtotalnegociado) WHERE ngo_conclusao='ganho'"
         />
         <KPICard
           title="Ciclo de Vendas" value={formatDias(kpis.cicloMedioDias)}
@@ -118,7 +118,7 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
           trend={calcTrend(kpis.cicloMedioDias, kpisPrev.cicloMedioDias)}
           invertTrend
           hint="media nos negocios concluidos"
-          dataSource="rpc_negocios_bi › kpis.cicloMedioDias"
+          dataSource="mirror.crm_negocios · AVG(ngo_ciclovendas) WHERE ganho"
         />
         <KPICard
           title="Esforco Medio" value={kpis.esforcoMedio.toFixed(1)}
@@ -126,7 +126,7 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
           previousValue={kpisPrev.esforcoMedio.toFixed(1)}
           trend={calcTrend(kpis.esforcoMedio, kpisPrev.esforcoMedio)}
           hint="acoes por negocio"
-          dataSource="rpc_negocios_bi › kpis.esforcoMedio"
+          dataSource="mirror.crm_negocios · AVG(ngo_qtdacoes)"
         />
       </div>
 
@@ -134,7 +134,7 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
         <ChartCard
           title="Funil de Vendas — Pipeline por Etapa"
           description="Valor em aberto (R$) acumulado em cada etapa do funil"
-          dataSource="rpc_negocios_bi › funilPorEtapa[].valor"
+          dataSource="mirror.crm_negocios · ngo_etapa, SUM(ngo_vlrtotalnegociado)"
           loading={isLoading}
         >
           <HorizontalBarChart
@@ -150,7 +150,7 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
         <ChartCard
           title="Origem do Lead — Conversao"
           description="Negocios por canal de entrada (ganho / perdido / em aberto)"
-          dataSource="rpc_negocios_bi › porOrigem[].ganhos/perdidos/andamento"
+          dataSource="mirror.crm_negocios · ngo_formaentrada, COUNT(*) ganho/perdido/andamento"
           loading={isLoading}
         >
           <HorizontalBarChart
@@ -170,7 +170,7 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
         <ChartCard
           title="Motivos de Perda — Valor Perdido"
           description="Onde a receita esta vazando (R$ em negocios perdidos)"
-          dataSource="rpc_negocios_bi › motivosPerda[].valor"
+          dataSource="mirror.crm_negocios · ngo_motivoperda, SUM(ngo_vlrtotalnegociado) WHERE perdido"
           loading={isLoading}
         >
           <HorizontalBarChart
@@ -190,7 +190,7 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
         <ChartCard
           title="Velocidade do Funil — Gargalos"
           description="Tempo medio (dias) que negocios permanecem em cada etapa"
-          dataSource="rpc_negocios_bi › velocidadeFunil[].diasMedio"
+          dataSource="mirror.crm_negocios · ngo_etapa, AVG(ngo_ciclovendas)"
           loading={isLoading}
         >
           <HorizontalBarChart
@@ -211,7 +211,7 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
           title="Evolucao Mensal de Negocios"
           description="Novos negocios criados e valor negociado por mes"
           infoTooltip="Por data de cadastro do negócio"
-          dataSource="rpc_negocios_bi › evolucaoMensal[].novos/valorCriado"
+          dataSource="mirror.crm_negocios · ngo_datafechamento→YYYY-MM, COUNT(*) + SUM(ngo_vlrtotalnegociado)"
           loading={isLoading}
         >
           <div className="h-full">
@@ -243,7 +243,7 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
         <ChartCard
           title="Ranking de Consultores — Valor Ganho"
           description="Top 10 por receita fechada (taxa de conversao no tooltip)"
-          dataSource="rpc_negocios_bi › rankingConsultor[].valorGanho"
+          dataSource="mirror.crm_negocios · ngo_vendedores, SUM(ngo_vlrtotalnegociado) WHERE ganho"
           loading={isLoading}
         >
           <HorizontalBarChart

@@ -22,7 +22,7 @@ export function PainelNegociosSection({ kpis, loading }: Props) {
           trend={kpis.totalNegocios.trend}
           loading={loading}
           formula="COUNT negocios unicos (dedup por numero)"
-          dataSource="rpc_negocios_bi › kpis.totalNegocios"
+          dataSource="mirror.crm_negocios · COUNT(DISTINCT ngo_numero)"
         />
       )}
       {(loading || !isEmpty(kpis.ganhos.value)) && (
@@ -35,7 +35,7 @@ export function PainelNegociosSection({ kpis, loading }: Props) {
           loading={loading}
           accentColor="var(--voux-success)"
           formula="COUNT WHERE conclusao = ganho"
-          dataSource="rpc_negocios_bi › kpis.ganhos"
+          dataSource="mirror.crm_negocios · COUNT(*) WHERE ngo_conclusao='ganho'"
         />
       )}
       {(loading || !isEmpty(kpis.perdidos.value)) && (
@@ -49,7 +49,7 @@ export function PainelNegociosSection({ kpis, loading }: Props) {
           loading={loading}
           accentColor="var(--voux-danger)"
           formula="COUNT WHERE conclusao = perda"
-          dataSource="rpc_negocios_bi › kpis.perdidos"
+          dataSource="mirror.crm_negocios · COUNT(*) WHERE ngo_conclusao='perdido'"
         />
       )}
       {(loading || !isEmpty(kpis.andamento.value)) && (
@@ -61,7 +61,7 @@ export function PainelNegociosSection({ kpis, loading }: Props) {
           trend={kpis.andamento.trend}
           loading={loading}
           formula="COUNT WHERE sem conclusao definitiva"
-          dataSource="rpc_negocios_bi › kpis.andamento"
+          dataSource="mirror.crm_negocios · COUNT(*) WHERE sem ngo_conclusao definitiva"
         />
       )}
       {(loading || !isEmpty(kpis.taxaConversao.value)) && (
@@ -73,7 +73,7 @@ export function PainelNegociosSection({ kpis, loading }: Props) {
           trend={kpis.taxaConversao.trend}
           loading={loading}
           formula="ganhos / (ganhos + perdidos) x 100"
-          dataSource="rpc_negocios_bi › kpis.taxaConversao"
+          dataSource="mirror.crm_negocios · ganhos/(ganhos+perdidos)×100"
         />
       )}
     </>

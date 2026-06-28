@@ -21,7 +21,7 @@ export function PainelPedidosSection({ pedKpis, loading }: Props) {
           loading={loading}
           accentColor="var(--voux-success)"
           formula="SUM(valor pedido) WHERE aprovado"
-          dataSource="rpc_pedidos_bi › kpis.faturamento"
+          dataSource="mirror.crm_pedidos · SUM(pdo_vlrpedido) WHERE aprovado"
         />
       )}
       {(loading || !isEmpty(pedKpis.totalPedidos.value)) && (
@@ -33,7 +33,7 @@ export function PainelPedidosSection({ pedKpis, loading }: Props) {
           trend={pedKpis.totalPedidos.trend}
           loading={loading}
           formula="COUNT pedidos no periodo"
-          dataSource="rpc_pedidos_bi › kpis.total"
+          dataSource="mirror.crm_pedidos · COUNT(*) por pdo_dthpedido"
         />
       )}
       {(loading || !isEmpty(pedKpis.taxaAprovacao.value)) && (
@@ -45,7 +45,7 @@ export function PainelPedidosSection({ pedKpis, loading }: Props) {
           trend={pedKpis.taxaAprovacao.trend}
           loading={loading}
           formula="pedidos aprovados / total x 100"
-          dataSource="rpc_pedidos_bi › kpis.percentAprovado"
+          dataSource="mirror.crm_pedidos · COUNT(aprovado)/COUNT(*) × 100"
         />
       )}
       {(loading || !isEmpty(pedKpis.mixFinanciamento.value)) && (
@@ -58,7 +58,7 @@ export function PainelPedidosSection({ pedKpis, loading }: Props) {
           loading={loading}
           hint="% valor financiado vs total"
           formula="valor financiado / (financiado + recurso proprio) x 100"
-          dataSource="rpc_pedidos_bi › kpis.percentFinanciado"
+          dataSource="mirror.crm_pedidos · SUM(pdo_vlrfinanciado)/SUM(total) × 100"
         />
       )}
     </>
