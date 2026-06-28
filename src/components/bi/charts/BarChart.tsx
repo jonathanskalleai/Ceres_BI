@@ -3,8 +3,16 @@ import { ChartFrame } from "./ChartFrame";
 import { SvgBarH } from "./primitives/SvgBarH";
 import { SvgBarV } from "./primitives/SvgBarV";
 import { useContainerWidth } from "./primitives/useContainerWidth";
-import { VOUX_COLORS, getVouxPalette, fmtCompact } from "./primitives/svgGeometry";
+import { getVouxPalette } from "./primitives/svgGeometry";
 import { useTheme } from "@/hooks/useTheme";
+import {
+  BarChartTooltip,
+  SeriesLabel,
+  resolveColor,
+  buildTooltipContent,
+  INITIAL_TOOLTIP,
+  type TooltipState,
+} from "./barChartHelpers";
 
 export interface BarChartData {
   name: string;
@@ -28,51 +36,6 @@ export interface BarChartProps {
   onBarClick?: (datum: BarChartData, index: number) => void;
 }
 
-// ── Tooltip ────────────────────────────────────────────────────────────────────
-interface TooltipState {
-  visible: boolean;
-  x: number;
-  y: number;
-  content: string;
-}
-
-function Tooltip({ state }: { state: TooltipState }) {
-  if (!state.visible) return null;
-  return (
-    <div
-      style={{
-        position: "fixed",
-        left: state.x + 14,
-        top: state.y - 10,
-        background: "var(--voux-tooltip-bg)",
-        border: "1px solid var(--voux-tooltip-border)",
-        backdropFilter: "blur(10px)",
-        WebkitBackdropFilter: "blur(10px)",
-        padding: "8px 12px",
-        borderRadius: 10,
-        fontFamily: "var(--voux-font-mono)",
-        fontSize: 11,
-        color: "var(--voux-tooltip-text)",
-        pointerEvents: "none",
-        zIndex: 9999,
-        whiteSpace: "nowrap",
-      }}
-      dangerouslySetInnerHTML={{ __html: state.content }}
-    />
-  );
-}
-
-// ── Helpers ────────────────────────────────────────────────────────────────────
-function resolveColor(
-  keyIndex: number,
-  dataIndex: number,
-  colors: readonly string[],
-  itemColors?: string[],
-): string {
-  if (itemColors) return itemColors[dataIndex % itemColors.length];
-  return colors[keyIndex % colors.length];
-}
-
 // ── Main component ─────────────────────────────────────────────────────────────
 export default function BarChart({
   data,
@@ -92,12 +55,7 @@ export default function BarChart({
   const { isDark } = useTheme();
   const palette = colors ?? getVouxPalette(isDark);
 
-  const [tooltip, setTooltip] = useState<TooltipState>({
-    visible: false,
-    x: 0,
-    y: 0,
-    content: "",
-  });
+  const [tooltip, setTooltip] = useState<TooltipState>(INITIAL_TOOLTIP);
 
   const fmt = useCallback(
     (v: number, datum?: BarChartData) =>
@@ -107,94 +65,69 @@ export default function BarChart({
 
   const isEmpty = data.length === 0;
 
-  // ── Horizontal layout ───────────────────────────────────────────────────────
+  const handleBarEnter = useCallback(
+    (key: string, di: number, x: number, y: number, label: string, value: number) => {
+      const datum = data[di];
+      const formatted = fmt(value, datum);
+      const keyLabel = seriesLabels?.[key] ?? key;
+      setTooltip({ visible: true, x, y, content: buildTooltipContent(keyLabel, label, formatted) });
+    },
+    [data, fmt, seriesLabels],
+  );
+
+  const handleBarLeave = useCallback(
+    () => setTooltip((t) => ({ ...t, visible: false })),
+    [],
+  );
+
+  const handleBarClick = onBarClick
+    ? (di: number) => onBarClick(data[di], di)
+    : undefined;
+
+  // ── Horizontal layout ─────────────────────────────────────────────────────
   if (layout === "horizontal") {
     return (
       <ChartFrame loading={loading} isEmpty={isEmpty} height={height} ariaLabel={`Gráfico de barras: ${keys.join(", ")}`}>
         <div ref={containerRef} style={{ width: "100%", position: "relative" }}>
           {keys.map((key, ki) => {
             const color = resolveColor(ki, 0, palette, itemColors);
-            const seriesData = data.map((d, di) => ({
+            const seriesData = data.map((d) => ({
               label: String(d.name),
               value: Number(d[key] ?? 0),
-              _datum: d,
-              _idx: di,
             }));
             const globalMax =
               groupMode === "stacked"
-                ? Math.max(
-                    ...data.map((d) =>
-                      keys.reduce((s, k) => s + Number(d[k] ?? 0), 0),
-                    ),
-                    1,
-                  )
+                ? Math.max(...data.map((d) => keys.reduce((s, k) => s + Number(d[k] ?? 0), 0)), 1)
                 : undefined;
             return (
               <div key={key} style={{ marginBottom: keys.length > 1 ? 12 : 0 }}>
                 {keys.length > 1 && (
-                  <div
-                    style={{
-                      fontFamily: "var(--voux-font-mono)",
-                      fontSize: 10,
-                      color: VOUX_COLORS.inkMuted,
-                      letterSpacing: "0.10em",
-                      marginBottom: 4,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                    }}
-                  >
-                    <span
-                      style={{
-                        display: "inline-block",
-                        width: 8,
-                        height: 8,
-                        borderRadius: "50%",
-                        backgroundColor: itemColors ? palette[0] : color,
-                      }}
-                    />
-                    {seriesLabels?.[key] ?? key}
-                  </div>
+                  <SeriesLabel color={itemColors ? palette[0] : color} label={seriesLabels?.[key] ?? key} />
                 )}
                 <SvgBarH
                   width={width}
-                  data={seriesData.map((sd) => ({
-                    label: sd.label,
-                    value: sd.value,
-                  }))}
+                  data={seriesData}
                   color={itemColors ? resolveColor(ki, 0, palette, itemColors) : color}
                   valueFormatter={(v) => fmt(v)}
                   max={globalMax}
-                  onBarEnter={(di, x, y, label, value) => {
-                    const datum = data[di];
-                    const formatted = fmt(value, datum);
-                    const keyLabel = seriesLabels?.[key] ?? key;
-                    setTooltip({
-                      visible: true,
-                      x,
-                      y,
-                      content: `<div style="font-size:10px;color:var(--voux-tooltip-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.1em">${keyLabel}</div><div style="font-size:13px;color:var(--voux-tooltip-text)"><strong>${label}</strong>: ${formatted}</div>`,
-                    });
-                  }}
-                  onBarLeave={() => setTooltip((t) => ({ ...t, visible: false }))}
-                  onBarClick={onBarClick ? (di) => onBarClick(data[di], di) : undefined}
+                  onBarEnter={(di, x, y, label, value) => handleBarEnter(key, di, x, y, label, value)}
+                  onBarLeave={handleBarLeave}
+                  onBarClick={handleBarClick}
                 />
               </div>
             );
           })}
-          <Tooltip state={tooltip} />
+          <BarChartTooltip state={tooltip} />
         </div>
       </ChartFrame>
     );
   }
 
-  // ── Vertical layout ─────────────────────────────────────────────────────────
+  // ── Vertical layout ───────────────────────────────────────────────────────
   const labels = data.map((d) => String(d.name));
   const chartH = height ?? 220;
 
   if (groupMode === "stacked") {
-    // Stacked: render as grouped SvgBarV sections stacked (simplified for v1)
-    // Each key becomes its own row of bars rendered below each other
     return (
       <ChartFrame loading={loading} isEmpty={isEmpty} height={height} ariaLabel={`Gráfico de barras empilhadas: ${keys.join(", ")}`}>
         <div ref={containerRef} style={{ width: "100%", position: "relative" }}>
@@ -203,50 +136,16 @@ export default function BarChart({
             const values = data.map((d) => Number(d[key] ?? 0));
             return (
               <div key={key}>
-                {keys.length > 1 && (
-                  <div
-                    style={{
-                      fontFamily: "var(--voux-font-mono)",
-                      fontSize: 10,
-                      color: VOUX_COLORS.inkMuted,
-                      letterSpacing: "0.10em",
-                      marginBottom: 4,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                    }}
-                  >
-                    <span
-                      style={{
-                        display: "inline-block",
-                        width: 8,
-                        height: 8,
-                        borderRadius: "50%",
-                        backgroundColor: color,
-                      }}
-                    />
-                    {seriesLabels?.[key] ?? key}
-                  </div>
-                )}
+                {keys.length > 1 && <SeriesLabel color={color} label={seriesLabels?.[key] ?? key} />}
                 <SvgBarV
                   width={width}
                   height={Math.round(chartH / Math.max(keys.length, 1))}
                   labels={ki === keys.length - 1 ? labels : labels.map(() => "")}
                   values={values}
                   color={color}
-                  onBarEnter={(di, x, y, label, value) => {
-                    const datum = data[di];
-                    const formatted = fmt(value, datum);
-                    const keyLabel = seriesLabels?.[key] ?? key;
-                    setTooltip({
-                      visible: true,
-                      x,
-                      y,
-                      content: `<div style="font-size:10px;color:var(--voux-tooltip-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.1em">${keyLabel}</div><div style="font-size:13px;color:var(--voux-tooltip-text)"><strong>${label}</strong>: ${formatted}</div>`,
-                    });
-                  }}
-                  onBarLeave={() => setTooltip((t) => ({ ...t, visible: false }))}
-                  onBarClick={onBarClick ? (di) => onBarClick(data[di], di) : undefined}
+                  onBarEnter={(di, x, y, label, value) => handleBarEnter(key, di, x, y, label, value)}
+                  onBarLeave={handleBarLeave}
+                  onBarClick={handleBarClick}
                 />
               </div>
             );
@@ -260,31 +159,9 @@ export default function BarChart({
   return (
     <ChartFrame loading={loading} isEmpty={isEmpty} height={height} ariaLabel={`Gráfico de barras: ${keys.join(", ")}`}>
       <div ref={containerRef} style={{ width: "100%", position: "relative" }}>
-        {/* Single-series legend when seriesLabels is provided */}
         {keys.length === 1 && seriesLabels && seriesLabels[keys[0]] && (
-          <div
-            style={{
-              fontFamily: "var(--voux-font-mono)",
-              fontSize: 10,
-              color: VOUX_COLORS.inkMuted,
-              letterSpacing: "0.10em",
-              marginBottom: 6,
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              textTransform: "uppercase",
-            }}
-          >
-            <span
-              style={{
-                display: "inline-block",
-                width: 8,
-                height: 8,
-                borderRadius: "50%",
-                backgroundColor: resolveColor(0, 0, colors, itemColors),
-              }}
-            />
-            {seriesLabels[keys[0]]}
+          <div style={{ marginBottom: 6, textTransform: "uppercase" }}>
+            <SeriesLabel color={resolveColor(0, 0, colors ?? palette, itemColors)} label={seriesLabels[keys[0]]} />
           </div>
         )}
         {keys.map((key, ki) => {
@@ -292,70 +169,32 @@ export default function BarChart({
           const values = data.map((d) => Number(d[key] ?? 0));
           return (
             <div key={key}>
-              {keys.length > 1 && (
-                <div
-                  style={{
-                    fontFamily: "var(--voux-font-mono)",
-                    fontSize: 10,
-                    color: VOUX_COLORS.inkMuted,
-                    letterSpacing: "0.10em",
-                    marginBottom: 4,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                  }}
-                >
-                  <span
-                    style={{
-                      display: "inline-block",
-                      width: 8,
-                      height: 8,
-                      borderRadius: "50%",
-                      backgroundColor: color,
-                    }}
-                  />
-                  {seriesLabels?.[key] ?? key}
-                </div>
-              )}
+              {keys.length > 1 && <SeriesLabel color={color} label={seriesLabels?.[key] ?? key} />}
               <SvgBarV
                 width={width}
                 height={Math.round(chartH / Math.max(keys.length, 1))}
                 labels={ki === keys.length - 1 ? labels : labels.map(() => "")}
                 values={values}
                 color={color}
-                onBarEnter={(di, x, y, label, value) => {
-                  const datum = data[di];
-                  const formatted = fmt(value, datum);
-                  const keyLabel = seriesLabels?.[key] ?? key;
-                  setTooltip({
-                    visible: true,
-                    x,
-                    y,
-                    content: `<div style="font-size:10px;color:var(--voux-tooltip-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.1em">${keyLabel}</div><div style="font-size:13px;color:var(--voux-tooltip-text)"><strong>${label}</strong>: ${formatted}</div>`,
-                  });
-                }}
-                onBarLeave={() => setTooltip((t) => ({ ...t, visible: false }))}
-                onBarClick={onBarClick ? (di) => onBarClick(data[di], di) : undefined}
+                onBarEnter={(di, x, y, label, value) => handleBarEnter(key, di, x, y, label, value)}
+                onBarLeave={handleBarLeave}
+                onBarClick={handleBarClick}
               />
             </div>
           );
         })}
-        <Tooltip state={tooltip} />
+        <BarChartTooltip state={tooltip} />
       </div>
     </ChartFrame>
   );
 }
 
 // ── Convenience wrappers (maintain existing API) ───────────────────────────────
-export function VerticalBarChart(
-  props: Omit<BarChartProps, "layout" | "groupMode">,
-) {
+export function VerticalBarChart(props: Omit<BarChartProps, "layout" | "groupMode">) {
   return <BarChart {...props} layout="vertical" />;
 }
 
-export function HorizontalBarChart(
-  props: Omit<BarChartProps, "layout" | "groupMode">,
-) {
+export function HorizontalBarChart(props: Omit<BarChartProps, "layout" | "groupMode">) {
   return <BarChart {...props} layout="horizontal" />;
 }
 

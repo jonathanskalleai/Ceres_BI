@@ -2,6 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Sidebar custom scrollbar ── */
+.sidebar-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: var(--voux-ink-700);
+  border-radius: 9999px;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--voux-ink-500);
+}
+.sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--voux-ink-700) transparent;
+}
+
 /* ═══════════════════════════════════════════════════════════
    VOUX DESIGN SYSTEM — Ceres BI
    Camada 1: Primitivos (cores absolutas, NÃO flipam com tema)

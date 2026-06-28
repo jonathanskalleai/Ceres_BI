@@ -106,45 +106,26 @@ export function AppSidebar({ onNavClick }: AppSidebarProps) {
     <TooltipProvider delayDuration={0}>
       <aside
         className={cn(
-          'shrink-0 flex flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200',
-          onNavClick ? 'w-full' : (collapsed ? 'w-[56px]' : 'w-[252px]'),
+          'shrink-0 flex flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200 sidebar-scroll',
+          onNavClick ? 'w-full' : (collapsed ? 'w-[56px]' : 'w-[200px]'),
         )}
         style={onNavClick ? { height: '100%', overflowY: 'auto' } : { height: '100vh', position: 'sticky', top: 0, overflowY: 'auto' }}
       >
         {/* Brand */}
         <div
           className={cn(
-            'flex items-center gap-3 border-b border-sidebar-border',
-            collapsed ? 'p-3 justify-center' : 'p-5 px-[22px]',
+            'flex items-center border-b border-sidebar-border',
+            collapsed ? 'p-3 justify-center' : 'px-4 py-4 justify-between',
           )}
         >
-          <div
-            className="flex-shrink-0 w-9 h-9 rounded-[10px] flex items-center justify-center text-[20px] italic font-bold"
-            style={{
-              background: 'linear-gradient(135deg, var(--voux-champagne-400), var(--voux-champagne-600))',
-              color: 'var(--voux-ink-1000)',
-              boxShadow: '0 0 24px rgba(212,184,150,0.18), 0 0 1px rgba(212,184,150,0.5)',
-              fontFamily: 'var(--voux-font-display)',
-            }}
-          >
-            C
-          </div>
-          {!collapsed && (
-            <div className="min-w-0 flex-1">
-              <div
-                className="text-[18px] leading-none tracking-[-0.01em] text-sidebar-foreground"
-                style={{ fontFamily: 'var(--voux-font-display)' }}
-              >
-                Ceres <em className="not-italic text-sidebar-primary">BI</em>
-              </div>
-              <div
-                className="text-[9px] tracking-[0.26em] uppercase text-sidebar-foreground/50 mt-1"
-                style={{ fontFamily: 'var(--voux-font-mono)' }}
-              >
-                Business Intelligence
-              </div>
-            </div>
-          )}
+          <img
+            src="/LogoCeresbranca.png"
+            alt="Ceres BI"
+            className={cn(
+              'object-contain',
+              collapsed ? 'h-8 w-8' : 'h-10 flex-1',
+            )}
+          />
           {!collapsed && (
             <button
               onClick={() => setCollapsed(true)}
