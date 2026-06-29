@@ -36,11 +36,19 @@ AS $$
 DECLARE
   v_status text;
 BEGIN
-  -- Normaliza para o dominio do CHECK de sync_log para NUNCA abortar a UPSERT do ETL.
-  v_status := CASE
-    WHEN NEW.status IN ('running', 'success', 'error') THEN NEW.status
-    ELSE 'error'
-  END;
+  -- sync_control usa 'idle' para runs bem-sucedidos; sync_log.status CHECK so aceita
+  -- running/success/error. Mapeamento:
+  --   idle    -> success  (run concluiu sem erro)
+  --   error   -> error
+  --   running -> PULA (evita entradas duplicadas; nao aborta a UPSERT)
+  IF NEW.status IN ('idle', 'success') THEN
+    v_status := 'success';
+  ELSIF NEW.status = 'error' THEN
+    v_status := 'error';
+  ELSE
+    -- 'running' ou status nao reconhecido: nao logar, nao abortar UPSERT
+    RETURN NEW;
+  END IF;
 
   INSERT INTO mirror.sync_log (
     view_name,
@@ -52,19 +60,13 @@ BEGIN
     error_message,
     strategy_used
   ) VALUES (
-    COALESCE(NEW.source_view, NEW.table_name),  -- source_view pode nao existir ainda
-    now(),                                       -- aproximacao honesta (sem started real)
+    COALESCE(NEW.source_view, NEW.table_name),
+    COALESCE(NEW.last_sync_at, now()),  -- last_sync_at e a hora real do run
     NEW.last_sync_at,
     v_status,
     NEW.rows_synced,
-    NULL,                                        -- sem inicio real -> sem duracao real
-    -- se o status original nao era valido, preserva o valor cru para diagnostico
-    CASE
-      WHEN NEW.status NOT IN ('running', 'success', 'error')
-        THEN COALESCE(NEW.error_message, '') ||
-             ' [status_origem=' || COALESCE(NEW.status, 'NULL') || ']'
-      ELSE NEW.error_message
-    END,
+    NULL,                               -- sync_control nao guarda duracao real
+    CASE WHEN NEW.status = 'error' THEN NEW.error_message ELSE NULL END,
     'incremental'
   );
 
