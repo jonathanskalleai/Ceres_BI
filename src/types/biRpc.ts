@@ -293,6 +293,18 @@ export interface EtlSyncStatus {
   minutes_since_sync: number;
 }
 
+// ─── rpc_etl_log ──────────────────────────────────────────────────────────────
+
+export interface EtlRunLog {
+  view_name: string;
+  started_at: string;
+  finished_at: string | null;
+  status: "running" | "success" | "error";
+  rows_affected: number | null;
+  duration_ms: number | null;
+  error_message: string | null;
+}
+
 // ─── rpc_operacional_bi ──────────────────────────────────────────────────────
 
 export interface OperacionalBIKpis {

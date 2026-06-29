@@ -1,6 +1,8 @@
-import { Database, Activity, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Fragment, useState } from "react";
+import { Database, Activity, CheckCircle2, AlertTriangle, ChevronDown, ChevronRight } from "lucide-react";
 import { KPICard } from "@/components/bi/KPICard";
 import { Badge } from "@/components/ui/badge";
+import { EtlHistoryPanel } from "@/components/bi/EtlHistoryPanel";
 import { useEtlStatus } from "@/hooks/bi/useEtlStatus";
 import type { EtlSyncStatus } from "@/types/biRpc";
 
@@ -30,6 +32,8 @@ function formatDate(iso: string): string {
 }
 
 function SyncTable({ tables }: { tables: EtlSyncStatus[] }) {
+  const [expandedRow, setExpandedRow] = useState<string | null>(null);
+
   return (
     <div className="overflow-x-auto rounded-xl border" style={{ borderColor: "var(--voux-card-border)" }}>
       <table className="w-full text-sm">
@@ -38,6 +42,7 @@ function SyncTable({ tables }: { tables: EtlSyncStatus[] }) {
             className="text-left text-[11px] uppercase tracking-wider"
             style={{ fontFamily: "var(--voux-font-label)", color: "var(--voux-label)", background: "var(--surface-raised)" }}
           >
+            <th className="px-4 py-3 w-10">Histórico</th>
             <th className="px-4 py-3">Tabela</th>
             <th className="px-4 py-3">View Origem</th>
             <th className="px-4 py-3 text-right">Registros</th>
@@ -47,43 +52,59 @@ function SyncTable({ tables }: { tables: EtlSyncStatus[] }) {
           </tr>
         </thead>
         <tbody>
-          {tables.map((row) => (
-            <tr
-              key={row.table_name}
-              className="border-t transition-colors hover:bg-[var(--surface-raised)]"
-              style={{ borderColor: "var(--voux-card-border)" }}
-            >
-              <td className="px-4 py-2.5 font-medium" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-heading)" }}>
-                {row.table_name}
-              </td>
-              <td className="px-4 py-2.5" style={{ color: "var(--voux-text-muted)" }}>
-                {row.source_view}
-              </td>
-              <td className="px-4 py-2.5 text-right tabular-nums" style={{ color: "var(--voux-text-soft)" }}>
-                {row.rows_synced?.toLocaleString("pt-BR") ?? "—"}
-              </td>
-              <td className="px-4 py-2.5" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-soft)" }}>
-                {formatDate(row.last_sync_at)}
-              </td>
-              <td className="px-4 py-2.5">
-                <span className="inline-flex items-center gap-1.5">
-                  <FreshnessBadge minutes={row.minutes_since_sync} hasError={!!row.error_message} />
-                  <span className="text-[11px] tabular-nums" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-muted)" }}>
-                    {formatMinutes(row.minutes_since_sync)}
-                  </span>
-                </span>
-              </td>
-              <td className="px-4 py-2.5">
-                {row.error_message ? (
-                  <span className="text-xs text-red-400 truncate max-w-[200px] inline-block" title={row.error_message}>
-                    {row.error_message}
-                  </span>
-                ) : (
-                  <span className="text-xs" style={{ color: "var(--voux-text-muted)" }}>{row.status}</span>
+          {tables.map((row) => {
+            const isExpanded = expandedRow === row.table_name;
+            return (
+              <Fragment key={row.table_name}>
+                <tr
+                  onClick={() => setExpandedRow(isExpanded ? null : row.table_name)}
+                  className="border-t cursor-pointer transition-colors hover:bg-[var(--surface-raised)]"
+                  style={{ borderColor: "var(--voux-card-border)" }}
+                  aria-expanded={isExpanded}
+                >
+                  <td className="px-4 py-2.5" style={{ color: "var(--voux-text-muted)" }}>
+                    {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  </td>
+                  <td className="px-4 py-2.5 font-medium" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-heading)" }}>
+                    {row.table_name}
+                  </td>
+                  <td className="px-4 py-2.5" style={{ color: "var(--voux-text-muted)" }}>
+                    {row.source_view}
+                  </td>
+                  <td className="px-4 py-2.5 text-right tabular-nums" style={{ color: "var(--voux-text-soft)" }}>
+                    {row.rows_synced?.toLocaleString("pt-BR") ?? "—"}
+                  </td>
+                  <td className="px-4 py-2.5" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-soft)" }}>
+                    {formatDate(row.last_sync_at)}
+                  </td>
+                  <td className="px-4 py-2.5">
+                    <span className="inline-flex items-center gap-1.5">
+                      <FreshnessBadge minutes={row.minutes_since_sync} hasError={!!row.error_message} />
+                      <span className="text-[11px] tabular-nums" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-muted)" }}>
+                        {formatMinutes(row.minutes_since_sync)}
+                      </span>
+                    </span>
+                  </td>
+                  <td className="px-4 py-2.5">
+                    {row.error_message ? (
+                      <span className="text-xs text-red-400 truncate max-w-[200px] inline-block" title={row.error_message}>
+                        {row.error_message}
+                      </span>
+                    ) : (
+                      <span className="text-xs" style={{ color: "var(--voux-text-muted)" }}>{row.status}</span>
+                    )}
+                  </td>
+                </tr>
+                {isExpanded && (
+                  <tr style={{ borderColor: "var(--voux-card-border)" }}>
+                    <td colSpan={7} className="p-0" style={{ background: "var(--surface-raised)" }}>
+                      <EtlHistoryPanel tableName={row.table_name} />
+                    </td>
+                  </tr>
                 )}
-              </td>
-            </tr>
-          ))}
+              </Fragment>
+            );
+          })}
         </tbody>
       </table>
     </div>
