@@ -58,9 +58,9 @@
   --voux-champagne-200: #ead7be;
 
   /* Status */
-  --voux-success: #7a9b6f;
+  --voux-success: #2d7a3f;
   --voux-warning: #d4a05a;
-  --voux-danger:  #c97565;
+  --voux-danger:  #b83a28;
   --voux-info:    #8ea3b8;
 
   /* Tipografia */
@@ -193,6 +193,10 @@
     --voux-text-heading:     #ece5d4;
     --voux-text-muted:       #b3a89a;
     --voux-text-faint:       #a39a8c;
+
+    /* Status (dark: tons mais luminosos para contraste sobre fundo escuro) */
+    --voux-success: #7dc688;
+    --voux-danger:  #e07a6a;
     --voux-accent:           #d4b896;
     --voux-skeleton:         #2a2620;
     --voux-surface:          #11100d;
