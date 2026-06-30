@@ -120,7 +120,7 @@ export function SvgLine({
               textAnchor="end"
               fontFamily="var(--voux-font-mono)"
               fontSize={10}
-              fill={VOUX_COLORS.inkFaint}
+              fill="var(--voux-text-muted)"
               letterSpacing="0.04em"
             >
               {yFmt(tv)}

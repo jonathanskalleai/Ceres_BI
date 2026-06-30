@@ -140,7 +140,7 @@ export function SvgBarV({
                 textAnchor="middle"
                 fontFamily="var(--voux-font-mono)"
                 fontSize={9}
-                fill="var(--voux-text-faint)"
+                fill="var(--voux-text-primary)"
                 letterSpacing="0.02em"
                 style={{ opacity: 0 }}
               >

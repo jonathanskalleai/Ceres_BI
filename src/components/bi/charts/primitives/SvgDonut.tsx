@@ -140,7 +140,8 @@ export function SvgDonut({
               gap: 6,
               fontFamily: "var(--voux-font-mono)",
               fontSize: 10,
-              color: VOUX_COLORS.inkSoft,
+              color: "var(--voux-text-muted)",
+              fontWeight: 400,
               letterSpacing: "0.04em",
             }}
           >

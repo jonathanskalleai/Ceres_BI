@@ -27,7 +27,7 @@ export function SvgBarH({
   valueFormatter = fmtCompact,
   showValues = true,
   max: maxProp,
-  labelW: labelWProp = 170,
+  labelW: labelWProp = 220,
   rowH = 26,
   onBarEnter,
   onBarLeave,
@@ -106,9 +106,11 @@ export function SvgBarH({
               textAnchor="end"
               fontFamily="var(--voux-font-sans)"
               fontSize={12}
-              fill={VOUX_COLORS.inkSoft}
+              fontWeight={500}
+              fill="var(--voux-text-primary)"
             >
-              {isNarrow && d.label.length > 12 ? `${d.label.substring(0, 12)}…` : d.label}
+              {isNarrow && d.label.length > 20 ? `${d.label.substring(0, 20)}…` : d.label}
+              <title>{d.label}</title>
             </text>
 
             {/* track */}
