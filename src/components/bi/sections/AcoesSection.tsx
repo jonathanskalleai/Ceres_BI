@@ -7,7 +7,7 @@ import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { HorizontalBarChart, VerticalBarChart, PieChartWithLabels } from "@/components/bi/charts";
 import { CHART_COLORS } from "@/lib/chartTheme";
-import { toISODate, getPreviousPeriod, calcTrend } from "@/lib/dateUtils";
+import { toISODate, getPreviousPeriod, calcTrend, formatMonthYear } from "@/lib/dateUtils";
 import type { RpcAcoesBI } from "@/types/biRpc";
 
 const EMPTY: RpcAcoesBI = {
@@ -86,7 +86,7 @@ export default function AcoesSection({ active, dateRange, categoria, funil }: Pr
 
         <ChartCard title="Evolucao Mensal de Acoes" description="Quantidade por mes" dataSource="mirror.crm_acoes · aco_dthconclusao→YYYY-MM, COUNT(*)" loading={isLoading}>
           <VerticalBarChart
-            data={porMes.map((d) => ({ name: d.name, acoes: d.acoes }))}
+            data={porMes.map((d) => ({ name: formatMonthYear(d.name), acoes: d.acoes }))}
             keys={["acoes"]}
             seriesLabels={{ acoes: "Ações" }}
             title=""

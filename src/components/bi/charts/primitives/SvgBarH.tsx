@@ -144,7 +144,7 @@ export function SvgBarH({
                 y={y + rowH / 2 + 4}
                 fontFamily="var(--voux-font-mono)"
                 fontSize={10}
-                fill="var(--voux-text-faint)"
+                fill="var(--voux-text-primary)"
                 letterSpacing="0.02em"
               >
                 {valueFormatter(d.value)}
