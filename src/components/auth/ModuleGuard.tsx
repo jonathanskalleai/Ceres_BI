@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { usePermissions } from '@/hooks/usePermissions';
-import { MODULE_ROUTES } from '@/components/layout/AppSidebar';
+import { MODULE_ROUTES } from '@/components/layout/navItems';
 
 interface ModuleGuardProps {
   moduleId: string;

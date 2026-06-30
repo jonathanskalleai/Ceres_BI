@@ -6,6 +6,7 @@ export interface NavItem {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   route: string;
+  children?: NavItem[];
 }
 
 interface SidebarNavItemProps {

@@ -3,96 +3,32 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Users, MapPin, Table2, AlertTriangle, MessageSquareText,
   Map as MapIcon, Handshake, ClipboardList, Zap, Database, BarChart3, Settings,
-  Sun, Moon, TrendingUp, Package, Wrench, Activity,
-  LogOut, User,
+  Sun, Moon, Settings2, LogOut,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { TooltipProvider } from '@/components/ui/tooltip';
+import { TooltipProvider, Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useTheme } from '@/hooks/useTheme';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useAuth } from '@/hooks/useAuth';
 import { SidebarNavItem } from './SidebarNavItem';
+import { SidebarNavItemGroup } from './SidebarNavItemGroup';
+import { buildNavItems } from './navItems';
 import type { NavItem } from './SidebarNavItem';
-import type { AppModule } from '@/types/auth';
 
 export interface AppSidebarProps {
   /** Called after a nav item is clicked (used by mobile Sheet to close) */
   onNavClick?: () => void;
 }
 
-/** Map of module_id to route path */
-export const MODULE_ROUTES: Record<string, string> = {
-  'crm.overview': '/crm/overview',
-  'crm.consultores': '/crm/consultores',
-  'crm.registros': '/crm/registros',
-  'crm.criticos': '/crm/criticos',
-  'crm.mapa': '/crm/mapa',
-  'crm.insights': '/crm/insights',
-  'crm.negocios': '/crm/negocios',
-  'crm.administrativo': '/crm/administrativo',
-  'bi.painel': '/bi/painel',
-  'bi.comercial': '/bi/comercial',
-  'bi.pedidos': '/bi/pedidos',
-  'bi.produtos': '/bi/produtos',
-  'bi.servicos': '/bi/servicos',
-  'bi.operacional': '/bi/operacional',
-  'bi.admin': '/bi/admin',
-  'bi.acoes': '/bi/acoes',
-  'bi.inteligencia': '/bi/inteligencia',
-  'bi.etl-monitor': '/bi/etl-monitor',
-  'tools.explorer': '/tools/explorer',
-  'tools.performance': '/tools/performance',
-  'admin.users': '/admin/users',
-  'admin.profile': '/admin/profile',
-};
-
-/** Map of icon_name to Lucide component */
-const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
-  LayoutDashboard,
-  Users,
-  MapPin,
-  Table2,
-  AlertTriangle,
-  MessageSquareText,
-  Map: MapIcon,
-  Handshake,
-  ClipboardList,
-  Zap,
-  Database,
-  BarChart3,
-  Settings,
-  TrendingUp,
-  Package,
-  Wrench,
-  Activity,
-  User,
-};
-
-/** Build flat sorted nav items from allowed modules */
-function buildNavItems(modules: AppModule[]): NavItem[] {
-  const items: NavItem[] = [];
-  for (const mod of modules) {
-    const route = MODULE_ROUTES[mod.id];
-    if (!route) continue;
-    items.push({
-      id: mod.id,
-      label: mod.label,
-      icon: ICON_MAP[mod.icon_name] || LayoutDashboard,
-      route,
-    });
-  }
-  return items;
-}
-
 export function AppSidebar({ onNavClick }: AppSidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { isDark, toggle: toggleTheme } = useTheme();
-  const { allowedModules, isLoading } = usePermissions();
+  const { allowedModules, isLoading, isAdmin } = usePermissions();
   const { profile, signOut } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
 
-  const navItems = useMemo(() => buildNavItems(allowedModules), [allowedModules]);
+  const navItems = useMemo(() => buildNavItems(allowedModules, isAdmin), [allowedModules, isAdmin]);
 
   const handleItemClick = (item: NavItem) => {
     navigate(item.route);
@@ -161,15 +97,34 @@ export function AppSidebar({ onNavClick }: AppSidebarProps) {
             </div>
           ) : (
             <div className="space-y-[2px]">
-              {navItems.map((item) => (
-                <SidebarNavItem
-                  key={item.id}
-                  item={item}
-                  active={isActive(item)}
-                  collapsed={collapsed}
-                  onClick={() => handleItemClick(item)}
-                />
-              ))}
+              {navItems.length === 0 ? (
+                <div className="text-center py-8 text-sidebar-foreground/50">
+                  <p>Nenhum módulo disponível</p>
+                </div>
+              ) : (
+                navItems.map((item) =>
+                  item.children && item.children.length > 0 ? (
+                    <SidebarNavItemGroup
+                      key={item.id}
+                      label={item.label}
+                      icon={item.icon}
+                      items={item.children}
+                      defaultOpen={true}
+                      collapsed={collapsed}
+                      isActive={isActive}
+                      onItemClick={handleItemClick}
+                    />
+                  ) : (
+                    <SidebarNavItem
+                      key={item.id}
+                      item={item}
+                      active={isActive(item)}
+                      collapsed={collapsed}
+                      onClick={() => handleItemClick(item)}
+                    />
+                  )
+                )
+              )}
             </div>
           )}
         </nav>

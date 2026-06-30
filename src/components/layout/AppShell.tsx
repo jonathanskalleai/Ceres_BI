@@ -25,6 +25,7 @@ const ROUTE_META: Record<string, { section: string; title: string }> = {
   '/bi/operacional': { section: 'BI ANALYTICS', title: 'Produtividade Tecnica' },
   '/bi/admin': { section: 'BI ANALYTICS', title: 'Carteira de Clientes' },
   '/bi/acoes': { section: 'BI ANALYTICS', title: 'Acoes' },
+  '/bi/etl-monitor': { section: 'BI ANALYTICS', title: 'Monitor ETL' },
   '/tools/explorer': { section: 'FERRAMENTAS', title: 'Explorador de Dados' },
   '/tools/performance': { section: 'FERRAMENTAS', title: 'Relatorio Anual' },
   '/admin/users': { section: 'ADMINISTRACAO', title: 'Usuarios' },
