@@ -131,8 +131,8 @@ export function SvgLine({
 
       {/* X labels */}
       {labels.map((lbl, i) => {
-        // Thin labels: when narrow (<400px) and >6 points show every 3rd; else >12 show every 3rd
-        const step = (width < 400 && n > 6) ? 3 : (n > 12 ? 3 : 1);
+        // Thin labels: narrow (<400) skip some; wide shows all up to 18 points
+        const step = (width < 400 && n > 6) ? 2 : (n > 18 ? 3 : 1);
         if (step > 1 && i % step !== 0 && i !== n - 1) return null;
         return (
           <text
@@ -219,18 +219,8 @@ export function SvgLine({
               ))}
             {/* Value labels on points */}
             {showValues && (() => {
-              // For many points, show only first, last, and max to avoid overlap
-              let indicesToShow: Set<number>;
-              if (validPairs.length > 8) {
-                const maxPair = validPairs.reduce((best, p) => p.v > best.v ? p : best, validPairs[0]);
-                indicesToShow = new Set([
-                  validPairs[0].i,
-                  validPairs[validPairs.length - 1].i,
-                  maxPair.i,
-                ]);
-              } else {
-                indicesToShow = new Set(validPairs.map(p => p.i));
-              }
+              // Show values on ALL points — offset alternates by series to reduce overlap
+              const indicesToShow = new Set(validPairs.map(p => p.i));
               const offsetY = sIdx === 0 ? -10 : 14;
               return validPairs
                 .filter(({ v, i }) => v !== 0 && indicesToShow.has(i))

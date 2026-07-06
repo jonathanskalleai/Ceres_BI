@@ -98,6 +98,9 @@ export default function CrmOverviewRpc() {
     return evolucao.slice(-12);
   }, [evolucao]);
 
+  /** Short month label for chart X axis: "jul/2026" → "jul/26" */
+  const fmtShort = (ym: string) => formatMonthYear(ym).replace(/\/20(\d{2})$/, "/$1");
+
   const regioesChart = useMemo(() => {
     if (!regioes) return [];
     return regioes.map((r) => ({ cidade: r.cidade, acoes: r.acoes }));
@@ -133,8 +136,8 @@ export default function CrmOverviewRpc() {
           <CardContent>
             <LineChart
               series={[
-                { name: "Acoes", data: evolucaoChart.map((d) => ({ x: formatMonthYear(d.mes), y: d.acoes })) },
-                { name: "Visitas", data: evolucaoChart.map((d) => ({ x: formatMonthYear(d.mes), y: d.visitas })) },
+                { name: "Acoes", data: evolucaoChart.map((d) => ({ x: fmtShort(d.mes), y: d.acoes })) },
+                { name: "Visitas", data: evolucaoChart.map((d) => ({ x: fmtShort(d.mes), y: d.visitas })) },
               ]}
               height={280}
               loading={evolLoading}
