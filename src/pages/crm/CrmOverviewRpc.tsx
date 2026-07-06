@@ -8,6 +8,7 @@ import type { PieChartData } from "@/components/bi/charts";
 import { formatMonthYear, toISODate } from "@/lib/dateUtils";
 import { useNegociosFilter } from "@/contexts/NegociosFilterContext";
 import { useNavigate } from "react-router-dom";
+import { startOfMonth, endOfMonth, subMonths, format } from "date-fns";
 import {
   useKpisComercial,
   useRankingVendedores,
@@ -25,9 +26,21 @@ const formatCurrency = (v: number) =>
 export default function CrmOverviewRpc() {
   const { dateRange } = useNegociosFilter();
   const navigate = useNavigate();
-  const from = toISODate(dateRange?.from) ?? "";
-  const to = toISODate(dateRange?.to) ?? "";
+
+  // Fallback: se dateRange vem undefined momentaneamente, usar mes atual
+  const fallbackFrom = useMemo(() => startOfMonth(new Date()), []);
+  const fallbackTo = useMemo(() => endOfMonth(new Date()), []);
+  const from = toISODate(dateRange?.from ?? fallbackFrom) ?? "";
+  const to = toISODate(dateRange?.to ?? fallbackTo) ?? "";
   const hasDateRange = !!from && !!to;
+
+  // Evolucao mensal: janela fixa de 12 meses rolling (RPC ignora p_from/p_to,
+  // mas precisamos de strings validas para o hook nao se desabilitar)
+  const evoFrom = useMemo(
+    () => format(subMonths(startOfMonth(new Date()), 11), "yyyy-MM-dd"),
+    [],
+  );
+  const evoTo = useMemo(() => format(new Date(), "yyyy-MM-dd"), []);
 
   // ─── RPC hooks ───────────────────────────────────────────────────────
   const { data: kpisRaw, isLoading: kpisLoading } = useKpisComercial({
@@ -37,7 +50,7 @@ export default function CrmOverviewRpc() {
     from, to, limit: 10, enabled: hasDateRange,
   });
   const { data: evolucao, isLoading: evolLoading } = useEvolucaoMensal({
-    from, to, enabled: hasDateRange,
+    from: evoFrom, to: evoTo, enabled: true,
   });
   const { data: regioes, isLoading: regLoading } = useRankingRegioes({
     from, to, limit: 15, enabled: hasDateRange,
