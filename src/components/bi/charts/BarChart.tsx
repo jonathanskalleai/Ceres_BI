@@ -65,6 +65,9 @@ export default function BarChart({
 
   const isEmpty = data.length === 0;
 
+  // Treat width=0 as "still measuring" so ChartFrame shows skeleton
+  const measuring = width === 0 && !loading;
+
   const handleBarEnter = useCallback(
     (key: string, di: number, x: number, y: number, label: string, value: number) => {
       const datum = data[di];
@@ -87,39 +90,41 @@ export default function BarChart({
   // ── Horizontal layout ─────────────────────────────────────────────────────
   if (layout === "horizontal") {
     return (
-      <ChartFrame loading={loading} isEmpty={isEmpty} height={height} ariaLabel={`Gráfico de barras: ${keys.join(", ")}`}>
-        <div ref={containerRef} style={{ width: "100%", position: "relative" }}>
-          {keys.map((key, ki) => {
-            const color = resolveColor(ki, 0, palette, itemColors);
-            const seriesData = data.map((d) => ({
-              label: String(d.name),
-              value: Number(d[key] ?? 0),
-            }));
-            const globalMax =
-              groupMode === "stacked"
-                ? Math.max(...data.map((d) => keys.reduce((s, k) => s + Number(d[k] ?? 0), 0)), 1)
-                : undefined;
-            return (
-              <div key={key} style={{ marginBottom: keys.length > 1 ? 12 : 0 }}>
-                {keys.length > 1 && (
-                  <SeriesLabel color={itemColors ? palette[0] : color} label={seriesLabels?.[key] ?? key} />
-                )}
-                <SvgBarH
-                  width={width}
-                  data={seriesData}
-                  color={itemColors ? resolveColor(ki, 0, palette, itemColors) : color}
-                  valueFormatter={(v) => fmt(v)}
-                  max={globalMax}
-                  onBarEnter={(di, x, y, label, value) => handleBarEnter(key, di, x, y, label, value)}
-                  onBarLeave={handleBarLeave}
-                  onBarClick={handleBarClick}
-                />
-              </div>
-            );
-          })}
-          <BarChartTooltip state={tooltip} />
-        </div>
-      </ChartFrame>
+      <div ref={containerRef} style={{ position: "relative", width: "100%" }}>
+        <ChartFrame loading={loading || measuring} isEmpty={isEmpty} height={height} ariaLabel={`Gráfico de barras: ${keys.join(", ")}`}>
+          <div style={{ width: "100%", position: "relative" }}>
+            {keys.map((key, ki) => {
+              const color = resolveColor(ki, 0, palette, itemColors);
+              const seriesData = data.map((d) => ({
+                label: String(d.name),
+                value: Number(d[key] ?? 0),
+              }));
+              const globalMax =
+                groupMode === "stacked"
+                  ? Math.max(...data.map((d) => keys.reduce((s, k) => s + Number(d[k] ?? 0), 0)), 1)
+                  : undefined;
+              return (
+                <div key={key} style={{ marginBottom: keys.length > 1 ? 12 : 0 }}>
+                  {keys.length > 1 && (
+                    <SeriesLabel color={itemColors ? palette[0] : color} label={seriesLabels?.[key] ?? key} />
+                  )}
+                  <SvgBarH
+                    width={width}
+                    data={seriesData}
+                    color={itemColors ? resolveColor(ki, 0, palette, itemColors) : color}
+                    valueFormatter={(v) => fmt(v)}
+                    max={globalMax}
+                    onBarEnter={(di, x, y, label, value) => handleBarEnter(key, di, x, y, label, value)}
+                    onBarLeave={handleBarLeave}
+                    onBarClick={handleBarClick}
+                  />
+                </div>
+              );
+            })}
+            <BarChartTooltip state={tooltip} />
+          </div>
+        </ChartFrame>
+      </div>
     );
   }
 
@@ -129,8 +134,44 @@ export default function BarChart({
 
   if (groupMode === "stacked") {
     return (
-      <ChartFrame loading={loading} isEmpty={isEmpty} height={height} ariaLabel={`Gráfico de barras empilhadas: ${keys.join(", ")}`}>
-        <div ref={containerRef} style={{ width: "100%", position: "relative" }}>
+      <div ref={containerRef} style={{ position: "relative", width: "100%" }}>
+        <ChartFrame loading={loading || measuring} isEmpty={isEmpty} height={height} ariaLabel={`Gráfico de barras empilhadas: ${keys.join(", ")}`}>
+          <div style={{ width: "100%", position: "relative" }}>
+            {keys.map((key, ki) => {
+              const color = resolveColor(ki, 0, palette, itemColors);
+              const values = data.map((d) => Number(d[key] ?? 0));
+              return (
+                <div key={key}>
+                  {keys.length > 1 && <SeriesLabel color={color} label={seriesLabels?.[key] ?? key} />}
+                  <SvgBarV
+                    width={width}
+                    height={Math.round(chartH / Math.max(keys.length, 1))}
+                    labels={ki === keys.length - 1 ? labels : labels.map(() => "")}
+                    values={values}
+                    color={color}
+                    onBarEnter={(di, x, y, label, value) => handleBarEnter(key, di, x, y, label, value)}
+                    onBarLeave={handleBarLeave}
+                    onBarClick={handleBarClick}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </ChartFrame>
+      </div>
+    );
+  }
+
+  // Grouped / single-key vertical
+  return (
+    <div ref={containerRef} style={{ position: "relative", width: "100%" }}>
+      <ChartFrame loading={loading || measuring} isEmpty={isEmpty} height={height} ariaLabel={`Gráfico de barras: ${keys.join(", ")}`}>
+        <div style={{ width: "100%", position: "relative" }}>
+          {keys.length === 1 && seriesLabels && seriesLabels[keys[0]] && (
+            <div style={{ marginBottom: 6, textTransform: "uppercase" }}>
+              <SeriesLabel color={resolveColor(0, 0, colors ?? palette, itemColors)} label={seriesLabels[keys[0]]} />
+            </div>
+          )}
           {keys.map((key, ki) => {
             const color = resolveColor(ki, 0, palette, itemColors);
             const values = data.map((d) => Number(d[key] ?? 0));
@@ -150,42 +191,10 @@ export default function BarChart({
               </div>
             );
           })}
+          <BarChartTooltip state={tooltip} />
         </div>
       </ChartFrame>
-    );
-  }
-
-  // Grouped / single-key vertical
-  return (
-    <ChartFrame loading={loading} isEmpty={isEmpty} height={height} ariaLabel={`Gráfico de barras: ${keys.join(", ")}`}>
-      <div ref={containerRef} style={{ width: "100%", position: "relative" }}>
-        {keys.length === 1 && seriesLabels && seriesLabels[keys[0]] && (
-          <div style={{ marginBottom: 6, textTransform: "uppercase" }}>
-            <SeriesLabel color={resolveColor(0, 0, colors ?? palette, itemColors)} label={seriesLabels[keys[0]]} />
-          </div>
-        )}
-        {keys.map((key, ki) => {
-          const color = resolveColor(ki, 0, palette, itemColors);
-          const values = data.map((d) => Number(d[key] ?? 0));
-          return (
-            <div key={key}>
-              {keys.length > 1 && <SeriesLabel color={color} label={seriesLabels?.[key] ?? key} />}
-              <SvgBarV
-                width={width}
-                height={Math.round(chartH / Math.max(keys.length, 1))}
-                labels={ki === keys.length - 1 ? labels : labels.map(() => "")}
-                values={values}
-                color={color}
-                onBarEnter={(di, x, y, label, value) => handleBarEnter(key, di, x, y, label, value)}
-                onBarLeave={handleBarLeave}
-                onBarClick={handleBarClick}
-              />
-            </div>
-          );
-        })}
-        <BarChartTooltip state={tooltip} />
-      </div>
-    </ChartFrame>
+    </div>
   );
 }
 

@@ -57,57 +57,61 @@ export default function PieChart({
     ? tooltipFormatter(total)
     : fmtCompact(total);
 
+  // Treat width=0 as "still measuring" so ChartFrame shows skeleton
+  const measuring = width === 0 && !loading;
+
   return (
-    <ChartFrame loading={loading} isEmpty={!data.length} height={height} rounded="full" ariaLabel={`Gráfico de pizza: ${data.map((d) => d.name).join(", ")}`}>
-      <div
-        ref={containerRef}
-        style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}
-      >
-        {width > 0 && (
-          <SvgDonut
-            width={Math.min(width, chartH)}
-            height={chartH}
-            data={donutData}
-            centerValue={centerValue}
-            fmt={tooltipFormatter ?? fmtCompact}
-            onSegmentEnter={(segIdx, x, y) => {
-              const d = donutData[segIdx];
-              const formatted = tooltipFormatter ? tooltipFormatter(d.value) : fmtCompact(d.value);
-              const pct = total > 0 ? ((d.value / total) * 100).toFixed(1) : "0";
-              setTooltip({
-                visible: true,
-                x,
-                y,
-                content: `<div style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:${d.color};display:inline-block"></span><span style="color:var(--voux-tooltip-muted)">${d.label}</span></div><div style="margin-top:4px;color:var(--voux-tooltip-text)"><strong>${formatted}</strong> <span style="color:var(--voux-tooltip-muted)">(${pct}%)</span></div>`,
-              });
+    <div ref={containerRef} style={{ position: "relative", width: "100%" }}>
+      <ChartFrame loading={loading || measuring} isEmpty={!data.length} height={height} rounded="full" ariaLabel={`Gráfico de pizza: ${data.map((d) => d.name).join(", ")}`}>
+        <div
+          style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}
+        >
+          {width > 0 && (
+            <SvgDonut
+              width={Math.min(width, chartH)}
+              height={chartH}
+              data={donutData}
+              centerValue={centerValue}
+              fmt={tooltipFormatter ?? fmtCompact}
+              onSegmentEnter={(segIdx, x, y) => {
+                const d = donutData[segIdx];
+                const formatted = tooltipFormatter ? tooltipFormatter(d.value) : fmtCompact(d.value);
+                const pct = total > 0 ? ((d.value / total) * 100).toFixed(1) : "0";
+                setTooltip({
+                  visible: true,
+                  x,
+                  y,
+                  content: `<div style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:${d.color};display:inline-block"></span><span style="color:var(--voux-tooltip-muted)">${d.label}</span></div><div style="margin-top:4px;color:var(--voux-tooltip-text)"><strong>${formatted}</strong> <span style="color:var(--voux-tooltip-muted)">(${pct}%)</span></div>`,
+                });
+              }}
+              onSegmentLeave={() => setTooltip((t) => ({ ...t, visible: false }))}
+            />
+          )}
+        </div>
+        {tooltip.visible && (
+          <div
+            style={{
+              position: "fixed",
+              left: tooltip.x + 14,
+              top: tooltip.y - 10,
+              background: "var(--voux-tooltip-bg)",
+              border: "1px solid var(--voux-tooltip-border)",
+              backdropFilter: "blur(10px)",
+              WebkitBackdropFilter: "blur(10px)",
+              padding: "8px 12px",
+              borderRadius: 10,
+              fontFamily: "var(--voux-font-mono)",
+              fontSize: 11,
+              color: "var(--voux-tooltip-text)",
+              pointerEvents: "none",
+              zIndex: 9999,
+              whiteSpace: "nowrap",
             }}
-            onSegmentLeave={() => setTooltip((t) => ({ ...t, visible: false }))}
+            dangerouslySetInnerHTML={{ __html: tooltip.content }}
           />
         )}
-      </div>
-      {tooltip.visible && (
-        <div
-          style={{
-            position: "fixed",
-            left: tooltip.x + 14,
-            top: tooltip.y - 10,
-            background: "var(--voux-tooltip-bg)",
-            border: "1px solid var(--voux-tooltip-border)",
-            backdropFilter: "blur(10px)",
-            WebkitBackdropFilter: "blur(10px)",
-            padding: "8px 12px",
-            borderRadius: 10,
-            fontFamily: "var(--voux-font-mono)",
-            fontSize: 11,
-            color: "var(--voux-tooltip-text)",
-            pointerEvents: "none",
-            zIndex: 9999,
-            whiteSpace: "nowrap",
-          }}
-          dangerouslySetInnerHTML={{ __html: tooltip.content }}
-        />
-      )}
-    </ChartFrame>
+      </ChartFrame>
+    </div>
   );
 }
 

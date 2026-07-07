@@ -54,7 +54,10 @@ export default function LineChart({
   const [tooltip, setTooltip] = useState<TooltipState>({ visible: false, x: 0, y: 0, content: "" });
   const [hoveredIdx, setHoveredIdx] = useState<number | undefined>(undefined);
 
-  const chartH = height ?? 280;
+  // Account for legend height so SVG + legend fit within ChartFrame's fixed height
+  const showLegendEarly = series && series.length > 0 && series[0].name !== "Valor";
+  const legendH = showLegendEarly ? 36 : 0;
+  const chartH = (height ?? 280) - legendH;
 
   // Normalise to SvgLine series format
   let svgSeries: import("./primitives/SvgLine").SvgLineSeries[];
@@ -90,108 +93,113 @@ export default function LineChart({
     ? series.every((s) => s.data.length === 0)
     : data.length === 0;
 
+  // Treat width=0 as "still measuring" so ChartFrame shows skeleton
+  const measuring = width === 0 && !loading;
+
   // Always show legend to give context (single or multi-series)
   const showLegend = svgSeries.length >= 1 && svgSeries[0].name !== "Valor";
 
   return (
-    <ChartFrame loading={loading} isEmpty={isEmpty} height={height}>
-      {showLegend && (
-        <div
-          style={{
-            display: "flex",
-            gap: 16,
-            marginBottom: 8,
-            paddingLeft: 4,
-            flexWrap: "wrap",
-          }}
-        >
-          {svgSeries.map((s) => (
-            <div
-              key={s.name}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                fontFamily: "var(--voux-font-mono, monospace)",
-                fontSize: 10,
-                color: "var(--voux-text-muted)",
-                letterSpacing: "0.14em",
-                textTransform: "uppercase",
-              }}
-            >
-              <span
+    <div ref={containerRef} style={{ position: "relative", width: "100%" }}>
+      <ChartFrame loading={loading || measuring} isEmpty={isEmpty} height={height}>
+        {showLegend && (
+          <div
+            style={{
+              display: "flex",
+              gap: 16,
+              marginBottom: 8,
+              paddingLeft: 4,
+              flexWrap: "wrap",
+            }}
+          >
+            {svgSeries.map((s) => (
+              <div
+                key={s.name}
                 style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: "50%",
-                  background: s.color ?? "var(--voux-champagne-400)",
-                  flexShrink: 0,
-                  display: "inline-block",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  fontFamily: "var(--voux-font-mono, monospace)",
+                  fontSize: 10,
+                  color: "var(--voux-text-muted)",
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
                 }}
-              />
-              {s.name}
-            </div>
-          ))}
+              >
+                <span
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    background: s.color ?? "var(--voux-champagne-400)",
+                    flexShrink: 0,
+                    display: "inline-block",
+                  }}
+                />
+                {s.name}
+              </div>
+            ))}
+          </div>
+        )}
+        <div style={{ width: "100%" }}>
+          {width > 0 && (
+            <SvgLine
+              width={width}
+              height={chartH}
+              labels={labels}
+              series={svgSeries}
+              points
+              yFmt={tooltipFormatter}
+              hoveredIdx={hoveredIdx}
+              onHover={(idx, x, y) => {
+                setHoveredIdx(idx);
+                const label = labels[idx];
+                const rows = svgSeries
+                  .map((s, si) => {
+                    const v = s.values[idx];
+                    if (v == null) return "";
+                    const c = s.color ?? palette[si % palette.length];
+                    const formatted = tooltipFormatter ? tooltipFormatter(v) : fmtCompact(v);
+                    return `<div style="display:flex;align-items:center;gap:6px;margin-top:3px"><span style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0;display:inline-block"></span><span style="color:var(--voux-tooltip-muted);font-size:11px">${s.name}: <strong style="color:var(--voux-tooltip-text)">${formatted}</strong></span></div>`;
+                  })
+                  .join("");
+                setTooltip({
+                  visible: true,
+                  x,
+                  y,
+                  content: `<div style="font-size:10px;color:var(--voux-tooltip-muted);letter-spacing:0.08em;margin-bottom:4px">${label}</div>${rows}`,
+                });
+              }}
+              onLeave={() => {
+                setTooltip((t) => ({ ...t, visible: false }));
+                setHoveredIdx(undefined);
+              }}
+            />
+          )}
         </div>
-      )}
-      <div ref={containerRef} style={{ width: "100%" }}>
-        {width > 0 && (
-          <SvgLine
-            width={width}
-            height={chartH}
-            labels={labels}
-            series={svgSeries}
-            points
-            yFmt={tooltipFormatter}
-            hoveredIdx={hoveredIdx}
-            onHover={(idx, x, y) => {
-              setHoveredIdx(idx);
-              const label = labels[idx];
-              const rows = svgSeries
-                .map((s, si) => {
-                  const v = s.values[idx];
-                  if (v == null) return "";
-                  const c = s.color ?? palette[si % palette.length];
-                  const formatted = tooltipFormatter ? tooltipFormatter(v) : fmtCompact(v);
-                  return `<div style="display:flex;align-items:center;gap:6px;margin-top:3px"><span style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0;display:inline-block"></span><span style="color:var(--voux-tooltip-muted);font-size:11px">${s.name}: <strong style="color:var(--voux-tooltip-text)">${formatted}</strong></span></div>`;
-                })
-                .join("");
-              setTooltip({
-                visible: true,
-                x,
-                y,
-                content: `<div style="font-size:10px;color:var(--voux-tooltip-muted);letter-spacing:0.08em;margin-bottom:4px">${label}</div>${rows}`,
-              });
+        {tooltip.visible && (
+          <div
+            style={{
+              position: "fixed",
+              left: tooltip.x + 14,
+              top: tooltip.y - 10,
+              background: "var(--voux-tooltip-bg)",
+              border: "1px solid var(--voux-tooltip-border)",
+              backdropFilter: "blur(10px)",
+              WebkitBackdropFilter: "blur(10px)",
+              padding: "8px 12px",
+              borderRadius: 10,
+              fontFamily: "var(--voux-font-mono)",
+              fontSize: 11,
+              color: "var(--voux-tooltip-text)",
+              pointerEvents: "none",
+              zIndex: 9999,
+              whiteSpace: "nowrap",
             }}
-            onLeave={() => {
-              setTooltip((t) => ({ ...t, visible: false }));
-              setHoveredIdx(undefined);
-            }}
+            dangerouslySetInnerHTML={{ __html: tooltip.content }}
           />
         )}
-      </div>
-      {tooltip.visible && (
-        <div
-          style={{
-            position: "fixed",
-            left: tooltip.x + 14,
-            top: tooltip.y - 10,
-            background: "var(--voux-tooltip-bg)",
-            border: "1px solid var(--voux-tooltip-border)",
-            backdropFilter: "blur(10px)",
-            WebkitBackdropFilter: "blur(10px)",
-            padding: "8px 12px",
-            borderRadius: 10,
-            fontFamily: "var(--voux-font-mono)",
-            fontSize: 11,
-            color: "var(--voux-tooltip-text)",
-            pointerEvents: "none",
-            zIndex: 9999,
-            whiteSpace: "nowrap",
-          }}
-          dangerouslySetInnerHTML={{ __html: tooltip.content }}
-        />
-      )}
-    </ChartFrame>
+      </ChartFrame>
+    </div>
   );
 }
