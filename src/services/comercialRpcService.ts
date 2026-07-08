@@ -7,6 +7,8 @@ import type {
   RpcClienteVendedor,
   RpcRankingVendedorV2,
   RpcRegistroRecente,
+  RpcEvolucaoNegocios12m,
+  RpcEvolucaoTiposAcao12m,
 } from "@/types/comercialRpc";
 
 /**
@@ -156,5 +158,43 @@ export async function fetchRegistrosRecentes(
     return (data ?? []) as RpcRegistroRecente[];
   } catch (err) {
     throw new Error(`[comercialRpcService.fetchRegistrosRecentes] ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
+}
+
+/**
+ * Calls rpc_evolucao_negocios_12m — monthly deal evolution (12m rolling).
+ */
+export async function fetchEvolucaoNegocios12m(
+  vendedor?: string,
+): Promise<RpcEvolucaoNegocios12m[]> {
+  try {
+    const params: Record<string, unknown> = { p_vendedor: vendedor ?? null };
+
+    const { data, error } = await supabase.rpc("rpc_evolucao_negocios_12m", params);
+    if (error) throw new Error(error.message);
+    return (data ?? []) as RpcEvolucaoNegocios12m[];
+  } catch (err) {
+    throw new Error(`[comercialRpcService.fetchEvolucaoNegocios12m] ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
+}
+
+/**
+ * Calls rpc_evolucao_tipos_acao_12m — top N action types by month (flat rows).
+ */
+export async function fetchEvolucaoTiposAcao12m(
+  vendedor?: string,
+  limit = 8,
+): Promise<RpcEvolucaoTiposAcao12m[]> {
+  try {
+    const params: Record<string, unknown> = {
+      p_vendedor: vendedor ?? null,
+      p_limit: limit,
+    };
+
+    const { data, error } = await supabase.rpc("rpc_evolucao_tipos_acao_12m", params);
+    if (error) throw new Error(error.message);
+    return (data ?? []) as RpcEvolucaoTiposAcao12m[];
+  } catch (err) {
+    throw new Error(`[comercialRpcService.fetchEvolucaoTiposAcao12m] ${err instanceof Error ? err.message : "Unknown error"}`);
   }
 }

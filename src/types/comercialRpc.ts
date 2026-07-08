@@ -79,3 +79,20 @@ export interface RpcRegistroRecente {
   status: string | null;
   nro_negocio: string | null;
 }
+
+/** Row from rpc_evolucao_negocios_12m — SETOF */
+export interface RpcEvolucaoNegocios12m {
+  mes: string;
+  total: number;
+  ganhos: number;
+  perdidos: number;
+  valor_ganho: number;
+  valor_perdido: number;
+}
+
+/** Row from rpc_evolucao_tipos_acao_12m — SETOF (flat format: 1 row per mes+tipo) */
+export interface RpcEvolucaoTiposAcao12m {
+  mes: string;
+  tipo_acao: string;
+  total: number;
+}

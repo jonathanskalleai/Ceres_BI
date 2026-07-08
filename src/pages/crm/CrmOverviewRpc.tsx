@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { KPICard } from "@/components/bi/KPICard";
 import { Users, MapPin, TrendingUp, Eye, DollarSign, BarChart3 } from "lucide-react";
 import { BarChart, LineChart, PieChart } from "@/components/bi/charts";
@@ -15,6 +16,7 @@ import {
   useEvolucaoMensal,
   useRankingRegioes,
 } from "@/hooks/useComercialRpc";
+import CrmEvolucaoCharts from "@/components/crm/CrmEvolucaoCharts";
 
 const formatCurrency = (v: number) =>
   v >= 1e6 ? `R$ ${(v / 1e6).toFixed(1)}M` : `R$ ${(v / 1e3).toFixed(0)}K`;
@@ -109,106 +111,119 @@ export default function CrmOverviewRpc() {
   // ─── Render ──────────────────────────────────────────────────────────
   return (
     <div className="p-6 space-y-6">
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {kpiCards.map((kpi) => (
-          <KPICard
-            key={kpi.label}
-            title={kpi.label}
-            value={kpi.value}
-            icon={kpi.icon}
-            loading={kpisLoading}
-          />
-        ))}
-        {kpisLoading && kpiCards.length === 0 &&
-          Array.from({ length: 6 }).map((_, i) => (
-            <KPICard key={i} title="" value="" loading />
-          ))
-        }
-      </div>
+      <Tabs defaultValue="cards" className="w-full">
+        <TabsList>
+          <TabsTrigger value="cards">Cards</TabsTrigger>
+          <TabsTrigger value="graficos">Graficos</TabsTrigger>
+        </TabsList>
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">
-              Evolucao Mensal <InfoTooltip text="Por data de conclusao da acao" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <LineChart
-              series={[
-                { name: "Acoes", data: evolucaoChart.map((d) => ({ x: fmtShort(d.mes), y: d.acoes })) },
-                { name: "Visitas", data: evolucaoChart.map((d) => ({ x: fmtShort(d.mes), y: d.visitas })) },
-              ]}
-              height={280}
-              loading={evolLoading}
-            />
-          </CardContent>
-        </Card>
+        <TabsContent value="cards" className="space-y-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {kpiCards.map((kpi) => (
+              <KPICard
+                key={kpi.label}
+                title={kpi.label}
+                value={kpi.value}
+                icon={kpi.icon}
+                loading={kpisLoading}
+              />
+            ))}
+            {kpisLoading && kpiCards.length === 0 &&
+              Array.from({ length: 6 }).map((_, i) => (
+                <KPICard key={i} title="" value="" loading />
+              ))
+            }
+          </div>
 
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Top 10 Consultores — Acoes Concluidas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <BarChart
-              data={topConsultores.map((c) => ({ name: c.nome, acoes: c.acoes, full: c.full }))}
-              layout="horizontal"
-              keys={["acoes"]}
-              height={280}
-              loading={rankLoading}
-              tooltipFormatter={(v) => `${v} acoes`}
-              onBarClick={(datum) => navigate(`/crm/consultores/${encodeURIComponent(String(datum.full))}`)}
-            />
-          </CardContent>
-        </Card>
+          <div className="grid lg:grid-cols-2 gap-6">
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold">
+                  Evolucao Mensal <InfoTooltip text="Por data de conclusao da acao" />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <LineChart
+                  series={[
+                    { name: "Acoes", data: evolucaoChart.map((d) => ({ x: fmtShort(d.mes), y: d.acoes })) },
+                    { name: "Visitas", data: evolucaoChart.map((d) => ({ x: fmtShort(d.mes), y: d.visitas })) },
+                  ]}
+                  height={280}
+                  loading={evolLoading}
+                />
+              </CardContent>
+            </Card>
 
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Tipos de Contato</CardTitle>
-          </CardHeader>
-          <CardContent className="flex justify-center">
-            <PieChart
-              data={tiposContato}
-              height={250}
-              loading={kpisLoading}
-              enableLabels
-            />
-          </CardContent>
-        </Card>
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold">Top 10 Consultores — Acoes Concluidas</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <BarChart
+                  data={topConsultores.map((c) => ({ name: c.nome, acoes: c.acoes, full: c.full }))}
+                  layout="horizontal"
+                  keys={["acoes"]}
+                  height={280}
+                  loading={rankLoading}
+                  tooltipFormatter={(v) => `${v} acoes`}
+                  onBarClick={(datum) => navigate(`/crm/consultores/${encodeURIComponent(String(datum.full))}`)}
+                />
+              </CardContent>
+            </Card>
 
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Tipos de Acao</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <BarChart
-              data={tiposAcao.map((t) => ({ name: t.name, value: t.value }))}
-              layout="horizontal"
-              keys={["value"]}
-              height={250}
-              loading={kpisLoading}
-            />
-          </CardContent>
-        </Card>
-      </div>
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold">Tipos de Contato</CardTitle>
+              </CardHeader>
+              <CardContent className="flex justify-center">
+                <PieChart
+                  data={tiposContato}
+                  height={250}
+                  loading={kpisLoading}
+                  enableLabels
+                />
+              </CardContent>
+            </Card>
 
-      <div className={regioesChart.length <= 6 ? "grid lg:grid-cols-2 gap-6" : ""}>
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Top Regioes por Acoes Concluidas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <BarChart
-              data={regioesChart.map((r) => ({ name: r.cidade, acoes: r.acoes }))}
-              layout="vertical"
-              keys={["acoes"]}
-              height={Math.min(regioesChart.length * 45 + 40, 300)}
-              loading={regLoading}
-              tooltipFormatter={(v) => `${v} acoes`}
-            />
-          </CardContent>
-        </Card>
-      </div>
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold">Tipos de Acao</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <BarChart
+                  data={tiposAcao.map((t) => ({ name: t.name, value: t.value }))}
+                  layout="horizontal"
+                  keys={["value"]}
+                  height={250}
+                  loading={kpisLoading}
+                />
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className={regioesChart.length <= 6 ? "grid lg:grid-cols-2 gap-6" : ""}>
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-semibold">Top Regioes por Acoes Concluidas</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <BarChart
+                  data={regioesChart.map((r) => ({ name: r.cidade, acoes: r.acoes }))}
+                  layout="vertical"
+                  keys={["acoes"]}
+                  height={Math.min(regioesChart.length * 45 + 40, 300)}
+                  loading={regLoading}
+                  tooltipFormatter={(v) => `${v} acoes`}
+                />
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="graficos">
+          <CrmEvolucaoCharts />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

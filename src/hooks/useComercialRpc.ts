@@ -7,6 +7,8 @@ import {
   fetchClientesPorVendedor,
   fetchRankingVendedoresV2,
   fetchRegistrosRecentes,
+  fetchEvolucaoNegocios12m,
+  fetchEvolucaoTiposAcao12m,
 } from "@/services/comercialRpcService";
 import type {
   RpcKpisComercial,
@@ -16,6 +18,8 @@ import type {
   RpcClienteVendedor,
   RpcRankingVendedorV2,
   RpcRegistroRecente,
+  RpcEvolucaoNegocios12m,
+  RpcEvolucaoTiposAcao12m,
 } from "@/types/comercialRpc";
 
 const STALE_TIME = 5 * 60_000; // 5 minutes
@@ -149,6 +153,41 @@ export function useRegistrosRecentes({ from, to, vendedor, cidade, limit, enable
   return useQuery<RpcRegistroRecente[], Error>({
     queryKey: ["rpc", "registros-recentes", from ?? null, to ?? null, vendedor ?? null, cidade ?? null, limit ?? null],
     queryFn: () => fetchRegistrosRecentes(from || "", to || "", vendedor, cidade, limit),
+    staleTime: STALE_TIME,
+    placeholderData: keepPreviousData,
+    enabled,
+  });
+}
+
+// ─── Evolução Negócios 12m ──────────────────────────────────────────────────
+
+interface UseEvolucaoNegocios12mOptions {
+  vendedor?: string;
+  enabled?: boolean;
+}
+
+export function useEvolucaoNegocios12m({ vendedor, enabled = true }: UseEvolucaoNegocios12mOptions) {
+  return useQuery<RpcEvolucaoNegocios12m[], Error>({
+    queryKey: ["rpc", "evolucao-negocios-12m", vendedor ?? null],
+    queryFn: () => fetchEvolucaoNegocios12m(vendedor),
+    staleTime: STALE_TIME,
+    placeholderData: keepPreviousData,
+    enabled,
+  });
+}
+
+// ─── Evolução Tipos de Ação 12m ─────────────────────────────────────────────
+
+interface UseEvolucaoTiposAcao12mOptions {
+  vendedor?: string;
+  limit?: number;
+  enabled?: boolean;
+}
+
+export function useEvolucaoTiposAcao12m({ vendedor, limit, enabled = true }: UseEvolucaoTiposAcao12mOptions) {
+  return useQuery<RpcEvolucaoTiposAcao12m[], Error>({
+    queryKey: ["rpc", "evolucao-tipos-acao-12m", vendedor ?? null, limit ?? null],
+    queryFn: () => fetchEvolucaoTiposAcao12m(vendedor, limit),
     staleTime: STALE_TIME,
     placeholderData: keepPreviousData,
     enabled,
