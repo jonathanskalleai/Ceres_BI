@@ -5,10 +5,10 @@ type Theme = "light" | "dark";
 const STORAGE_KEY = "theme";
 
 function getStoredTheme(): Theme {
-  if (typeof window === "undefined") return "dark";
+  if (typeof window === "undefined") return "light";
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored === "light" || stored === "dark") return stored;
-  return "dark"; // VOUX default: dark editorial
+  return "light"; // default: light mode
 }
 
 function applyTheme(theme: Theme) {
@@ -21,7 +21,7 @@ function applyTheme(theme: Theme) {
 }
 
 // Simple pub-sub so multiple hook consumers stay in sync
-let currentTheme: Theme = typeof window !== "undefined" ? getStoredTheme() : "dark";
+let currentTheme: Theme = typeof window !== "undefined" ? getStoredTheme() : "light";
 const listeners = new Set<() => void>();
 
 function subscribe(cb: () => void) {
@@ -48,7 +48,7 @@ if (typeof window !== "undefined") {
 }
 
 export function useTheme() {
-  const theme = useSyncExternalStore(subscribe, getSnapshot, () => "dark" as Theme);
+  const theme = useSyncExternalStore(subscribe, getSnapshot, () => "light" as Theme);
 
   useEffect(() => {
     // Ensure DOM is synced if another tab changed localStorage
