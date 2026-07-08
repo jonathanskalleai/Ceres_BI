@@ -19,8 +19,7 @@ export function PainelClientesSection({ cliKpis, loading }: Props) {
           previousValue={fmtNum(cliKpis.clientesAtivos.previousValue)}
           trend={cliKpis.clientesAtivos.trend}
           loading={loading}
-          hint="Clientes ja compradores na carteira"
-          formula="Conta clientes que nao sao prospects (ja tem historico de compra)"
+          formula="Clientes que ja compraram — nao sao prospects"
         />
       )}
       {(loading || !isEmpty(cliKpis.prospects.value)) && (
@@ -32,8 +31,7 @@ export function PainelClientesSection({ cliKpis, loading }: Props) {
           trend={cliKpis.prospects.trend}
           loading={loading}
           accentColor="var(--voux-champagne-400, #d4a574)"
-          hint="Potenciais clientes em prospecao"
-          formula="Conta contatos marcados como prospect que ainda nao compraram"
+          formula="Potenciais clientes em prospecao que ainda nao compraram"
         />
       )}
       {(loading || !isEmpty(cliKpis.parqueMaquinas.value)) && (
@@ -44,8 +42,7 @@ export function PainelClientesSection({ cliKpis, loading }: Props) {
           previousValue={fmtNum(cliKpis.parqueMaquinas.previousValue)}
           trend={cliKpis.parqueMaquinas.trend}
           loading={loading}
-          hint="Total de maquinas na base de clientes"
-          formula="Soma todas as maquinas registradas no parque dos clientes"
+          formula="Total de maquinas registradas no parque de todos os clientes"
         />
       )}
       {(loading || !isEmpty(cliKpis.coberturaComercial.value)) && (
@@ -56,8 +53,7 @@ export function PainelClientesSection({ cliKpis, loading }: Props) {
           previousValue={fmtPct(cliKpis.coberturaComercial.previousValue)}
           trend={cliKpis.coberturaComercial.trend}
           loading={loading}
-          hint="Quanto da carteira foi trabalhada"
-          formula="Percentual de clientes ativos que receberam alguma acao no periodo"
+          formula="Quanto da carteira foi trabalhada — % de clientes que receberam acao no periodo"
         />
       )}
     </>

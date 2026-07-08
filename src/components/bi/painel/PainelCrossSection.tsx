@@ -20,8 +20,7 @@ export function PainelCrossSection({ crossKpis, loading }: Props) {
           trend={crossKpis.cicloMedioVendas.trend}
           invertTrend
           loading={loading}
-          hint="Tempo medio para fechar um negocio"
-          formula="Media de dias entre a abertura e o fechamento dos negocios ganhos"
+          formula="Tempo medio para fechar um negocio — media de dias entre abertura e fechamento dos ganhos"
         />
       )}
       {(loading || !isEmpty(crossKpis.esforcoMedio.value)) && (
@@ -33,8 +32,7 @@ export function PainelCrossSection({ crossKpis, loading }: Props) {
           trend={crossKpis.esforcoMedio.trend}
           invertTrend
           loading={loading}
-          hint="Quantas acoes ate fechar um negocio"
-          formula="Media de acoes realizadas para cada negocio que foi ganho"
+          formula="Quantas acoes em media ate fechar um negocio com sucesso"
         />
       )}
       {(loading || !isEmpty(crossKpis.conversaoPedidoNegocio.value)) && (
@@ -45,8 +43,7 @@ export function PainelCrossSection({ crossKpis, loading }: Props) {
           previousValue={fmtPct(crossKpis.conversaoPedidoNegocio.previousValue)}
           trend={crossKpis.conversaoPedidoNegocio.trend}
           loading={loading}
-          hint="Dos ganhos, quantos geraram pedido"
-          formula="Percentual dos negocios ganhos que tiveram pedido emitido"
+          formula="Dos negocios ganhos, quantos % geraram pedido emitido"
         />
       )}
     </>

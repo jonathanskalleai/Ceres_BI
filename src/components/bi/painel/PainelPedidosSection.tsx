@@ -20,8 +20,7 @@ export function PainelPedidosSection({ pedKpis, loading }: Props) {
           trend={pedKpis.faturamento.trend}
           loading={loading}
           accentColor="var(--voux-success)"
-          hint="Valor total dos pedidos aprovados"
-          formula="Soma o valor de todos os pedidos que foram aprovados no periodo"
+          formula="Valor total em R$ dos pedidos aprovados no periodo"
         />
       )}
       {(loading || !isEmpty(pedKpis.totalPedidos.value)) && (
@@ -32,8 +31,7 @@ export function PainelPedidosSection({ pedKpis, loading }: Props) {
           previousValue={fmtNum(pedKpis.totalPedidos.previousValue)}
           trend={pedKpis.totalPedidos.trend}
           loading={loading}
-          hint="Quantidade de pedidos emitidos"
-          formula="Conta todos os pedidos registrados no periodo"
+          formula="Quantidade de pedidos emitidos no periodo"
         />
       )}
       {(loading || !isEmpty(pedKpis.taxaAprovacao.value)) && (
@@ -44,7 +42,6 @@ export function PainelPedidosSection({ pedKpis, loading }: Props) {
           previousValue={fmtPct(pedKpis.taxaAprovacao.previousValue)}
           trend={pedKpis.taxaAprovacao.trend}
           loading={loading}
-          hint="Percentual de pedidos aprovados"
           formula="De todos os pedidos, quantos % foram aprovados"
         />
       )}
@@ -56,8 +53,7 @@ export function PainelPedidosSection({ pedKpis, loading }: Props) {
           previousValue={fmtPct(pedKpis.mixFinanciamento.previousValue)}
           trend={pedKpis.mixFinanciamento.trend}
           loading={loading}
-          hint="Quanto do valor foi financiado"
-          formula="Percentual do valor total que foi via financiamento (vs recurso proprio)"
+          formula="Quanto do valor total foi via financiamento (vs recurso proprio)"
         />
       )}
     </>

@@ -21,8 +21,7 @@ export function PainelNegociosSection({ kpis, loading }: Props) {
           previousValue={fmtNum(kpis.totalNegocios.previousValue)}
           trend={kpis.totalNegocios.trend}
           loading={loading}
-          hint="Quantidade de negocios diferentes no periodo"
-          formula="Conta cada negocio uma unica vez, mesmo que tenha varios produtos"
+          formula="Quantidade de negocios diferentes no periodo. Conta cada negocio uma unica vez, mesmo que tenha varios produtos"
         />
       )}
       {(loading || !isEmpty(kpis.ganhos.value)) && (
@@ -34,8 +33,7 @@ export function PainelNegociosSection({ kpis, loading }: Props) {
           trend={kpis.ganhos.trend}
           loading={loading}
           accentColor="var(--voux-success)"
-          hint="Negocios fechados com sucesso"
-          formula="Conta negocios marcados como ganhos no periodo"
+          formula="Negocios fechados com sucesso no periodo"
         />
       )}
       {(loading || !isEmpty(kpis.perdidos.value)) && (
@@ -48,8 +46,7 @@ export function PainelNegociosSection({ kpis, loading }: Props) {
           invertTrend
           loading={loading}
           accentColor="var(--voux-danger)"
-          hint="Negocios que nao fecharam"
-          formula="Conta negocios marcados como perdidos no periodo"
+          formula="Negocios que nao fecharam — marcados como perdidos no periodo"
         />
       )}
       {(loading || !isEmpty(kpis.andamento.value)) && (
@@ -60,8 +57,7 @@ export function PainelNegociosSection({ kpis, loading }: Props) {
           previousValue={fmtNum(kpis.andamento.previousValue)}
           trend={kpis.andamento.trend}
           loading={loading}
-          hint="Negocios ainda abertos"
-          formula="Conta negocios que ainda nao tiveram resultado definido"
+          formula="Negocios ainda abertos, sem resultado definido"
         />
       )}
       {(loading || !isEmpty(kpis.taxaConversao.value)) && (
@@ -72,7 +68,6 @@ export function PainelNegociosSection({ kpis, loading }: Props) {
           previousValue={fmtPct(kpis.taxaConversao.previousValue)}
           trend={kpis.taxaConversao.trend}
           loading={loading}
-          hint="Percentual de sucesso"
           formula="Dos negocios que tiveram resultado, quantos % foram ganhos"
         />
       )}

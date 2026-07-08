@@ -22,8 +22,7 @@ export function PainelValoresSection({ kpis, loading }: Props) {
           trend={kpis.valorGanho.trend}
           loading={loading}
           accentColor="var(--voux-success)"
-          hint="Total em R$ dos negocios ganhos"
-          formula="Soma o valor negociado de todos os negocios fechados com sucesso"
+          formula="Total em R$ dos negocios fechados com sucesso no periodo"
         />
       )}
       {(loading || !isEmpty(kpis.valorPerdido.value)) && (
@@ -36,8 +35,7 @@ export function PainelValoresSection({ kpis, loading }: Props) {
           invertTrend
           loading={loading}
           accentColor="var(--voux-danger)"
-          hint="Total em R$ dos negocios perdidos"
-          formula="Soma o valor negociado de todos os negocios que nao fecharam"
+          formula="Total em R$ dos negocios que nao fecharam no periodo"
         />
       )}
       {(loading || !isEmpty(kpis.pipelineAberto.value)) && (
@@ -48,8 +46,7 @@ export function PainelValoresSection({ kpis, loading }: Props) {
           previousValue={fmtBRLKpi(kpis.pipelineAberto.previousValue)}
           trend={kpis.pipelineAberto.trend}
           loading={loading}
-          hint="Valor total dos negocios ainda abertos"
-          formula="Soma o valor de todos os negocios que ainda nao tiveram resultado"
+          formula="Soma o valor de todos os negocios ainda abertos, sem resultado definido"
         />
       )}
       {(loading || !isEmpty(kpis.ticketMedio.value)) && (
@@ -60,8 +57,7 @@ export function PainelValoresSection({ kpis, loading }: Props) {
           previousValue={fmtBRLKpi(kpis.ticketMedio.previousValue)}
           trend={kpis.ticketMedio.trend}
           loading={loading}
-          hint="Valor medio por negocio ganho"
-          formula="Divide o valor total ganho pela quantidade de negocios ganhos"
+          formula="Valor medio por negocio ganho — divide o total ganho pela quantidade"
         />
       )}
     </>

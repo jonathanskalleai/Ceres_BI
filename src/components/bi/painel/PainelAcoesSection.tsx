@@ -22,8 +22,7 @@ export function PainelAcoesSection({ kpis, loading }: Props) {
             previousValue={fmtNum(kpis.totalAcoes.previousValue)}
             trend={kpis.totalAcoes.trend}
             loading={loading}
-            hint="Todas as acoes concluidas no periodo"
-            formula="Conta cada acao finalizada pelos consultores (qualquer tipo)"
+            formula="Todas as acoes concluidas pelos consultores no periodo (qualquer tipo)"
           />
         )}
         {(loading || !isEmpty(kpis.totalVisitas.value)) && (
@@ -34,8 +33,7 @@ export function PainelAcoesSection({ kpis, loading }: Props) {
             previousValue={fmtNum(kpis.totalVisitas.previousValue)}
             trend={kpis.totalVisitas.trend}
             loading={loading}
-            hint="Visitas presenciais realizadas"
-            formula="Conta acoes cujo tipo de contato e visita"
+            formula="Visitas presenciais realizadas pelos consultores"
           />
         )}
         {kpis.porTipoAcao
@@ -49,8 +47,7 @@ export function PainelAcoesSection({ kpis, loading }: Props) {
               previousValue={fmtNum(tipo.previousValue)}
               trend={tipo.trend}
               loading={loading}
-              hint={`Acoes do tipo ${tipo.name}`}
-              formula={`Conta acoes classificadas como ${tipo.name.toLowerCase()} no periodo`}
+              formula={`Acoes classificadas como ${tipo.name.toLowerCase()} no periodo`}
             />
           ))}
       </div>

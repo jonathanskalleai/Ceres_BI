@@ -19,8 +19,7 @@ export function PainelServicosSection({ svcKpis, loading }: Props) {
           previousValue={fmtNum(svcKpis.osAbertas.previousValue)}
           trend={svcKpis.osAbertas.trend}
           loading={loading}
-          hint="Ordens de servico em andamento"
-          formula="Conta as OS que foram abertas e ainda nao foram encerradas"
+          formula="Ordens de servico abertas que ainda nao foram encerradas"
         />
       )}
       {(loading || !isEmpty(svcKpis.osFechadas.value)) && (
@@ -32,8 +31,7 @@ export function PainelServicosSection({ svcKpis, loading }: Props) {
           trend={svcKpis.osFechadas.trend}
           loading={loading}
           accentColor="var(--voux-success)"
-          hint="Ordens de servico concluidas"
-          formula="Conta as OS que foram encerradas no periodo"
+          formula="Ordens de servico concluidas no periodo"
         />
       )}
       {(loading || !isEmpty(svcKpis.tempoMedioResolucao.value)) && (
@@ -45,8 +43,7 @@ export function PainelServicosSection({ svcKpis, loading }: Props) {
           trend={svcKpis.tempoMedioResolucao.trend}
           invertTrend
           loading={loading}
-          hint="Tempo medio para resolver uma OS"
-          formula="Media de dias entre a abertura e o encerramento das ordens de servico"
+          formula="Tempo medio para resolver uma OS — dias entre abertura e encerramento"
         />
       )}
     </>
