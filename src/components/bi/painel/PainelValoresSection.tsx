@@ -17,6 +17,7 @@ export function PainelValoresSection({ kpis, loading }: Props) {
         <KPICard
           title="Valor Ganho"
           value={fmtBRLKpi(kpis.valorGanho.value)}
+          rawValue={kpis.valorGanho.value}
           icon={DollarSign}
           previousValue={fmtBRLKpi(kpis.valorGanho.previousValue)}
           trend={kpis.valorGanho.trend}
@@ -29,6 +30,7 @@ export function PainelValoresSection({ kpis, loading }: Props) {
         <KPICard
           title="Valor Perdido"
           value={fmtBRLKpi(kpis.valorPerdido.value)}
+          rawValue={kpis.valorPerdido.value}
           icon={TrendingDown}
           previousValue={fmtBRLKpi(kpis.valorPerdido.previousValue)}
           trend={kpis.valorPerdido.trend}
@@ -42,6 +44,7 @@ export function PainelValoresSection({ kpis, loading }: Props) {
         <KPICard
           title="Pipeline Aberto"
           value={fmtBRLKpi(kpis.pipelineAberto.value)}
+          rawValue={kpis.pipelineAberto.value}
           icon={Briefcase}
           previousValue={fmtBRLKpi(kpis.pipelineAberto.previousValue)}
           trend={kpis.pipelineAberto.trend}
@@ -53,6 +56,7 @@ export function PainelValoresSection({ kpis, loading }: Props) {
         <KPICard
           title="Ticket Medio"
           value={fmtBRLKpi(kpis.ticketMedio.value)}
+          rawValue={kpis.ticketMedio.value}
           icon={Ticket}
           previousValue={fmtBRLKpi(kpis.ticketMedio.previousValue)}
           trend={kpis.ticketMedio.trend}

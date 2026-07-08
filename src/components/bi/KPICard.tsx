@@ -18,6 +18,8 @@ interface KPICardProps {
   /** When true, a downward trend is positive (e.g. fewer losses) */
   invertTrend?: boolean;
   dataSource?: string;
+  /** Raw numeric value — shown on hover with full precision (e.g. R$ 1.234.567,89) */
+  rawValue?: number;
 }
 
 function DeltaBadge({ previousValue, trend, invertTrend }: { previousValue: string | number; trend: "up" | "down" | "neutral"; invertTrend?: boolean }) {
@@ -45,7 +47,7 @@ function DeltaBadge({ previousValue, trend, invertTrend }: { previousValue: stri
 
 export function KPICard({
   title, value, icon: Icon, hint, formula, loading = false, accentColor,
-  previousValue, trend, invertTrend, dataSource,
+  previousValue, trend, invertTrend, dataSource, rawValue,
 }: KPICardProps) {
   const [showTooltip, setShowTooltip] = useState(false);
 
@@ -124,7 +126,9 @@ export function KPICard({
                   : "text-2xl sm:text-[28px] md:text-[32px]",
             )}
             style={{ color: accentColor || "var(--voux-text-heading)" }}
-            title={String(value)}
+            title={rawValue != null
+              ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rawValue)
+              : String(value)}
           >
             {value}
           </div>

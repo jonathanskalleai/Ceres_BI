@@ -15,6 +15,7 @@ export function PainelPedidosSection({ pedKpis, loading }: Props) {
         <KPICard
           title="Faturamento"
           value={fmtBRLKpi(pedKpis.faturamento.value)}
+          rawValue={pedKpis.faturamento.value}
           icon={DollarSign}
           previousValue={fmtBRLKpi(pedKpis.faturamento.previousValue)}
           trend={pedKpis.faturamento.trend}
