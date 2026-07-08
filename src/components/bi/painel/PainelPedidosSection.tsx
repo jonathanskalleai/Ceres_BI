@@ -20,8 +20,8 @@ export function PainelPedidosSection({ pedKpis, loading }: Props) {
           trend={pedKpis.faturamento.trend}
           loading={loading}
           accentColor="var(--voux-success)"
-          formula="SUM(valor pedido) WHERE aprovado"
-          dataSource="mirror.crm_pedidos · SUM(pdo_vlrpedido) WHERE aprovado"
+          hint="Valor total dos pedidos aprovados"
+          formula="Soma o valor de todos os pedidos que foram aprovados no periodo"
         />
       )}
       {(loading || !isEmpty(pedKpis.totalPedidos.value)) && (
@@ -32,8 +32,8 @@ export function PainelPedidosSection({ pedKpis, loading }: Props) {
           previousValue={fmtNum(pedKpis.totalPedidos.previousValue)}
           trend={pedKpis.totalPedidos.trend}
           loading={loading}
-          formula="COUNT pedidos no periodo"
-          dataSource="mirror.crm_pedidos · COUNT(*) por pdo_dthpedido"
+          hint="Quantidade de pedidos emitidos"
+          formula="Conta todos os pedidos registrados no periodo"
         />
       )}
       {(loading || !isEmpty(pedKpis.taxaAprovacao.value)) && (
@@ -44,8 +44,8 @@ export function PainelPedidosSection({ pedKpis, loading }: Props) {
           previousValue={fmtPct(pedKpis.taxaAprovacao.previousValue)}
           trend={pedKpis.taxaAprovacao.trend}
           loading={loading}
-          formula="pedidos aprovados / total x 100"
-          dataSource="mirror.crm_pedidos · COUNT(aprovado)/COUNT(*) × 100"
+          hint="Percentual de pedidos aprovados"
+          formula="De todos os pedidos, quantos % foram aprovados"
         />
       )}
       {(loading || !isEmpty(pedKpis.mixFinanciamento.value)) && (
@@ -56,9 +56,8 @@ export function PainelPedidosSection({ pedKpis, loading }: Props) {
           previousValue={fmtPct(pedKpis.mixFinanciamento.previousValue)}
           trend={pedKpis.mixFinanciamento.trend}
           loading={loading}
-          hint="% valor financiado vs total"
-          formula="valor financiado / (financiado + recurso proprio) x 100"
-          dataSource="mirror.crm_pedidos · SUM(pdo_vlrfinanciado)/SUM(total) × 100"
+          hint="Quanto do valor foi financiado"
+          formula="Percentual do valor total que foi via financiamento (vs recurso proprio)"
         />
       )}
     </>

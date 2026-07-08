@@ -35,7 +35,7 @@ export default function BiPainel() {
           <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
             <PainelNegociosSection kpis={kpis} loading={anyLoading} />
             <PainelCrossSection crossKpis={crossKpis} loading={anyLoading} />
-            <PainelValoresSection kpis={kpis} crossKpis={crossKpis} loading={anyLoading} />
+            <PainelValoresSection kpis={kpis} loading={anyLoading} />
             <PainelPedidosSection pedKpis={pedKpis} loading={anyLoading} />
             <PainelClientesSection cliKpis={cliKpis} loading={anyLoading} />
             <PainelServicosSection svcKpis={svcKpis} loading={anyLoading} />

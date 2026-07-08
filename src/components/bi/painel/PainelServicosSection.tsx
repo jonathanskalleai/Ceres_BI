@@ -19,8 +19,8 @@ export function PainelServicosSection({ svcKpis, loading }: Props) {
           previousValue={fmtNum(svcKpis.osAbertas.previousValue)}
           trend={svcKpis.osAbertas.trend}
           loading={loading}
-          formula="COUNT OS abertas no periodo"
-          dataSource="mirror.ordens_servico · COUNT(*) WHERE os_fstatus LIKE 'abert%'"
+          hint="Ordens de servico em andamento"
+          formula="Conta as OS que foram abertas e ainda nao foram encerradas"
         />
       )}
       {(loading || !isEmpty(svcKpis.osFechadas.value)) && (
@@ -32,8 +32,8 @@ export function PainelServicosSection({ svcKpis, loading }: Props) {
           trend={svcKpis.osFechadas.trend}
           loading={loading}
           accentColor="var(--voux-success)"
-          formula="COUNT OS encerradas no periodo"
-          dataSource="mirror.ordens_servico · COUNT(*) WHERE os_fstatus LIKE 'fechad%'"
+          hint="Ordens de servico concluidas"
+          formula="Conta as OS que foram encerradas no periodo"
         />
       )}
       {(loading || !isEmpty(svcKpis.tempoMedioResolucao.value)) && (
@@ -45,9 +45,8 @@ export function PainelServicosSection({ svcKpis, loading }: Props) {
           trend={svcKpis.tempoMedioResolucao.trend}
           invertTrend
           loading={loading}
-          hint="Media dias para encerrar OS"
-          formula="AVG(encerramento - abertura) em dias"
-          dataSource="mirror.ordens_servico · AVG(os_dthencerramento − os_dthabertura)"
+          hint="Tempo medio para resolver uma OS"
+          formula="Media de dias entre a abertura e o encerramento das ordens de servico"
         />
       )}
     </>

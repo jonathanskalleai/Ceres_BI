@@ -22,8 +22,8 @@ export function PainelAcoesSection({ kpis, loading }: Props) {
             previousValue={fmtNum(kpis.totalAcoes.previousValue)}
             trend={kpis.totalAcoes.trend}
             loading={loading}
-            formula="COUNT acoes concluidas no periodo"
-            dataSource="mirror.crm_acoes · COUNT(*) por aco_dthconclusao"
+            hint="Todas as acoes concluidas no periodo"
+            formula="Conta cada acao finalizada pelos consultores (qualquer tipo)"
           />
         )}
         {(loading || !isEmpty(kpis.totalVisitas.value)) && (
@@ -34,8 +34,8 @@ export function PainelAcoesSection({ kpis, loading }: Props) {
             previousValue={fmtNum(kpis.totalVisitas.previousValue)}
             trend={kpis.totalVisitas.trend}
             loading={loading}
-            formula="COUNT acoes tipo visita"
-            dataSource="mirror.crm_acoes · COUNT(*) WHERE aco_tipocontato LIKE '%visita%'"
+            hint="Visitas presenciais realizadas"
+            formula="Conta acoes cujo tipo de contato e visita"
           />
         )}
         {kpis.porTipoAcao
@@ -49,8 +49,8 @@ export function PainelAcoesSection({ kpis, loading }: Props) {
               previousValue={fmtNum(tipo.previousValue)}
               trend={tipo.trend}
               loading={loading}
-              formula={`COUNT acoes tipo ${tipo.name.toLowerCase()}`}
-              dataSource="mirror.crm_acoes · aco_tipoacao, COUNT(*)"
+              hint={`Acoes do tipo ${tipo.name}`}
+              formula={`Conta acoes classificadas como ${tipo.name.toLowerCase()} no periodo`}
             />
           ))}
       </div>

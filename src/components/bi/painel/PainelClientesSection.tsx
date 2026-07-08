@@ -19,8 +19,8 @@ export function PainelClientesSection({ cliKpis, loading }: Props) {
           previousValue={fmtNum(cliKpis.clientesAtivos.previousValue)}
           trend={cliKpis.clientesAtivos.trend}
           loading={loading}
-          formula="COUNT carteira WHERE nao prospect"
-          dataSource="mirror.crm_carteira · COUNT(*) WHERE prospect='N'"
+          hint="Clientes ja compradores na carteira"
+          formula="Conta clientes que nao sao prospects (ja tem historico de compra)"
         />
       )}
       {(loading || !isEmpty(cliKpis.prospects.value)) && (
@@ -32,8 +32,8 @@ export function PainelClientesSection({ cliKpis, loading }: Props) {
           trend={cliKpis.prospects.trend}
           loading={loading}
           accentColor="var(--voux-champagne-400, #d4a574)"
-          formula="COUNT carteira WHERE prospect = S"
-          dataSource="mirror.crm_carteira · COUNT(*) WHERE prospect='S'"
+          hint="Potenciais clientes em prospecao"
+          formula="Conta contatos marcados como prospect que ainda nao compraram"
         />
       )}
       {(loading || !isEmpty(cliKpis.parqueMaquinas.value)) && (
@@ -44,8 +44,8 @@ export function PainelClientesSection({ cliKpis, loading }: Props) {
           previousValue={fmtNum(cliKpis.parqueMaquinas.previousValue)}
           trend={cliKpis.parqueMaquinas.trend}
           loading={loading}
-          formula="SUM(qtd maquinas) da base"
-          dataSource="mirror.crm_parque · SUM(qtd_maquinas)"
+          hint="Total de maquinas na base de clientes"
+          formula="Soma todas as maquinas registradas no parque dos clientes"
         />
       )}
       {(loading || !isEmpty(cliKpis.coberturaComercial.value)) && (
@@ -56,9 +56,8 @@ export function PainelClientesSection({ cliKpis, loading }: Props) {
           previousValue={fmtPct(cliKpis.coberturaComercial.previousValue)}
           trend={cliKpis.coberturaComercial.trend}
           loading={loading}
-          hint="% clientes com acao no periodo"
-          formula="clientes com acao no periodo / total ativos x 100"
-          dataSource="⚠ RPC dedicado pendente — sempre 0"
+          hint="Quanto da carteira foi trabalhada"
+          formula="Percentual de clientes ativos que receberam alguma acao no periodo"
         />
       )}
     </>

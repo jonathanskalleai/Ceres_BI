@@ -20,9 +20,8 @@ export function PainelCrossSection({ crossKpis, loading }: Props) {
           trend={crossKpis.cicloMedioVendas.trend}
           invertTrend
           loading={loading}
-          hint="Media dias ate fechar (ganhos)"
-          formula="AVG(dias ate fechar) dos ganhos"
-          dataSource="mirror.crm_negocios · AVG(ngo_ciclovendas) WHERE ganho"
+          hint="Tempo medio para fechar um negocio"
+          formula="Media de dias entre a abertura e o fechamento dos negocios ganhos"
         />
       )}
       {(loading || !isEmpty(crossKpis.esforcoMedio.value)) && (
@@ -34,9 +33,8 @@ export function PainelCrossSection({ crossKpis, loading }: Props) {
           trend={crossKpis.esforcoMedio.trend}
           invertTrend
           loading={loading}
-          hint="Acoes por negocio ganho"
-          formula="AVG(qtd acoes) por negocio ganho"
-          dataSource="mirror.crm_negocios + mirror.crm_acoes · AVG(ngo_qtdacoes) por negócio ganho"
+          hint="Quantas acoes ate fechar um negocio"
+          formula="Media de acoes realizadas para cada negocio que foi ganho"
         />
       )}
       {(loading || !isEmpty(crossKpis.conversaoPedidoNegocio.value)) && (
@@ -47,9 +45,8 @@ export function PainelCrossSection({ crossKpis, loading }: Props) {
           previousValue={fmtPct(crossKpis.conversaoPedidoNegocio.previousValue)}
           trend={crossKpis.conversaoPedidoNegocio.trend}
           loading={loading}
-          hint="% ganhos com pedido emitido"
-          formula="negocios ganhos com pedido / total ganhos x 100"
-          dataSource="mirror.crm_negocios + mirror.crm_pedidos · ganhos com pedido/total ganhos × 100"
+          hint="Dos ganhos, quantos geraram pedido"
+          formula="Percentual dos negocios ganhos que tiveram pedido emitido"
         />
       )}
     </>

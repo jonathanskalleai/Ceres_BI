@@ -1,18 +1,16 @@
 import {
-  DollarSign, TrendingDown, Briefcase, Ticket, BarChart3,
+  DollarSign, TrendingDown, Briefcase, Ticket,
 } from "lucide-react";
 import { KPICard } from "@/components/bi/KPICard";
 import { fmtBRLKpi, isEmpty } from "@/lib/formatters";
 import type { PainelKPIs } from "@/hooks/bi/usePainelKPIsRpc";
-import type { CrossKPIs } from "@/hooks/bi/useCrossKPIsRpc";
 
 interface Props {
   kpis: PainelKPIs;
-  crossKpis: CrossKPIs;
   loading: boolean;
 }
 
-export function PainelValoresSection({ kpis, crossKpis, loading }: Props) {
+export function PainelValoresSection({ kpis, loading }: Props) {
   return (
     <>
       {(loading || !isEmpty(kpis.valorGanho.value)) && (
@@ -24,8 +22,8 @@ export function PainelValoresSection({ kpis, crossKpis, loading }: Props) {
           trend={kpis.valorGanho.trend}
           loading={loading}
           accentColor="var(--voux-success)"
-          formula="SUM(valor) dos negocios ganhos"
-          dataSource="mirror.crm_negocios · SUM(ngo_vlrtotalnegociado) WHERE ngo_conclusao='ganho'"
+          hint="Total em R$ dos negocios ganhos"
+          formula="Soma o valor negociado de todos os negocios fechados com sucesso"
         />
       )}
       {(loading || !isEmpty(kpis.valorPerdido.value)) && (
@@ -38,8 +36,8 @@ export function PainelValoresSection({ kpis, crossKpis, loading }: Props) {
           invertTrend
           loading={loading}
           accentColor="var(--voux-danger)"
-          formula="SUM(valor) dos negocios perdidos"
-          dataSource="mirror.crm_negocios · SUM(ngo_vlrtotalnegociado) WHERE ngo_conclusao='perdido'"
+          hint="Total em R$ dos negocios perdidos"
+          formula="Soma o valor negociado de todos os negocios que nao fecharam"
         />
       )}
       {(loading || !isEmpty(kpis.pipelineAberto.value)) && (
@@ -50,8 +48,8 @@ export function PainelValoresSection({ kpis, crossKpis, loading }: Props) {
           previousValue={fmtBRLKpi(kpis.pipelineAberto.previousValue)}
           trend={kpis.pipelineAberto.trend}
           loading={loading}
-          formula="SUM(valor) dos negocios em andamento"
-          dataSource="mirror.crm_negocios · SUM(ngo_vlrtotalnegociado) WHERE sem conclusao"
+          hint="Valor total dos negocios ainda abertos"
+          formula="Soma o valor de todos os negocios que ainda nao tiveram resultado"
         />
       )}
       {(loading || !isEmpty(kpis.ticketMedio.value)) && (
@@ -62,21 +60,8 @@ export function PainelValoresSection({ kpis, crossKpis, loading }: Props) {
           previousValue={fmtBRLKpi(kpis.ticketMedio.previousValue)}
           trend={kpis.ticketMedio.trend}
           loading={loading}
-          formula="valor ganho / qtd ganhos"
-          dataSource="mirror.crm_negocios · AVG(ngo_vlrtotalnegociado) WHERE ganho"
-        />
-      )}
-      {(loading || !isEmpty(crossKpis.receitaPorConsultor.value)) && (
-        <KPICard
-          title="Receita/Consultor"
-          value={fmtBRLKpi(crossKpis.receitaPorConsultor.value)}
-          icon={BarChart3}
-          previousValue={fmtBRLKpi(crossKpis.receitaPorConsultor.previousValue)}
-          trend={crossKpis.receitaPorConsultor.trend}
-          loading={loading}
-          hint="Media valor ganho por vendedor"
-          formula="valor ganho / qtd vendedores com ganho"
-          dataSource="mirror.crm_negocios · SUM(ngo_vlrtotalnegociado)/COUNT(DISTINCT ngo_vendedores)"
+          hint="Valor medio por negocio ganho"
+          formula="Divide o valor total ganho pela quantidade de negocios ganhos"
         />
       )}
     </>
