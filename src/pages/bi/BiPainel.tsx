@@ -4,6 +4,7 @@ import { usePedidosKPIsRpc } from "@/hooks/bi/usePedidosKPIsRpc";
 import { useClientesKPIsRpc } from "@/hooks/bi/useClientesKPIsRpc";
 import { useServicosKPIsRpc } from "@/hooks/bi/useServicosKPIsRpc";
 import { useCrossKPIsRpc } from "@/hooks/bi/useCrossKPIsRpc";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PainelNegociosSection } from "@/components/bi/painel/PainelNegociosSection";
 import { PainelValoresSection } from "@/components/bi/painel/PainelValoresSection";
 import { PainelCrossSection } from "@/components/bi/painel/PainelCrossSection";
@@ -11,6 +12,7 @@ import { PainelPedidosSection } from "@/components/bi/painel/PainelPedidosSectio
 import { PainelClientesSection } from "@/components/bi/painel/PainelClientesSection";
 import { PainelServicosSection } from "@/components/bi/painel/PainelServicosSection";
 import { PainelAcoesSection } from "@/components/bi/painel/PainelAcoesSection";
+import CrmEvolucaoCharts from "@/components/crm/CrmEvolucaoCharts";
 
 export default function BiPainel() {
   const { dateRange, categoria, funil, vendedor, cidade } = useNegociosFilter();
@@ -24,15 +26,26 @@ export default function BiPainel() {
 
   return (
     <section className="p-8 space-y-2" style={{ background: "var(--voux-bg)" }}>
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
-        <PainelNegociosSection kpis={kpis} loading={anyLoading} />
-        <PainelCrossSection crossKpis={crossKpis} loading={anyLoading} />
-        <PainelValoresSection kpis={kpis} crossKpis={crossKpis} loading={anyLoading} />
-        <PainelPedidosSection pedKpis={pedKpis} loading={anyLoading} />
-        <PainelClientesSection cliKpis={cliKpis} loading={anyLoading} />
-        <PainelServicosSection svcKpis={svcKpis} loading={anyLoading} />
-      </div>
-      <PainelAcoesSection kpis={kpis} loading={anyLoading} />
+      <Tabs defaultValue="cards" className="w-full">
+        <TabsList>
+          <TabsTrigger value="cards">Cards</TabsTrigger>
+          <TabsTrigger value="graficos">Graficos</TabsTrigger>
+        </TabsList>
+        <TabsContent value="cards" className="space-y-2">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
+            <PainelNegociosSection kpis={kpis} loading={anyLoading} />
+            <PainelCrossSection crossKpis={crossKpis} loading={anyLoading} />
+            <PainelValoresSection kpis={kpis} crossKpis={crossKpis} loading={anyLoading} />
+            <PainelPedidosSection pedKpis={pedKpis} loading={anyLoading} />
+            <PainelClientesSection cliKpis={cliKpis} loading={anyLoading} />
+            <PainelServicosSection svcKpis={svcKpis} loading={anyLoading} />
+          </div>
+          <PainelAcoesSection kpis={kpis} loading={anyLoading} />
+        </TabsContent>
+        <TabsContent value="graficos">
+          <CrmEvolucaoCharts />
+        </TabsContent>
+      </Tabs>
     </section>
   );
 }
