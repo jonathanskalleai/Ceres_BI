@@ -62,11 +62,11 @@ export function KPICard({
         boxShadow: "var(--voux-card-shadow)",
         ...(accentColor ? { borderLeftColor: accentColor, borderLeftWidth: 3 } : {}),
       }}
-      onMouseEnter={() => (formula || dataSource) && setShowTooltip(true)}
+      onMouseEnter={() => (formula || dataSource || rawValue != null) && setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
     >
       {/* Formula + data source tooltip */}
-      {showTooltip && (formula || dataSource) && (
+      {showTooltip && (formula || dataSource || rawValue != null) && (
         <div
           className="absolute top-2 left-2 right-2 z-10 rounded-lg px-3 py-2 text-[11px] leading-tight"
           style={{
@@ -77,6 +77,11 @@ export function KPICard({
             boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
           }}
         >
+          {rawValue != null && (
+            <div style={{ fontWeight: 600, fontSize: "12px", marginBottom: formula ? 4 : 0 }}>
+              {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rawValue)}
+            </div>
+          )}
           {formula && <div>{formula}</div>}
           {formula && dataSource && (
             <div style={{ borderTop: "1px solid var(--voux-tooltip-border)", marginTop: 6, paddingTop: 6, opacity: 0.7, fontSize: "10px" }}>
