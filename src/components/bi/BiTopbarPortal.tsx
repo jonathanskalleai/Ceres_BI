@@ -35,6 +35,8 @@ export function BiTopbarPortal() {
     setVendedor,
     cidade,
     setCidade,
+    tipoAcao,
+    setTipoAcao,
     resetFilters,
     hasActiveFilter,
   } = useNegociosFilter();
@@ -113,6 +115,26 @@ export function BiTopbarPortal() {
           {cidadeOptions.map((c) => (
             <SelectItem key={c} value={c}>{c}</SelectItem>
           ))}
+        </SelectContent>
+      </Select>
+
+      <Select value={tipoAcao || "__all__"} onValueChange={(v) => setTipoAcao(v === "__all__" ? "" : v)} aria-label="Filtro de tipo de acao">
+        <SelectTrigger className="h-7 w-full sm:w-[160px] text-[11px] bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]">
+          <SelectValue placeholder="Tipo de Acao" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="__all__">Todos tipos</SelectItem>
+          <SelectItem value="0 - Cliente Novo">0 - Cliente Novo</SelectItem>
+          <SelectItem value="1 - Prospecção Maq">1 - Prospecção Maq</SelectItem>
+          <SelectItem value="2 - Prospecção AP">2 - Prospecção AP</SelectItem>
+          <SelectItem value="3 - Documentação">3 - Documentação</SelectItem>
+          <SelectItem value="4 - Entrega setor maquinas">4 - Entrega setor maquinas</SelectItem>
+          <SelectItem value="5 - Demonstração">5 - Demonstração</SelectItem>
+          <SelectItem value="6 - Pós-Vendas Máquinas">6 - Pós-Vendas Máquinas</SelectItem>
+          <SelectItem value="7 - Pós-Vendas AP">7 - Pós-Vendas AP</SelectItem>
+          <SelectItem value="8 - Agendamento de coleta">8 - Agendamento de coleta</SelectItem>
+          <SelectItem value="9 - Assuntos Financeiro">9 - Assuntos Financeiro</SelectItem>
+          <SelectItem value="11- Repasse de máquina">11- Repasse de máquina</SelectItem>
         </SelectContent>
       </Select>
 

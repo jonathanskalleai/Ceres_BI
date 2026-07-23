@@ -220,6 +220,15 @@ export interface AcoesBIKpis {
   visitas: number;
   clientes: number;
   tiposAcaoDistintos: number;
+  valorNegociado: number;
+  tempoMedioContato: number;
+}
+
+export interface AcoesBIRankingItem {
+  vendedor: string;
+  cidade: string;
+  acoes: number;
+  visitas: number;
 }
 
 export interface AcoesBINameAcoes {
@@ -243,6 +252,7 @@ export interface RpcAcoesBI {
   porTipoAcao: AcoesBIPieDatum[];
   porTipoContato: AcoesBIPieDatum[];
   listaAnos: string[];
+  porVendedorCidade: AcoesBIRankingItem[];
 }
 
 // ─── rpc_inteligencia_esforco_bi ─────────────────────────────────────────────
