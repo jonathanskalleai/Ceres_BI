@@ -7,6 +7,7 @@ import type {
   RpcServicosBI,
   RpcAdminBI,
   RpcAcoesBI,
+  RpcAcoesDetalhe,
   RpcInteligenciaEsforcoBI,
   RpcParqueRenovacaoBI,
   RpcOperacionalBI,
@@ -185,6 +186,44 @@ export async function fetchAcoesBI(params: {
     return unwrapRpc<RpcAcoesBI>(data);
   } catch (err) {
     throw new Error(`[biRpcService.fetchAcoesBI] ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
+}
+
+/**
+ * Calls rpc_acoes_detalhe — paginated detail rows for the "Acoes do Periodo" table.
+ *
+ * Separada de `fetchAcoesBI` de proposito: `rpc_acoes_bi` roda 4x no app (2x em
+ * AcoesSection para o comparativo de trend + 2x em usePainelKPIsRpc, que le SOMENTE
+ * `kpis`). Manter ~660 linhas com observacao no payload monolitico faria esse peso
+ * viajar 4 vezes, 2 delas para uma tela que nem renderiza tabela.
+ */
+export async function fetchAcoesDetalhe(params: {
+  from?: string;
+  to?: string;
+  vendedor?: string;
+  tipoAcao?: string;
+  cidade?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<RpcAcoesDetalhe> {
+  try {
+    const rpcParams: Record<string, unknown> = {};
+    if (params.from) rpcParams.p_from = params.from;
+    if (params.to) rpcParams.p_to = params.to;
+    if (params.vendedor) rpcParams.p_vendedor = params.vendedor;
+    if (params.tipoAcao) rpcParams.p_tipo_acao = params.tipoAcao;
+    if (params.cidade) rpcParams.p_cidade = params.cidade;
+    if (params.limit != null) rpcParams.p_limit = params.limit;
+    if (params.offset != null) rpcParams.p_offset = params.offset;
+
+    const { data, error } = await supabase.rpc("rpc_acoes_detalhe", rpcParams);
+    if (error) throw new Error(error.message);
+
+    const raw = unwrapRpc<Partial<RpcAcoesDetalhe> | null>(data);
+    // Defensivo: RPC pode retornar null/objeto parcial se a funcao for redeployada
+    return { rows: raw?.rows ?? [], total: raw?.total ?? 0 };
+  } catch (err) {
+    throw new Error(`[biRpcService.fetchAcoesDetalhe] ${err instanceof Error ? err.message : "Unknown error"}`);
   }
 }
 

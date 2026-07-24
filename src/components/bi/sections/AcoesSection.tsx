@@ -1,23 +1,28 @@
 import { useMemo } from "react";
-import { ClipboardList, MapPin, Users, Eye, UserCheck, Tag, DollarSign, Clock } from "lucide-react";
 import { type DateRange } from "react-day-picker";
 import { useAcoesBIRpc } from "@/hooks/bi/useAcoesBIRpc";
+import { useAcoesDetalheRpc } from "@/hooks/bi/useAcoesDetalheRpc";
 import { useNegociosFilter } from "@/contexts/NegociosFilterContext";
-import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { AcoesRankingTable } from "@/components/bi/AcoesRankingTable";
 import { AcoesClientesTable } from "@/components/bi/AcoesClientesTable";
 import { AcoesDetailTable } from "@/components/bi/AcoesDetailTable";
+import { AcoesKpiGrid } from "@/components/bi/sections/AcoesKpiGrid";
 import { HorizontalBarChart, VerticalBarChart, PieChartWithLabels } from "@/components/bi/charts";
 import { CHART_COLORS } from "@/lib/chartTheme";
-import { toISODate, getPreviousPeriod, calcTrend, formatMonthYear } from "@/lib/dateUtils";
+import { toISODate, getPreviousPeriod, formatMonthYear } from "@/lib/dateUtils";
+import { buildTipoAcaoBars, TIPO_ACAO_TOP_N } from "@/lib/acoesChartUtils";
 import type { RpcAcoesBI } from "@/types/biRpc";
 
 const EMPTY: RpcAcoesBI = {
-  kpis: { totalAcoes: 0, cidades: 0, consultores: 0, visitas: 0, clientes: 0, tiposAcaoDistintos: 0, valorNegociado: 0, tempoMedioContato: 0 },
+  kpis: {
+    totalAcoes: 0, cidades: 0, consultores: 0, visitas: 0, clientes: 0, tiposAcaoDistintos: 0,
+    valorAberto: 0, negociosAberto: 0, valorGanho: 0, negociosGanho: 0, valorPerdido: 0, negociosPerdido: 0,
+    negociosTocados: 0, valorTocado: 0, negociosOutrosStatus: 0, tempoMedioContato: 0,
+  },
   porVendedor: [], porCidade: [], porMes: [], porDiaSemana: [],
   porTipoAcao: [], porTipoContato: [], listaAnos: [], porVendedorCidade: [],
-  clientesMaisAtendidos: [], tabelaAcoes: [],
+  clientesMaisAtendidos: [],
 };
 
 interface Props {
@@ -27,13 +32,24 @@ interface Props {
   funil?: string;
 }
 
-export default function AcoesSection({ active, dateRange, categoria, funil }: Props) {
+export default function AcoesSection({ active, dateRange }: Props) {
   const { vendedor, cidade, tipoAcao } = useNegociosFilter();
 
   const from = useMemo(() => toISODate(dateRange?.from), [dateRange?.from]);
   const to = useMemo(() => toISODate(dateRange?.to ?? dateRange?.from), [dateRange?.to, dateRange?.from]);
 
   const { data, isLoading } = useAcoesBIRpc({
+    from,
+    to,
+    vendedor: vendedor || undefined,
+    tipoAcao: tipoAcao || undefined,
+    cidade: cidade || undefined,
+    enabled: active,
+  });
+
+  // Tabela de detalhe em RPC separada: rpc_acoes_bi roda 4x no app (2x aqui,
+  // 2x em usePainelKPIsRpc que le so os kpis) — a tabela pesada fica fora dele.
+  const { data: detalhe, isLoading: detalheLoading } = useAcoesDetalheRpc({
     from,
     to,
     vendedor: vendedor || undefined,
@@ -55,34 +71,15 @@ export default function AcoesSection({ active, dateRange, categoria, funil }: Pr
     enabled: active && !!fromPrev,
   });
 
-  const { kpis, porVendedor, porCidade, porMes, porDiaSemana, porTipoAcao, porTipoContato, porVendedorCidade, clientesMaisAtendidos, tabelaAcoes } = data ?? EMPTY;
+  const { kpis, porVendedor, porCidade, porMes, porDiaSemana, porTipoAcao, porTipoContato, porVendedorCidade, clientesMaisAtendidos } = data ?? EMPTY;
   const kpisPrev = (dataPrev ?? EMPTY).kpis;
 
-  const valorFmt = kpis.valorNegociado.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 });
-  const valorPrevFmt = kpisPrev.valorNegociado.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  const tipoAcaoBars = useMemo(() => buildTipoAcaoBars(porTipoAcao), [porTipoAcao]);
 
   return (
     <div className="space-y-6 pt-2">
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KPICard title="Total de Acoes" value={kpis.totalAcoes.toLocaleString("pt-BR")} icon={ClipboardList} loading={isLoading}
-          previousValue={kpisPrev.totalAcoes.toLocaleString("pt-BR")} trend={calcTrend(kpis.totalAcoes, kpisPrev.totalAcoes)} dataSource="mirror.crm_acoes · COUNT(*) por aco_dthconclusao" />
-        <KPICard title="Cidades Atendidas" value={kpis.cidades.toLocaleString("pt-BR")} icon={MapPin} loading={isLoading}
-          previousValue={kpisPrev.cidades.toLocaleString("pt-BR")} trend={calcTrend(kpis.cidades, kpisPrev.cidades)} dataSource="mirror.crm_acoes · COUNT(DISTINCT emp_cidade)" />
-        <KPICard title="Consultores Ativos" value={kpis.consultores.toLocaleString("pt-BR")} icon={Users} loading={isLoading}
-          previousValue={kpisPrev.consultores.toLocaleString("pt-BR")} trend={calcTrend(kpis.consultores, kpisPrev.consultores)} dataSource="mirror.crm_acoes · COUNT(DISTINCT aco_vendedor)" />
-        <KPICard title="Total de Visitas" value={kpis.visitas.toLocaleString("pt-BR")} icon={Eye} loading={isLoading}
-          previousValue={kpisPrev.visitas.toLocaleString("pt-BR")} trend={calcTrend(kpis.visitas, kpisPrev.visitas)} dataSource="mirror.crm_acoes · COUNT(*) WHERE aco_tipocontato LIKE '%visita%'" />
-        <KPICard title="Clientes Unicos" value={kpis.clientes.toLocaleString("pt-BR")} icon={UserCheck} loading={isLoading}
-          previousValue={kpisPrev.clientes.toLocaleString("pt-BR")} trend={calcTrend(kpis.clientes, kpisPrev.clientes)} dataSource="mirror.crm_acoes · COUNT(DISTINCT cli_nome)" />
-        <KPICard title="Tipos de Acao" value={kpis.tiposAcaoDistintos.toLocaleString("pt-BR")} icon={Tag} loading={isLoading}
-          previousValue={kpisPrev.tiposAcaoDistintos.toLocaleString("pt-BR")} trend={calcTrend(kpis.tiposAcaoDistintos, kpisPrev.tiposAcaoDistintos)} dataSource="mirror.crm_acoes · COUNT(DISTINCT aco_tipoacao)" />
-        <KPICard title="Valor Negociado" value={valorFmt} icon={DollarSign} loading={isLoading}
-          previousValue={valorPrevFmt} trend={calcTrend(kpis.valorNegociado, kpisPrev.valorNegociado)} rawValue={kpis.valorNegociado} dataSource="mirror.crm_negocios · SUM(ngo_vlrtotalnegociado) via LEFT JOIN ngo_nronegocio" />
-        <KPICard title="Tempo Medio 1o Contato" value={`${kpis.tempoMedioContato} dias`} icon={Clock} loading={isLoading}
-          previousValue={`${kpisPrev.tempoMedioContato} dias`} trend={calcTrend(kpis.tempoMedioContato, kpisPrev.tempoMedioContato)} invertTrend dataSource="mirror.crm_acoes · AVG(aco_dthconclusao - aco_dthabertura) em dias" />
-      </div>
+      <AcoesKpiGrid kpis={kpis} kpisPrev={kpisPrev} loading={isLoading} />
 
       {/* Ranking table */}
       <AcoesRankingTable data={porVendedorCidade} loading={isLoading} />
@@ -109,7 +106,7 @@ export default function AcoesSection({ active, dateRange, categoria, funil }: Pr
           />
         </ChartCard>
 
-        <ChartCard title="Acoes por Cidade" description="Top 15 cidades" dataSource="mirror.crm_acoes · emp_cidade, COUNT(*)" loading={isLoading}>
+        <ChartCard title="Acoes por Cidade" description="Top 15 cidades" dataSource="mirror.crm_acoes · cli_cidade (cidade do CLIENTE), COUNT(*)" loading={isLoading}>
           <HorizontalBarChart
             data={porCidade.map((d) => ({ name: d.name, acoes: d.acoes }))}
             keys={["acoes"]}
@@ -119,8 +116,19 @@ export default function AcoesSection({ active, dateRange, categoria, funil }: Pr
           />
         </ChartCard>
 
-        <ChartCard title="Distribuicao por Tipo de Acao" description="Proporcao de cada tipo" dataSource="mirror.crm_acoes · aco_tipoacao, COUNT(*)" loading={isLoading}>
-          <PieChartWithLabels data={porTipoAcao} title="" />
+        <ChartCard
+          title="Distribuicao por Tipo de Acao"
+          description={`Top ${TIPO_ACAO_TOP_N} + demais agregados`}
+          dataSource="mirror.crm_acoes · aco_tipoacao, COUNT(*) — barra em vez de pizza: 17 categorias excedem a paleta de 7 cores e repetiriam cor"
+          loading={isLoading}
+        >
+          <HorizontalBarChart
+            data={tipoAcaoBars}
+            keys={["acoes"]}
+            seriesLabels={{ acoes: "Ações" }}
+            title=""
+            colors={[CHART_COLORS[1]]}
+          />
         </ChartCard>
 
         <ChartCard title="Acoes por Dia da Semana" description="Concentracao semanal" dataSource="mirror.crm_acoes · DOW(aco_dthconclusao), COUNT(*)" loading={isLoading}>
@@ -138,11 +146,15 @@ export default function AcoesSection({ active, dateRange, categoria, funil }: Pr
         </ChartCard>
       </div>
 
-      {/* Tables */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <AcoesClientesTable data={clientesMaisAtendidos} loading={isLoading} />
-        <AcoesDetailTable data={tabelaAcoes} loading={isLoading} />
-      </div>
+      {/* Tabelas */}
+      <AcoesClientesTable data={clientesMaisAtendidos} loading={isLoading} />
+
+      {/* Artefato principal da tela — full width */}
+      <AcoesDetailTable
+        rows={detalhe?.rows ?? []}
+        total={detalhe?.total ?? 0}
+        loading={detalheLoading}
+      />
     </div>
   );
 }
