@@ -8,6 +8,7 @@ import type {
   RpcAdminBI,
   RpcAcoesBI,
   RpcAcoesDetalhe,
+  RpcClientesRisco,
   RpcInteligenciaEsforcoBI,
   RpcParqueRenovacaoBI,
   RpcOperacionalBI,
@@ -203,6 +204,7 @@ export async function fetchAcoesDetalhe(params: {
   vendedor?: string;
   tipoAcao?: string;
   cidade?: string;
+  statusNegocio?: string;
   limit?: number;
   offset?: number;
 }): Promise<RpcAcoesDetalhe> {
@@ -213,6 +215,7 @@ export async function fetchAcoesDetalhe(params: {
     if (params.vendedor) rpcParams.p_vendedor = params.vendedor;
     if (params.tipoAcao) rpcParams.p_tipo_acao = params.tipoAcao;
     if (params.cidade) rpcParams.p_cidade = params.cidade;
+    if (params.statusNegocio) rpcParams.p_status = params.statusNegocio;
     if (params.limit != null) rpcParams.p_limit = params.limit;
     if (params.offset != null) rpcParams.p_offset = params.offset;
 
@@ -287,5 +290,32 @@ export async function fetchProdutosBI(): Promise<RpcProdutosBI> {
     return unwrapRpc<RpcProdutosBI>(data);
   } catch (err) {
     throw new Error(`[biRpcService.fetchProdutosBI] ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
+}
+
+/**
+ * Calls rpc_acoes_clientes_risco — returns client risk distribution by days-since-last-action.
+ */
+export async function fetchClientesRisco(params: {
+  vendedor?: string;
+  cidade?: string;
+}): Promise<RpcClientesRisco> {
+  try {
+    const rpcParams: Record<string, unknown> = {};
+    if (params.vendedor) rpcParams.p_vendedor = params.vendedor;
+    if (params.cidade) rpcParams.p_cidade = params.cidade;
+
+    const { data, error } = await supabase.rpc("rpc_acoes_clientes_risco", rpcParams);
+    if (error) throw new Error(error.message);
+
+    const raw = unwrapRpc<Partial<RpcClientesRisco> | null>(data);
+    return {
+      faixas: raw?.faixas ?? [],
+      totalCarteira: raw?.totalCarteira ?? 0,
+      clientesComAcao: raw?.clientesComAcao ?? 0,
+      clientesSemAcao: raw?.clientesSemAcao ?? 0,
+    };
+  } catch (err) {
+    throw new Error(`[biRpcService.fetchClientesRisco] ${err instanceof Error ? err.message : "Unknown error"}`);
   }
 }

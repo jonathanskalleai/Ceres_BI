@@ -2,11 +2,12 @@ import { useMemo } from "react";
 import { type DateRange } from "react-day-picker";
 import { useAcoesBIRpc } from "@/hooks/bi/useAcoesBIRpc";
 import { useAcoesDetalheRpc } from "@/hooks/bi/useAcoesDetalheRpc";
+import { useClientesRiscoRpc } from "@/hooks/bi/useClientesRiscoRpc";
 import { useNegociosFilter } from "@/contexts/NegociosFilterContext";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { AcoesRankingTable } from "@/components/bi/AcoesRankingTable";
 import { AcoesClientesTable } from "@/components/bi/AcoesClientesTable";
-import { AcoesDetailTable } from "@/components/bi/AcoesDetailTable";
+import { AcoesDetailWithFilter } from "@/components/bi/sections/AcoesDetailWithFilter";
 import { AcoesKpiGrid } from "@/components/bi/sections/AcoesKpiGrid";
 import { HorizontalBarChart, VerticalBarChart, LineChart, PieChartWithLabels } from "@/components/bi/charts";
 import { CHART_COLORS } from "@/lib/chartTheme";
@@ -30,7 +31,7 @@ interface Props {
 }
 
 export default function AcoesSection({ active, dateRange }: Props) {
-  const { vendedor, cidade, tipoAcao } = useNegociosFilter();
+  const { vendedor, cidade, tipoAcao, statusNegocio } = useNegociosFilter();
 
   const from = useMemo(() => toISODate(dateRange?.from), [dateRange?.from]);
   const to = useMemo(() => toISODate(dateRange?.to ?? dateRange?.from), [dateRange?.to, dateRange?.from]);
@@ -51,6 +52,14 @@ export default function AcoesSection({ active, dateRange }: Props) {
     to,
     vendedor: vendedor || undefined,
     tipoAcao: tipoAcao || undefined,
+    cidade: cidade || undefined,
+    statusNegocio: statusNegocio || undefined,
+    enabled: active,
+  });
+
+  // Clientes em risco — distribuicao por faixa de dias sem acao
+  const { data: riscoData, isLoading: riscoLoading } = useClientesRiscoRpc({
+    vendedor: vendedor || undefined,
     cidade: cidade || undefined,
     enabled: active,
   });
@@ -136,8 +145,24 @@ export default function AcoesSection({ active, dateRange }: Props) {
       {/* Tabelas */}
       <AcoesClientesTable data={clientesMaisAtendidos} loading={isLoading} error={error} />
 
-      {/* Artefato principal da tela — full width */}
-      <AcoesDetailTable
+      {/* Clientes em Risco — distribuicao por faixa de dias sem acao */}
+      <ChartCard
+        title="Clientes em Risco"
+        description="Dias sem acao comercial (toda a carteira)"
+        dataSource="rpc_acoes_clientes_risco · faixas de dias sem contato"
+        loading={riscoLoading}
+      >
+        <VerticalBarChart
+          data={(riscoData?.faixas ?? []).map((f) => ({ name: f.faixa, clientes: f.clientes }))}
+          keys={["clientes"]}
+          seriesLabels={{ clientes: "Clientes" }}
+          title=""
+          colors={[CHART_COLORS[4]]}
+        />
+      </ChartCard>
+
+      {/* Artefato principal — tabela com filtro de status */}
+      <AcoesDetailWithFilter
         rows={detalhe?.rows ?? []}
         total={detalhe?.total ?? 0}
         loading={detalheLoading}

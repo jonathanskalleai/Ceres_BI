@@ -19,6 +19,7 @@ interface NegociosFilterState {
   vendedor: string;
   cidade: string;
   tipoAcao: string;
+  statusNegocio: string;
 }
 
 interface NegociosFilterContextValue extends NegociosFilterState {
@@ -28,6 +29,7 @@ interface NegociosFilterContextValue extends NegociosFilterState {
   setVendedor: (vendedor: string) => void;
   setCidade: (cidade: string) => void;
   setTipoAcao: (tipo: string) => void;
+  setStatusNegocio: (status: string) => void;
   resetFilters: () => void;
   hasActiveFilter: boolean;
 }
@@ -41,6 +43,7 @@ export function NegociosFilterProvider({ children }: { children: ReactNode }) {
   const [vendedor, setVendedor] = useState<string>("");
   const [cidade, setCidade] = useState<string>("");
   const [tipoAcao, setTipoAcao] = useState<string>("");
+  const [statusNegocio, setStatusNegocio] = useState<string>("");
 
   const setCategoria = useCallback((cat: CategoriaFilter) => {
     setCategoria_(cat);
@@ -55,6 +58,7 @@ export function NegociosFilterProvider({ children }: { children: ReactNode }) {
     setVendedor("");
     setCidade("");
     setTipoAcao("");
+    setStatusNegocio("");
   }, []);
 
   const hasActiveFilter =
@@ -63,7 +67,8 @@ export function NegociosFilterProvider({ children }: { children: ReactNode }) {
     funil !== FUNIL_ALL ||
     vendedor !== "" ||
     cidade !== "" ||
-    tipoAcao !== "";
+    tipoAcao !== "" ||
+    statusNegocio !== "";
 
   return (
     <NegociosFilterContext.Provider
@@ -74,12 +79,14 @@ export function NegociosFilterProvider({ children }: { children: ReactNode }) {
         vendedor,
         cidade,
         tipoAcao,
+        statusNegocio,
         setDateRange,
         setCategoria,
         setFunil,
         setVendedor,
         setCidade,
         setTipoAcao,
+        setStatusNegocio,
         resetFilters,
         hasActiveFilter,
       }}

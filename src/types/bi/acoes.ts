@@ -85,10 +85,28 @@ export interface AcoesDetalheItem {
   etapa: string | null;
   /** Valor total do negocio vinculado (ngo_vlrtotalnegociado). Null se acao sem negocio. */
   valor: number | null;
+  /** Status do negocio vinculado (ngo_conclusao). Null se acao sem negocio. */
+  status: string | null;
 }
 
 /** Full return type of rpc_acoes_detalhe. `total` = COUNT real do periodo (sem limit). */
 export interface RpcAcoesDetalhe {
   rows: AcoesDetalheItem[];
   total: number;
+}
+
+// --- Clientes em Risco (rpc_acoes_clientes_risco) ---
+
+export interface ClientesRiscoFaixa {
+  faixa: string;
+  clientes: number;
+  pct: number;
+}
+
+/** Full return type of rpc_acoes_clientes_risco. */
+export interface RpcClientesRisco {
+  faixas: ClientesRiscoFaixa[];
+  totalCarteira: number;
+  clientesComAcao: number;
+  clientesSemAcao: number;
 }

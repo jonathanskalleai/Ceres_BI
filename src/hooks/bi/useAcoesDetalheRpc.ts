@@ -13,6 +13,7 @@ interface UseAcoesDetalheOptions {
   vendedor?: string;
   tipoAcao?: string;
   cidade?: string;
+  statusNegocio?: string;
   limit?: number;
   enabled?: boolean;
 }
@@ -30,12 +31,13 @@ export function useAcoesDetalheRpc({
   vendedor,
   tipoAcao,
   cidade,
+  statusNegocio,
   limit = ACOES_DETALHE_LIMIT,
   enabled = true,
 }: UseAcoesDetalheOptions) {
   return useQuery<RpcAcoesDetalhe, Error>({
-    queryKey: ["rpc", "acoes-detalhe", from ?? null, to ?? null, vendedor ?? null, tipoAcao ?? null, cidade ?? null, limit],
-    queryFn: () => fetchAcoesDetalhe({ from, to, vendedor, tipoAcao, cidade, limit }),
+    queryKey: ["rpc", "acoes-detalhe", from ?? null, to ?? null, vendedor ?? null, tipoAcao ?? null, cidade ?? null, statusNegocio ?? null, limit],
+    queryFn: () => fetchAcoesDetalhe({ from, to, vendedor, tipoAcao, cidade, statusNegocio, limit }),
     staleTime: STALE_TIME,
     placeholderData: keepPreviousData,
     enabled,
