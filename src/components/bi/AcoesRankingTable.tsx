@@ -87,7 +87,7 @@ export function AcoesRankingTable({ data, loading }: Props) {
               {cidades.map((c) => (
                 <th
                   key={c}
-                  className="py-2 px-2 font-medium text-[var(--voux-text-muted)] text-center whitespace-nowrap max-w-[100px] truncate"
+                  className="py-2 px-2 font-medium text-[var(--voux-text-muted)] text-center whitespace-nowrap max-w-[100px] truncate border-l border-[var(--voux-card-border)]/20"
                   title={c}
                 >
                   {c.length > 12 ? `${c.slice(0, 11)}…` : c}
@@ -110,7 +110,7 @@ export function AcoesRankingTable({ data, loading }: Props) {
                   return (
                     <td
                       key={cidade}
-                      className={`py-2 px-2 text-center tabular-nums rounded-sm ${heatBg(intensity)} ${heatText(intensity)}`}
+                      className={`py-2 px-2 text-center tabular-nums rounded-sm border-l border-[var(--voux-card-border)]/20 ${heatBg(intensity)} ${heatText(intensity)}`}
                       title={`${consultor} · ${cidade}: ${value.toLocaleString("pt-BR")} ações`}
                     >
                       {value > 0 ? value.toLocaleString("pt-BR") : ""}
