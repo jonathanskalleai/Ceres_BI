@@ -6,6 +6,8 @@ import { useNegociosFilter } from "@/contexts/NegociosFilterContext";
 import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { AcoesRankingTable } from "@/components/bi/AcoesRankingTable";
+import { AcoesClientesTable } from "@/components/bi/AcoesClientesTable";
+import { AcoesDetailTable } from "@/components/bi/AcoesDetailTable";
 import { HorizontalBarChart, VerticalBarChart, PieChartWithLabels } from "@/components/bi/charts";
 import { CHART_COLORS } from "@/lib/chartTheme";
 import { toISODate, getPreviousPeriod, calcTrend, formatMonthYear } from "@/lib/dateUtils";
@@ -15,6 +17,7 @@ const EMPTY: RpcAcoesBI = {
   kpis: { totalAcoes: 0, cidades: 0, consultores: 0, visitas: 0, clientes: 0, tiposAcaoDistintos: 0, valorNegociado: 0, tempoMedioContato: 0 },
   porVendedor: [], porCidade: [], porMes: [], porDiaSemana: [],
   porTipoAcao: [], porTipoContato: [], listaAnos: [], porVendedorCidade: [],
+  clientesMaisAtendidos: [], tabelaAcoes: [],
 };
 
 interface Props {
@@ -52,7 +55,7 @@ export default function AcoesSection({ active, dateRange, categoria, funil }: Pr
     enabled: active && !!fromPrev,
   });
 
-  const { kpis, porVendedor, porCidade, porMes, porDiaSemana, porTipoAcao, porTipoContato, porVendedorCidade } = data ?? EMPTY;
+  const { kpis, porVendedor, porCidade, porMes, porDiaSemana, porTipoAcao, porTipoContato, porVendedorCidade, clientesMaisAtendidos, tabelaAcoes } = data ?? EMPTY;
   const kpisPrev = (dataPrev ?? EMPTY).kpis;
 
   const valorFmt = kpis.valorNegociado.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -133,6 +136,12 @@ export default function AcoesSection({ active, dateRange, categoria, funil }: Pr
         <ChartCard title="Tipo de Contato" description="Distribuicao dos canais" dataSource="mirror.crm_acoes · aco_tipocontato, COUNT(*)" loading={isLoading}>
           <PieChartWithLabels data={porTipoContato} title="" />
         </ChartCard>
+      </div>
+
+      {/* Tables */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <AcoesClientesTable data={clientesMaisAtendidos} loading={isLoading} />
+        <AcoesDetailTable data={tabelaAcoes} loading={isLoading} />
       </div>
     </div>
   );

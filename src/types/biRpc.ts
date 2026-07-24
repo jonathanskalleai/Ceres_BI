@@ -242,6 +242,22 @@ export interface AcoesBIPieDatum {
   value: number;
 }
 
+export interface AcoesBIClienteItem {
+  cliente: string;
+  cidade: string;
+  acoes: number;
+  visitas: number;
+}
+
+export interface AcoesBIDetalheItem {
+  data: string;
+  consultor: string;
+  cliente: string;
+  cidade: string;
+  tipoAcao: string;
+  tipoContato: string;
+}
+
 /** Full return type of rpc_acoes_bi */
 export interface RpcAcoesBI {
   kpis: AcoesBIKpis;
@@ -253,6 +269,8 @@ export interface RpcAcoesBI {
   porTipoContato: AcoesBIPieDatum[];
   listaAnos: string[];
   porVendedorCidade: AcoesBIRankingItem[];
+  clientesMaisAtendidos: AcoesBIClienteItem[];
+  tabelaAcoes: AcoesBIDetalheItem[];
 }
 
 // ─── rpc_inteligencia_esforco_bi ─────────────────────────────────────────────
