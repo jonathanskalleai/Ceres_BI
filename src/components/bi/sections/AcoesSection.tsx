@@ -28,8 +28,6 @@ const EMPTY: RpcAcoesBI = {
 interface Props {
   active: boolean;
   dateRange?: DateRange;
-  categoria?: string;
-  funil?: string;
 }
 
 export default function AcoesSection({ active, dateRange }: Props) {
@@ -38,7 +36,7 @@ export default function AcoesSection({ active, dateRange }: Props) {
   const from = useMemo(() => toISODate(dateRange?.from), [dateRange?.from]);
   const to = useMemo(() => toISODate(dateRange?.to ?? dateRange?.from), [dateRange?.to, dateRange?.from]);
 
-  const { data, isLoading } = useAcoesBIRpc({
+  const { data, isLoading, error } = useAcoesBIRpc({
     from,
     to,
     vendedor: vendedor || undefined,
@@ -49,7 +47,7 @@ export default function AcoesSection({ active, dateRange }: Props) {
 
   // Tabela de detalhe em RPC separada: rpc_acoes_bi roda 4x no app (2x aqui,
   // 2x em usePainelKPIsRpc que le so os kpis) — a tabela pesada fica fora dele.
-  const { data: detalhe, isLoading: detalheLoading } = useAcoesDetalheRpc({
+  const { data: detalhe, isLoading: detalheLoading, error: detalheError } = useAcoesDetalheRpc({
     from,
     to,
     vendedor: vendedor || undefined,
@@ -82,7 +80,7 @@ export default function AcoesSection({ active, dateRange }: Props) {
       <AcoesKpiGrid kpis={kpis} kpisPrev={kpisPrev} loading={isLoading} />
 
       {/* Ranking table */}
-      <AcoesRankingTable data={porVendedorCidade} loading={isLoading} />
+      <AcoesRankingTable data={porVendedorCidade} loading={isLoading} error={error} />
 
       {/* Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -147,13 +145,14 @@ export default function AcoesSection({ active, dateRange }: Props) {
       </div>
 
       {/* Tabelas */}
-      <AcoesClientesTable data={clientesMaisAtendidos} loading={isLoading} />
+      <AcoesClientesTable data={clientesMaisAtendidos} loading={isLoading} error={error} />
 
       {/* Artefato principal da tela — full width */}
       <AcoesDetailTable
         rows={detalhe?.rows ?? []}
         total={detalhe?.total ?? 0}
         loading={detalheLoading}
+        error={detalheError}
       />
     </div>
   );

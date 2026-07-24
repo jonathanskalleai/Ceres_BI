@@ -717,61 +717,100 @@ const ALL_VIEWS = Object.keys(VIEW_CONFIG);
 const BATCH_SIZE = 500;
 
 // =============================================================================
-// SQL Server Query Execution (reuses tedious pattern from query-sqlserver)
+// Retry Configuration (QA approved: 1 retry, 10s backoff — avoids server overload)
 // =============================================================================
 
-async function execQuery(sql: string): Promise<Record<string, unknown>[]> {
+const RETRY_CONFIG = {
+  maxRetries: 1,
+  backoffMs: 10_000, // 10 seconds
+  timeoutMs: 60_000,  // 60 seconds (was 240s)
+};
+
+// =============================================================================
+// SQL Server Query Execution with retry + timeout
+// =============================================================================
+
+async function execQueryWithRetry(
+  sql: string,
+  viewName: string,
+): Promise<Record<string, unknown>[]> {
   const { Connection, Request } = await import("npm:tedious@19");
   const config = getSqlServerConfig();
+  let lastError: Error | null = null;
 
-  return new Promise((resolve, reject) => {
-    const connection = new Connection({
-      server: config.server,
-      authentication: {
-        type: "default",
-        options: { userName: config.user, password: config.password },
-      },
-      options: {
-        database: config.database,
-        port: config.port,
-        encrypt: false,
-        trustServerCertificate: true,
-        connectTimeout: 30000,
-        requestTimeout: 240000,
-        rowCollectionOnRequestCompletion: true,
-      },
-    });
+  for (let attempt = 0; attempt <= RETRY_CONFIG.maxRetries; attempt++) {
+    const attemptStart = Date.now();
+    const attemptLabel = attempt === 0 ? "initial" : `retry:${attempt}`;
 
-    connection.on("connect", (err: Error | null) => {
-      if (err) {
-        reject(err);
-        return;
-      }
+    try {
+      const result = await new Promise<Record<string, unknown>[]>((resolve, reject) => {
+        const connection = new Connection({
+          server: config.server,
+          authentication: {
+            type: "default",
+            options: { userName: config.user, password: config.password },
+          },
+          options: {
+            database: config.database,
+            port: config.port,
+            encrypt: false,
+            trustServerCertificate: true,
+            connectTimeout: RETRY_CONFIG.timeoutMs,
+            requestTimeout: RETRY_CONFIG.timeoutMs,
+            rowCollectionOnRequestCompletion: true,
+          },
+        });
 
-      const request = new Request(
-        sql,
-        (err: Error | null, _rowCount: number, resultRows: unknown[]) => {
-          connection.close();
+        const requestStart = Date.now();
+
+        connection.on("connect", (err: Error | null) => {
           if (err) {
+            connection.close();
             reject(err);
             return;
           }
-          const data = (resultRows as unknown[][]).map((columns: unknown[]) => {
-            const row: Record<string, unknown> = {};
-            for (const col of columns as { metadata: { colName: string }; value: unknown }[]) {
-              row[col.metadata.colName] = col.value;
-            }
-            return row;
-          });
-          resolve(data);
-        },
-      );
 
-      connection.execSql(request);
-    });
+          const request = new Request(
+            sql,
+            (err: Error | null, _rowCount: number, resultRows: unknown[]) => {
+              connection.close();
+              if (err) {
+                reject(err);
+                return;
+              }
+              const data = (resultRows as unknown[][]).map((columns: unknown[]) => {
+                const row: Record<string, unknown> = {};
+                for (const col of columns as { metadata: { colName: string }; value: unknown }[]) {
+                  row[col.metadata.colName] = col.value;
+                }
+                return row;
+              });
+              resolve(data);
+            },
+          );
 
-    connection.connect();
-  });
+          connection.execSql(request);
+        });
+
+        connection.connect();
+      });
+
+      const elapsed = Date.now() - attemptStart;
+      console.log(`[${viewName}] query_ok attempt=${attemptLabel} rows=${result.length} elapsed_ms=${elapsed} ts=${new Date().toISOString()}`);
+      return result;
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      const elapsed = Date.now() - attemptStart;
+      console.warn(`[${viewName}] query_fail attempt=${attemptLabel} error="${lastError.message}" elapsed_ms=${elapsed} ts=${new Date().toISOString()}`);
+
+      if (attempt < RETRY_CONFIG.maxRetries) {
+        console.log(`[${viewName}] retry_scheduled delay_ms=${RETRY_CONFIG.backoffMs} next_attempt=${attempt + 1} ts=${new Date().toISOString()}`);
+        await new Promise((resolve) => setTimeout(resolve, RETRY_CONFIG.backoffMs));
+      }
+    }
+  }
+
+  throw lastError;
 }
 
 // =============================================================================
@@ -789,6 +828,8 @@ async function syncView(
   }
 
   const startTime = Date.now();
+  const startTimestamp = new Date().toISOString();
+  console.log(`[${viewName}] sync_start strategy=${config.strategy} ts=${startTimestamp}`);
 
   // Insert running log entry
   const { data: logEntry } = await supabase
@@ -833,8 +874,8 @@ async function syncView(
       sql += ` OFFSET ${pageOptions.offset} ROWS FETCH NEXT ${pageOptions.limit} ROWS ONLY`;
     }
 
-    // 3. Fetch from SQL Server
-    const rows = await execQuery(sql);
+    // 3. Fetch from SQL Server (with retry + timeout)
+    const rows = await execQueryWithRetry(sql, viewName);
     const mapped = rows.map(config.mapRow);
 
     // 3.5 Deduplicate by conflictKey to avoid "cannot affect row a second time"
@@ -921,8 +962,10 @@ async function syncView(
       })
       .eq("view_name", viewName);
 
-    // 7. Update sync_log to success
     const duration = Date.now() - startTime;
+    const endTimestamp = new Date().toISOString();
+
+    // 7. Update sync_log to success
     if (logId) {
       await supabase
         .schema("mirror")
@@ -931,15 +974,17 @@ async function syncView(
           status: "success",
           rows_affected: dedupMapped.length,
           duration_ms: duration,
-          finished_at: new Date().toISOString(),
+          finished_at: endTimestamp,
         })
         .eq("id", logId);
     }
 
+    console.log(`[${viewName}] sync_ok rows=${dedupMapped.length} duration_ms=${duration} start_ts=${startTimestamp} end_ts=${endTimestamp}`);
+
     return { view: viewName, status: "success", rows: dedupMapped.length, duration_ms: duration };
   } catch (error) {
-    const duration = Date.now() - startTime;
     const errMsg = error instanceof Error ? error.message : String(error);
+    console.error(`[${viewName}] sync_error error="${errMsg}" duration_ms=${duration} start_ts=${startTimestamp} end_ts=${endTimestamp}`);
 
     // Update sync_log to error
     if (logId) {

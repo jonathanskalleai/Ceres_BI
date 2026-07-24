@@ -13,7 +13,8 @@ async function fetchEtlStatus(): Promise<EtlSyncStatus[]> {
 }
 
 /**
- * Hook for rpc_etl_status — mirror.sync_control status for all ETL tables.
+ * Hook for rpc_etl_status — reads from mirror.sync_metadata (joined with sync_log).
+ * Shows ETL sync status for all Campus Dealer tables.
  * Refetches every 60s to keep freshness indicators live.
  */
 export function useEtlStatus() {

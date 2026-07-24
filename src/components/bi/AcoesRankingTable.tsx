@@ -1,9 +1,11 @@
 import { useMemo } from "react";
+import { BiTableCard } from "@/components/bi/BiTableCard";
 import type { AcoesBIRankingItem } from "@/types/biRpc";
 
 interface Props {
   data: AcoesBIRankingItem[];
   loading?: boolean;
+  error?: Error | null;
 }
 
 /** Returns a Tailwind bg class based on intensity 0-1 */
@@ -25,7 +27,7 @@ function heatText(intensity: number): string {
  * Heatmap Comercial: Consultor × Cidade
  * Rows = consultores (unique), Columns = cidades, Cells = qtd ações with color intensity.
  */
-export function AcoesRankingTable({ data, loading }: Props) {
+export function AcoesRankingTable({ data, loading, error }: Props) {
   const { consultores, cidades, matrix, maxValue } = useMemo(() => {
     const cidadeSet = new Set<string>();
     const consultorSet = new Set<string>();
@@ -46,37 +48,26 @@ export function AcoesRankingTable({ data, loading }: Props) {
     return { consultores, cidades, matrix: map, maxValue: maxVal };
   }, [data]);
 
-  if (loading) {
-    return (
-      <div className="rounded-xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4">
-        <div className="h-4 w-48 bg-foreground/5 animate-pulse rounded mb-3" />
-        <div className="space-y-2">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-8 bg-foreground/5 animate-pulse rounded" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (!data.length) return null;
+  const legenda = (
+    <div className="flex items-center gap-1 text-[10px] text-[var(--voux-text-muted)]">
+      <span>Baixa</span>
+      <span className="inline-block w-3 h-3 rounded-sm bg-blue-100/70" />
+      <span className="inline-block w-3 h-3 rounded-sm bg-blue-200/70" />
+      <span className="inline-block w-3 h-3 rounded-sm bg-blue-300/70" />
+      <span className="inline-block w-3 h-3 rounded-sm bg-blue-400/70" />
+      <span className="inline-block w-3 h-3 rounded-sm bg-blue-500/80" />
+      <span>Alta</span>
+    </div>
+  );
 
   return (
-    <div className="rounded-xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--voux-text-muted)]">
-          Heatmap Comercial · Consultor × Cidade
-        </h3>
-        <div className="flex items-center gap-1 text-[10px] text-[var(--voux-text-muted)]">
-          <span>Baixa</span>
-          <span className="inline-block w-3 h-3 rounded-sm bg-blue-100/70" />
-          <span className="inline-block w-3 h-3 rounded-sm bg-blue-200/70" />
-          <span className="inline-block w-3 h-3 rounded-sm bg-blue-300/70" />
-          <span className="inline-block w-3 h-3 rounded-sm bg-blue-400/70" />
-          <span className="inline-block w-3 h-3 rounded-sm bg-blue-500/80" />
-          <span>Alta</span>
-        </div>
-      </div>
+    <BiTableCard
+      title="Heatmap Comercial · Consultor × Cidade"
+      actions={legenda}
+      loading={loading}
+      error={error}
+      isEmpty={data.length === 0}
+    >
       <div className="overflow-x-auto">
         <table className="w-full text-xs border-collapse">
           <thead>
@@ -122,6 +113,6 @@ export function AcoesRankingTable({ data, loading }: Props) {
           </tbody>
         </table>
       </div>
-    </div>
+    </BiTableCard>
   );
 }

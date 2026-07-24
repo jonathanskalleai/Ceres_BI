@@ -17,12 +17,14 @@ function SectionFallback() {
 }
 
 export default function BiAcoes() {
-  const { dateRange, categoria, funil } = useNegociosFilter();
+  // AcoesSection filtra por vendedor/cidade/tipoAcao lendo o contexto direto;
+  // categoria/funil nao se aplicam a acoes (sao recortes de negocio).
+  const { dateRange } = useNegociosFilter();
 
   return (
     <div className="p-8 space-y-5">
       <Suspense fallback={<SectionFallback />}>
-        <AcoesSection active dateRange={dateRange} categoria={categoria} funil={funil} />
+        <AcoesSection active dateRange={dateRange} />
       </Suspense>
     </div>
   );

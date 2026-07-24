@@ -1,4 +1,4 @@
-import { ClipboardList, MapPin, Users, Eye, UserCheck, Tag, Clock, Wallet, Trophy, XCircle } from "lucide-react";
+import { ClipboardList, MapPin, Users, Eye, UserCheck, Tag, Clock, Wallet, Trophy, XCircle, AlertTriangle } from "lucide-react";
 import { KPICard } from "@/components/bi/KPICard";
 import { calcTrend } from "@/lib/dateUtils";
 import type { AcoesBIKpis } from "@/types/biRpc";
@@ -22,10 +22,42 @@ interface Props {
   loading?: boolean;
 }
 
+/**
+ * Aviso de 4o status em `ngo_conclusao`.
+ *
+ * A RPC quebra o valor tocado em Em Andamento / Ganho / Perdido — os 3 valores
+ * que existem hoje. Se o ERP introduzir um quarto, os negocios dele nao entram
+ * em nenhum dos 3 cards e a soma passa a ser MENOR que o real, em silencio.
+ * `negociosOutrosStatus` existe para isso; este bloco e o que faz alguem ficar
+ * sabendo. Detector que ninguem le nao detecta nada.
+ */
+function StatusDesconhecidoAlert({ kpis }: { kpis: AcoesBIKpis }) {
+  if (kpis.negociosOutrosStatus <= 0) return null;
+
+  const somaCards = kpis.valorAberto + kpis.valorGanho + kpis.valorPerdido;
+  return (
+    <div
+      role="alert"
+      className="flex items-start gap-2 rounded-xl border border-[var(--voux-danger)]/40 bg-[var(--voux-danger)]/[0.06] p-3 text-xs"
+    >
+      <AlertTriangle className="h-4 w-4 shrink-0 text-[var(--voux-danger)]" aria-hidden="true" />
+      <p className="text-[var(--voux-text-primary)]">
+        <span className="font-medium">
+          {num(kpis.negociosOutrosStatus)} negocio(s) com status fora de Em Andamento/Ganho/Perdido.
+        </span>{" "}
+        Os cards abaixo somam {brl(somaCards)} de um total tocado de {brl(kpis.valorTocado)} — a diferenca
+        esta num status que a tela ainda nao tem card. Avise o time de dados.
+      </p>
+    </div>
+  );
+}
+
 /** Grid de KPIs da tela /bi/acoes — extraida de AcoesSection para conter o tamanho do arquivo. */
 export function AcoesKpiGrid({ kpis, kpisPrev, loading }: Props) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div className="space-y-4">
+      <StatusDesconhecidoAlert kpis={kpis} />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       <KPICard title="Total de Acoes" value={num(kpis.totalAcoes)} icon={ClipboardList} loading={loading}
         previousValue={num(kpisPrev.totalAcoes)} trend={calcTrend(kpis.totalAcoes, kpisPrev.totalAcoes)}
         dataSource="mirror.crm_acoes · COUNT(*) por aco_dthconclusao" />
@@ -72,6 +104,7 @@ export function AcoesKpiGrid({ kpis, kpisPrev, loading }: Props) {
         rawValue={kpis.valorPerdido}
         hint={`${num(kpis.negociosPerdido)} negocios`}
         dataSource={`${VALOR_BASE} · recorte: Perdido`} />
+      </div>
     </div>
   );
 }

@@ -1,34 +1,24 @@
+import { BiTableCard } from "@/components/bi/BiTableCard";
 import type { AcoesBIClienteItem } from "@/types/biRpc";
 
 interface Props {
   data: AcoesBIClienteItem[];
   loading?: boolean;
+  error?: Error | null;
 }
 
 /**
  * Tabela "Clientes Mais Atendidos (Ano)" — top 15 clientes por volume de ações no ano atual.
  */
-export function AcoesClientesTable({ data, loading }: Props) {
-  if (loading) {
-    return (
-      <div className="rounded-xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4">
-        <div className="h-4 w-56 bg-foreground/5 animate-pulse rounded mb-3" />
-        <div className="space-y-2">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-7 bg-foreground/5 animate-pulse rounded" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (!data.length) return null;
-
+export function AcoesClientesTable({ data, loading, error }: Props) {
   return (
-    <div className="rounded-xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--voux-text-muted)] mb-3">
-        Clientes Mais Atendidos · Ano Atual
-      </h3>
+    <BiTableCard
+      title="Clientes Mais Atendidos · Ano Atual"
+      loading={loading}
+      error={error}
+      isEmpty={data.length === 0}
+      skeletonRows={5}
+    >
       <div className="overflow-x-auto">
         <table className="w-full text-xs border-collapse">
           <thead>
@@ -68,6 +58,6 @@ export function AcoesClientesTable({ data, loading }: Props) {
           </tbody>
         </table>
       </div>
-    </div>
+    </BiTableCard>
   );
 }

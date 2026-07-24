@@ -5,12 +5,12 @@ updated_by: scribe (haiku)
 status: active
 ---
 
-# CRM Overview — Aba Graficos
+# BI Painel — Aba Graficos
 
-**Proposito:** Toggle Cards|Graficos na pagina CRM Overview. A aba "Graficos" exibe 5 LineCharts de evolucao 12 meses rolling (acoes, visitas, negocios ganhos/perdidos, valor pipeline, tipos de acao top 8).
+**Proposito:** Toggle Cards|Graficos na pagina BI Painel (/bi/painel). A aba "Graficos" exibe 5 LineCharts de evolucao 12 meses rolling (acoes, visitas, negocios ganhos/perdidos, valor pipeline, tipos de acao top 8).
 
 ## Entry Points
-- `src/pages/crm/CrmOverviewRpc.tsx` — pagina principal com Radix Tabs (Cards | Graficos)
+- `src/pages/bi/BiPainel.tsx` — pagina principal com Radix Tabs (Cards | Graficos)
 - `src/components/crm/CrmEvolucaoCharts.tsx` — componente dos 5 graficos (143 linhas)
 
 ## Dependencias Internas
@@ -37,8 +37,8 @@ status: active
 
 ## Smoke
 - `npm run build` → sucesso (sem erros TS)
-- Abrir https://ceresbi.vouxconsultoria.com.br/crm/overview → toggle "Graficos" visivel
-- Clicar em "Graficos" → 5 cards com LineChart renderizam (podem estar empty se RPCs nao aplicadas)
+- Abrir https://ceresbi.vouxconsultoria.com.br/bi/painel → toggle "Graficos" visivel
+- Clicar em "Graficos" → 5 cards com LineChart renderizam com dados reais
 
 ## Riscos / Acoplamentos
 - rpc_evolucao_mensal e compartilhada — mudanca nela afeta esta aba + outros consumers
