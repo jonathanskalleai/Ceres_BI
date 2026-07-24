@@ -21,7 +21,7 @@ interface Props {
 }
 
 function matches(row: AcoesDetalheItem, term: string): boolean {
-  return [row.consultor, row.cliente, row.cidade, row.tipoAcao, row.tipoContato, row.observacao, row.data]
+  return [row.consultor, row.cliente, row.cidade, row.tipoAcao, row.tipoContato, row.observacao, row.data, row.etapa]
     .some((v) => (v ?? "").toLowerCase().includes(term));
 }
 
@@ -45,6 +45,8 @@ function AcoesDetailRow({ row, index, expanded, onToggle }: RowProps) {
         <td className="py-2 px-2 text-[var(--voux-text-soft)] truncate max-w-[120px]">{row.cidade ?? "—"}</td>
         <td className="py-2 px-2 text-[var(--voux-text-soft)] truncate max-w-[130px]">{row.tipoAcao ?? "—"}</td>
         <td className="py-2 px-2 text-[var(--voux-text-soft)] truncate max-w-[110px]">{row.tipoContato ?? "—"}</td>
+        <td className="py-2 px-2 text-[var(--voux-text-soft)] truncate max-w-[120px]">{row.etapa ?? "—"}</td>
+        <td className="py-2 px-2 text-[var(--voux-text-primary)] tabular-nums whitespace-nowrap">{row.valor != null ? `R$ ${row.valor.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : "—"}</td>
         <td className="py-2 px-2 text-[var(--voux-text-soft)] max-w-[340px]">
           <span className="block truncate">{truncateObs(row.observacao ?? undefined, OBS_INLINE_CHARS)}</span>
         </td>
@@ -65,7 +67,7 @@ function AcoesDetailRow({ row, index, expanded, onToggle }: RowProps) {
       </tr>
       {expanded && (
         <tr className={zebra}>
-          <td colSpan={8} className="p-0">
+          <td colSpan={10} className="p-0">
             <div id={panelId} className="px-3 py-3 bg-foreground/[0.03] border-t border-[var(--voux-card-border)]/30 space-y-2">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-[11px]">
                 <div>
@@ -186,6 +188,8 @@ export function AcoesDetailTable({ rows, total, loading, error }: Props) {
               <th className={TH}>Cidade</th>
               <th className={TH}>Tipo Acao</th>
               <th className={TH}>Contato</th>
+              <th className={TH}>Etapa</th>
+              <th className={TH}>Valor</th>
               <th className={TH}>Observacao</th>
               <th className="py-2 pl-2 w-8"><span className="sr-only">Detalhes</span></th>
             </tr>
@@ -202,7 +206,7 @@ export function AcoesDetailTable({ rows, total, loading, error }: Props) {
             ))}
             {visible.length === 0 && (
               <tr>
-                <td colSpan={8} className="py-6 text-center text-[var(--voux-text-muted)]">
+                <td colSpan={10} className="py-6 text-center text-[var(--voux-text-muted)]">
                   Nenhuma acao corresponde a busca.
                 </td>
               </tr>

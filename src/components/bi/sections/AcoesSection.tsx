@@ -11,7 +11,6 @@ import { AcoesKpiGrid } from "@/components/bi/sections/AcoesKpiGrid";
 import { HorizontalBarChart, VerticalBarChart, LineChart, PieChartWithLabels } from "@/components/bi/charts";
 import { CHART_COLORS } from "@/lib/chartTheme";
 import { toISODate, getPreviousPeriod, formatMonthYear } from "@/lib/dateUtils";
-import { buildTipoAcaoBars, TIPO_ACAO_TOP_N } from "@/lib/acoesChartUtils";
 import type { RpcAcoesBI } from "@/types/biRpc";
 
 const EMPTY: RpcAcoesBI = {
@@ -72,8 +71,6 @@ export default function AcoesSection({ active, dateRange }: Props) {
   const { kpis, porVendedor, porCidade, porMes, porDiaSemana, porTipoAcao, porTipoContato, porVendedorCidade, clientesMaisAtendidos } = data ?? EMPTY;
   const kpisPrev = (dataPrev ?? EMPTY).kpis;
 
-  const tipoAcaoBars = useMemo(() => buildTipoAcaoBars(porTipoAcao), [porTipoAcao]);
-
   return (
     <div className="space-y-6 pt-2">
 
@@ -114,17 +111,11 @@ export default function AcoesSection({ active, dateRange }: Props) {
 
         <ChartCard
           title="Distribuicao por Tipo de Acao"
-          description={`Top ${TIPO_ACAO_TOP_N} + demais agregados`}
-          dataSource="mirror.crm_acoes · aco_tipoacao, COUNT(*) — barra em vez de pizza: 17 categorias excedem a paleta de 7 cores e repetiriam cor"
+          description="Todos os tipos"
+          dataSource="mirror.crm_acoes · aco_tipoacao, COUNT(*)"
           loading={isLoading}
         >
-          <HorizontalBarChart
-            data={tipoAcaoBars}
-            keys={["acoes"]}
-            seriesLabels={{ acoes: "Ações" }}
-            title=""
-            colors={[CHART_COLORS[1]]}
-          />
+          <PieChartWithLabels data={porTipoAcao} title="" />
         </ChartCard>
 
         <ChartCard title="Acoes por Dia da Semana" description="Concentracao semanal" dataSource="mirror.crm_acoes · DOW(aco_dthconclusao), COUNT(*)" loading={isLoading}>

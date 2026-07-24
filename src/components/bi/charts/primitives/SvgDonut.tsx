@@ -125,7 +125,7 @@ export function SvgDonut({
                 y={yText + 3}
                 textAnchor={anchor}
                 fontFamily="var(--voux-font-mono)"
-                fontSize={9}
+                fontSize={11}
                 fill="var(--voux-text-muted)"
                 letterSpacing="0.04em"
               >

@@ -81,6 +81,10 @@ export interface AcoesDetalheItem {
   tipoContato: string | null;
   /** `aco_atividadeexecutada` — o que FOI executado (nao o planejado) */
   observacao: string | null;
+  /** Etapa do negocio vinculado (ngo_etapa). Null se acao sem negocio. */
+  etapa: string | null;
+  /** Valor total do negocio vinculado (ngo_vlrtotalnegociado). Null se acao sem negocio. */
+  valor: number | null;
 }
 
 /** Full return type of rpc_acoes_detalhe. `total` = COUNT real do periodo (sem limit). */
