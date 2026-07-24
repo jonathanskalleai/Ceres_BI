@@ -44,7 +44,7 @@ export default function PieChart({
 
   const [tooltip, setTooltip] = useState<TooltipState>({ visible: false, x: 0, y: 0, content: "" });
 
-  const chartH = height ?? 200;
+  const chartH = height ?? 300;
 
   const donutData = data.map((d, i) => ({
     label: d.name,

@@ -56,9 +56,13 @@ export function SvgDonut({
 }: SvgDonutProps) {
   if (width === 0) return null;
 
-  const cx = width / 2;
-  const cy = height / 2;
-  const r = Math.min(cx, cy) - 44;  // extra padding for leader labels
+  // Horizontal padding for leader-line labels that extend beyond the donut
+  const labelPadX = 80;
+  const svgW = width + labelPadX * 2;
+  const svgH = height + 20;
+  const cx = svgW / 2;
+  const cy = svgH / 2;
+  const r = Math.min(width / 2, height / 2) - 10;
   const rIn = r - thickness;
   const total = data.reduce((a, d) => a + d.value, 0);
 
@@ -74,17 +78,18 @@ export function SvgDonut({
   });
 
   // Leader line geometry
-  const leaderR1 = r + 6;   // start just outside arc
-  const leaderR2 = r + 20;  // elbow point
-  const labelR = r + 24;    // text anchor point
+  const leaderR1 = r + 4;   // start just outside arc
+  const leaderR2 = r + 18;  // elbow point
+  const labelPadH = 8;      // horizontal extension after elbow
 
   return (
     <>
       <svg
-        viewBox={`0 0 ${width} ${height}`}
-        width={width}
-        height={height}
+        viewBox={`0 0 ${svgW} ${svgH}`}
+        width="100%"
+        height={svgH}
         aria-hidden="true"
+        style={{ overflow: "visible" }}
       >
         {segments.map((seg, i) => (
           <path
@@ -108,26 +113,31 @@ export function SvgDonut({
           const y1 = cy + sin * leaderR1;
           const x2 = cx + cos * leaderR2;
           const y2 = cy + sin * leaderR2;
-          const xText = cx + cos * labelR;
-          const yText = cy + sin * labelR;
+          // Horizontal extension (elbow)
+          const direction = cos >= 0 ? 1 : -1;
+          const x3 = x2 + direction * labelPadH;
+          const y3 = y2;
+          const xText = x3 + direction * 4;
+          const yText = y3;
           const anchor = cos >= 0 ? "start" : "end";
           const pct = total > 0 ? ((seg.value / total) * 100).toFixed(0) : "0";
           return (
             <g key={`leader-${i}`}>
-              <line
-                x1={x1} y1={y1} x2={x2} y2={y2}
+              <polyline
+                points={`${x1},${y1} ${x2},${y2} ${x3},${y3}`}
+                fill="none"
                 stroke={seg.color}
                 strokeWidth={1}
-                opacity={0.7}
+                opacity={0.6}
               />
               <text
                 x={xText}
-                y={yText + 3}
+                y={yText + 4}
                 textAnchor={anchor}
                 fontFamily="var(--voux-font-mono)"
                 fontSize={11}
                 fill="var(--voux-text-muted)"
-                letterSpacing="0.04em"
+                letterSpacing="0.02em"
               >
                 {seg.label} ({pct}%)
               </text>
