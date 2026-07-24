@@ -8,7 +8,7 @@ import { AcoesRankingTable } from "@/components/bi/AcoesRankingTable";
 import { AcoesClientesTable } from "@/components/bi/AcoesClientesTable";
 import { AcoesDetailTable } from "@/components/bi/AcoesDetailTable";
 import { AcoesKpiGrid } from "@/components/bi/sections/AcoesKpiGrid";
-import { HorizontalBarChart, VerticalBarChart, PieChartWithLabels } from "@/components/bi/charts";
+import { HorizontalBarChart, VerticalBarChart, LineChart, PieChartWithLabels } from "@/components/bi/charts";
 import { CHART_COLORS } from "@/lib/chartTheme";
 import { toISODate, getPreviousPeriod, formatMonthYear } from "@/lib/dateUtils";
 import { buildTipoAcaoBars, TIPO_ACAO_TOP_N } from "@/lib/acoesChartUtils";
@@ -95,12 +95,10 @@ export default function AcoesSection({ active, dateRange }: Props) {
         </ChartCard>
 
         <ChartCard title="Evolucao Mensal de Acoes" description="Quantidade por mes" dataSource="mirror.crm_acoes · aco_dthconclusao→YYYY-MM, COUNT(*)" loading={isLoading}>
-          <VerticalBarChart
-            data={porMes.map((d) => ({ name: formatMonthYear(d.name), acoes: d.acoes }))}
-            keys={["acoes"]}
-            seriesLabels={{ acoes: "Ações" }}
-            title=""
-            colors={[CHART_COLORS[0]]}
+          <LineChart
+            data={porMes.map((d) => ({ x: formatMonthYear(d.name), y: d.acoes }))}
+            seriesName="Ações"
+            color={CHART_COLORS[0]}
           />
         </ChartCard>
 
