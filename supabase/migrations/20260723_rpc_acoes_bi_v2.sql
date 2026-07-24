@@ -26,6 +26,7 @@ BEGIN
       a.aco_tipocontato,
       a.aco_tipoacao,
       a.cli_nome,
+      a.cli_idcliente,
       a.aco_dthconclusao,
       a.aco_dthabertura,
       a.ngo_nronegocio
@@ -103,14 +104,15 @@ BEGIN
       LIMIT 15
     ) sub
   ),
-  -- Por cidade (top 15)
+  -- Por cidade (top 15 — cidade do CLIENTE via crm_carteira_clientes)
   por_cidade AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
-      SELECT emp_cidade AS name, COUNT(*) AS acoes
-      FROM filtered
-      WHERE emp_cidade IS NOT NULL
-      GROUP BY emp_cidade
+      SELECT c.cli_cidade AS name, COUNT(*) AS acoes
+      FROM filtered f
+      JOIN mirror.crm_carteira_clientes c ON f.cli_idcliente = c.cli_idcliente
+      WHERE c.cli_cidade IS NOT NULL AND c.cli_cidade <> ''
+      GROUP BY c.cli_cidade
       ORDER BY COUNT(*) DESC
       LIMIT 15
     ) sub
@@ -167,18 +169,19 @@ BEGIN
       FROM filtered
     ) sub
   ),
-  -- Ranking por vendedor+cidade (top 50)
+  -- Ranking por vendedor+cidade do CLIENTE (top 50)
   por_vendedor_cidade AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
       SELECT
-        aco_vendedor AS vendedor,
-        emp_cidade AS cidade,
+        f.aco_vendedor AS vendedor,
+        c.cli_cidade AS cidade,
         COUNT(*) AS acoes,
-        COUNT(*) FILTER (WHERE LOWER(COALESCE(aco_tipocontato, '')) LIKE '%visita%') AS visitas
-      FROM filtered
-      WHERE aco_vendedor IS NOT NULL AND emp_cidade IS NOT NULL
-      GROUP BY aco_vendedor, emp_cidade
+        COUNT(*) FILTER (WHERE LOWER(COALESCE(f.aco_tipocontato, '')) LIKE '%visita%') AS visitas
+      FROM filtered f
+      JOIN mirror.crm_carteira_clientes c ON f.cli_idcliente = c.cli_idcliente
+      WHERE f.aco_vendedor IS NOT NULL AND c.cli_cidade IS NOT NULL AND c.cli_cidade <> ''
+      GROUP BY f.aco_vendedor, c.cli_cidade
       ORDER BY COUNT(*) DESC
       LIMIT 50
     ) sub
