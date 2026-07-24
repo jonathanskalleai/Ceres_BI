@@ -4,14 +4,14 @@ import type { AcoesDetalheItem } from "@/types/biRpc";
 
 const STATUS_OPTIONS = [
   { value: "", label: "Todos" },
-  { value: "Em Aberto", label: "Em Aberto" },
+  { value: "Em Andamento", label: "Em Aberto" },
   { value: "Ganho", label: "Ganho" },
   { value: "Perdido", label: "Perdido" },
 ] as const;
 
 const STATUS_COLORS: Record<string, string> = {
   "": "border-[var(--voux-card-border)] text-[var(--voux-text-primary)]",
-  "Em Aberto": "border-[var(--voux-champagne-400)] text-[var(--voux-champagne-400)]",
+  "Em Andamento": "border-[var(--voux-champagne-400)] text-[var(--voux-champagne-400)]",
   "Ganho": "border-[#1f6e3f] text-[#1f6e3f]",
   "Perdido": "border-[#b8421c] text-[#b8421c]",
 };
