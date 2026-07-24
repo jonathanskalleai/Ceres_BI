@@ -90,7 +90,7 @@ export function SvgLine({
             <stop
               offset="0%"
               stopColor={series[0].color ?? VOUX_PALETTE[0]}
-              stopOpacity={0.30}
+              stopOpacity={0.40}
             />
             <stop
               offset="100%"

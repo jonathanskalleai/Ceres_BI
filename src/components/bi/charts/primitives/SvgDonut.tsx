@@ -58,7 +58,7 @@ export function SvgDonut({
 
   const cx = width / 2;
   const cy = height / 2;
-  const r = Math.min(cx, cy) - 18;
+  const r = Math.min(cx, cy) - 44;  // extra padding for leader labels
   const rIn = r - thickness;
   const total = data.reduce((a, d) => a + d.value, 0);
 
@@ -68,9 +68,15 @@ export function SvgDonut({
     const a1 = a0 + frac * Math.PI * 2;
     const path = arcPath(cx, cy, r, rIn, a0, a1);
     const color = d.color ?? VOUX_PALETTE[i % VOUX_PALETTE.length];
+    const midAngle = (a0 + a1) / 2;
     a0 = a1;
-    return { path, color, label: d.label, value: d.value };
+    return { path, color, label: d.label, value: d.value, midAngle, frac };
   });
+
+  // Leader line geometry
+  const leaderR1 = r + 6;   // start just outside arc
+  const leaderR2 = r + 20;  // elbow point
+  const labelR = r + 24;    // text anchor point
 
   return (
     <>
@@ -91,6 +97,43 @@ export function SvgDonut({
             style={{ cursor: "pointer" }}
           />
         ))}
+
+        {/* Leader lines + external labels */}
+        {segments.map((seg, i) => {
+          // Skip tiny slices (<3%) to avoid clutter
+          if (seg.frac < 0.03) return null;
+          const cos = Math.cos(seg.midAngle);
+          const sin = Math.sin(seg.midAngle);
+          const x1 = cx + cos * leaderR1;
+          const y1 = cy + sin * leaderR1;
+          const x2 = cx + cos * leaderR2;
+          const y2 = cy + sin * leaderR2;
+          const xText = cx + cos * labelR;
+          const yText = cy + sin * labelR;
+          const anchor = cos >= 0 ? "start" : "end";
+          const pct = total > 0 ? ((seg.value / total) * 100).toFixed(0) : "0";
+          return (
+            <g key={`leader-${i}`}>
+              <line
+                x1={x1} y1={y1} x2={x2} y2={y2}
+                stroke={seg.color}
+                strokeWidth={1}
+                opacity={0.7}
+              />
+              <text
+                x={xText}
+                y={yText + 3}
+                textAnchor={anchor}
+                fontFamily="var(--voux-font-mono)"
+                fontSize={9}
+                fill="var(--voux-text-muted)"
+                letterSpacing="0.04em"
+              >
+                {seg.label} ({pct}%)
+              </text>
+            </g>
+          );
+        })}
 
         {centerLabel && (
           <text
@@ -120,49 +163,6 @@ export function SvgDonut({
           </text>
         )}
       </svg>
-
-      {/* HTML legend below the donut */}
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "6px 14px",
-          marginTop: 8,
-          justifyContent: "center",
-        }}
-      >
-        {segments.map((seg, i) => (
-          <div
-            key={i}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              fontFamily: "var(--voux-font-mono)",
-              fontSize: 10,
-              color: "var(--voux-text-muted)",
-              fontWeight: 400,
-              letterSpacing: "0.04em",
-            }}
-          >
-            <span
-              style={{
-                display: "inline-block",
-                width: 8,
-                height: 8,
-                borderRadius: "50%",
-                backgroundColor: seg.color,
-                opacity: 0.92,
-                flexShrink: 0,
-              }}
-            />
-            <span>{seg.label}</span>
-            <span style={{ color: VOUX_COLORS.ink, marginLeft: 2 }}>
-              {fmt(seg.value)}
-            </span>
-          </div>
-        ))}
-      </div>
     </>
   );
 }
