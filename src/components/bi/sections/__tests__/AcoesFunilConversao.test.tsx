@@ -43,7 +43,9 @@ describe("AcoesFunilConversao", () => {
       />,
     );
     expect(screen.getByRole("alert")).toBeInTheDocument();
-    expect(screen.getByText(/PGRST202/)).toBeInTheDocument();
+    // a mensagem amigavel e sempre visivel; o detalhe tecnico e gateado pelo
+    // BI DEBUG e tem cobertura propria em BiGestaoErro.test.tsx
+    expect(screen.getByText(/a consulta falhou/)).toBeInTheDocument();
     // o funil NAO pode ser renderizado com zeros quando a consulta falhou
     expect(screen.queryByText("Visitas")).toBeNull();
   });

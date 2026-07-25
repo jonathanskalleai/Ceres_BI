@@ -1,5 +1,6 @@
 import { useState, useSyncExternalStore } from "react";
 import { biDebug, type BiDebugEntry } from "./biDebugStore";
+import { isBiDebugEnabled } from "./isBiDebugEnabled";
 import { useNegociosFilter } from "@/contexts/NegociosFilterContext";
 import { getFunisByCategoria, CATEGORIA_ALL, FUNIL_ALL } from "@/lib/categoriaFunil";
 
@@ -10,11 +11,7 @@ import { getFunisByCategoria, CATEGORIA_ALL, FUNIL_ALL } from "@/lib/categoriaFu
  * Activation: import.meta.env.DEV || localStorage.getItem("bi_debug") === "true"
  */
 export default function BiDebugOverlay() {
-  const isEnabled =
-    import.meta.env.DEV ||
-    (typeof localStorage !== "undefined" && localStorage.getItem("bi_debug") === "true");
-
-  if (!isEnabled) return null;
+  if (!isBiDebugEnabled()) return null;
 
   return <OverlayContent />;
 }

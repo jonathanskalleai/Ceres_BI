@@ -1,8 +1,38 @@
+import { useMemo } from "react";
 import { CircleMarker, Popup, Tooltip as LTooltip } from "react-leaflet";
+import { useTheme } from "@/hooks/useTheme";
 import { formatCurrency, type OportunidadePoint } from "./types";
 
 /** Dias sem acao a partir dos quais o pino vira alerta visual. */
 const PARADO_ALERTA_DIAS = 90;
+
+/**
+ * Fallbacks = valor atual das vars no `index.css`. So entram em cena antes do
+ * CSS aplicar (ou em ambiente sem DOM); um pino champagne levemente fora do
+ * tema e infinitamente melhor que a bolinha preta do default do canvas.
+ */
+const FALLBACK_ALERTA = "#b83a28"; // --voux-danger
+const FALLBACK_NORMAL = "#d4b896"; // --voux-champagne-400
+
+/**
+ * Resolve uma CSS custom property para o valor COMPUTADO (hex).
+ *
+ * O `CircleMarker` do Leaflet com `preferCanvas` desenha via
+ * `ctx.fillStyle`/`strokeStyle`, e **Canvas 2D nao resolve `var()`**: a
+ * atribuicao e descartada em silencio e o contexto fica no default `#000000`.
+ * Passar "var(--voux-danger)" aqui pintava TODOS os pinos de preto — e o
+ * rodape do card seguia prometendo "vermelho = 90+ dias sem acao", ou seja,
+ * uma legenda que a tela nao entregava. Em BI, afirmacao falsa e pior que
+ * omissao. (Os modos com `divIcon` nao passam por isso: la e DOM, e o browser
+ * resolve a var normalmente.)
+ *
+ * `getPropertyValue` devolve com espaco a esquerda — o `.trim()` nao e enfeite.
+ */
+function resolveCssVar(nome: string, fallback: string): string {
+  if (typeof window === "undefined" || typeof document === "undefined") return fallback;
+  const valor = getComputedStyle(document.documentElement).getPropertyValue(nome).trim();
+  return valor || fallback;
+}
 
 /** Raio por faixa de valor — o negocio grande precisa saltar no mapa. */
 function raio(valor: number | null): number {
@@ -10,12 +40,6 @@ function raio(valor: number | null): number {
   if (valor >= 500_000) return 9;
   if (valor >= 100_000) return 7;
   return 5;
-}
-
-function cor(diasParado: number | null): string {
-  return diasParado != null && diasParado >= PARADO_ALERTA_DIAS
-    ? "var(--voux-danger)"
-    : "var(--voux-champagne-400)";
 }
 
 function labelDias(diasParado: number | null): string {
@@ -31,6 +55,33 @@ function labelDias(diasParado: number | null): string {
  * so vale para camadas vetoriais — divIcon continuaria sendo DOM.
  */
 export function OportunidadeMarkers({ oportunidades }: { oportunidades: OportunidadePoint[] }) {
+  // Resolvido NO RENDER, com o tema como gatilho de re-resolucao — nunca numa
+  // constante de modulo, que congelaria a cor do primeiro tema carregado.
+  //
+  // Medido hoje (2026-07-25) no browser: alternar para dark NAO muda o valor
+  // computado de `--voux-danger` (segue #b83a28). O override dark existe em
+  // `index.css:199`, mas dentro de `@layer base`, enquanto o `:root` da linha 32
+  // e NAO-layered — e regra sem layer sempre vence regra em layer. Ou seja: hoje
+  // o gatilho nao dispara mudanca de cor nenhuma, e nao foi possivel verificar o
+  // repintar em runtime. Isso e um defeito PRE-EXISTENTE de camada de CSS, que
+  // afeta a aplicacao inteira e nao so o mapa — corrigi-lo aqui mudaria cores de
+  // outras telas, entao fica reportado, nao consertado de carona.
+  // A dependencia continua porque custa zero e passa a funcionar sozinha no dia
+  // em que a camada for arrumada.
+  const { isDark } = useTheme();
+  const cores = useMemo(() => {
+    // `isDark` nao entra na conta: ele E a conta. O que muda com o tema e o
+    // valor COMPUTADO da var, que so o getComputedStyle abaixo enxerga.
+    void isDark;
+    return {
+      alerta: resolveCssVar("--voux-danger", FALLBACK_ALERTA),
+      normal: resolveCssVar("--voux-champagne-400", FALLBACK_NORMAL),
+    };
+  }, [isDark]);
+
+  const cor = (diasParado: number | null): string =>
+    diasParado != null && diasParado >= PARADO_ALERTA_DIAS ? cores.alerta : cores.normal;
+
   return (
     <>
       {oportunidades.map((o) => (
