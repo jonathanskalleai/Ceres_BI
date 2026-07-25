@@ -15,6 +15,7 @@ export * from "./bi/pedidos";
 export * from "./bi/servicos";
 export * from "./bi/admin";
 export * from "./bi/acoes";
+export * from "./bi/acoesGestao";
 export * from "./bi/inteligencia";
 export * from "./bi/parque";
 export * from "./bi/etl";

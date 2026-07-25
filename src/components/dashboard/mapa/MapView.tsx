@@ -1,7 +1,8 @@
 import { MapPin, Users, Maximize2, Minimize2, X } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Popup, Tooltip as LTooltip } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { MONO, MapRegion, ClientePoint, MapViewMode, createPinIcon, formatCurrency } from "./types";
+import { MONO, MapRegion, ClientePoint, MapViewMode, OportunidadePoint, createPinIcon, formatCurrency } from "./types";
+import { OportunidadeMarkers } from "./OportunidadeMarkers";
 
 interface MapViewProps {
   mapView: MapViewMode;
@@ -12,6 +13,19 @@ interface MapViewProps {
   fullscreen: boolean;
   toggleFullscreen: () => void;
   onRegionClick: (r: MapRegion) => void;
+  /**
+   * Pinos do modo `oportunidades` (/bi/acoes). Opcional: `DashboardMapa` nao
+   * passa e continua funcionando exatamente como antes.
+   */
+  oportunidades?: OportunidadePoint[];
+  /**
+   * Renderizacao vetorial em canvas. Necessario no modo `oportunidades`
+   * (~2.240 CircleMarkers); sem efeito nos modos com divIcon, que sao DOM.
+   */
+  preferCanvas?: boolean;
+  /** Esconde o seletor clientes|regioes quando o mapa tem um modo unico. */
+  hideModeSwitch?: boolean;
+  zoom?: number;
 }
 
 function MapMarkers({
@@ -19,7 +33,12 @@ function MapMarkers({
   clientePoints,
   regions,
   onRegionClick,
-}: Pick<MapViewProps, "mapView" | "clientePoints" | "regions" | "onRegionClick">) {
+  oportunidades,
+}: Pick<MapViewProps, "mapView" | "clientePoints" | "regions" | "onRegionClick" | "oportunidades">) {
+  if (mapView === "oportunidades") {
+    return <OportunidadeMarkers oportunidades={oportunidades ?? []} />;
+  }
+
   if (mapView === "clientes") {
     return (
       <>
@@ -79,6 +98,10 @@ export const MapView = ({
   fullscreen,
   toggleFullscreen,
   onRegionClick,
+  oportunidades,
+  preferCanvas = false,
+  hideModeSwitch = false,
+  zoom = 7,
 }: MapViewProps) => {
   return (
     <>
@@ -87,12 +110,12 @@ export const MapView = ({
         className="relative overflow-hidden rounded-[20px] border border-[var(--voux-card-border)] shadow-[var(--voux-card-shadow)]"
         style={{ height: 520 }}
       >
-        <MapContainer key={`inline-${mapView}`} center={center} zoom={7} style={{ height: "100%", width: "100%" }} scrollWheelZoom>
+        <MapContainer key={`inline-${mapView}`} center={center} zoom={zoom} preferCanvas={preferCanvas} style={{ height: "100%", width: "100%" }} scrollWheelZoom>
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          <MapMarkers mapView={mapView} clientePoints={clientePoints} regions={regions} onRegionClick={onRegionClick} />
+          <MapMarkers mapView={mapView} clientePoints={clientePoints} regions={regions} onRegionClick={onRegionClick} oportunidades={oportunidades} />
         </MapContainer>
 
         <button
@@ -125,6 +148,10 @@ export const MapView = ({
           center={center}
           toggleFullscreen={toggleFullscreen}
           onRegionClick={onRegionClick}
+          oportunidades={oportunidades}
+          preferCanvas={preferCanvas}
+          hideModeSwitch={hideModeSwitch}
+          zoom={zoom}
         />
       )}
     </>
@@ -139,6 +166,10 @@ function FullscreenOverlay({
   center,
   toggleFullscreen,
   onRegionClick,
+  oportunidades,
+  preferCanvas = false,
+  hideModeSwitch = false,
+  zoom = 7,
 }: Omit<MapViewProps, "fullscreen">) {
   return (
     <div className="fixed inset-0 z-[9999] flex flex-col" style={{ background: "var(--voux-card-to)" }}>
@@ -148,11 +179,15 @@ function FullscreenOverlay({
           <MapPin className="h-4 w-4 text-[var(--voux-accent)]" />
           <span className="text-[var(--voux-text-primary)] font-semibold text-sm">Mapa de Ações Comerciais</span>
           <span className="text-[var(--voux-text-faint)] text-[10px]" style={MONO}>
-            {mapView === "clientes" ? `${clientePoints.length} clientes` : `${regions.length} regiões`}
+            {mapView === "oportunidades"
+              ? `${(oportunidades ?? []).length} oportunidades`
+              : mapView === "clientes"
+                ? `${clientePoints.length} clientes`
+                : `${regions.length} regiões`}
           </span>
         </div>
         <div className="flex items-center gap-2">
-          {(["clientes", "regioes"] as const).map((view) => {
+          {!hideModeSwitch && (["clientes", "regioes"] as const).map((view) => {
             const active = mapView === view;
             const Icon = view === "clientes" ? Users : MapPin;
             return (
@@ -196,12 +231,12 @@ function FullscreenOverlay({
 
       {/* Full-height map */}
       <div className="flex-1 relative">
-        <MapContainer key={`fs-${mapView}`} center={center} zoom={7} style={{ height: "100%", width: "100%" }} scrollWheelZoom>
+        <MapContainer key={`fs-${mapView}`} center={center} zoom={zoom} preferCanvas={preferCanvas} style={{ height: "100%", width: "100%" }} scrollWheelZoom>
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          <MapMarkers mapView={mapView} clientePoints={clientePoints} regions={regions} onRegionClick={onRegionClick} />
+          <MapMarkers mapView={mapView} clientePoints={clientePoints} regions={regions} onRegionClick={onRegionClick} oportunidades={oportunidades} />
         </MapContainer>
       </div>
     </div>

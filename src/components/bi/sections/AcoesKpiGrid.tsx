@@ -1,7 +1,8 @@
-import { ClipboardList, MapPin, Users, Eye, UserCheck, Tag, Clock, Wallet, Trophy, XCircle, AlertTriangle } from "lucide-react";
+import { ClipboardList, MapPin, Users, Eye, UserCheck, Tag, Clock, Wallet, Trophy, XCircle, AlertTriangle, Target, Gauge, PauseCircle } from "lucide-react";
 import { KPICard } from "@/components/bi/KPICard";
 import { calcTrend } from "@/lib/dateUtils";
-import type { AcoesBIKpis } from "@/types/biRpc";
+import { funilRatios, fmtRatio, DASH } from "@/lib/bi/acoesGestaoUtils";
+import type { AcoesBIKpis, AcoesDiasParados, AcoesFunil } from "@/types/biRpc";
 
 /**
  * Semantica compartilhada pelos 3 cards de valor. Explicita de proposito:
@@ -20,6 +21,54 @@ interface Props {
   kpis: AcoesBIKpis;
   kpisPrev: AcoesBIKpis;
   loading?: boolean;
+  /**
+   * Numeros de gestao (rpc_acoes_funil_gestao). Absorvidos NESTA faixa de KPI
+   * de proposito: uma segunda faixa logo abaixo empurraria os graficos para
+   * fora da dobra e ninguem leria nem uma nem outra.
+   */
+  funil?: AcoesFunil;
+  diasParados?: AcoesDiasParados;
+  gestaoLoading?: boolean;
+}
+
+/**
+ * KPIs de gestao comercial (pedido 7 + E6).
+ *
+ * `diasParados` usa MEDIANA, nao media: a distribuicao tem cauda longa e a
+ * media seria puxada por negocios abandonados ha anos. E o unico indicador da
+ * tela que aponta receita JA levantada e parada.
+ */
+function GestaoKpis({ funil, diasParados, loading }: { funil?: AcoesFunil; diasParados?: AcoesDiasParados; loading?: boolean }) {
+  const ratios = funil ? funilRatios(funil) : null;
+  const mediana = diasParados?.mediana;
+
+  return (
+    <>
+      <KPICard
+        title="Oportunidades Levantadas"
+        value={funil ? num(funil.oportunidades) : DASH}
+        icon={Target}
+        loading={loading}
+        hint={funil ? `${num(funil.ganhos)} fechadas ate agora` : undefined}
+        dataSource="rpc_acoes_funil_gestao · negocios comerciais DISTINTOS tocados por acao no periodo (dedup por ngo_numero)" />
+
+      <KPICard
+        title="Visitas por Oportunidade"
+        value={fmtRatio(ratios?.visitasPorOportunidade ?? null)}
+        icon={Gauge}
+        loading={loading}
+        hint="quanto esforco custa levantar 1 negocio"
+        dataSource="rpc_acoes_funil_gestao · visitas / oportunidades no periodo · '—' quando nao ha oportunidade (divisao por zero, nao zero)" />
+
+      <KPICard
+        title="Dias Parados (mediana)"
+        value={mediana != null ? `${num(mediana)} dias` : DASH}
+        icon={PauseCircle}
+        loading={loading}
+        hint={diasParados ? `${num(diasParados.negociosAbertos)} negocios abertos` : undefined}
+        dataSource="rpc_acoes_funil_gestao · MEDIANA de dias desde a ultima acao em negocio comercial 'Em Andamento' — mediana, nao media: a distribuicao tem cauda longa" />
+    </>
+  );
 }
 
 /**
@@ -53,7 +102,7 @@ function StatusDesconhecidoAlert({ kpis }: { kpis: AcoesBIKpis }) {
 }
 
 /** Grid de KPIs da tela /bi/acoes — extraida de AcoesSection para conter o tamanho do arquivo. */
-export function AcoesKpiGrid({ kpis, kpisPrev, loading }: Props) {
+export function AcoesKpiGrid({ kpis, kpisPrev, loading, funil, diasParados, gestaoLoading }: Props) {
   return (
     <div className="space-y-4">
       <StatusDesconhecidoAlert kpis={kpis} />
@@ -104,6 +153,8 @@ export function AcoesKpiGrid({ kpis, kpisPrev, loading }: Props) {
         rawValue={kpis.valorPerdido}
         hint={`${num(kpis.negociosPerdido)} negocios`}
         dataSource={`${VALOR_BASE} · recorte: Perdido`} />
+
+      <GestaoKpis funil={funil} diasParados={diasParados} loading={gestaoLoading} />
       </div>
     </div>
   );

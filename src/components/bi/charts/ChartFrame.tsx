@@ -33,8 +33,17 @@ export function ChartFrame({
   if (loading) {
     return (
       <div
-        className={`w-full animate-pulse bg-foreground/5 ${rounded === "full" ? "rounded-full mx-auto" : "rounded-lg"}`}
-        style={rounded === "full" ? { ...style, maxWidth: height } : style}
+        // `var(--voux-skeleton)`, NAO `bg-foreground/5`: 5% de opacidade sobre
+        // o fundo escuro e indistinguivel do card, e o sintoma que chega ao
+        // usuario e "o grafico veio vazio" quando ele so esta carregando —
+        // defeito ja diagnosticado neste projeto (ChartCard e BiTableCard ja
+        // usam a versao correta; este frame tinha ficado para tras).
+        className={`w-full animate-pulse ${rounded === "full" ? "rounded-full mx-auto" : "rounded-lg"}`}
+        style={
+          rounded === "full"
+            ? { ...style, maxWidth: height, background: "var(--voux-skeleton)" }
+            : { ...style, background: "var(--voux-skeleton)" }
+        }
         aria-hidden="true"
       />
     );

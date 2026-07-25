@@ -23,7 +23,29 @@ export interface ClientePoint {
   totalAcoes: number;
 }
 
-export type MapViewMode = "clientes" | "regioes";
+/**
+ * Um pino de oportunidade aberta (/bi/acoes). Tipo proprio, e nao reuso de
+ * `ClientePoint`, porque a unidade e o NEGOCIO — o mesmo cliente pode ter
+ * varios negocios abertos, cada um com valor, etapa e tempo parado diferentes.
+ */
+export interface OportunidadePoint {
+  negocio: string;
+  cliente: string | null;
+  cidade: string | null;
+  etapa: string | null;
+  valor: number | null;
+  consultor: string | null;
+  lat: number;
+  lng: number;
+  /** NULL quando o negocio nunca teve acao registrada — nao renderizar "null dias". */
+  diasParado: number | null;
+}
+
+/**
+ * Modos do mapa. `oportunidades` foi ACRESCENTADO sem tocar nos dois
+ * existentes: `DashboardMapa` continua alternando so entre clientes|regioes.
+ */
+export type MapViewMode = "clientes" | "regioes" | "oportunidades";
 
 // ─── Shared constants ──────────────────────────────────────────────────────
 

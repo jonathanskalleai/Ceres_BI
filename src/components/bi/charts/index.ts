@@ -25,6 +25,11 @@ export {
   type BrazilHeatmapProps,
 } from "./BrazilHeatmap";
 export {
+  default as ScatterChart,
+  type ScatterChartProps,
+  type ScatterPoint,
+} from "./ScatterChart";
+export {
   default as ComboChart,
   type ComboChartData,
   type ComboChartProps,

@@ -14,6 +14,10 @@ interface ChartCardProps {
   children: ReactNode;
   label?: string;
   dataSource?: string;
+  /** Slot a direita do titulo (chips de filtro, toggle, contador). */
+  actions?: ReactNode;
+  /** Rodape do card — legendas/ressalvas que nao podem sumir do grafico. */
+  footer?: ReactNode;
 }
 
 export function ChartCard({
@@ -26,6 +30,8 @@ export function ChartCard({
   children,
   label,
   dataSource,
+  actions,
+  footer,
 }: ChartCardProps) {
   const [showDataSource, setShowDataSource] = useState(false);
 
@@ -100,6 +106,7 @@ export function ChartCard({
             </p>
           )}
         </div>
+        {actions && <div className="shrink-0">{actions}</div>}
       </div>
 
       {/* Content */}
@@ -111,6 +118,7 @@ export function ChartCard({
             {children}
           </div>
         )}
+        {footer && <div className="mt-3 border-t border-[var(--voux-card-border)] pt-3">{footer}</div>}
       </div>
     </div>
   );

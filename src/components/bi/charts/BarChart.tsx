@@ -34,6 +34,14 @@ export interface BarChartProps {
   tooltipFormatter?: (value: number, datum?: BarChartData) => string;
   groupMode?: "grouped" | "stacked";
   onBarClick?: (datum: BarChartData, index: number) => void;
+  /**
+   * Conteudo HTML do tooltip, quando o rotulo da barra nao basta para explicar
+   * o dado (ex: ranking com 4 metricas por consultor). Separado de
+   * `tooltipFormatter` de proposito: aquele tambem formata o rotulo DENTRO do
+   * SVG, onde HTML apareceria como texto literal.
+   * O chamador e responsavel por escapar o que vier de dados.
+   */
+  tooltipContentFormatter?: (datum: BarChartData, value: number, keyLabel: string) => string;
 }
 
 // ── Main component ─────────────────────────────────────────────────────────────
@@ -49,6 +57,7 @@ export default function BarChart({
   tooltipFormatter,
   groupMode = "grouped",
   onBarClick,
+  tooltipContentFormatter,
 }: BarChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const width = useContainerWidth(containerRef as React.RefObject<HTMLElement>);
@@ -73,9 +82,12 @@ export default function BarChart({
       const datum = data[di];
       const formatted = fmt(value, datum);
       const keyLabel = seriesLabels?.[key] ?? key;
-      setTooltip({ visible: true, x, y, content: buildTooltipContent(keyLabel, label, formatted) });
+      const content = tooltipContentFormatter && datum
+        ? tooltipContentFormatter(datum, value, keyLabel)
+        : buildTooltipContent(keyLabel, label, formatted);
+      setTooltip({ visible: true, x, y, content });
     },
-    [data, fmt, seriesLabels],
+    [data, fmt, seriesLabels, tooltipContentFormatter],
   );
 
   const handleBarLeave = useCallback(
