@@ -58,16 +58,22 @@ export function OportunidadeMarkers({ oportunidades }: { oportunidades: Oportuni
   // Resolvido NO RENDER, com o tema como gatilho de re-resolucao — nunca numa
   // constante de modulo, que congelaria a cor do primeiro tema carregado.
   //
-  // Medido hoje (2026-07-25) no browser: alternar para dark NAO muda o valor
-  // computado de `--voux-danger` (segue #b83a28). O override dark existe em
-  // `index.css:199`, mas dentro de `@layer base`, enquanto o `:root` da linha 32
-  // e NAO-layered — e regra sem layer sempre vence regra em layer. Ou seja: hoje
-  // o gatilho nao dispara mudanca de cor nenhuma, e nao foi possivel verificar o
-  // repintar em runtime. Isso e um defeito PRE-EXISTENTE de camada de CSS, que
-  // afeta a aplicacao inteira e nao so o mapa — corrigi-lo aqui mudaria cores de
-  // outras telas, entao fica reportado, nao consertado de carona.
-  // A dependencia continua porque custa zero e passa a funcionar sozinha no dia
-  // em que a camada for arrumada.
+  // RESSALVA MEDIDA no CSS buildado (2026-07-25): hoje o gatilho nao muda cor
+  // nenhuma, porque `--voux-danger` nao muda com o tema. Mecanismo real:
+  //   - o bundle tem ZERO `@layer` (`grep -c '@layer' dist/assets/*.css` -> 0):
+  //     em Tailwind 3, `@layer base` e diretiva do proprio Tailwind, nao cascade
+  //     layer nativa — o PostCSS remove e ica o conteudo para a posicao do
+  //     `@tailwind base`;
+  //   - depois do icamento, `.dark` cai no byte 29581 e o `:root` nao-layered no
+  //     75555. `:root` e `.dark` tem especificidade IDENTICA (0,1,0), entao quem
+  //     decide e a ORDEM DE ORIGEM — e o `:root` vem depois. Ele vence.
+  // Alcance exato: 2 tokens, `--voux-danger` e `--voux-success` (os unicos
+  // declarados nos dois blocos com valores diferentes). NAO e a aplicacao
+  // inteira, como eu havia escrito antes de medir.
+  // Fica reportado, nao consertado de carona: mexer na ordem/estrutura do
+  // index.css mudaria cor de outras telas e merece demanda propria.
+  // A dependencia de tema continua porque custa zero e passa a funcionar
+  // sozinha no dia em que o index.css for arrumado.
   const { isDark } = useTheme();
   const cores = useMemo(() => {
     // `isDark` nao entra na conta: ele E a conta. O que muda com o tema e o

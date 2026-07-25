@@ -1,6 +1,7 @@
 import { type ReactNode } from "react";
 import { AlertTriangle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { isBiDebugEnabled } from "@/components/bi/debug/isBiDebugEnabled";
 
 const CARD = "rounded-xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4";
 
@@ -89,7 +90,14 @@ export function BiTableCard({
               A consulta falhou — o que voce ve abaixo NAO e "nenhum registro no periodo". Recarregue a
               pagina; se persistir, avise o time de dados.
             </p>
-            <p className="mt-1 font-mono text-[11px] text-[var(--voux-text-muted)] break-all">{error.message}</p>
+            {/* Mesmo gate do BiGestaoErro: `error.message` carrega o prefixo
+                [biRpcService.fetchX] e nomes de funcao/parametro de banco —
+                reconhecimento de graca para quem estiver do outro lado
+                (security-standards #6). Detalhe tecnico so com o BI DEBUG
+                ligado; a mensagem amigavel acima e sempre visivel. */}
+            {isBiDebugEnabled() && (
+              <p className="mt-1 font-mono text-[11px] text-[var(--voux-text-muted)] break-all">{error.message}</p>
+            )}
           </div>
         </div>
       </div>
