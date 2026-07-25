@@ -3,6 +3,7 @@ import { ChartCard } from "@/components/bi/ChartCard";
 import { ChipToggle, type ChipOption } from "@/components/bi/ChipToggle";
 import { BiGestaoErro } from "@/components/bi/BiGestaoErro";
 import { HorizontalBarChart, type BarChartData } from "@/components/bi/charts";
+import { tooltipRow, tooltipTitle } from "@/components/bi/charts/barChartHelpers";
 import { CHART_COLORS } from "@/lib/chartTheme";
 import { fmtBRL, fmtNum } from "@/lib/formatters";
 import {
@@ -21,27 +22,18 @@ const CRITERIO_OPTIONS: readonly ChipOption<RankingCriterio>[] = RANKING_CRITERI
   label: RANKING_CRITERIO_LABEL[c],
 }));
 
-/** Escapa dado do banco antes de virar HTML do tooltip (o container usa innerHTML). */
-function escapeHtml(s: string): string {
-  return s.replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] ?? c,
-  );
-}
-
 /**
  * Tooltip com os 4 numeros SEMPRE, independente do criterio ordenado. Ver so a
  * metrica escolhida esconde o caso que importa: 615 visitas com 0 fechamentos.
  */
 function buildTooltip(datum: BarChartData): string {
-  const linha = (label: string, valor: string) =>
-    `<div style="display:flex;justify-content:space-between;gap:14px"><span style="color:var(--voux-tooltip-muted)">${label}</span><span>${valor}</span></div>`;
   return [
-    `<div style="font-size:12px;margin-bottom:5px"><strong>${escapeHtml(String(datum.name))}</strong></div>`,
-    linha("Visitas", fmtNum(Number(datum.visitas ?? 0))),
-    linha("Oportunidades", fmtNum(Number(datum.oportunidades ?? 0))),
-    linha("Fechamentos", fmtNum(Number(datum.ganhos ?? 0))),
-    linha("Valor ganho", fmtBRL(Number(datum.valorGanho ?? 0))),
-    linha("Conversao", String(datum.taxaLabel ?? "—")),
+    tooltipTitle(String(datum.name)),
+    tooltipRow("Visitas", fmtNum(Number(datum.visitas ?? 0))),
+    tooltipRow("Oportunidades", fmtNum(Number(datum.oportunidades ?? 0))),
+    tooltipRow("Fechamentos", fmtNum(Number(datum.ganhos ?? 0))),
+    tooltipRow("Valor ganho", fmtBRL(Number(datum.valorGanho ?? 0))),
+    tooltipRow("Conversao", String(datum.taxaLabel ?? "—")),
     `<div style="margin-top:5px;font-size:9px;color:var(--voux-tooltip-muted);max-width:230px;white-space:normal">Visitas/oportunidades por quem EXECUTOU a acao; fechamentos/valor por quem o negocio PERTENCE.</div>`,
   ].join("");
 }

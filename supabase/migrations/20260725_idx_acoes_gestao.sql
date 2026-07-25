@@ -1,0 +1,95 @@
+-------------------------------------------------------------------------------
+-- Indices para as RPCs de gestao comercial (/bi/acoes) — 20260725.
+--
+-- ###########################################################################
+-- ESTA MIGRATION NAO CRIA NENHUM INDICE. E DELIBERADO.
+-- ###########################################################################
+--
+-- O plano previa dois indices. Os dois foram MEDIDOS no banco vivo antes de
+-- serem escritos, e os dois cairam. Indice que o planner nunca escolhe nao e
+-- neutro: ocupa disco, e reescrito a cada INSERT/UPDATE do ETL (que ja e o
+-- gargalo conhecido deste projeto, ~6,5ms/row) e cria a ILUSAO de que a query
+-- foi otimizada. Este arquivo existe para registrar a evidencia — para que a
+-- proxima pessoa nao "reintroduza a melhoria que faltou".
+--
+-- ===========================================================================
+-- 1) crm_negocios(ngo_numero) — REJEITADO: JA EXISTE
+-- ===========================================================================
+--   idx_crm_negocios_numero  btree (ngo_numero)  — 320 kB, 137.102 scans.
+-- E o indice mais usado da tabela. Criar de novo com outro nome seria um
+-- terceiro duplicado (vide item 4).
+--
+-- ===========================================================================
+-- 2) crm_negocios(ngo_conclusao, ngo_funil) — REJEITADO: SELETIVIDADE 64%
+-- ===========================================================================
+-- Distribuicao medida de ngo_conclusao em mirror.crm_negocios (4.827 rows):
+--     Em Andamento  3.098  (64,2%)
+--     Ganho           901  (18,7%)
+--     Perdido         828  (17,2%)
+--
+-- O predicado que este indice serviria e justamente ngo_conclusao =
+-- 'Em Andamento' — 64% da tabela. Nenhum planner troca um seq scan por index
+-- scan que retorna 2 de cada 3 linhas; o custo de acesso aleatorio perde.
+--
+-- Alem disso, e o argumento decisivo: nas 3 RPCs o filtro por conclusao/funil
+-- e aplicado DEPOIS do `DISTINCT ON (ngo_numero)`, que precisa varrer a tabela
+-- inteira de qualquer forma (crm_negocios esta no grao negocio x produto).
+-- O indice nao teria nem onde ser aplicado. Custo medido do dedup completo:
+--     Seq Scan 5,9ms -> Sort 17,1ms -> Unique  = 19,8ms total.
+-- Otimizar 19,8ms dentro de um orcamento de 150ms nao paga o custo de escrita
+-- no ETL.
+--
+-- ===========================================================================
+-- 3) Indice parcial em crm_acoes para as coordenadas — AVALIADO E REJEITADO
+-- ===========================================================================
+-- Candidato: (cli_idcliente, aco_dthconclusao DESC) WHERE aco_lat ~ '...'
+-- para evitar o sort de 23.249 linhas no DISTINCT ON do mapa (211ms medidos).
+--
+-- Rejeitado por trade-off explicito: o scan retorna 23.249 de 40.365 acoes
+-- (57%) — de novo fora da faixa em que um indice ganha. E o mapa e o unico
+-- bloco COLAPSADO por padrao (E5): ele roda sob demanda, poucas vezes por
+-- sessao, enquanto o ETL escreve em crm_acoes a cada 15 minutos. Encarecer o
+-- caminho quente para acelerar o caminho frio e o trade errado.
+--
+-- ===========================================================================
+-- 4) ACHADO NAO SOLICITADO — indices DUPLICADOS em mirror.crm_acoes
+-- ===========================================================================
+-- Encontrados durante a medicao. NAO removidos aqui: DROP INDEX e destrutivo
+-- e exige decisao explicita do usuario (agent-conduct: nunca deletar sem
+-- perguntar). Registrado para virar demanda propria via /aivoux/router.
+--
+--   idx_acoes_ngo_nro_negocio  btree (ngo_nronegocio)  816 kB   27.903 scans
+--   idx_acoes_ngo_nronegocio   btree (ngo_nronegocio)  832 kB   13.223 scans
+--     -> definicao IDENTICA, so o nome difere. O planner alterna entre os dois
+--        (por isso ambos tem scans > 0). Um deles e puro desperdicio: ~832 kB
+--        e uma escrita extra por row em TODO INSERT do ETL.
+--
+--   idx_acoes_tipocontato      btree (aco_tipocontato) 536 kB  342.763 scans
+--   idx_acoes_tipo_contato     btree (aco_tipocontato) 536 kB        0 scans
+--     -> idem, e aqui o veredito e inequivoco: ZERO scans desde o ultimo reset
+--        das estatisticas. Indice morto sendo mantido pelo ETL a cada insert.
+--
+-- Se e quando o usuario autorizar, a limpeza e (rodar UM de cada par):
+--   -- DROP INDEX mirror.idx_acoes_ngo_nronegocio;
+--   -- DROP INDEX mirror.idx_acoes_tipo_contato;
+--
+-- ===========================================================================
+-- PERFORMANCE MEDIDA DAS 3 RPCs (banco vivo, 2026-07-25, sem indice novo)
+-- ===========================================================================
+--   rpc_acoes_funil_gestao(ano corrente)      70-85 ms   (orcamento 150 ms) OK
+--   rpc_acoes_funil_gestao(sem janela)          141 ms   (orcamento 150 ms) OK
+--   rpc_acoes_funil_gestao(+ p_vendedor)         31 ms                      OK
+--   rpc_acoes_gestao_listas('sem_contato')      224 ms   (orcamento 300 ms) OK
+--   rpc_acoes_gestao_listas('desperdicio')       81 ms   (orcamento 300 ms) OK
+--   rpc_acoes_gestao_listas('negativas')         44 ms   (orcamento 300 ms) OK
+--   rpc_acoes_mapa_oportunidades()              307 ms   (bloco colapsado)  OK
+--
+-- Query de auditoria para revisitar a decisao quando o volume crescer (se
+-- crm_negocios passar de ~50k rows ou crm_acoes de ~500k, reavaliar o item 2):
+--   SELECT relname, n_live_tup, pg_size_pretty(pg_total_relation_size(oid))
+--   FROM pg_class c JOIN pg_stat_user_tables t ON t.relid = c.oid
+--   WHERE t.schemaname = 'mirror' AND relname IN ('crm_acoes','crm_negocios');
+-------------------------------------------------------------------------------
+
+-- Intencionalmente sem DDL. Ver justificativa acima.
+SELECT 1;

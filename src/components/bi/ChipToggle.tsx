@@ -16,8 +16,16 @@ interface ChipToggleProps<T extends string> {
 }
 
 /**
- * Chips de alternancia em mono uppercase — mesmo padrao dos chips de status de
- * `AcoesDetailWithFilter`, extraido porque agora ha 3 usos (regra dos 3x).
+ * Chips de alternancia em mono uppercase, com 3 usos nos blocos de gestao
+ * comercial (ranking, esforco x retorno, abas da carteira).
+ *
+ * Segue a APARENCIA dos chips de status de `AcoesDetailWithFilter`, mas aquele
+ * NAO foi migrado para ca: ele pinta cada opcao com uma cor semantica propria
+ * (`colorClass` por status — champagne/verde/terracota), coisa que este
+ * componente nao faz. Migrar exigiria dar `colorClass` ao ChipToggle e mexer
+ * num bloco que ja funciona e esta coberto pelo `## Smoke` da feature — custo e
+ * risco sem ganho para o usuario. Se um terceiro caso precisar de cor por
+ * opcao, ai sim vale unificar.
  *
  * Sao `<button aria-pressed>`, nunca `<div onClick>`: o estado precisa chegar
  * ao leitor de tela e o Tab/Enter precisa funcionar (#11 a11y).

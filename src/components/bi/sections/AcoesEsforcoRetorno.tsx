@@ -3,6 +3,7 @@ import { ChartCard } from "@/components/bi/ChartCard";
 import { ChipToggle, type ChipOption } from "@/components/bi/ChipToggle";
 import { BiGestaoErro } from "@/components/bi/BiGestaoErro";
 import { ScatterChart, type ScatterPoint } from "@/components/bi/charts";
+import { tooltipRow, tooltipTitle } from "@/components/bi/charts/barChartHelpers";
 import { useAcoesGestaoListasRpc } from "@/hooks/bi/useAcoesGestaoListasRpc";
 import { fmtNum } from "@/lib/formatters";
 import { fmtRatio } from "@/lib/bi/acoesGestaoUtils";
@@ -17,16 +18,6 @@ const MODO_OPTIONS: readonly ChipOption<Modo>[] = [
 
 /** Teto de pontos do modo cliente — o scatter satura muito antes disso. */
 const CLIENTES_LIMIT = 300;
-
-function escapeHtml(s: string): string {
-  return s.replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] ?? c,
-  );
-}
-
-function tooltipLinha(label: string, valor: string): string {
-  return `<div style="display:flex;justify-content:space-between;gap:14px"><span style="color:var(--voux-tooltip-muted)">${label}</span><span>${valor}</span></div>`;
-}
 
 interface Props {
   ranking: AcoesRankingConsultorItem[];
@@ -90,10 +81,10 @@ export function AcoesEsforcoRetorno({ ranking, loading, error, from, to, vendedo
       return (p: ScatterPoint) => {
         const r = byName.get(p.label);
         return [
-          `<div style="font-size:12px;margin-bottom:5px"><strong>${escapeHtml(p.label)}</strong></div>`,
-          tooltipLinha("Visitas", fmtNum(p.x)),
-          tooltipLinha("Fechamentos", fmtNum(p.y)),
-          tooltipLinha("Oportunidades", fmtNum(r?.oportunidades ?? 0)),
+          tooltipTitle(p.label),
+          tooltipRow("Visitas", fmtNum(p.x)),
+          tooltipRow("Fechamentos", fmtNum(p.y)),
+          tooltipRow("Oportunidades", fmtNum(r?.oportunidades ?? 0)),
         ].join("");
       };
     }
@@ -101,11 +92,11 @@ export function AcoesEsforcoRetorno({ ranking, loading, error, from, to, vendedo
     return (p: ScatterPoint) => {
       const c = byName.get(p.label);
       return [
-        `<div style="font-size:12px;margin-bottom:5px"><strong>${escapeHtml(p.label)}</strong></div>`,
-        tooltipLinha("Visitas", fmtNum(p.x)),
-        tooltipLinha("Oportunidades", fmtNum(p.y)),
-        tooltipLinha("Acoes totais", fmtNum(c?.acoes ?? 0)),
-        tooltipLinha("Visitas/oport.", fmtRatio(c?.visitasPorOportunidade ?? null)),
+        tooltipTitle(p.label),
+        tooltipRow("Visitas", fmtNum(p.x)),
+        tooltipRow("Oportunidades", fmtNum(p.y)),
+        tooltipRow("Acoes totais", fmtNum(c?.acoes ?? 0)),
+        tooltipRow("Visitas/oport.", fmtRatio(c?.visitasPorOportunidade ?? null)),
       ].join("");
     };
   }, [modo, ranking, clientes]);

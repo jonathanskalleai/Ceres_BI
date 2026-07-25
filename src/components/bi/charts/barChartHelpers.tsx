@@ -61,6 +61,30 @@ export function buildTooltipContent(
   return `<div style="font-size:10px;color:var(--voux-tooltip-muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.1em">${keyLabel}</div><div style="font-size:13px;color:var(--voux-tooltip-text)"><strong>${label}</strong>: ${formatted}</div>`;
 }
 
+/**
+ * Escapa texto vindo do banco antes de virar HTML do tooltip.
+ *
+ * Mora aqui, junto do `buildTooltipContent`, porque o `BarChartTooltip`
+ * renderiza via `dangerouslySetInnerHTML`: quem monta conteudo de tooltip
+ * precisa do escape ao alcance, e duas copias divergentes da funcao de escape
+ * e exatamente como um dos lados fica para tras.
+ */
+export function escapeTooltipText(value: string): string {
+  return value.replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] ?? c,
+  );
+}
+
+/** Linha "rotulo ......... valor" de um tooltip multi-metrica. */
+export function tooltipRow(label: string, valor: string): string {
+  return `<div style="display:flex;justify-content:space-between;gap:14px"><span style="color:var(--voux-tooltip-muted)">${label}</span><span>${valor}</span></div>`;
+}
+
+/** Cabecalho (nome da entidade) de um tooltip multi-metrica. Ja escapa o nome. */
+export function tooltipTitle(nome: string): string {
+  return `<div style="font-size:12px;margin-bottom:5px"><strong>${escapeTooltipText(nome)}</strong></div>`;
+}
+
 // ── Series legend label ───────────────────────────────────────────────────────
 export function SeriesLabel({
   color,

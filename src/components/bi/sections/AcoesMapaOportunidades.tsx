@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, MapPin } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BiGestaoErro } from "@/components/bi/BiGestaoErro";
 import { MapView } from "@/components/dashboard/mapa";
 import type { OportunidadePoint } from "@/components/dashboard/mapa";
 import { useAcoesMapaRpc } from "@/hooks/bi/useAcoesMapaRpc";
@@ -96,17 +97,7 @@ export function AcoesMapaOportunidades({ vendedor, cidade, active = true }: Prop
             <Skeleton className="w-full rounded-[20px]" style={{ height: 520, background: "var(--voux-skeleton)" }} />
           )}
 
-          {!isLoading && error && (
-            <div role="alert" className="rounded-xl border border-[var(--voux-danger)]/40 p-4 text-xs">
-              <p className="font-medium text-[var(--voux-text-primary)]">
-                Nao foi possivel carregar os pinos do mapa.
-              </p>
-              <p className="mt-1 text-[var(--voux-text-muted)]">
-                Isto NAO significa “nenhuma oportunidade aberta” — a consulta falhou.
-              </p>
-              <p className="mt-1 break-all font-mono text-[11px] text-[var(--voux-text-muted)]">{error.message}</p>
-            </div>
-          )}
+          {!isLoading && error && <BiGestaoErro error={error} contexto="os pinos do mapa" />}
 
           {!isLoading && !error && (
             <>
