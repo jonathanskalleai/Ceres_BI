@@ -113,7 +113,7 @@ status: active
 
 ### v7 (novos indicadores — SEMPRE rodar)
 - Abrir `/bi/acoes` → expande corretamente em 5 blocos
-- **Bloco 1 — Funil + Ranking:** funil estritamente decrescente (visitas > oportunidades > ganhos) no ano corrente; o consultor no topo do critério "visitas" aparece com **0 fechamentos** — é o caso que motivou a feature; o topo do critério "valor ganho" **NÃO** é o topo de "visitas" (prova a atribuição híbrida, armadilha 9)
+- **Bloco 1 — Funil + Ranking:** funil estritamente decrescente (visitas > oportunidades > ganhos) no ano corrente; o ranking expõe **ao menos um** consultor com `visitas > 100` e `ganhos = 0` — é o caso que motivou a feature (asserção de existência: não depende de QUEM está no topo, então não quebra no dia em que a pessoa fechar um negócio); o topo de "valor ganho" ser diferente do topo de "visitas" é **consistente com** a atribuição híbrida (armadilha 9) — é sinal, não prova: a prova é o teste unitário `sortRanking — valorGanho desc`
 - **Bloco 2 — Esforço e Retorno:** scatter chart visível, bolhas agrupadas por consultor, escala X visitas / Y valor
 - **Bloco 3 — Gestão de Carteira:** card "Clientes em Risco" mostra 5 faixas dias sem contato; clicar faixa 31-60 → abre aba "Sem contato" com a **mesma contagem** exibida na barra (drill-down bate com o chart)
 - **Bloco 4 — Mapa:** mapa visível e colapsável, markers geoloc visíveis
@@ -127,7 +127,10 @@ status: active
 - `SELECT (public.rpc_acoes_gestao_listas('negativas','2026-01-01','2026-12-31',NULL,NULL,50,0,NULL,NULL,NULL))::text` → menor das 3 listas, não vazia
 - `SELECT (public.rpc_acoes_gestao_listas('tipo_invalido',...))::text` → EXCEPTION (p_tipo é validado, não silencia)
 - `SELECT * FROM public.rpc_acoes_mapa_oportunidades(NULL,NULL)` → `comCoordenada + semCoordenada = total`; plota ~82% dos negócios abertos e o rodapé informa quantos ficaram sem coordenada; `valorNoMapa` < valor total (o resto é o sem-coordenada)
-- Com `bi_debug=true`: o card de erro mostra o diagnóstico técnico completo (uso interno). **Sem** a flag: nenhum detalhe técnico chega ao DOM — só mensagem amigável. É o gate do security standard #6; testar SEMPRE sem a flag antes de subir
+- **Vazamento de erro técnico no DOM** (gate do security standard #6 — fix de `4072fa2`; testar SEMPRE, a asserção é grepável de propósito): forçar o card de erro e medir
+  - sem a flag → `getByText(/PGRST|biRpcService|Could not find the function/).count() === 0` (só a mensagem amigável no DOM)
+  - com `bi_debug=true` → a mesma contagem é **> 0** (o diagnóstico técnico volta, para uso interno)
+  - o passo mede os dois lados de propósito: só o `=== 0` passaria também se o card de erro nunca renderizasse
 
 ### v7.1 (pós-security-gate — SEMPRE rodar após deployment)
 - **AVISO METODOLÓGICO:** limpar route interception (`page.unrouteAll()`) no início de toda rodada de QA. A injeção de falha de rodada anterior (`p_qa_forcado`) persistiu no contexto Playwright e simulou quebra total de `/bi/acoes` (5 RPCs 404) — quase provocou rollback indevido

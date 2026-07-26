@@ -13,10 +13,10 @@ import {
 import type { AcoesFunil, AcoesRankingConsultorItem } from "@/types/biRpc";
 
 const ranking: AcoesRankingConsultorItem[] = [
-  { consultor: "MAYCON KALISKY", visitas: 381, oportunidades: 150, ganhos: 4, valorGanho: 900_000, taxaConversao: 2.7 },
-  { consultor: "LUIZ CARLOS CUNICO", visitas: 615, oportunidades: 80, ganhos: 0, valorGanho: 0, taxaConversao: 0 },
-  { consultor: "CARLOS AUGUSTO AUGUSTIN", visitas: 461, oportunidades: 190, ganhos: 0, valorGanho: 0, taxaConversao: 0 },
-  { consultor: "ANA PAULA", visitas: 100, oportunidades: 10, ganhos: 4, valorGanho: 2_500_000, taxaConversao: 40 },
+  { consultor: "CONSULTOR C", visitas: 381, oportunidades: 150, ganhos: 4, valorGanho: 900_000, taxaConversao: 2.7 },
+  { consultor: "CONSULTOR D", visitas: 615, oportunidades: 80, ganhos: 0, valorGanho: 0, taxaConversao: 0 },
+  { consultor: "CONSULTOR B", visitas: 461, oportunidades: 190, ganhos: 0, valorGanho: 0, taxaConversao: 0 },
+  { consultor: "CONSULTOR A", visitas: 100, oportunidades: 10, ganhos: 4, valorGanho: 2_500_000, taxaConversao: 40 },
 ];
 
 describe("safeRatio — divisao por zero", () => {
@@ -95,27 +95,27 @@ describe("funilRatios", () => {
 describe("sortRanking — os 4 criterios", () => {
   it("should sort by visitas desc", () => {
     expect(sortRanking(ranking, "visitas").map((r) => r.consultor)).toEqual([
-      "LUIZ CARLOS CUNICO", "CARLOS AUGUSTO AUGUSTIN", "MAYCON KALISKY", "ANA PAULA",
+      "CONSULTOR D", "CONSULTOR B", "CONSULTOR C", "CONSULTOR A",
     ]);
   });
 
   it("should sort by oportunidades desc", () => {
     expect(sortRanking(ranking, "oportunidades").map((r) => r.consultor)).toEqual([
-      "CARLOS AUGUSTO AUGUSTIN", "MAYCON KALISKY", "LUIZ CARLOS CUNICO", "ANA PAULA",
+      "CONSULTOR B", "CONSULTOR C", "CONSULTOR D", "CONSULTOR A",
     ]);
   });
 
   it("should sort by ganhos desc, breaking ties by consultor name (stable order)", () => {
-    // MAYCON e ANA PAULA empatam em 4 ganhos: desempate alfabetico e obrigatorio,
+    // CONSULTOR C e CONSULTOR A empatam em 4 ganhos: desempate alfabetico e obrigatorio,
     // senao a lista troca de ordem entre renders.
     expect(sortRanking(ranking, "ganhos").map((r) => r.consultor)).toEqual([
-      "ANA PAULA", "MAYCON KALISKY", "CARLOS AUGUSTO AUGUSTIN", "LUIZ CARLOS CUNICO",
+      "CONSULTOR A", "CONSULTOR C", "CONSULTOR B", "CONSULTOR D",
     ]);
   });
 
   it("should sort by valorGanho desc — different podium than fechamentos", () => {
     expect(sortRanking(ranking, "valorGanho").map((r) => r.consultor)).toEqual([
-      "ANA PAULA", "MAYCON KALISKY", "CARLOS AUGUSTO AUGUSTIN", "LUIZ CARLOS CUNICO",
+      "CONSULTOR A", "CONSULTOR C", "CONSULTOR B", "CONSULTOR D",
     ]);
   });
 

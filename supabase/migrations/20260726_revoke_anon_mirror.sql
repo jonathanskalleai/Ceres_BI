@@ -6,6 +6,16 @@
 --         Validado antes em dry-run (BEGIN/ROLLBACK) no banco vivo.
 --         Nao rode pela metade: a Parte 1 sozinha nao fecha nada.
 --
+-- PARIDADE COM PRODUCAO (leia antes de auditar este arquivo)
+--   Os COMENTARIOS deste cabecalho foram reescritos em 2026-07-26, depois da
+--   aplicacao, para tirar de um repositorio PUBLICO o detalhamento do incidente
+--   (ver bloco seguinte). Isso quebra a comparacao byte-a-byte entre o arquivo
+--   inteiro e o que foi executado — e e aceitavel: o que o banco guarda de
+--   comparavel e o `prosrc` das funcoes, ou seja SO o corpo entre `AS $$` e
+--   `$$;`, e NENHUMA linha desse corpo mudou. Nenhum statement, nenhuma ordem
+--   e nenhuma linha nao-comentario foi alterada. O repo NAO diverge de producao
+--   no que e executavel; diverge so no que e prosa.
+--
 -- AUTORIZACAO EXPLICITA DO USUARIO (registrada em .aivoux/gates/overrides.log):
 --   Opcao escolhida pelo usuario: "Sim, autorizo as 3"
 --   Descrita como: "REVOKE EXECUTE FROM PUBLIC nas 28 RPCs + executar como
@@ -14,24 +24,21 @@
 --   PUBLIC, executar como supabase_admin, e mexer numa funcao nao-`rpc_`.
 -- =====================================================================
 --
--- O INCIDENTE
--- -----------
--- O role `anon` do PostgREST e autenticado por um JWT PUBLICO (`VITE_*`,
--- inlinado no bundle pelo Vite). "Protegido pela anon key" nao e protecao:
--- qualquer pessoa com a URL do projeto le os mesmos dados que o app.
+-- POR QUE ESTA MIGRATION EXISTE  (este repositorio e PUBLICO — leia a ressalva)
+-- ----------------------------------------------------------------------------
+-- O role `anon` do PostgREST e publico por design: a chave que o autentica vai
+-- inlinada no bundle do frontend. "Protegido pela anon key" nao e protecao.
+-- Medido no banco de producao em 2026-07-26, ANTES desta migration: `anon`
+-- tinha SELECT em 18 das 19 tabelas de `mirror` e EXECUTE em 28/28 funcoes
+-- `public.rpc_*` (SECURITY DEFINER). Pre-existente — nao e regressao do v7.
 --
--- Medido no banco de producao em 2026-07-26 (self-hosted na VPS, NAO o
--- Cloud do supabase/config.toml):
---   * `anon` com SELECT em 18 das 19 tabelas de `mirror`
---   * 28/28 funcoes `public.rpc_*` SECURITY DEFINER executaveis por `anon`
---   * Exposto: 8.660 CNPJ/CPF, 14.880 telefones, 15.343 enderecos,
---     2.990 coordenadas, + `mirror.usuarios` com 96 CPF de funcionarios.
---
--- Provas ao vivo (REST anonimo, chave anon publica):
---   GET  /rest/v1/crm_carteira_clientes  (Accept-Profile: mirror) -> HTTP 200, CPF em claro
---   POST /rest/v1/rpc/rpc_clientes_criticos                       -> HTTP 200, 63 KB, 200 linhas
---
--- NAO e regressao do v7 — e pre-existente e vale para o projeto inteiro.
+-- O DETALHAMENTO NAO MORA AQUI. Inventario do que ficou exposto, evidencias
+-- reproduzidas, achados residuais que ainda nao foram corrigidos e o
+-- procedimento de reversao ficam em
+-- `docs/security/incidente-20260726-anon-mirror.md` — LOCAL e gitignorado.
+-- Este cabecalho e deliberadamente so o "como" e o "porque" operacional de
+-- rodar o script: publicar alvo nominal, inventario de PII ou passo-a-passo
+-- reproduzivel num repo publico e reabrir o incidente em outro formato.
 --
 --
 -- POR QUE **NAO** SE MEXE NO `PGRST_DB_SCHEMAS`
@@ -151,11 +158,11 @@ END $$;
 -- PARTE 3 — `public.truncate_mirror_table(text)`   [P0 — DESTRUTIVO]
 -- ---------------------------------------------------------------------
 -- Nao e vazamento de leitura: e destruicao de dados por anonimo.
--- A funcao e SECURITY DEFINER (owner `postgres`), executavel por `anon` via
--- PUBLIC, e o corpo faz `EXECUTE format('TRUNCATE %I.%I', ...)`. A unica
--- validacao e exigir o prefixo 'mirror.'. Ou seja, um POST anonimo em
--- /rest/v1/rpc/truncate_mirror_table {"table_name":"mirror.<tabela>"}
--- apaga qualquer tabela do DW.
+-- A funcao e SECURITY DEFINER (owner `postgres`) e estava executavel por `anon`
+-- via PUBLIC, com validacao interna insuficiente para conter o alvo do TRUNCATE.
+-- Por isso ela e revogada aqui em vez de so depender daquela validacao.
+-- (O detalhe do que a validacao deixa passar fica no documento de incidente
+-- local — nao e informacao que ajude quem mantem, so quem ataca.)
 --
 -- Revogado tambem de `authenticated`: nenhum usuario de BI tem motivo para
 -- truncar o DW.
@@ -165,7 +172,7 @@ END $$;
 --     Usa `SUPABASE_SERVICE_ROLE_KEY`, logo executa como **`service_role`**,
 --     que esta preservado. E este o caller que nao pode quebrar.
 --   * O ETL Python NAO chama esta funcao: faz `TRUNCATE TABLE {dest}` em SQL
---     direto (`/opt/etl-stack/etl_campos_dealer.py:135`), como `postgres`.
+--     direto, conectado como `postgres` — que segue com EXECUTE de qualquer forma.
 -- `postgres` (owner) e `service_role` mantem EXECUTE; ambos seguem operando.
 
 REVOKE EXECUTE ON FUNCTION public.truncate_mirror_table(text)
@@ -198,69 +205,20 @@ WHERE n.nspname = 'public' AND p.proname = 'truncate_mirror_table';
 
 
 -- =====================================================================
--- ROLLBACK (restaura o estado atual — inseguro — em segundos)
+-- REVERSAO E ACHADOS RESIDUAIS — NAO FICAM NESTE ARQUIVO
 -- =====================================================================
--- Rodar como supabase_admin:
+-- O procedimento de reversao e a lista de achados que esta migration NAO
+-- fechou estao em `docs/security/incidente-20260726-anon-mirror.md` (local,
+-- gitignorado), junto com o dono e o prazo de cada um.
 --
---   -- ATENCAO: o estado anterior era 18/19, NAO 19/19. `anon` NUNCA teve
---   -- SELECT em mirror.crm_carteira_clientes_bak_20260630 (backup com 15.222
---   -- linhas de carteira; `authenticated` tambem nao le). Um
---   -- `GRANT ... ON ALL TABLES` aqui ABRIRIA um vazamento que nunca existiu —
---   -- dentro do rollback do documento que fecha vazamento. Por isso o REVOKE
---   -- logo apos o GRANT:
---   GRANT SELECT ON ALL TABLES IN SCHEMA mirror TO anon;
---   REVOKE SELECT ON mirror.crm_carteira_clientes_bak_20260630 FROM anon;
---   ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA mirror
---     GRANT SELECT ON TABLES TO anon;
---   DO $$ DECLARE f record; BEGIN
---     FOR f IN SELECT p.oid::regprocedure AS sig FROM pg_proc p
---              JOIN pg_namespace n ON n.oid = p.pronamespace
---              WHERE n.nspname='public' AND p.proname LIKE 'rpc\_%'
---     LOOP
---       EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO PUBLIC', f.sig);
---       EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO anon',   f.sig);
---     END LOOP; END $$;
---   GRANT EXECUTE ON FUNCTION public.truncate_mirror_table(text)
---     TO PUBLIC, anon, authenticated;
+-- Motivo de nao estarem aqui: este repositorio e PUBLICO. Um roteiro de
+-- reversao e a receita exata de reabrir o vazamento, e uma lista de achados
+-- em aberto com alvo nominal e um mapa. Nenhum dos dois perde utilidade por
+-- morar fora do repo — quem opera o banco tem acesso ao documento local.
 --
--- NAO ha nada a reverter quanto ao `ALTER ... FOR ROLE postgres` da Parte 1.
--- Verificado no `pg_default_acl` real (antes E depois): o schema mirror so tem
--- as entradas `postgres|S` (sequences) e `supabase_admin|r` (tables). NUNCA
--- existiu entrada `postgres|r`, e o ALTER daquela linha foi um NO-OP
--- preventivo (revogar algo nunca concedido nao cria entrada).
--- **NAO execute um GRANT correspondente para "restaurar" essa entrada** — ele
--- a CRIARIA, e toda tabela futura criada por `postgres` em mirror passaria a
--- nascer legivel por `anon`. Seria introduzir o bug que esta migration fecha.
---
---
--- =====================================================================
--- FORA DE ESCOPO — ACHADOS QUE PRECISAM DE DECISAO SEPARADA
--- =====================================================================
--- 0) [PENDENCIA REGISTRADA — nao corrigida aqui, vira demanda SIMPLE propria]
---    O corpo de `truncate_mirror_table` (definido em
---    20260603_create_mirror_schema.sql:202) tem o comentario
---    `-- Whitelist: only mirror schema tables allowed` sobre um
---    `IF table_name NOT LIKE 'mirror.%'`. **Isso NAO e whitelist, e checagem
---    de prefixo**: aceita qualquer uma das 19 tabelas de mirror, incluindo
---    `sync_control` e `sync_metadata`. Nao ha SQL injection (o `%I` do
---    format() quota o identificador), mas o comentario mente e a proxima
---    pessoa vai confiar nele. Correcao (~30 min): trocar o LIKE por checagem
---    real em `pg_tables` + corrigir o comentario.
---
--- 1) `truncate_mirror_table` foi CORRIGIDO na Parte 3 desta migration.
---    Residual: a funcao continua sem validar o nome da tabela alem do
---    prefixo (vide item 0). Hoje so `postgres`/`service_role` executam, entao
---    nao e mais exploravel externamente — mas a validacao fraca deveria ser endurecida
---    (whitelist de tabelas, nao prefixo) num pipeline proprio.
---
--- 2) RLS ativo em apenas 6 das 19 tabelas de `mirror`. Com os REVOKEs acima
---    isso deixa de ser exploravel por `anon`, mas continua sendo a unica
---    barreira entre um usuario logado qualquer e os dados de todos.
---
--- 3) `public.profiles`, `user_permissions`, `app_modules`, `metas_comerciais`
---    tem SELECT para `anon`. Todas com RLS ativo, entao dependem inteiramente
---    das policies estarem corretas — auditar com @security.
---
--- 4) Default privilege de SEQUENCES em `mirror` ainda concede `rU` a `anon`
---    (dono: postgres). Baixo impacto, mas e residuo do mesmo problema.
+-- O unico residual que vale registrar aqui, porque e sobre ESTE script:
+-- `truncate_mirror_table` foi fechada na Parte 3 (`anon` e `authenticated`
+-- revogados; `postgres`/`service_role` preservados). O endurecimento da
+-- validacao interna dela e trabalho de um pipeline proprio, ja registrado no
+-- documento de incidente.
 -- =====================================================================
