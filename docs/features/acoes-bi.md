@@ -5,56 +5,81 @@ updated_by: scribe (haiku)
 status: active
 ---
 
-# BI Acoes — Tela de Produtividade Comercial (v6)
+# BI Acoes — Tela de Gestao Comercial (v7)
 
-**Proposito:** Pagina /bi/acoes com KPIs (3 cards de valor + contadores), heatmap matrix consultor x cidade, tabela completa paginada (com etapa, valor e status do negocio vinculado, filtravel por status), graficos (pizza com leader lines + linha com area + barras verticais "Clientes em Risco") para analise de produtividade comercial (acoes CRM). Funis comerciais: VENDAS, Vendas AP, REPASSE DE MAQUINA.
+**Proposito:** Pagina /bi/acoes com 9 indicadores de gestao comercial organizados em 5 blocos: funil de conversao (visitas → oportunidades → ganhos + ranking de consultores), gestao de carteira (clientes em risco por dias sem contato, com 4 critérios ordenáveis), esforço e retorno (scatter: visitas vs valor), mapa de oportunidades (pinos geoloc por estoque aberto) e listas de gestão (sem contato, desperdício, negativas paginadas com search). Funis: VENDAS, Vendas AP, REPASSE DE MAQUINA. Semântica: visita=aco_tipocontato='Visita'; oportunidade=negócio comercial distinto tocado por ≥1 ação no período; fechamento=ngo_conclusao='Ganho' (status atual).
 
 ## Entry Points
 - `src/pages/bi/BiAcoes.tsx` — pagina principal (rota /bi/acoes)
-- `src/components/bi/sections/AcoesSection.tsx` — secao de KPIs + ranking + graficos + tabelas
-- `src/components/bi/sections/AcoesKpiGrid.tsx` — grid de KPIs com 3 cards de valor
-- `src/components/bi/sections/AcoesDetailWithFilter.tsx` — wrapper da tabela detalhe com chips de filtro por status
+- `src/components/bi/sections/AcoesSection.tsx` — secao de KPIs + ranking + graficos + tabelas (v7)
+- `src/components/bi/sections/AcoesKpiGrid.tsx` — grid de KPIs com 3 cards de valor (v6)
+- `src/components/bi/sections/AcoesDetailWithFilter.tsx` — wrapper da tabela detalhe com chips de filtro por status (v6)
+- `src/components/bi/AcoesFunilConversao.tsx` — bloco 1: funil visitas→oportunidades→ganhos + ranking consultores (NOVO)
+- `src/components/bi/AcoesRankingConsultores.tsx` — ranking com 4 critérios (visitas, oportunidades, ganhos, valor) e toggle client-side (NOVO)
+- `src/components/bi/AcoesEsforcoRetorno.tsx` — bloco 2: scatter visitas vs valor, funde pedidos 3+5 (NOVO)
+- `src/components/bi/AcoesGestaoCarteira.tsx` — bloco 3: clientes em risco com 5 faixas dias sem contato, colapsável (NOVO)
+- `src/components/bi/AcoesGestaoCarteiraTables.tsx` — tabelas paginadas das 3 listas: sem-contato, desperdicio, negativas (NOVO)
+- `src/components/bi/AcoesMapaOportunidades.tsx` — bloco 4: mapa colapsável com pinos geoloc (NOVO)
+- `src/components/bi/dashboard/mapa/OportunidadeMarkers.tsx` — pinos: cor por dias parado, popup com info (NOVO)
+- `src/components/bi/ChipToggle.tsx` — chip com estado ativo/inativo, reutilizavel (NOVO)
+- `src/components/bi/BiGestaoErro.tsx` — card de erro com debug gateado por isBiDebugEnabled() (NOVO)
 
 ## Dependencias Internas
 - `src/hooks/bi/useAcoesBIRpc.ts` — hook de fetch para RPC acoes
 - `src/hooks/bi/useAcoesDetalheRpc.ts` — hook de fetch para tabela detalhe (aceita statusNegocio)
-- `src/hooks/bi/useClientesRiscoRpc.ts` — hook de fetch para RPC clientes em risco
-- `src/services/biRpcService.ts` — fetchAcoesBI + fetchAcoesDetalhe (com p_status) + fetchClientesRisco
-- `src/types/bi/` — tipos split em modulos (barrel em `src/types/biRpc.ts`), inclui ClientesRiscoFaixa e RpcClientesRisco
-- `src/components/bi/AcoesRankingTable.tsx` — heatmap matrix consultor x cidade (usa fn_cli_cidade)
-- `src/components/bi/AcoesClientesTable.tsx` — top 15 clientes mais atendidos no ANO ATUAL
-- `src/components/bi/AcoesDetailTable.tsx` — tabela COMPLETA paginada (p_limit/p_offset/p_search), com colunas observacao, etapa, valor e status do negocio vinculado
+- `src/hooks/bi/useClientesRiscoRpc.ts` — hook de fetch para RPC clientes em risco (v6)
+- `src/hooks/bi/useAcoesFunilRpc.ts` — hook de fetch para rpc_acoes_funil_gestao (NOVO)
+- `src/hooks/bi/useAcoesGestaoListasRpc.ts` — hook de fetch para rpc_acoes_gestao_listas (NOVO)
+- `src/hooks/bi/useAcoesMapaRpc.ts` — hook de fetch para rpc_acoes_mapa_oportunidades (NOVO)
+- `src/services/biRpcService.ts` — fetchAcoesBI + fetchAcoesDetalhe + fetchClientesRisco + fetchAcoesFunilGestao + fetchAcoesGestaoListas + fetchAcoesMapaOportunidades (v7)
+- `src/types/bi/` — tipos expandidos: AcoesFunilRow, AcoesGestaoListaRow, AcoesMapaOportunidadeRow + existentes (barrel em `src/types/biRpc.ts`)
+- `src/components/bi/AcoesRankingTable.tsx` — heatmap matrix consultor x cidade (v6)
+- `src/components/bi/AcoesClientesTable.tsx` — top 15 clientes mais atendidos no ANO ATUAL (v6)
+- `src/components/bi/AcoesDetailTable.tsx` — tabela COMPLETA paginada (v6)
 - `src/components/bi/BiTableCard.tsx` — card DRY para tabelas (skeleton/error/empty states, 119 linhas)
+- `src/components/bi/BiGestaoErro.tsx` — error state com debug gateado (NOVO)
 - `src/components/bi/BiTopbarPortal.tsx` — dropdown "Tipo de Acao" na topbar
+- `src/components/bi/charts/ScatterChart.tsx` — scatter generico (NOVO)
+- `src/components/bi/charts/primitives/SvgScatter.tsx` — SVG raw scatter plotter (NOVO)
+- `src/bi/debug/isBiDebugEnabled.ts` — gate de debug por flag isBiDebugEnabled (NOVO)
+- `src/services/bi/acoesGestaoService.ts` — logica de transformacao dos dados de gestao (NOVO)
+- `src/lib/bi/acoesGestaoUtils.ts` — utilitarios: diasParado, mapeadores de criteria (NOVO)
 - `NegociosFilterContext` — contexto de filtros compartilhado (vendedor, periodo, tipoAcao, statusNegocio)
 
 ## Database
-- RPC: `rpc_acoes_bi` v5 — usa `mirror.fn_cli_cidade()` (DRY), CTE `negocios_dedup` (dedup por ngo_numero), 3 cards de valor filtrados por funis comerciais
-- RPC: `rpc_acoes_detalhe` v4 — tabela completa server-side, paginacao (p_limit/p_offset/p_search), campo `status` (ngo_conclusao), filtro opcional `p_status` (DEFAULT NULL, backward compat). Labels: "Em Andamento"="Em Aberto", "Ganha"="Ganho", "Perdida"="Perdido"
-- RPC: `rpc_acoes_clientes_risco` — 5 faixas de dias sem contato (0-15, 16-30, 31-60, 61-90, +90) da carteira de clientes. Params: p_vendedor (match por usr_nomeusuario=aco_vendedor), p_cidade. Base = DISTINCT cli_idcliente da carteira total
-- Funcao: `mirror.fn_cli_cidade(p_cli_id)` — resolve cidade do cliente (DRY, usada em ambas RPCs)
+- RPC: `rpc_acoes_bi` v5 — usa `mirror.fn_cli_cidade()` (DRY), CTE `negocios_dedup` (dedup por ngo_numero), 3 cards de valor (v6)
+- RPC: `rpc_acoes_detalhe` v4 — tabela completa server-side, paginacao (v6)
+- RPC: `rpc_acoes_clientes_risco` — 5 faixas de dias sem contato (v6)
+- RPC: `rpc_acoes_funil_gestao` (NOVO v7) — funil visitas→oportunidades→ganhos + rankingConsultores + diasParados + meta. Params: p_from, p_to, p_vendedor, p_cidade. Retorna ~70-100ms
+- RPC: `rpc_acoes_gestao_listas` (NOVO v7) — listas paginadas por p_tipo (sem_contato | desperdicio | negativas). Params: p_tipo, p_from, p_to, p_vendedor, p_cidade, p_limit, p_offset, p_search, p_dias_min, p_dias_max. Lança EXCEPTION se p_tipo inválido
+- RPC: `rpc_acoes_mapa_oportunidades` (NOVO v7) — pinos geoloc, estoque aberto (não janela). Params: p_vendedor, p_cidade (NÃO aceita p_from/p_to). Coordenada por cascata (última ação do cliente → fallback carteira). Retorna lat/lng, diasParado, ngoNumero, valor
+- Funcao: `mirror.fn_cli_cidade(p_cli_id)` — resolve cidade do cliente (DRY, v6)
 - Tabelas: `mirror.crm_acoes`, `mirror.crm_negocios`, `mirror.crm_carteira_clientes`
-- Migration: `supabase/migrations/20260724_fn_cli_cidade_v5.sql` (supersede v4 inline e v3)
-- Migration: `supabase/migrations/20260724_rpc_acoes_detalhe_v4.sql` (v4 com p_status + campo status)
-- Migration: `supabase/migrations/20260724_rpc_acoes_clientes_risco.sql` (RPC nova)
+- Índices (proposta rejeitada): `mirror.idx_acoes_diasParado` e `mirror.idx_negocios_vendedores` — benchmark mostrou 0 ganho queries atuais, custo +escrita; documentado em `20260725_idx_acoes_gestao.sql`
+- Migration: `supabase/migrations/20260725_rpc_acoes_funil_gestao.sql` (NOVO)
+- Migration: `supabase/migrations/20260725_rpc_acoes_gestao_listas.sql` (NOVO)
+- Migration: `supabase/migrations/20260725_rpc_acoes_mapa_oportunidades.sql` (NOVO)
+- Migration: `supabase/migrations/20260725_idx_acoes_gestao.sql` — no-op: comentário documentando rejeição de índices
 
-## Padroes
+## Padroes (v7)
 - Server-side aggregation via RPC (nao agrega no browser)
-- fn_cli_cidade centraliza resolucao de cidade (DRY — nao mais LATERAL LIMIT 1 duplicado)
-- Dedup negocios via CTE negocios_dedup (elimina fan-out de ngo_numero duplicado)
-- Paginacao server-side em AcoesDetailTable (p_limit/p_offset/p_search)
-- Filtros via NegociosFilterContext (vendedor, periodo, tipo de acao, statusNegocio)
-- Filtro por status: chips "Em Aberto"/"Ganho"/"Perdido" em AcoesDetailWithFilter; quando ativo, acoes sem negocio desaparecem (badge informa)
-- Heatmap matrix: linhas=consultores, colunas=cidades (fn_cli_cidade do CLIENTE)
-- porMes: ANO ATUAL fixo, NAO respeita filtro de datas
-- Grafico "Tipo de Acao": PieChartWithLabels (SvgDonut) com leader lines e labels externos (nome + %, fontSize 11)
-- Grafico de linha (SvgLine): area opacity 0.40
-- Grafico "Clientes em Risco": VerticalBarChart com 5 faixas de dias sem contato; respeita filtro vendedor/cidade
-- Tabela detalhe: etapa, valor e status null quando acao sem negocio vinculado (61%) — exibe "—"; valor formatado sem decimais (R$ 66.000)
-- KPIs: valorAberto/negociosAberto, valorGanho/negociosGanho, valorPerdido/negociosPerdido, negociosTocados, negociosOutrosStatus
-- StatusDesconhecidoAlert: alerta visual quando negociosOutrosStatus > 0
+- Atribuição HÍBRIDA: visitas/oportunidades por aco_vendedor; ganhos/valor por ngo_vendedores → usr_codusuario → usr_nomeusuario. Motivo: 17% ganhos tocados >1 consultor (10,4% ano corrente) — unificar as duas pontas quebra soma com card
+- fn_cli_cidade centraliza resolucao de cidade (DRY, v6)
+- Dedup negocios via CTE (elimina fan-out ngo_numero duplicado, v6)
+- Paginacao server-side em AcoesDetailTable e AcoesGestaoListasTable (v6 + NOVO)
+- Filtros via NegociosFilterContext (vendedor, periodo, tipoAcao) — estendido com critérios de gestao (v7)
+- Ranking consultores: 4 critérios (visitas, oportunidades, ganhos, valor) com toggle client-side — NÃO refetch (v7)
+- Scatter visitas vs valor: bolhas agrupadas por consultor, cor por dias parado (v7)
+- Mapa de oportunidades: mostra ESTOQUE ABERTO (não fluxo de janela). Coordenada por cascata: última ação geoloc do cliente → fallback carteira (v7)
+- Pinos cor por dias parado: < 90 dias = champagne (`#d4b896`), >= 90 = vermelho (`#b83a28`); 38% sem geolocalizacao = cor champagne também (v7)
+- Listas gestao: sem-contato (8736), desperdicio (410 com janela, 1713 sem), negativas (7) — search/filter server-side (v7)
+- Heatmap matrix: linhas=consultores, colunas=cidades (fn_cli_cidade do CLIENTE, v6)
+- Card "Clientes em Risco": 5 faixas dias sem contato + barras com valores reais (v6)
+- KPIs: 3 cards de valor (v6)
+- StatusDesconhecidoAlert: alerta visual quando status desconhecido > 0 (v6)
 
 ## Como Alterar com Seguranca
+### v6 (vigente)
 1. fn_cli_cidade e usada por AMBAS as RPCs + rpc_acoes_clientes_risco — alterar a funcao impacta heatmap + detalhe + risco
 2. CTE negocios_dedup garante dedup por ngo_numero — remover causa fan-out (1472 vs 664 rows)
 3. 3 cards de valor filtram por funis comerciais hardcoded — novos funis exigem alterar RPC
@@ -64,24 +89,65 @@ status: active
 7. rpc_acoes_detalhe v3 (7 params) deve ser dropada no deploy — v4 com DEFAULT NULL cobre backward compat
 8. rpc_acoes_clientes_risco usa aco_vendedor = usr_nomeusuario (match direto) — alterar nomes no ETL quebra o chart
 
+### v7 (novas armadilhas)
+9. **Atribuição HÍBRIDA por design:** visitas/oportunidades por `aco_vendedor`; ganhos/valor por `ngo_vendedores → usuarios.usr_codusuario → usr_nomeusuario`. Motivo: 17% dos ganhos comerciais na base (10,4% ano corrente) são tocados por >1 consultor — atribuir por ação inflava o ranking. Unificar as duas pontas quebra a soma com o card
+10. **Canvas não resolve `var()`:** `CircleMarker` com `preferCanvas` desenha via `ctx.fillStyle`, que descarta CSS custom properties em silêncio e cai em `#000000`. Cor tem que ser resolvida para hex no render (`getComputedStyle().getPropertyValue().trim()`) com fallback. Já causou pinos 100% pretos com legenda mentindo
+11. **`ngo_datafechamento` é inutilizável no funil VENDAS:** 151 Ganho, 0 com data no ano. Não usar para "fechou no período"
+12. **`error.message` nunca vai ao DOM sem `isBiDebugEnabled()`:** security standard #6. Bloco gateado está duplicado em `BiGestaoErro` e `BiTableCard` — se surgir 3º consumidor, extrair componente único (foi a duplicação que produziu "um lugar gateado, o outro não")
+13. **`p_from/p_to = NULL` na lista `desperdicio` desliga o filtro de janela:** 1713 vs 410 com janela do ano. Não é bug
+
 ## Smoke
+### v6 (regressão — SEMPRE rodar)
 - `npm run build` → sucesso (sem erros TS)
-- `npx vitest run` → 135/135 (inclui 9 testes de AcoesDetailTable)
+- `npx vitest run` → 164/164 (12 arquivos, inclui testes novos AcoesFunilConversao, AcoesEsforcoRetorno, AcoesMapaOportunidades, etc)
 - Abrir /bi/acoes → grafico "Tipo de Acao" e pizza (PieChartWithLabels) com leader lines e labels externos
 - Tabela "Acoes do Periodo" tem colunas Etapa, Valor e Status (MARCELO FERNANDES: etapa "3-PROPOSTA AO CLIENTE", valor R$ 66.000)
 - Chips de filtro por status: clicar "Ganho" → tabela filtra, badge informa acoes sem negocio ocultas
 - Chart "Clientes em Risco" visivel com 5 barras (faixas de dias sem contato)
 - Heatmap usa cidade do CLIENTE (fn_cli_cidade), nao emp_cidade
 - StatusDesconhecidoAlert aparece se negociosOutrosStatus > 0
-- `SELECT (public.rpc_acoes_detalhe('2026-07-01','2026-07-31',NULL,NULL,NULL,50,0,'Ganho'))::text` → 690 rows com status='Ganho'
-- `SELECT (public.rpc_acoes_detalhe('2026-07-01','2026-07-31',NULL,NULL,NULL,50,0,NULL))::text` → 5567 rows (backward compat)
-- `SELECT * FROM public.rpc_acoes_clientes_risco(NULL, NULL)` → totalCarteira=8731, 5 faixas
-- `SELECT * FROM public.rpc_acoes_clientes_risco('MAYCON KALISKY', NULL)` → totalCarteira=334
+- `SELECT (public.rpc_acoes_detalhe('2026-07-01','2026-07-31',NULL,NULL,NULL,50,0,'Ganho'))::text` → **110 rows** com status='Ganho'
+- `SELECT (public.rpc_acoes_detalhe('2026-07-01','2026-07-31',NULL,NULL,NULL,50,0,NULL))::text` → **704 rows** (backward compat)
+- `SELECT * FROM public.rpc_acoes_clientes_risco(NULL, NULL)` → totalCarteira **8736**, 5 faixas
+- `SELECT * FROM public.rpc_acoes_clientes_risco('MAYCON KALISKY', NULL)` → totalCarteira **334**
+
+### v7 (novos indicadores — SEMPRE rodar)
+- Abrir `/bi/acoes` → expande corretamente em 5 blocos
+- **Bloco 1 — Funil + Ranking:** funil exibe visitas 3679, oportunidades 662, ganhos 48 (ano corrente); ranking mostra `LUIZ CARLOS CUNICO` = 615 visitas / 80 oportunidades / 0 ganhos; `DIEGO JOSE DO AMARAL` = topo por valor R$ 1.944.500
+- **Bloco 2 — Esforço e Retorno:** scatter chart visível, bolhas agrupadas por consultor, escala X visitas / Y valor
+- **Bloco 3 — Gestão de Carteira:** card "Clientes em Risco" mostra 5 faixas dias sem contato; clicar faixa 31-60 → abre aba "Sem contato" com **308** (idêntico à barra)
+- **Bloco 4 — Mapa:** mapa visível e colapsável, markers geoloc visíveis
+- Expandir mapa, varrer pixels do canvas de markers → **0 px `rgb(0,0,0)`**, >0 px `#b83a28` (vermelho >= 90), >0 px `#d4b896` (champagne < 90)
+- Clicar pino vermelho → popup mostra `diasParado >= 90` (validado: 173 dias vermelho, 38 dias champagne)
+- Clicar os 4 critérios do ranking (visitas, oportunidades, ganhos, valor) → ordem muda **sem nova request** (ordenação client-side, não refetch)
+- **Bloco 5 — Listas de Gestão:** 3 abas (sem-contato, desperdício, negativas) com paginação e search; valores: sem_contato 8736, desperdicio 410 (com janela ano), negativas 7
+- `SELECT * FROM public.rpc_acoes_funil_gestao('2026-01-01','2026-12-31',NULL,NULL)` → visitas 3679, oportunidades 662, ganhos 48
+- `SELECT (public.rpc_acoes_gestao_listas('sem_contato','2026-01-01','2026-12-31',NULL,NULL,50,0,NULL,NULL,NULL))::text` → 8736 rows
+- `SELECT (public.rpc_acoes_gestao_listas('desperdicio','2026-01-01','2026-12-31',NULL,NULL,50,0,NULL,NULL,NULL))::text` → 410 rows (com janela)
+- `SELECT (public.rpc_acoes_gestao_listas('negativas','2026-01-01','2026-12-31',NULL,NULL,50,0,NULL,NULL,NULL))::text` → 7 rows
+- `SELECT * FROM public.rpc_acoes_mapa_oportunidades(NULL,NULL)` → total 2742, comCoordenada 2240, semCoordenada 502, valorNoMapa R$ 326,77M de R$ 393,75M
+- Com `bi_debug=true`: `error.message` contém nome de service, função e parâmetro de banco exposto (ex.: `[biRpcService.fetchAcoesBI] Could not find the function public.rpc_acoes_bi(p_fim, p_ini)`); sem flag: 0 ocorrências de `PGRST202` / `biRpcService` / `error.message` no DOM, apenas mensagens amigáveis (7 mensagens de erro em tela de teste)
 
 ## Riscos / Acoplamentos
+### v6 (vigente)
 - crm_negocios tem erro pendente (text DISTINCT) — CTE negocios_dedup pode retornar vazio se view nao sincroniza
 - crm_carteira_clientes tem PK dup pendente — fn_cli_cidade usa LIMIT 1, mitigado; rpc_acoes_clientes_risco usa DISTINCT cli_idcliente (mitigado)
 - NegociosFilterContext e compartilhado com outras telas BI — mudanca no shape (ex: statusNegocio) afeta esta pagina
 - fn_cli_cidade depende de crm_carteira_clientes populada — cliente sem registro = cidade NULL
 - 86% dos clientes estao na faixa +90 dias — valor esperado alto nessa barra (nao e bug)
 - rpc_acoes_clientes_risco sem indice dedicado (125ms aceitavel hoje, monitorar se carteira crescer)
+
+### v7 (novos riscos)
+- **`supabase_rest` perda de listen:** a cada ~2h (visto 09:36, 11:38, 13:40 UTC): `NOTIFY pgrst, 'reload schema'` é aposta neste ambiente; todo deploy de RPC pode exigir `docker kill -s SIGUSR1` no container
+- **RPCs invisíveis à role `anon`:** todas as novas RPCs exigem sessão autenticada — PGRST202 (Postgrest esconde função que role não pode executar) é indistinguível de "função não aplicada"
+- **`mirror.sync_metadata` cego:** 0 linhas para `crm_acoes`/`crm_negocios`/`crm_carteira_clientes` — monitoramento de ETL possivelmente não vê sincronização nessas views
+- **Índices duplicados rejeitados:** `idx_acoes_ngo_nro_negocio`/`idx_acoes_ngo_nronegocio` (832 kB, zero scans do segundo) e `idx_acoes_tipocontato`/`idx_acoes_tipo_contato` — custo mantencao > benefício nas queries atuais
+- **Override dark CSS quebrado:** `:root` não-layered de `index.css` emitido DEPOIS `.dark` (Tailwind v3); especificidade 0,1,0 idêntica, ordem de origem decide. Afeta `--voux-danger`/`--voux-success` em 19 componentes dark (a11y, não estética) — demanda MEDIUM própria
+- **`diasParado == null` — 38% pinos:** negócio nunca tocado por ação; pinta champagne ("saudável") — pior caso. Pré-existente
+- **Migrations `20260630`/`20260631` untracked:** 5 migrations aplicadas na VPS seguem fora do repo há um mês
+- **Atribuição valor por ngo_vendedores:** 10 negócios (dos 1000+) têm ngo_vendedores = NULL → 0.89% perda; mapeamento usr_codusuario → nome pode falhar silenciosamente
+- **crm_negocios erro `text DISTINCT`:** pendente desde v3; CTE negocios_dedup pode vazio se view não sincroniza
+- **crm_carteira_clientes PK dup:** pendente desde v8 ETL; fn_cli_cidade usa LIMIT 1 (mitigado), rpc_acoes_clientes_risco usa DISTINCT (mitigado)
+- **NegociosFilterContext compartilhado:** mudança no shape (ex: statusNegocio) afeta esta página + outras telas BI
+- **fn_cli_cidade depende carteira populada:** cliente sem registro = cidade NULL
+- **Atribuição valor por ngo_vendedores:** 10 negócios (dos 1000+) têm ngo_vendedores = NULL → 0.89% perda; mapeamento usr_codusuario → nome pode falhar silenciosamente
