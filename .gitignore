@@ -33,3 +33,10 @@ dist-ssr
 .aivoux/telemetry/
 .aivoux/.session-tier
 .aivoux/session-digest.md
+.aivoux/gates/
+# Handoff de sessao e estado LOCAL: pode conter detalhe operacional de infra
+# (hosts, paths na VPS, vulnerabilidade ainda aberta). Repo e publico.
+.aivoux/handoff-*.md
+# Documentacao de incidente fica LOCAL enquanto a vulnerabilidade estiver aberta:
+# em repo publico ela vira mapa de alvo. Publicar quando o status virar resolvido.
+docs/security/
