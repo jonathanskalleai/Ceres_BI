@@ -14,7 +14,6 @@ import { AcoesFunilConversao } from "@/components/bi/sections/AcoesFunilConversa
 import { AcoesRankingConsultores } from "@/components/bi/sections/AcoesRankingConsultores";
 import { AcoesEsforcoRetorno } from "@/components/bi/sections/AcoesEsforcoRetorno";
 import { AcoesGestaoCarteira, type CarteiraDrill } from "@/components/bi/sections/AcoesGestaoCarteira";
-import { AcoesGestaoCarteiraSummary } from "@/components/bi/sections/AcoesGestaoCarteiraSummary";
 import { AcoesMapaOportunidades } from "@/components/bi/sections/AcoesMapaOportunidades";
 import { HorizontalBarChart, VerticalBarChart, LineChart, type BarChartData } from "@/components/bi/charts";
 import { CHART_COLORS } from "@/lib/chartTheme";
@@ -253,14 +252,6 @@ export default function AcoesSection({ active, dateRange }: Props) {
         />
       </ChartCard>
 
-      {/* Mini-cards resumo: top 3 clientes sem contato */}
-      <AcoesGestaoCarteiraSummary
-        from={from}
-        to={to}
-        vendedor={vendedor || undefined}
-        cidade={cidade || undefined}
-        active={active}
-      />
 
       {/* Gestao da carteira em abas — recebe o drill-down do chart acima */}
       <AcoesGestaoCarteira

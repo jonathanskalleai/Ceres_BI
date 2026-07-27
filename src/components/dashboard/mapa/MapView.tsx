@@ -129,7 +129,7 @@ export const MapView = ({
           title="Tela cheia"
           className="absolute top-3 right-3 z-[1000] flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-colors"
           style={{
-            background: "rgba(17,16,13,0.82)",
+            background: "var(--surface-raised, rgba(17,16,13,0.82))",
             border: "1px solid var(--voux-border-hover)",
             color: "var(--voux-accent)",
             backdropFilter: "blur(6px)",
