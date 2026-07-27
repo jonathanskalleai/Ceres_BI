@@ -50,6 +50,7 @@ function GestaoKpis({ funil, diasParados, loading }: { funil?: AcoesFunil; diasP
         icon={Target}
         loading={loading}
         hint={funil ? `${num(funil.ganhos)} fechadas ate agora` : undefined}
+        formula="Quantos negocios comerciais distintos foram trabalhados (tiveram pelo menos 1 acao registrada) no periodo selecionado"
         dataSource="rpc_acoes_funil_gestao · negocios comerciais DISTINTOS tocados por acao no periodo (dedup por ngo_numero)" />
 
       <KPICard
@@ -58,6 +59,7 @@ function GestaoKpis({ funil, diasParados, loading }: { funil?: AcoesFunil; diasP
         icon={Gauge}
         loading={loading}
         hint="quanto esforco custa levantar 1 negocio"
+        formula="Quantas visitas presenciais foram necessarias, em media, para gerar cada oportunidade de negocio no periodo"
         dataSource="rpc_acoes_funil_gestao · visitas / oportunidades no periodo · '—' quando nao ha oportunidade (divisao por zero, nao zero)" />
 
       <KPICard
@@ -66,6 +68,7 @@ function GestaoKpis({ funil, diasParados, loading }: { funil?: AcoesFunil; diasP
         icon={PauseCircle}
         loading={loading}
         hint={diasParados ? `${num(diasParados.negociosAbertos)} negocios abertos` : undefined}
+        formula="Metade dos negocios em andamento esta sem contato ha mais dias que este numero, e metade ha menos. Mediana alta = carteira esfriando"
         dataSource="rpc_acoes_funil_gestao · MEDIANA de dias desde a ultima acao em negocio comercial 'Em Andamento' — mediana, nao media: a distribuicao tem cauda longa" />
     </>
   );
@@ -109,49 +112,59 @@ export function AcoesKpiGrid({ kpis, kpisPrev, loading, funil, diasParados, gest
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       <KPICard title="Total de Acoes" value={num(kpis.totalAcoes)} icon={ClipboardList} loading={loading}
         previousValue={num(kpisPrev.totalAcoes)} trend={calcTrend(kpis.totalAcoes, kpisPrev.totalAcoes)}
+        formula="Total de acoes comerciais concluidas no periodo, independente do tipo de contato (visita, telefone, email, etc.)"
         dataSource="mirror.crm_acoes · COUNT(*) por aco_dthconclusao" />
 
       <KPICard title="Cidades Atendidas" value={num(kpis.cidades)} icon={MapPin} loading={loading}
         previousValue={num(kpisPrev.cidades)} trend={calcTrend(kpis.cidades, kpisPrev.cidades)}
+        formula="Quantas cidades diferentes tiveram clientes atendidos no periodo. Usa a cidade do cliente, nao da filial"
         dataSource="COUNT(DISTINCT cli_cidade) — cidade do CLIENTE (crm_carteira_clientes), nao da filial" />
 
       <KPICard title="Consultores Ativos" value={num(kpis.consultores)} icon={Users} loading={loading}
         previousValue={num(kpisPrev.consultores)} trend={calcTrend(kpis.consultores, kpisPrev.consultores)}
+        formula="Quantos vendedores/consultores registraram pelo menos 1 acao concluida no periodo selecionado"
         dataSource="mirror.crm_acoes · COUNT(DISTINCT aco_vendedor)" />
 
       <KPICard title="Total de Visitas" value={num(kpis.visitas)} icon={Eye} loading={loading}
         previousValue={num(kpisPrev.visitas)} trend={calcTrend(kpis.visitas, kpisPrev.visitas)}
+        formula="Quantidade de acoes do tipo 'visita' (presencial) registradas no periodo. Um mesmo cliente visitado 3 vezes conta 3"
         dataSource="mirror.crm_acoes · COUNT(*) WHERE aco_tipocontato LIKE '%visita%'" />
 
       <KPICard title="Clientes Unicos" value={num(kpis.clientes)} icon={UserCheck} loading={loading}
         previousValue={num(kpisPrev.clientes)} trend={calcTrend(kpis.clientes, kpisPrev.clientes)}
+        formula="Quantos clientes diferentes receberam pelo menos 1 acao (qualquer tipo de contato) no periodo. Cada cliente conta 1 vez"
         dataSource="mirror.crm_acoes · COUNT(DISTINCT cli_nome)" />
 
       <KPICard title="Tipos de Acao" value={num(kpis.tiposAcaoDistintos)} icon={Tag} loading={loading}
         previousValue={num(kpisPrev.tiposAcaoDistintos)} trend={calcTrend(kpis.tiposAcaoDistintos, kpisPrev.tiposAcaoDistintos)}
+        formula="Quantos tipos de acao diferentes (ex: Prospeccao, Pos-Vendas, Cobranca) foram registrados no periodo. Mostra a diversidade do trabalho comercial"
         dataSource="mirror.crm_acoes · COUNT(DISTINCT aco_tipoacao)" />
 
       <KPICard title="Duracao Media da Acao" value={`${kpis.tempoMedioContato} dias`} icon={Clock} loading={loading}
         previousValue={`${kpisPrev.tempoMedioContato} dias`} trend={calcTrend(kpis.tempoMedioContato, kpisPrev.tempoMedioContato)}
         invertTrend
+        formula="Tempo medio em dias entre a abertura e a conclusao de uma acao. Mede quanto tempo o consultor leva para finalizar cada acao, nao o tempo ate o primeiro contato"
         dataSource="mirror.crm_acoes · AVG(aco_dthconclusao - aco_dthabertura) em dias — duracao da propria acao (abertura ate conclusao), NAO tempo ate o primeiro contato" />
 
       <KPICard title="Valor em Aberto" value={brl(kpis.valorAberto)} icon={Wallet} loading={loading}
         previousValue={brl(kpisPrev.valorAberto)} trend={calcTrend(kpis.valorAberto, kpisPrev.valorAberto)}
         rawValue={kpis.valorAberto}
         hint={`${num(kpis.negociosAberto)} negocios`}
+        formula="Soma do valor dos negocios que ainda estao Em Andamento e foram trabalhados (tiveram acao) no periodo. Receita potencial em jogo"
         dataSource={`${VALOR_BASE} · recorte: Em Andamento`} />
 
       <KPICard title="Valor Ganho" value={brl(kpis.valorGanho)} icon={Trophy} loading={loading}
         previousValue={brl(kpisPrev.valorGanho)} trend={calcTrend(kpis.valorGanho, kpisPrev.valorGanho)}
         rawValue={kpis.valorGanho}
         hint={`${num(kpis.negociosGanho)} negocios`}
+        formula="Soma do valor dos negocios ja fechados (ganhos) que foram trabalhados no periodo. Receita efetivamente convertida"
         dataSource={`${VALOR_BASE} · recorte: Ganho`} />
 
       <KPICard title="Valor Perdido" value={brl(kpis.valorPerdido)} icon={XCircle} loading={loading}
         previousValue={brl(kpisPrev.valorPerdido)} trend={calcTrend(kpis.valorPerdido, kpisPrev.valorPerdido)} invertTrend
         rawValue={kpis.valorPerdido}
         hint={`${num(kpis.negociosPerdido)} negocios`}
+        formula="Soma do valor dos negocios perdidos que foram trabalhados no periodo. Receita que escapou — quanto menor, melhor"
         dataSource={`${VALOR_BASE} · recorte: Perdido`} />
 
       <GestaoKpis funil={funil} diasParados={diasParados} loading={gestaoLoading} />
