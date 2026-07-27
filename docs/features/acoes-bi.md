@@ -1,11 +1,11 @@
 ---
 feature: acoes-bi
-updated_at: 2026-07-26T20:00:00Z
+updated_at: 2026-07-26T22:00:00Z
 updated_by: scribe (haiku)
 status: active
 ---
 
-# BI Acoes — Tela de Gestao Comercial (v7.2)
+# BI Acoes — Tela de Gestao Comercial (v7.3)
 
 **Proposito:** Pagina /bi/acoes com 9 indicadores de gestao comercial organizados em 5 blocos: funil de conversao (visitas → oportunidades → ganhos + ranking de consultores), gestao de carteira (clientes em risco por dias sem contato, com 4 critérios ordenáveis), esforço e retorno (tabela-ranking com InlineBar: top consultores por visitas vs valor), mapa de oportunidades (pinos geoloc com toggle estoque/período + cluster de pinos) e listas de gestão (sem contato, desperdício, negativas paginadas com search). Funis: VENDAS, Vendas AP, REPASSE DE MAQUINA. Semântica: visita=aco_tipocontato='Visita'; oportunidade=negócio comercial distinto tocado por ≥1 ação no período; fechamento=ngo_conclusao='Ganho' (status atual).
 
@@ -18,6 +18,7 @@ status: active
 - `src/components/bi/AcoesRankingConsultores.tsx` — ranking com 4 critérios (visitas, oportunidades, ganhos, valor) e toggle client-side (NOVO)
 - `src/components/bi/AcoesEsforcoRetorno.tsx` — bloco 2: tabela-ranking esforço vs retorno com InlineBar, toggle consultor/cliente, 8 linhas + "ver mais" (v7.2, reescrito)
 - `src/components/bi/AcoesGestaoCarteira.tsx` — bloco 3: clientes em risco com 5 faixas dias sem contato, colapsável (NOVO)
+- `src/components/bi/sections/AcoesGestaoCarteiraSummary.tsx` — mini-cards top 3 "sem contato" antes da gestão; usa useAcoesGestaoListasRpc limit:3, retorna null se vazio (NOVO v7.3, 76 linhas)
 - `src/components/bi/AcoesGestaoCarteiraTables.tsx` — tabelas paginadas das 3 listas: sem-contato, desperdicio, negativas (NOVO)
 - `src/components/bi/AcoesMapaOportunidades.tsx` — bloco 4: mapa colapsável com toggle "Todas abertas" | "Tocadas no mês" + cluster de pinos (v7.2, modificado)
 - `src/components/bi/dashboard/mapa/OportunidadeMarkers.tsx` — pinos: cor por dias parado, popup com info (NOVO)
@@ -42,6 +43,8 @@ status: active
 - `src/components/bi/charts/ScatterChart.tsx` — DELETADO v7.2 (scatter removido, substituído por tabela-ranking)
 - `src/components/bi/charts/primitives/SvgScatter.tsx` — DELETADO v7.2 (primitiva SVG do scatter removido)
 - `src/components/bi/charts/InlineBar.tsx` — barra horizontal inline para rankings (NOVO v7.2, 34 linhas)
+- `src/components/bi/charts/BarChart.tsx` — propaga `itemColors` para SvgBarV como `barColors` (v7.3, cor por barra)
+- `src/components/bi/charts/primitives/SvgBarV.tsx` — aceita `barColors?: string[]` (cor por índice, fallback para `color` se ausente) (v7.3)
 - `src/components/dashboard/mapa/ClusterMarker.tsx` — agrupa pinos por coordenada (4 decimais), badge numérico, popup com lista (NOVO v7.2, 93 linhas)
 - `src/bi/debug/isBiDebugEnabled.ts` — gate de debug por flag isBiDebugEnabled (NOVO)
 - `src/services/bi/acoesGestaoService.ts` — logica de transformacao dos dados de gestao (NOVO)
@@ -77,9 +80,13 @@ status: active
 - Pinos cor por dias parado: < 90 dias = champagne (`#d4b896`), >= 90 = vermelho (`#b83a28`); 38% sem geolocalizacao = cor champagne também (v7)
 - Listas gestao: sem-contato, desperdicio e negativas — search/filter server-side; "desperdicio" encolhe bastante ao aplicar a janela de data (v7)
 - Heatmap matrix: linhas=consultores, colunas=cidades (fn_cli_cidade do CLIENTE, v6)
-- Card "Clientes em Risco": 5 faixas dias sem contato + barras com valores reais (v6)
+- Card "Clientes em Risco": 5 faixas dias sem contato + barras com cores sequenciais champagne→terracota via SvgBarV `barColors` (v7.3, era cor única)
 - KPIs: 3 cards de valor (v6)
 - StatusDesconhecidoAlert: alerta visual quando status desconhecido > 0 (v6)
+- Toggle mapa com counts dinâmicos: ChipToggle exibe count derivado de `data?.total` e `data?.comCoordenada` via useMemo (v7.3)
+- Badge de contexto no funil: texto explicativo fixo com `role="note"` em AcoesFunilConversao (v7.3, a11y)
+- Mini-cards top 3 "sem contato": AcoesGestaoCarteiraSummary renderiza antes da gestão; usa useAcoesGestaoListasRpc com limit:3, retorna null se dados vazios (v7.3)
+- PieCharts substituídos por HorizontalBarChart ordenado DESC em AcoesSection: PieChartWithLabels NÃO é dead code (usado em 5 outras sections) — apenas removido desta tela (v7.3)
 
 ## Como Alterar com Seguranca
 ### v6 (vigente)
@@ -100,6 +107,12 @@ status: active
 11. **`ngo_datafechamento` é inutilizável no funil VENDAS:** há negócios com status Ganho, mas **nenhum** com `ngo_datafechamento` preenchida no ano. Não usar para "fechou no período" — filtrar por ela zera o funil
 12. **`error.message` nunca vai ao DOM sem `isBiDebugEnabled()`:** security standard #6. Bloco gateado está duplicado em `BiGestaoErro` e `BiTableCard` — se surgir 3º consumidor, extrair componente único (foi a duplicação que produziu "um lugar gateado, o outro não")
 13. **`p_from/p_to = NULL` na lista `desperdicio` desliga o filtro de janela:** sem janela a lista retorna várias vezes mais linhas que com a janela do ano. Não é bug. Mesma semântica no mapa v2: NULL = estoque completo
+
+### v7.3 (melhorias UX — novas armadilhas)
+14. **`SvgBarV.barColors` é por índice:** array posicional — se a ordem das barras mudar (sort diferente), as cores seguem o índice, não o dado. BarChart propaga via `itemColors`. Fallback para `color` (cor única) se `barColors` ausente
+15. **ChipToggle count depende de `data?.total` / `data?.comCoordenada`:** valores vêm do hook `useAcoesMapaRpc`. Se a RPC mudar o shape do retorno (ex: renomear campo), count mostra `undefined` em silêncio
+16. **AcoesGestaoCarteiraSummary retorna `null` se vazio:** componente invisível quando não há dados — não é bug, é design. Mas se o hook falhar (erro de rede), também retorna null → indistinguível de "sem dados"
+17. **PieChartWithLabels NÃO é dead code:** removido de AcoesSection (v7.3) mas ainda usado em 5 outras sections. Não deletar o componente
 
 ## Smoke
 ### v6 (regressão — SEMPRE rodar)
@@ -146,6 +159,14 @@ status: active
 - F5 + navegação rápida entre telas → **zero** 401/403 e zero `42501`/`permission denied` no body
 - **Todas** as requisições `/rest/v1` em 200, com `role=authenticated` nos headers
 - Smoke v7 anterior continua passando (regressão verificada)
+
+### v7.3 (melhorias UX — SEMPRE rodar)
+- Abrir `/bi/acoes` → toggle do mapa exibe counts numéricos (ex: "Todas abertas (42)" / "Tocadas no mês (12)") — counts > 0 quando há dados
+- Chart "Clientes em Risco" → barras com gradiente sequencial champagne→terracota (primeira barra mais clara, última mais escura) — NÃO cor única
+- Bloco 1 (Funil) → badge de contexto visível com `role="note"` (inspecionar DOM: `[role="note"]` presente dentro do funil)
+- Antes do bloco "Gestão de Carteira" → mini-cards top 3 "sem contato" visíveis (3 cards com nome de cliente + dias); se base sem dados de carteira, seção não renderiza (null) — não é erro
+- AcoesSection → gráficos de distribuição usam barras horizontais ordenadas DESC (HorizontalBarChart), NÃO pizza — PieChartWithLabels ausente desta tela (mas NÃO deletado do projeto)
+- `npm run build` → sucesso (sem erros TS nas 6 files tocadas)
 
 ## Riscos / Acoplamentos
 ### v6 (vigente)
