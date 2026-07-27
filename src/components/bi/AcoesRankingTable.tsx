@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { type CSSProperties, useMemo } from "react";
 import { BiTableCard } from "@/components/bi/BiTableCard";
 import type { AcoesBIRankingItem } from "@/types/biRpc";
 
@@ -8,19 +8,25 @@ interface Props {
   error?: Error | null;
 }
 
-/** Returns a Tailwind bg class based on intensity 0-1 */
-function heatBg(intensity: number): string {
-  if (intensity === 0) return "bg-transparent";
-  if (intensity < 0.15) return "bg-blue-100/40";
-  if (intensity < 0.3) return "bg-blue-100/70";
-  if (intensity < 0.5) return "bg-blue-200/70";
-  if (intensity < 0.7) return "bg-blue-300/70";
-  if (intensity < 0.85) return "bg-blue-400/70";
-  return "bg-blue-500/80";
+/**
+ * Retorna estilo inline de cor de fundo para a celula do heatmap.
+ * Escala baseada na cor primaria da paleta (#8a4a14 — champagne escurecido),
+ * com opacidades altas para legibilidade tanto em dark quanto em light mode.
+ */
+function heatStyle(intensity: number): CSSProperties {
+  if (intensity === 0) return {};
+  // Escala de 5 niveis: rgba do primario com opacidade crescente
+  const base = "138, 74, 20"; // #8a4a14 em RGB
+  if (intensity < 0.15) return { backgroundColor: `rgba(${base}, 0.15)` };
+  if (intensity < 0.3) return { backgroundColor: `rgba(${base}, 0.30)` };
+  if (intensity < 0.5) return { backgroundColor: `rgba(${base}, 0.50)` };
+  if (intensity < 0.7) return { backgroundColor: `rgba(${base}, 0.70)` };
+  if (intensity < 0.85) return { backgroundColor: `rgba(${base}, 0.85)` };
+  return { backgroundColor: `rgba(${base}, 0.95)` };
 }
 
 function heatText(intensity: number): string {
-  return intensity >= 0.7 ? "text-white" : "text-[var(--voux-text-primary)]";
+  return intensity >= 0.5 ? "text-white" : "text-[var(--voux-text-primary)]";
 }
 
 /**
@@ -51,11 +57,11 @@ export function AcoesRankingTable({ data, loading, error }: Props) {
   const legenda = (
     <div className="flex items-center gap-1 text-[10px] text-[var(--voux-text-muted)]">
       <span>Baixa</span>
-      <span className="inline-block w-3 h-3 rounded-sm bg-blue-100/70" />
-      <span className="inline-block w-3 h-3 rounded-sm bg-blue-200/70" />
-      <span className="inline-block w-3 h-3 rounded-sm bg-blue-300/70" />
-      <span className="inline-block w-3 h-3 rounded-sm bg-blue-400/70" />
-      <span className="inline-block w-3 h-3 rounded-sm bg-blue-500/80" />
+      <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "rgba(138, 74, 20, 0.15)" }} />
+      <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "rgba(138, 74, 20, 0.30)" }} />
+      <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "rgba(138, 74, 20, 0.50)" }} />
+      <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "rgba(138, 74, 20, 0.70)" }} />
+      <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: "rgba(138, 74, 20, 0.95)" }} />
       <span>Alta</span>
     </div>
   );
@@ -101,7 +107,8 @@ export function AcoesRankingTable({ data, loading, error }: Props) {
                   return (
                     <td
                       key={cidade}
-                      className={`py-2 px-2 text-center tabular-nums rounded-sm border-l border-[var(--voux-card-border)]/20 ${heatBg(intensity)} ${heatText(intensity)}`}
+                      className={`py-2 px-2 text-center tabular-nums rounded-sm border-l border-[var(--voux-card-border)]/20 ${heatText(intensity)}`}
+                      style={heatStyle(intensity)}
                       title={`${consultor} · ${cidade}: ${value.toLocaleString("pt-BR")} ações`}
                     >
                       {value > 0 ? value.toLocaleString("pt-BR") : ""}
