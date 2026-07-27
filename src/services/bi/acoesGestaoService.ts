@@ -141,18 +141,22 @@ const MAPA_DEFAULTS: RpcAcoesMapaOportunidades = {
 /**
  * Calls rpc_acoes_mapa_oportunidades — pinos das oportunidades abertas.
  *
- * NAO aceita janela de datas por decisao da RPC: o mapa mostra o ESTOQUE de
- * oportunidades vivas, nao o fluxo do periodo. Passar p_from/p_to aqui seria
- * um parametro que mente (o mapa nao mudaria) — pior que parametro ausente.
+ * Dois modos (toggle no painel do mapa):
+ * - Sem from/to → ESTOQUE: todas as oportunidades abertas (comportamento original)
+ * - Com from/to → PERIODO: oportunidades que tiveram acao no periodo (filtro via JOIN)
  */
 export async function fetchAcoesMapaOportunidades(params: {
   vendedor?: string;
   cidade?: string;
+  from?: string;
+  to?: string;
 }): Promise<RpcAcoesMapaOportunidades> {
   try {
     const rpcParams: Record<string, unknown> = {};
     if (params.vendedor) rpcParams.p_vendedor = params.vendedor;
     if (params.cidade) rpcParams.p_cidade = params.cidade;
+    if (params.from) rpcParams.p_from = params.from;
+    if (params.to) rpcParams.p_to = params.to;
 
     const { data, error } = await supabase.rpc("rpc_acoes_mapa_oportunidades", rpcParams);
     if (error) throw new Error(error.message);

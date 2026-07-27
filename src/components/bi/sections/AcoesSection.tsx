@@ -255,6 +255,8 @@ export default function AcoesSection({ active, dateRange }: Props) {
       <AcoesMapaOportunidades
         vendedor={vendedor || undefined}
         cidade={cidade || undefined}
+        from={from}
+        to={to}
         active={active}
       />
 

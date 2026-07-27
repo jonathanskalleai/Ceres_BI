@@ -1,3 +1,4 @@
+import { type ReactNode } from "react";
 import { MapPin, Users, Maximize2, Minimize2, X } from "lucide-react";
 import { MapContainer, TileLayer, Marker, Popup, Tooltip as LTooltip } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
@@ -26,6 +27,8 @@ interface MapViewProps {
   /** Esconde o seletor clientes|regioes quando o mapa tem um modo unico. */
   hideModeSwitch?: boolean;
   zoom?: number;
+  /** Marcadores adicionais renderizados DENTRO do MapContainer (ex: clusters). */
+  children?: ReactNode;
 }
 
 function MapMarkers({
@@ -102,6 +105,7 @@ export const MapView = ({
   preferCanvas = false,
   hideModeSwitch = false,
   zoom = 7,
+  children,
 }: MapViewProps) => {
   return (
     <>
@@ -116,6 +120,7 @@ export const MapView = ({
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <MapMarkers mapView={mapView} clientePoints={clientePoints} regions={regions} onRegionClick={onRegionClick} oportunidades={oportunidades} />
+          {children}
         </MapContainer>
 
         <button
@@ -152,6 +157,7 @@ export const MapView = ({
           preferCanvas={preferCanvas}
           hideModeSwitch={hideModeSwitch}
           zoom={zoom}
+          children={children}
         />
       )}
     </>
@@ -170,6 +176,7 @@ function FullscreenOverlay({
   preferCanvas = false,
   hideModeSwitch = false,
   zoom = 7,
+  children,
 }: Omit<MapViewProps, "fullscreen">) {
   return (
     <div className="fixed inset-0 z-[9999] flex flex-col" style={{ background: "var(--voux-card-to)" }}>
@@ -237,6 +244,7 @@ function FullscreenOverlay({
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <MapMarkers mapView={mapView} clientePoints={clientePoints} regions={regions} onRegionClick={onRegionClick} oportunidades={oportunidades} />
+          {children}
         </MapContainer>
       </div>
     </div>
