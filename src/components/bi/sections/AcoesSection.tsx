@@ -1,7 +1,7 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { type DateRange } from "react-day-picker";
 import { useAcoesBIRpc } from "@/hooks/bi/useAcoesBIRpc";
-import { useAcoesDetalheRpc } from "@/hooks/bi/useAcoesDetalheRpc";
+import { useAcoesDetalheRpc, ACOES_PAGE_SIZE } from "@/hooks/bi/useAcoesDetalheRpc";
 import { useClientesRiscoRpc } from "@/hooks/bi/useClientesRiscoRpc";
 import { useAcoesFunilRpc } from "@/hooks/bi/useAcoesFunilRpc";
 import { useNegociosFilter } from "@/contexts/NegociosFilterContext";
@@ -57,6 +57,14 @@ export default function AcoesSection({ active, dateRange }: Props) {
   const from = useMemo(() => toISODate(dateRange?.from), [dateRange?.from]);
   const to = useMemo(() => toISODate(dateRange?.to ?? dateRange?.from), [dateRange?.to, dateRange?.from]);
 
+  // Paginacao server-side da tabela de detalhe
+  const [detalhePage, setDetalhePage] = useState(1);
+
+  // Reset para pagina 1 quando qualquer filtro muda
+  useEffect(() => {
+    setDetalhePage(1);
+  }, [from, to, vendedor, cidade, tipoAcao, statusNegocio]);
+
   const { data, isLoading, error } = useAcoesBIRpc({
     from,
     to,
@@ -75,8 +83,12 @@ export default function AcoesSection({ active, dateRange }: Props) {
     tipoAcao: tipoAcao || undefined,
     cidade: cidade || undefined,
     statusNegocio: statusNegocio || undefined,
+    page: detalhePage,
     enabled: active,
   });
+
+  const detalheTotal = detalhe?.total ?? 0;
+  const detalheTotalPages = Math.max(1, Math.ceil(detalheTotal / ACOES_PAGE_SIZE));
 
   // Clientes em risco — distribuicao por faixa de dias sem acao
   const { data: riscoData, isLoading: riscoLoading } = useClientesRiscoRpc({
@@ -276,7 +288,11 @@ export default function AcoesSection({ active, dateRange }: Props) {
       {/* Artefato principal — tabela com filtro de status */}
       <AcoesDetailWithFilter
         rows={detalhe?.rows ?? []}
-        total={detalhe?.total ?? 0}
+        total={detalheTotal}
+        page={detalhePage}
+        pageSize={ACOES_PAGE_SIZE}
+        totalPages={detalheTotalPages}
+        onPageChange={setDetalhePage}
         loading={detalheLoading}
         error={detalheError}
       />

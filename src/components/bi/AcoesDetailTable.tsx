@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, Search } from "lucide-react";
 import { truncateObs } from "@/components/dashboard/useDashboardAdminDetail";
 import { BiTableCard } from "@/components/bi/BiTableCard";
+import { PaginationControls } from "@/components/bi/PaginationControls";
 import type { AcoesDetalheItem } from "@/types/biRpc";
 
-/** Linhas exibidas por pagina no cliente ("Carregar mais" soma outra pagina). */
-const PAGE_SIZE = 100;
 /** Chars da observacao mostrados inline; o resto so na linha expandida. */
 const OBS_INLINE_CHARS = 90;
 
@@ -13,10 +12,14 @@ const TH = "text-left py-2 px-2 font-medium text-[var(--voux-text-muted)]";
 
 interface Props {
   rows: AcoesDetalheItem[];
-  /** COUNT real do periodo no servidor — maior que rows.length quando a RPC truncou. */
+  /** COUNT real do servidor (respeitando filtros). */
   total: number;
+  /** Pagina atual (1-based). */
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
   loading?: boolean;
-  /** Erro da RPC. Sem isto uma falha de query viraria "nenhuma acao no periodo". */
   error?: Error | null;
 }
 
@@ -55,8 +58,6 @@ function AcoesDetailRow({ row, index, expanded, onToggle }: RowProps) {
             type="button"
             onClick={onToggle}
             aria-expanded={expanded}
-            // aria-controls so aponta para o painel quando ele existe no DOM: apontar
-            // para um id inexistente e uma promessa quebrada ao leitor de tela.
             aria-controls={expanded ? panelId : undefined}
             aria-label={expanded ? `Recolher detalhes da acao de ${row.data}` : `Expandir detalhes da acao de ${row.data}`}
             className="inline-flex h-6 w-6 items-center justify-center rounded-md text-[var(--voux-text-muted)] hover:bg-foreground/5 hover:text-[var(--voux-text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--voux-champagne-400)] transition-colors"
@@ -102,15 +103,13 @@ function AcoesDetailRow({ row, index, expanded, onToggle }: RowProps) {
 }
 
 /**
- * Tabela "Acoes do Periodo" — detalhe COMPLETO do periodo filtrado.
+ * Tabela "Acoes do Periodo" — paginacao server-side com controles numerados.
  *
- * `rows` vem paginada do servidor (rpc_acoes_detalhe, teto de 2.000 linhas) e
- * `total` e o COUNT real: quando `total > rows.length` o rodape avisa que a lista
- * esta truncada em vez de mentir por omissao.
+ * O search box filtra client-side DENTRO da pagina atual (refinar sem round-trip).
+ * Para filtrar no servidor inteiro, usar os chips de status/vendedor/cidade.
  */
-export function AcoesDetailTable({ rows, total, loading, error }: Props) {
+export function AcoesDetailTable({ rows, total, page, pageSize, totalPages, onPageChange, loading, error }: Props) {
   const [search, setSearch] = useState("");
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
   const filtered = useMemo(() => {
@@ -119,18 +118,19 @@ export function AcoesDetailTable({ rows, total, loading, error }: Props) {
     return rows.filter((r) => matches(r, term));
   }, [rows, search]);
 
-  // Novo filtro/busca = volta para a primeira pagina e fecha a linha aberta
-  useEffect(() => {
-    setVisibleCount(PAGE_SIZE);
-    setExpandedIndex(null);
-  }, [rows, search]);
+  const isEmpty = rows.length === 0 && total === 0;
 
-  const visible = filtered.slice(0, visibleCount);
-  const truncatedByServer = total > rows.length;
-  const isEmpty = rows.length === 0;
+  // Range label: "Mostrando 1-50 de 320"
+  const rangeStart = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const rangeEnd = Math.min(page * pageSize, total);
+  const rangeLabel = total > 0
+    ? `Mostrando ${rangeStart.toLocaleString("pt-BR")}–${rangeEnd.toLocaleString("pt-BR")} de ${total.toLocaleString("pt-BR")}`
+    : undefined;
+
+  // Counter for the title
   const counter = search.trim()
-    ? `${visible.length.toLocaleString("pt-BR")} de ${filtered.length.toLocaleString("pt-BR")} (filtradas)`
-    : `${visible.length.toLocaleString("pt-BR")} de ${rows.length.toLocaleString("pt-BR")}`;
+    ? `${filtered.length.toLocaleString("pt-BR")} encontradas na pagina`
+    : `${total.toLocaleString("pt-BR")} acoes`;
 
   const searchBox = (
     <div className="relative">
@@ -138,7 +138,7 @@ export function AcoesDetailTable({ rows, total, loading, error }: Props) {
       <input
         type="search"
         value={search}
-        onChange={(e) => setSearch(e.target.value)}
+        onChange={(e) => { setSearch(e.target.value); setExpandedIndex(null); }}
         placeholder="Buscar cliente, consultor, observacao..."
         aria-label="Buscar nas acoes do periodo"
         className="h-8 w-full sm:w-72 rounded-md border border-[var(--voux-card-border)] bg-transparent pl-8 pr-2 text-xs text-[var(--voux-text-primary)] placeholder:text-[var(--voux-text-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--voux-champagne-400)]"
@@ -147,24 +147,12 @@ export function AcoesDetailTable({ rows, total, loading, error }: Props) {
   );
 
   const footer = (
-    <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-      {visibleCount < filtered.length ? (
-        <button
-          type="button"
-          onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
-          className="h-8 rounded-full border border-[var(--voux-card-border)] px-4 text-xs font-medium text-[var(--voux-text-primary)] hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--voux-champagne-400)] transition-colors"
-        >
-          Carregar mais {Math.min(PAGE_SIZE, filtered.length - visibleCount).toLocaleString("pt-BR")}
-        </button>
-      ) : (
-        <span />
-      )}
-      {truncatedByServer && (
-        <p className="text-[11px] text-[var(--voux-text-muted)]">
-          Mostrando {rows.length.toLocaleString("pt-BR")} de {total.toLocaleString("pt-BR")} acoes do periodo — refine o filtro para ver o restante.
-        </p>
-      )}
-    </div>
+    <PaginationControls
+      page={page}
+      totalPages={totalPages}
+      onPageChange={onPageChange}
+      rangeLabel={rangeLabel}
+    />
   );
 
   return (
@@ -195,7 +183,7 @@ export function AcoesDetailTable({ rows, total, loading, error }: Props) {
             </tr>
           </thead>
           <tbody>
-            {visible.map((row, i) => (
+            {filtered.map((row, i) => (
               <AcoesDetailRow
                 key={`${row.dataIso}-${row.cliente ?? ""}-${i}`}
                 row={row}
@@ -204,10 +192,10 @@ export function AcoesDetailTable({ rows, total, loading, error }: Props) {
                 onToggle={() => setExpandedIndex(expandedIndex === i ? null : i)}
               />
             ))}
-            {visible.length === 0 && (
+            {filtered.length === 0 && (
               <tr>
                 <td colSpan={10} className="py-6 text-center text-[var(--voux-text-muted)]">
-                  Nenhuma acao corresponde a busca.
+                  {search.trim() ? "Nenhuma acao corresponde a busca." : "Nenhuma acao nesta pagina."}
                 </td>
               </tr>
             )}

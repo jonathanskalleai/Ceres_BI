@@ -19,20 +19,24 @@ const STATUS_COLORS: Record<string, string> = {
 interface Props {
   rows: AcoesDetalheItem[];
   total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
   loading?: boolean;
   error?: Error | null;
 }
 
 /**
- * Status filter chips + AcoesDetailTable with contextual badge.
+ * Status filter chips + AcoesDetailTable with pagination and contextual badge.
  * Extracted from AcoesSection to keep component sizes under 200 lines.
  */
-export function AcoesDetailWithFilter({ rows, total, loading, error }: Props) {
+export function AcoesDetailWithFilter({ rows, total, page, pageSize, totalPages, onPageChange, loading, error }: Props) {
   const { statusNegocio, setStatusNegocio } = useNegociosFilter();
 
   return (
     <div className="space-y-3">
-      {/* Status filter chips */}
+      {/* Status filter chips + total badge */}
       <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrar por status do negocio">
         <span className="text-xs text-[var(--voux-text-muted)] mr-1">Status:</span>
         {STATUS_OPTIONS.map(({ value, label }) => {
@@ -52,6 +56,13 @@ export function AcoesDetailWithFilter({ rows, total, loading, error }: Props) {
             </button>
           );
         })}
+
+        {/* Total badge when filter is active */}
+        {statusNegocio && total > 0 && (
+          <span className="ml-2 inline-flex items-center h-6 rounded-full bg-foreground/5 border border-[var(--voux-card-border)] px-2.5 text-[11px] font-mono tabular-nums text-[var(--voux-text-soft)]">
+            {total.toLocaleString("pt-BR")} resultados
+          </span>
+        )}
       </div>
 
       {/* Info badge when status filter active */}
@@ -61,7 +72,16 @@ export function AcoesDetailWithFilter({ rows, total, loading, error }: Props) {
         </p>
       )}
 
-      <AcoesDetailTable rows={rows} total={total} loading={loading} error={error} />
+      <AcoesDetailTable
+        rows={rows}
+        total={total}
+        page={page}
+        pageSize={pageSize}
+        totalPages={totalPages}
+        onPageChange={onPageChange}
+        loading={loading}
+        error={error}
+      />
     </div>
   );
 }

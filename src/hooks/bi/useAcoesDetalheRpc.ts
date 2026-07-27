@@ -4,8 +4,11 @@ import type { RpcAcoesDetalhe } from "@/types/biRpc";
 
 const STALE_TIME = 5 * 60_000; // 5 minutes
 
-/** Teto de linhas trazidas por vez. Ano inteiro tem ~5.5k acoes; a UI avisa quando trunca. */
-export const ACOES_DETALHE_LIMIT = 2000;
+/** Teto absoluto de linhas pedidas ao servidor (fallback de seguranca). */
+export const ACOES_DETALHE_LIMIT = 5000;
+
+/** Linhas por pagina da tabela "Acoes do Periodo". */
+export const ACOES_PAGE_SIZE = 50;
 
 interface UseAcoesDetalheOptions {
   from?: string;
@@ -14,16 +17,16 @@ interface UseAcoesDetalheOptions {
   tipoAcao?: string;
   cidade?: string;
   statusNegocio?: string;
-  limit?: number;
+  /** Pagina atual (1-based). Default 1. */
+  page?: number;
   enabled?: boolean;
 }
 
 /**
  * Hook for rpc_acoes_detalhe — linhas da tabela "Acoes do Periodo".
  *
- * Separado de `useAcoesBIRpc` de proposito: aquele payload roda 4x no app
- * (2x aqui na secao + 2x em usePainelKPIsRpc, que usa SOMENTE os kpis), entao a
- * tabela pesada — com observacao de ~200 chars por linha — fica FORA dele.
+ * Paginacao server-side: cada pagina faz um round-trip com LIMIT/OFFSET.
+ * `keepPreviousData` evita flash ao trocar de pagina.
  */
 export function useAcoesDetalheRpc({
   from,
@@ -32,12 +35,15 @@ export function useAcoesDetalheRpc({
   tipoAcao,
   cidade,
   statusNegocio,
-  limit = ACOES_DETALHE_LIMIT,
+  page = 1,
   enabled = true,
 }: UseAcoesDetalheOptions) {
+  const limit = ACOES_PAGE_SIZE;
+  const offset = (page - 1) * ACOES_PAGE_SIZE;
+
   return useQuery<RpcAcoesDetalhe, Error>({
-    queryKey: ["rpc", "acoes-detalhe", from ?? null, to ?? null, vendedor ?? null, tipoAcao ?? null, cidade ?? null, statusNegocio ?? null, limit],
-    queryFn: () => fetchAcoesDetalhe({ from, to, vendedor, tipoAcao, cidade, statusNegocio, limit }),
+    queryKey: ["rpc", "acoes-detalhe", from ?? null, to ?? null, vendedor ?? null, tipoAcao ?? null, cidade ?? null, statusNegocio ?? null, page],
+    queryFn: () => fetchAcoesDetalhe({ from, to, vendedor, tipoAcao, cidade, statusNegocio, limit, offset }),
     staleTime: STALE_TIME,
     placeholderData: keepPreviousData,
     enabled,
