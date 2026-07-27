@@ -12,11 +12,6 @@ import type { AcoesMapaPino } from "@/types/biRpc";
 
 type FiltroMapa = "estoque" | "periodo";
 
-const FILTRO_OPTIONS: readonly ChipOption<FiltroMapa>[] = [
-  { value: "estoque", label: "Todas abertas" },
-  { value: "periodo", label: "Tocadas no mes" },
-];
-
 const CARD =
   "rounded-2xl border border-[var(--voux-card-border)] bg-[var(--surface-raised)] shadow-[var(--voux-card-shadow)]";
 
@@ -81,6 +76,12 @@ export function AcoesMapaOportunidades({ vendedor, cidade, from, to, active = tr
     enabled: active && aberto,
   });
 
+  /** Chips com contagem dinâmica — count aparece só quando o dado está carregado. */
+  const filtroOptions = useMemo((): readonly ChipOption<FiltroMapa>[] => [
+    { value: "estoque", label: "Todas abertas", count: filtro === "estoque" ? data?.total : undefined },
+    { value: "periodo", label: "Tocadas no mes", count: filtro === "periodo" ? data?.total : undefined },
+  ], [data?.total, filtro]);
+
   const points = useMemo(() => toPoints(data?.pinos ?? []), [data]);
   const clusters = useMemo(() => clusterByCoord(points), [points]);
 
@@ -137,7 +138,7 @@ export function AcoesMapaOportunidades({ vendedor, cidade, from, to, active = tr
           {/* Toggle de filtro dentro do painel */}
           <div className="mb-3">
             <ChipToggle
-              options={FILTRO_OPTIONS}
+              options={filtroOptions}
               value={filtro}
               onChange={setFiltro}
               ariaLabel="Filtrar pinos do mapa"

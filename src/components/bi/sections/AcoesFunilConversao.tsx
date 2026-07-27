@@ -132,6 +132,14 @@ export function AcoesFunilConversao({ funil, loading, error }: Props) {
         </p>
       </header>
 
+      <p
+        className="mb-4 text-[10px] font-mono tracking-wider opacity-60 bg-champagne-400/[0.08] rounded-lg px-3 py-1.5"
+        role="note"
+        style={{ fontFamily: MONO, letterSpacing: "0.06em" }}
+      >
+        Ganhos = negocios com status atual &quot;Ganho&quot; tocados no periodo. Nao significa que fecharam neste periodo.
+      </p>
+
       <div className="space-y-2">
         <Degrau estagio={ESTAGIOS[0]} valor={funil.visitas} base={base} />
         <Conector valor={fmtRatio(visitasPorOportunidade)} texto="visitas por oportunidade levantada" />

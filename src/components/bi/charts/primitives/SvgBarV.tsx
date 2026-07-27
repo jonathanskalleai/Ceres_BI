@@ -7,6 +7,8 @@ export interface SvgBarVProps {
   labels: string[];
   values: number[];
   color?: string;
+  /** Cor individual por barra (sobrescreve `color` por indice). */
+  barColors?: string[];
   /** @deprecated Use showValues instead */
   dataLabels?: boolean;
   /** Show value above each bar (default true). Skips zero values. */
@@ -27,6 +29,7 @@ export function SvgBarV({
   labels,
   values,
   color = VOUX_COLORS.accent,
+  barColors,
   dataLabels = false,
   showValues = true,
   fmt = fmtCompact,
@@ -93,12 +96,15 @@ export function SvgBarV({
       aria-hidden="true"
     >
       <defs>
-        {gradIds.map((gid, i) => (
-          <linearGradient key={gid} id={gid} x1="0" y1="0" x2="0" y2="1">
-            <stop key={`${gid}-s0`} offset="0%" stopColor={color} stopOpacity={1} />
-            <stop key={`${gid}-s1`} offset="100%" stopColor={color} stopOpacity={0.8} />
-          </linearGradient>
-        ))}
+        {gradIds.map((gid, i) => {
+          const c = barColors?.[i] ?? color;
+          return (
+            <linearGradient key={gid} id={gid} x1="0" y1="0" x2="0" y2="1">
+              <stop key={`${gid}-s0`} offset="0%" stopColor={c} stopOpacity={1} />
+              <stop key={`${gid}-s1`} offset="100%" stopColor={c} stopOpacity={0.8} />
+            </linearGradient>
+          );
+        })}
       </defs>
 
       {/* baseline */}

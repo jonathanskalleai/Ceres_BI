@@ -14,8 +14,9 @@ import { AcoesFunilConversao } from "@/components/bi/sections/AcoesFunilConversa
 import { AcoesRankingConsultores } from "@/components/bi/sections/AcoesRankingConsultores";
 import { AcoesEsforcoRetorno } from "@/components/bi/sections/AcoesEsforcoRetorno";
 import { AcoesGestaoCarteira, type CarteiraDrill } from "@/components/bi/sections/AcoesGestaoCarteira";
+import { AcoesGestaoCarteiraSummary } from "@/components/bi/sections/AcoesGestaoCarteiraSummary";
 import { AcoesMapaOportunidades } from "@/components/bi/sections/AcoesMapaOportunidades";
-import { HorizontalBarChart, VerticalBarChart, LineChart, PieChartWithLabels, type BarChartData } from "@/components/bi/charts";
+import { HorizontalBarChart, VerticalBarChart, LineChart, type BarChartData } from "@/components/bi/charts";
 import { CHART_COLORS } from "@/lib/chartTheme";
 import { faixaToDiasRange } from "@/lib/bi/acoesGestaoUtils";
 import { toISODate, getPreviousPeriod, formatMonthYear } from "@/lib/dateUtils";
@@ -197,7 +198,13 @@ export default function AcoesSection({ active, dateRange }: Props) {
           dataSource="mirror.crm_acoes · aco_tipoacao, COUNT(*)"
           loading={isLoading}
         >
-          <PieChartWithLabels data={porTipoAcao} title="" />
+          <HorizontalBarChart
+            data={[...porTipoAcao].sort((a, b) => b.value - a.value).map((d) => ({ name: d.name, acoes: d.value }))}
+            keys={["acoes"]}
+            seriesLabels={{ acoes: "Ações" }}
+            title=""
+            colors={[CHART_COLORS[0]]}
+          />
         </ChartCard>
 
         <ChartCard title="Acoes por Dia da Semana" description="Concentracao semanal" dataSource="mirror.crm_acoes · DOW(aco_dthconclusao), COUNT(*)" loading={isLoading}>
@@ -211,7 +218,13 @@ export default function AcoesSection({ active, dateRange }: Props) {
         </ChartCard>
 
         <ChartCard title="Tipo de Contato" description="Distribuicao dos canais" dataSource="mirror.crm_acoes · aco_tipocontato, COUNT(*)" loading={isLoading}>
-          <PieChartWithLabels data={porTipoContato} title="" />
+          <HorizontalBarChart
+            data={[...porTipoContato].sort((a, b) => b.value - a.value).map((d) => ({ name: d.name, acoes: d.value }))}
+            keys={["acoes"]}
+            seriesLabels={{ acoes: "Ações" }}
+            title=""
+            colors={[CHART_COLORS[0]]}
+          />
         </ChartCard>
       </div>
 
@@ -226,7 +239,7 @@ export default function AcoesSection({ active, dateRange }: Props) {
         loading={riscoLoading}
         footer={
           <p className="text-[11px] text-[var(--voux-text-muted)]">
-            Clique numa faixa para abrir a lista de clientes dela em “Gestao da Carteira”.
+            Clique numa faixa para abrir a lista de clientes dela em "Gestao da Carteira".
           </p>
         }
       >
@@ -235,10 +248,19 @@ export default function AcoesSection({ active, dateRange }: Props) {
           keys={["clientes"]}
           seriesLabels={{ clientes: "Clientes" }}
           title=""
-          colors={[CHART_COLORS[4]]}
+          itemColors={["#C9A96E80", "#C9A96E", "#D4956A", "#B8603A", "#8B3A22"]}
           onBarClick={handleFaixaClick}
         />
       </ChartCard>
+
+      {/* Mini-cards resumo: top 3 clientes sem contato */}
+      <AcoesGestaoCarteiraSummary
+        from={from}
+        to={to}
+        vendedor={vendedor || undefined}
+        cidade={cidade || undefined}
+        active={active}
+      />
 
       {/* Gestao da carteira em abas — recebe o drill-down do chart acima */}
       <AcoesGestaoCarteira

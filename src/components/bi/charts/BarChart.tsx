@@ -187,6 +187,10 @@ export default function BarChart({
           {keys.map((key, ki) => {
             const color = resolveColor(ki, 0, palette, itemColors);
             const values = data.map((d) => Number(d[key] ?? 0));
+            // Per-bar colors: when itemColors is defined and we have a single key
+            const perBarColors = itemColors && keys.length === 1
+              ? data.map((_, di) => resolveColor(ki, di, palette, itemColors))
+              : undefined;
             return (
               <div key={key}>
                 {keys.length > 1 && <SeriesLabel color={color} label={seriesLabels?.[key] ?? key} />}
@@ -196,6 +200,7 @@ export default function BarChart({
                   labels={ki === keys.length - 1 ? labels : labels.map(() => "")}
                   values={values}
                   color={color}
+                  barColors={perBarColors}
                   onBarEnter={(di, x, y, label, value) => handleBarEnter(key, di, x, y, label, value)}
                   onBarLeave={handleBarLeave}
                   onBarClick={handleBarClick}
