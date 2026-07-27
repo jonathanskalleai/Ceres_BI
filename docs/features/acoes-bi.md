@@ -82,7 +82,7 @@ status: active
 - Listas gestao: sem-contato, desperdicio e negativas — search/filter server-side; "desperdicio" encolhe bastante ao aplicar a janela de data (v7)
 - Heatmap matrix: linhas=consultores, colunas=cidades (fn_cli_cidade do CLIENTE, v6)
 - Card "Clientes em Risco": 5 faixas dias sem contato + barras com cores sequenciais champagne→terracota via SvgBarV `barColors` (v7.3, era cor única)
-- KPIs: 3 cards de valor (v6)
+- KPIs: 13 cards de valor com prop `formula` (conceito de negócio em linguagem clara, exibido no tooltip hover) além do `dataSource` técnico (v8.1)
 - StatusDesconhecidoAlert: alerta visual quando status desconhecido > 0 (v6)
 - Toggle mapa com counts dinâmicos: ChipToggle exibe count derivado de `data?.total` e `data?.comCoordenada` via useMemo (v7.3)
 - Badge de contexto no funil: texto explicativo fixo com `role="note"` em AcoesFunilConversao (v7.3, a11y)
