@@ -1,13 +1,13 @@
 ---
 feature: acoes-bi
-updated_at: 2026-07-24T18:00:00Z
+updated_at: 2026-07-26T20:00:00Z
 updated_by: scribe (haiku)
 status: active
 ---
 
-# BI Acoes — Tela de Gestao Comercial (v7)
+# BI Acoes — Tela de Gestao Comercial (v7.2)
 
-**Proposito:** Pagina /bi/acoes com 9 indicadores de gestao comercial organizados em 5 blocos: funil de conversao (visitas → oportunidades → ganhos + ranking de consultores), gestao de carteira (clientes em risco por dias sem contato, com 4 critérios ordenáveis), esforço e retorno (scatter: visitas vs valor), mapa de oportunidades (pinos geoloc por estoque aberto) e listas de gestão (sem contato, desperdício, negativas paginadas com search). Funis: VENDAS, Vendas AP, REPASSE DE MAQUINA. Semântica: visita=aco_tipocontato='Visita'; oportunidade=negócio comercial distinto tocado por ≥1 ação no período; fechamento=ngo_conclusao='Ganho' (status atual).
+**Proposito:** Pagina /bi/acoes com 9 indicadores de gestao comercial organizados em 5 blocos: funil de conversao (visitas → oportunidades → ganhos + ranking de consultores), gestao de carteira (clientes em risco por dias sem contato, com 4 critérios ordenáveis), esforço e retorno (tabela-ranking com InlineBar: top consultores por visitas vs valor), mapa de oportunidades (pinos geoloc com toggle estoque/período + cluster de pinos) e listas de gestão (sem contato, desperdício, negativas paginadas com search). Funis: VENDAS, Vendas AP, REPASSE DE MAQUINA. Semântica: visita=aco_tipocontato='Visita'; oportunidade=negócio comercial distinto tocado por ≥1 ação no período; fechamento=ngo_conclusao='Ganho' (status atual).
 
 ## Entry Points
 - `src/pages/bi/BiAcoes.tsx` — pagina principal (rota /bi/acoes)
@@ -16,10 +16,10 @@ status: active
 - `src/components/bi/sections/AcoesDetailWithFilter.tsx` — wrapper da tabela detalhe com chips de filtro por status (v6)
 - `src/components/bi/AcoesFunilConversao.tsx` — bloco 1: funil visitas→oportunidades→ganhos + ranking consultores (NOVO)
 - `src/components/bi/AcoesRankingConsultores.tsx` — ranking com 4 critérios (visitas, oportunidades, ganhos, valor) e toggle client-side (NOVO)
-- `src/components/bi/AcoesEsforcoRetorno.tsx` — bloco 2: scatter visitas vs valor, funde pedidos 3+5 (NOVO)
+- `src/components/bi/AcoesEsforcoRetorno.tsx` — bloco 2: tabela-ranking esforço vs retorno com InlineBar, toggle consultor/cliente, 8 linhas + "ver mais" (v7.2, reescrito)
 - `src/components/bi/AcoesGestaoCarteira.tsx` — bloco 3: clientes em risco com 5 faixas dias sem contato, colapsável (NOVO)
 - `src/components/bi/AcoesGestaoCarteiraTables.tsx` — tabelas paginadas das 3 listas: sem-contato, desperdicio, negativas (NOVO)
-- `src/components/bi/AcoesMapaOportunidades.tsx` — bloco 4: mapa colapsável com pinos geoloc (NOVO)
+- `src/components/bi/AcoesMapaOportunidades.tsx` — bloco 4: mapa colapsável com toggle "Todas abertas" | "Tocadas no mês" + cluster de pinos (v7.2, modificado)
 - `src/components/bi/dashboard/mapa/OportunidadeMarkers.tsx` — pinos: cor por dias parado, popup com info (NOVO)
 - `src/components/bi/ChipToggle.tsx` — chip com estado ativo/inativo, reutilizavel (NOVO)
 - `src/components/bi/BiGestaoErro.tsx` — card de erro com debug gateado por isBiDebugEnabled() (NOVO)
@@ -39,8 +39,10 @@ status: active
 - `src/components/bi/BiTableCard.tsx` — card DRY para tabelas (skeleton/error/empty states, 119 linhas)
 - `src/components/bi/BiGestaoErro.tsx` — error state com debug gateado (NOVO)
 - `src/components/bi/BiTopbarPortal.tsx` — dropdown "Tipo de Acao" na topbar
-- `src/components/bi/charts/ScatterChart.tsx` — scatter generico (NOVO)
-- `src/components/bi/charts/primitives/SvgScatter.tsx` — SVG raw scatter plotter (NOVO)
+- `src/components/bi/charts/ScatterChart.tsx` — DELETADO v7.2 (scatter removido, substituído por tabela-ranking)
+- `src/components/bi/charts/primitives/SvgScatter.tsx` — DELETADO v7.2 (primitiva SVG do scatter removido)
+- `src/components/bi/charts/InlineBar.tsx` — barra horizontal inline para rankings (NOVO v7.2, 34 linhas)
+- `src/components/dashboard/mapa/ClusterMarker.tsx` — agrupa pinos por coordenada (4 decimais), badge numérico, popup com lista (NOVO v7.2, 93 linhas)
 - `src/bi/debug/isBiDebugEnabled.ts` — gate de debug por flag isBiDebugEnabled (NOVO)
 - `src/services/bi/acoesGestaoService.ts` — logica de transformacao dos dados de gestao (NOVO)
 - `src/lib/bi/acoesGestaoUtils.ts` — utilitarios: diasParado, mapeadores de criteria (NOVO)
@@ -52,13 +54,14 @@ status: active
 - RPC: `rpc_acoes_clientes_risco` — 5 faixas de dias sem contato (v6)
 - RPC: `rpc_acoes_funil_gestao` (NOVO v7) — funil visitas→oportunidades→ganhos + rankingConsultores + diasParados + meta. Params: p_from, p_to, p_vendedor, p_cidade. Retorna ~70-100ms
 - RPC: `rpc_acoes_gestao_listas` (NOVO v7) — listas paginadas por p_tipo (sem_contato | desperdicio | negativas). Params: p_tipo, p_from, p_to, p_vendedor, p_cidade, p_limit, p_offset, p_search, p_dias_min, p_dias_max. Lança EXCEPTION se p_tipo inválido
-- RPC: `rpc_acoes_mapa_oportunidades` (NOVO v7) — pinos geoloc, estoque aberto (não janela). Params: p_vendedor, p_cidade (NÃO aceita p_from/p_to). Coordenada por cascata (última ação do cliente → fallback carteira). Retorna lat/lng, diasParado, ngoNumero, valor
+- RPC: `rpc_acoes_mapa_oportunidades` v2 (NOVO v7.2) — pinos geoloc, toggle estoque/período. Params: p_vendedor, p_cidade, p_from (opcional), p_to (opcional). Quando p_from/p_to NULL = estoque aberto completo; quando preenchidos = tocadas no período. Coordenada por cascata (última ação do cliente → fallback carteira). Retorna lat/lng, diasParado, ngoNumero, valor
 - Funcao: `mirror.fn_cli_cidade(p_cli_id)` — resolve cidade do cliente (DRY, v6)
 - Tabelas: `mirror.crm_acoes`, `mirror.crm_negocios`, `mirror.crm_carteira_clientes`
 - Índices (proposta rejeitada): `mirror.idx_acoes_diasParado` e `mirror.idx_negocios_vendedores` — benchmark mostrou 0 ganho queries atuais, custo +escrita; documentado em `20260725_idx_acoes_gestao.sql`
 - Migration: `supabase/migrations/20260725_rpc_acoes_funil_gestao.sql` (NOVO)
 - Migration: `supabase/migrations/20260725_rpc_acoes_gestao_listas.sql` (NOVO)
 - Migration: `supabase/migrations/20260725_rpc_acoes_mapa_oportunidades.sql` (NOVO)
+- Migration: `supabase/migrations/20260727_rpc_acoes_mapa_oportunidades_v2.sql` (NOVO v7.2 — adiciona p_from/p_to opcionais)
 - Migration: `supabase/migrations/20260725_idx_acoes_gestao.sql` — no-op: comentário documentando rejeição de índices
 
 ## Padroes (v7)
@@ -69,8 +72,8 @@ status: active
 - Paginacao server-side em AcoesDetailTable e AcoesGestaoListasTable (v6 + NOVO)
 - Filtros via NegociosFilterContext (vendedor, periodo, tipoAcao) — estendido com critérios de gestao (v7)
 - Ranking consultores: 4 critérios (visitas, oportunidades, ganhos, valor) com toggle client-side — NÃO refetch (v7)
-- Scatter visitas vs valor: bolhas agrupadas por consultor, cor por dias parado (v7)
-- Mapa de oportunidades: mostra ESTOQUE ABERTO (não fluxo de janela). Coordenada por cascata: última ação geoloc do cliente → fallback carteira (v7)
+- Tabela-ranking esforço × retorno: InlineBar + BiTableCard, toggle consultor/cliente, 8 linhas visíveis + "ver mais", ordenação por visitas desc (v7.2, substituiu scatter)
+- Mapa de oportunidades v2: toggle "Todas abertas" (estoque) | "Tocadas no mês" (período via p_from/p_to); ClusterMarker agrupa pinos por coordenada arredondada a 4 decimais, badge numérico, popup com lista de negócios (v7.2)
 - Pinos cor por dias parado: < 90 dias = champagne (`#d4b896`), >= 90 = vermelho (`#b83a28`); 38% sem geolocalizacao = cor champagne também (v7)
 - Listas gestao: sem-contato, desperdicio e negativas — search/filter server-side; "desperdicio" encolhe bastante ao aplicar a janela de data (v7)
 - Heatmap matrix: linhas=consultores, colunas=cidades (fn_cli_cidade do CLIENTE, v6)
@@ -92,9 +95,11 @@ status: active
 ### v7 (novas armadilhas)
 9. **Atribuição HÍBRIDA por design:** visitas/oportunidades por `aco_vendedor`; ganhos/valor por `ngo_vendedores → usuarios.usr_codusuario → usr_nomeusuario`. Motivo: 17% dos ganhos comerciais na base (10,4% ano corrente) são tocados por >1 consultor — atribuir por ação inflava o ranking. Unificar as duas pontas quebra a soma com o card
 10. **Canvas não resolve `var()`:** `CircleMarker` com `preferCanvas` desenha via `ctx.fillStyle`, que descarta CSS custom properties em silêncio e cai em `#000000`. Cor tem que ser resolvida para hex no render (`getComputedStyle().getPropertyValue().trim()`) com fallback. Já causou pinos 100% pretos com legenda mentindo
+10.1. **ClusterMarker agrupa por 4 decimais:** coordenadas arredondadas a 4 casas definem grupo — alterar precisão muda a quantidade de clusters visíveis; popup lista até N negócios (v7.2)
+10.2. **Toggle mapa "Tocadas no mês" depende de p_from/p_to na RPC v2:** se o hook `useAcoesMapaRpc` receber from/to, filtra por período; NULL = estoque completo. Remover os params da RPC quebra o toggle (v7.2)
 11. **`ngo_datafechamento` é inutilizável no funil VENDAS:** há negócios com status Ganho, mas **nenhum** com `ngo_datafechamento` preenchida no ano. Não usar para "fechou no período" — filtrar por ela zera o funil
 12. **`error.message` nunca vai ao DOM sem `isBiDebugEnabled()`:** security standard #6. Bloco gateado está duplicado em `BiGestaoErro` e `BiTableCard` — se surgir 3º consumidor, extrair componente único (foi a duplicação que produziu "um lugar gateado, o outro não")
-13. **`p_from/p_to = NULL` na lista `desperdicio` desliga o filtro de janela:** sem janela a lista retorna várias vezes mais linhas que com a janela do ano. Não é bug
+13. **`p_from/p_to = NULL` na lista `desperdicio` desliga o filtro de janela:** sem janela a lista retorna várias vezes mais linhas que com a janela do ano. Não é bug. Mesma semântica no mapa v2: NULL = estoque completo
 
 ## Smoke
 ### v6 (regressão — SEMPRE rodar)
@@ -114,9 +119,9 @@ status: active
 ### v7 (novos indicadores — SEMPRE rodar)
 - Abrir `/bi/acoes` → expande corretamente em 5 blocos
 - **Bloco 1 — Funil + Ranking:** funil estritamente decrescente (visitas > oportunidades > ganhos) no ano corrente; o ranking expõe **ao menos um** consultor com `visitas > 100` e `ganhos = 0` — é o caso que motivou a feature (asserção de existência: não depende de QUEM está no topo, então não quebra no dia em que a pessoa fechar um negócio); o topo de "valor ganho" ser diferente do topo de "visitas" é **consistente com** a atribuição híbrida (armadilha 9) — é sinal, não prova: a prova é o teste unitário `sortRanking — valorGanho desc`
-- **Bloco 2 — Esforço e Retorno:** scatter chart visível, bolhas agrupadas por consultor, escala X visitas / Y valor
+- **Bloco 2 — Esforço e Retorno:** tabela-ranking visível com InlineBar, toggle consultor/cliente funcional (muda agrupamento sem refetch), 8 linhas + botão "ver mais"
 - **Bloco 3 — Gestão de Carteira:** card "Clientes em Risco" mostra 5 faixas dias sem contato; clicar faixa 31-60 → abre aba "Sem contato" com a **mesma contagem** exibida na barra (drill-down bate com o chart)
-- **Bloco 4 — Mapa:** mapa visível e colapsável, markers geoloc visíveis
+- **Bloco 4 — Mapa:** mapa visível e colapsável, toggle "Todas abertas" | "Tocadas no mês" funcional (alterna entre estoque completo e filtrado por período), ClusterMarker agrupa pinos com badge numérico, clicar cluster abre popup com lista de negócios
 - Expandir mapa, varrer pixels do canvas de markers → **0 px `rgb(0,0,0)`**, >0 px `#b83a28` (vermelho >= 90), >0 px `#d4b896` (champagne < 90)
 - Clicar pino vermelho → popup mostra `diasParado >= 90` (validado: 173 dias vermelho, 38 dias champagne)
 - Clicar os 4 critérios do ranking (visitas, oportunidades, ganhos, valor) → ordem muda **sem nova request** (ordenação client-side, não refetch)
@@ -126,7 +131,8 @@ status: active
 - `SELECT (public.rpc_acoes_gestao_listas('desperdicio','2026-01-01','2026-12-31',NULL,NULL,50,0,NULL,NULL,NULL))::text` → estritamente MENOS linhas que a mesma chamada com `p_from/p_to = NULL` (armadilha 13)
 - `SELECT (public.rpc_acoes_gestao_listas('negativas','2026-01-01','2026-12-31',NULL,NULL,50,0,NULL,NULL,NULL))::text` → menor das 3 listas, não vazia
 - `SELECT (public.rpc_acoes_gestao_listas('tipo_invalido',...))::text` → EXCEPTION (p_tipo é validado, não silencia)
-- `SELECT * FROM public.rpc_acoes_mapa_oportunidades(NULL,NULL)` → `comCoordenada + semCoordenada = total`; plota ~82% dos negócios abertos e o rodapé informa quantos ficaram sem coordenada; `valorNoMapa` < valor total (o resto é o sem-coordenada)
+- `SELECT * FROM public.rpc_acoes_mapa_oportunidades(NULL,NULL,NULL,NULL)` → `comCoordenada + semCoordenada = total`; plota ~82% dos negócios abertos e o rodapé informa quantos ficaram sem coordenada; `valorNoMapa` < valor total (o resto é o sem-coordenada) — modo "Todas abertas"
+- `SELECT * FROM public.rpc_acoes_mapa_oportunidades(NULL,NULL,'2026-07-01','2026-07-31')` → estritamente MENOS pinos que a chamada acima (modo "Tocadas no mês" filtra por período)
 - **Vazamento de erro técnico no DOM** (gate do security standard #6 — fix de `4072fa2`; testar SEMPRE, a asserção é grepável de propósito): forçar o card de erro e medir
   - sem a flag → `getByText(/PGRST|biRpcService|Could not find the function/).count() === 0` (só a mensagem amigável no DOM)
   - com `bi_debug=true` → a mesma contagem é **> 0** (o diagnóstico técnico volta, para uso interno)
