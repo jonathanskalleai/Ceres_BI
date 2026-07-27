@@ -4,9 +4,6 @@ import type { RpcAcoesDetalhe } from "@/types/biRpc";
 
 const STALE_TIME = 5 * 60_000; // 5 minutes
 
-/** Teto absoluto de linhas pedidas ao servidor (fallback de seguranca). */
-export const ACOES_DETALHE_LIMIT = 5000;
-
 /** Linhas por pagina da tabela "Acoes do Periodo". */
 export const ACOES_PAGE_SIZE = 50;
 

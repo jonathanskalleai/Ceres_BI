@@ -1,11 +1,11 @@
 ---
 feature: acoes-bi
-updated_at: 2026-07-26T22:00:00Z
+updated_at: 2026-07-27T14:00:00Z
 updated_by: scribe (haiku)
 status: active
 ---
 
-# BI Acoes — Tela de Gestao Comercial (v7.3)
+# BI Acoes — Tela de Gestao Comercial (v8)
 
 **Proposito:** Pagina /bi/acoes com 9 indicadores de gestao comercial organizados em 5 blocos: funil de conversao (visitas → oportunidades → ganhos + ranking de consultores), gestao de carteira (clientes em risco por dias sem contato, com 4 critérios ordenáveis), esforço e retorno (tabela-ranking com InlineBar: top consultores por visitas vs valor), mapa de oportunidades (pinos geoloc com toggle estoque/período + cluster de pinos) e listas de gestão (sem contato, desperdício, negativas paginadas com search). Funis: VENDAS, Vendas AP, REPASSE DE MAQUINA. Semântica: visita=aco_tipocontato='Visita'; oportunidade=negócio comercial distinto tocado por ≥1 ação no período; fechamento=ngo_conclusao='Ganho' (status atual).
 
@@ -13,7 +13,7 @@ status: active
 - `src/pages/bi/BiAcoes.tsx` — pagina principal (rota /bi/acoes)
 - `src/components/bi/sections/AcoesSection.tsx` — secao de KPIs + ranking + graficos + tabelas (v7)
 - `src/components/bi/sections/AcoesKpiGrid.tsx` — grid de KPIs com 3 cards de valor (v6)
-- `src/components/bi/sections/AcoesDetailWithFilter.tsx` — wrapper da tabela detalhe com chips de filtro por status (v6)
+- `src/components/bi/sections/AcoesDetailWithFilter.tsx` — wrapper da tabela detalhe com chips de filtro por status + paginação numerada server-side (v8)
 - `src/components/bi/AcoesFunilConversao.tsx` — bloco 1: funil visitas→oportunidades→ganhos + ranking consultores (NOVO)
 - `src/components/bi/AcoesRankingConsultores.tsx` — ranking com 4 critérios (visitas, oportunidades, ganhos, valor) e toggle client-side (NOVO)
 - `src/components/bi/AcoesEsforcoRetorno.tsx` — bloco 2: tabela-ranking esforço vs retorno com InlineBar, toggle consultor/cliente, 8 linhas + "ver mais" (v7.2, reescrito)
@@ -36,7 +36,8 @@ status: active
 - `src/types/bi/` — tipos expandidos: AcoesFunilRow, AcoesGestaoListaRow, AcoesMapaOportunidadeRow + existentes (barrel em `src/types/biRpc.ts`)
 - `src/components/bi/AcoesRankingTable.tsx` — heatmap matrix consultor x cidade (v6)
 - `src/components/bi/AcoesClientesTable.tsx` — top 15 clientes mais atendidos no ANO ATUAL (v6)
-- `src/components/bi/AcoesDetailTable.tsx` — tabela COMPLETA paginada (v6)
+- `src/components/bi/AcoesDetailTable.tsx` — tabela COMPLETA paginada com paginação numerada server-side (v8)
+- `src/components/bi/PaginationControls.tsx` — componente reutilizável de paginação numerada (124 linhas), design VOUX (champagne active, JetBrains Mono números, pill buttons), a11y (role=navigation, aria-current, aria-label) (NOVO v8)
 - `src/components/bi/BiTableCard.tsx` — card DRY para tabelas (skeleton/error/empty states, 119 linhas)
 - `src/components/bi/BiGestaoErro.tsx` — error state com debug gateado (NOVO)
 - `src/components/bi/BiTopbarPortal.tsx` — dropdown "Tipo de Acao" na topbar
@@ -53,7 +54,7 @@ status: active
 
 ## Database
 - RPC: `rpc_acoes_bi` v5 — usa `mirror.fn_cli_cidade()` (DRY), CTE `negocios_dedup` (dedup por ngo_numero), 3 cards de valor (v6)
-- RPC: `rpc_acoes_detalhe` v4 — tabela completa server-side, paginacao (v6)
+- RPC: `rpc_acoes_detalhe` v5 — tabela completa server-side, paginacao numerada PAGE_SIZE=50 LIMIT/OFFSET; dedup condicional: quando p_status IS NOT NULL (Ganho/Perdido), aplica ROW_NUMBER PARTITION BY ngo_nronegocio (apenas ação mais recente de cada negócio único), total conta negócios únicos; quando p_status IS NULL comportamento inalterado (v8)
 - RPC: `rpc_acoes_clientes_risco` — 5 faixas de dias sem contato (v6)
 - RPC: `rpc_acoes_funil_gestao` (NOVO v7) — funil visitas→oportunidades→ganhos + rankingConsultores + diasParados + meta. Params: p_from, p_to, p_vendedor, p_cidade. Retorna ~70-100ms
 - RPC: `rpc_acoes_gestao_listas` (NOVO v7) — listas paginadas por p_tipo (sem_contato | desperdicio | negativas). Params: p_tipo, p_from, p_to, p_vendedor, p_cidade, p_limit, p_offset, p_search, p_dias_min, p_dias_max. Lança EXCEPTION se p_tipo inválido
@@ -72,7 +73,7 @@ status: active
 - Atribuição HÍBRIDA: visitas/oportunidades por aco_vendedor; ganhos/valor por ngo_vendedores → usr_codusuario → usr_nomeusuario. Motivo: 17% ganhos tocados >1 consultor (10,4% ano corrente) — unificar as duas pontas quebra soma com card
 - fn_cli_cidade centraliza resolucao de cidade (DRY, v6)
 - Dedup negocios via CTE (elimina fan-out ngo_numero duplicado, v6)
-- Paginacao server-side em AcoesDetailTable e AcoesGestaoListasTable (v6 + NOVO)
+- Paginacao server-side em AcoesDetailTable (numerada, PAGE_SIZE=50, PaginationControls.tsx) e AcoesGestaoListasTable (v8 + NOVO)
 - Filtros via NegociosFilterContext (vendedor, periodo, tipoAcao) — estendido com critérios de gestao (v7)
 - Ranking consultores: 4 critérios (visitas, oportunidades, ganhos, valor) com toggle client-side — NÃO refetch (v7)
 - Tabela-ranking esforço × retorno: InlineBar + BiTableCard, toggle consultor/cliente, 8 linhas visíveis + "ver mais", ordenação por visitas desc (v7.2, substituiu scatter)
@@ -91,12 +92,12 @@ status: active
 ## Como Alterar com Seguranca
 ### v6 (vigente)
 1. fn_cli_cidade e usada por AMBAS as RPCs + rpc_acoes_clientes_risco — alterar a funcao impacta heatmap + detalhe + risco
-2. CTE negocios_dedup garante dedup por ngo_numero — remover causa fan-out (mais que dobra as linhas retornadas)
+2. CTE negocios_dedup garante dedup por ngo_numero em rpc_acoes_bi — remover causa fan-out (mais que dobra as linhas retornadas). Em rpc_acoes_detalhe v5, dedup condicional por ROW_NUMBER PARTITION BY ngo_nronegocio aplica-se apenas quando p_status IS NOT NULL — remover a window function causa duplicatas no filtro Ganho/Perdido
 3. 3 cards de valor filtram por funis comerciais hardcoded — novos funis exigem alterar RPC
 4. BiTopbarPortal depende do portal DOM node no layout
 5. Alterar tipos exige editar modulos em src/types/bi/ (barrel em biRpc.ts)
 6. `src/lib/acoesChartUtils.ts` e dead code (orphaned desde v5.1) — cleanup futuro, nao importar
-7. rpc_acoes_detalhe v3 (7 params) deve ser dropada no deploy — v4 com DEFAULT NULL cobre backward compat
+7. rpc_acoes_detalhe v4 (7 params) deve ser dropada no deploy — v5 com DEFAULT NULL cobre backward compat. Dead code: ACOES_DETALHE_LIMIT (export nunca usado) removido em v8
 8. rpc_acoes_clientes_risco usa aco_vendedor = usr_nomeusuario (match direto) — alterar nomes no ETL quebra o chart
 
 ### v7 (novas armadilhas)
@@ -114,6 +115,12 @@ status: active
 16. **AcoesGestaoCarteiraSummary retorna `null` se vazio:** componente invisível quando não há dados — não é bug, é design. Mas se o hook falhar (erro de rede), também retorna null → indistinguível de "sem dados"
 17. **PieChartWithLabels NÃO é dead code:** removido de AcoesSection (v7.3) mas ainda usado em 5 outras sections. Não deletar o componente
 
+### v8 (dedup + paginação numerada — novas armadilhas)
+18. **Dedup condicional em rpc_acoes_detalhe v5:** ROW_NUMBER PARTITION BY ngo_nronegocio aplica-se APENAS quando p_status IS NOT NULL. Quando p_status IS NULL (sem filtro), todas as ações retornam sem dedup — alterar essa lógica quebra a contagem total vs filtrada
+19. **Total conta negócios únicos no modo filtrado:** quando dedup ativo, o total retornado é COUNT(DISTINCT ngo_nronegocio), não COUNT(*) das linhas — PaginationControls usa esse total para calcular páginas. Trocar por count de linhas quebra a paginação
+20. **Paginação numerada reseta página 1 ao trocar filtros:** PaginationControls.tsx depende do hook resetar `page=1` ao mudar statusNegocio/vendedor/período. Se o hook não resetar, usuário vê página N de um filtro anterior (vazia ou dados errados)
+21. **ACOES_DETALHE_LIMIT removido:** era export dead code. Se algum consumidor externo importava (não deve), vai quebrar no build — build limpo confirma
+
 ## Smoke
 ### v6 (regressão — SEMPRE rodar)
 - `npm run build` → sucesso (sem erros TS)
@@ -124,8 +131,8 @@ status: active
 - Chart "Clientes em Risco" visivel com 5 barras (faixas de dias sem contato)
 - Heatmap usa cidade do CLIENTE (fn_cli_cidade), nao emp_cidade
 - StatusDesconhecidoAlert aparece se negociosOutrosStatus > 0
-- `SELECT (public.rpc_acoes_detalhe('2026-07-01','2026-07-31',NULL,NULL,NULL,50,0,'Ganho'))::text` → **todas** as linhas com status='Ganho', nenhuma com outro status
-- `SELECT (public.rpc_acoes_detalhe('2026-07-01','2026-07-31',NULL,NULL,NULL,50,0,NULL))::text` → estritamente MAIS linhas que a chamada acima (backward compat do 8º param)
+- `SELECT (public.rpc_acoes_detalhe('2026-07-01','2026-07-31',NULL,NULL,NULL,50,0,'Ganho'))::text` → **todas** as linhas com status='Ganho', dedup por ngo_nronegocio (1 ação por negócio único); nenhuma com outro status
+- `SELECT (public.rpc_acoes_detalhe('2026-07-01','2026-07-31',NULL,NULL,NULL,50,0,NULL))::text` → estritamente MAIS linhas que a chamada acima (sem dedup, backward compat do 8º param)
 - `SELECT * FROM public.rpc_acoes_clientes_risco(NULL, NULL)` → totalCarteira na ordem de ~8,7 mil clientes em 5 faixas; a soma das 5 faixas bate com o total
 - `SELECT * FROM public.rpc_acoes_clientes_risco(<nome de um consultor>, NULL)` → totalCarteira estritamente menor que o total sem filtro
 
@@ -167,6 +174,13 @@ status: active
 - Antes do bloco "Gestão de Carteira" → mini-cards top 3 "sem contato" visíveis (3 cards com nome de cliente + dias); se base sem dados de carteira, seção não renderiza (null) — não é erro
 - AcoesSection → gráficos de distribuição usam barras horizontais ordenadas DESC (HorizontalBarChart), NÃO pizza — PieChartWithLabels ausente desta tela (mas NÃO deletado do projeto)
 - `npm run build` → sucesso (sem erros TS nas 6 files tocadas)
+
+### v8 (dedup + paginação numerada — SEMPRE rodar)
+- `SELECT (public.rpc_acoes_detalhe('2026-07-01','2026-07-31',NULL,NULL,NULL,50,0,'Ganho'))::text` → linhas mostram apenas a ação mais recente de cada negócio único (sem duplicatas por ngo_nronegocio); total retornado = count de negócios únicos, não de linhas raw
+- `SELECT (public.rpc_acoes_detalhe('2026-07-01','2026-07-31',NULL,NULL,NULL,50,0,NULL))::text` → estritamente MAIS linhas que a chamada com 'Ganho' (sem dedup, backward compat)
+- Abrir `/bi/acoes` → clicar chip "Ganho" → tabela detalhe mostra paginação numerada (botões de página 1, 2, 3...), NÃO "carregar mais"
+- Trocar filtro de status (ex: Ganho → Perdido) → paginação reseta para página 1 automaticamente
+- `npm run build` → sucesso (sem erros TS; ACOES_DETALHE_LIMIT não referenciado em nenhum import)
 
 ## Riscos / Acoplamentos
 ### v6 (vigente)
