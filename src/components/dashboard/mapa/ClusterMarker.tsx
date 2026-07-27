@@ -23,7 +23,9 @@ export function ClusterMarker({ points, lat, lng }: ClusterMarkerProps) {
   const hasDanger = points.some((p) => (p.diasParado ?? 0) >= 90);
 
   const icon = useMemo(() => {
-    const radius = Math.round(14 + Math.log2(count) * 3);
+    // Raio conservador: base 8px + escala log suave. Antes era 14+log2*3 que
+    // gerava circulos enormes cobrindo regioes inteiras do mapa.
+    const radius = Math.round(8 + Math.log2(count) * 2);
     const borderColor = hasDanger ? "var(--voux-danger)" : "var(--voux-champagne-400)";
     const size = radius * 2;
 
@@ -42,16 +44,17 @@ export function ClusterMarker({ points, lat, lng }: ClusterMarkerProps) {
         ">
           <span style="
             position: absolute;
-            top: -6px;
-            right: -6px;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
+            top: -4px;
+            right: -4px;
+            min-width: 14px;
+            height: 14px;
+            padding: 0 2px;
+            border-radius: 7px;
             background: var(--voux-ink-800);
-            border: 1.5px solid ${borderColor};
+            border: 1px solid ${borderColor};
             color: var(--voux-champagne-400);
             font-family: var(--voux-font-mono);
-            font-size: 9px;
+            font-size: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
