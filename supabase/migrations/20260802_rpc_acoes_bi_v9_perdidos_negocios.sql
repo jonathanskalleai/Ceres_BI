@@ -61,7 +61,14 @@
 --    Oportunidades/visitas continuam por aco_vendedor (quem EXECUTOU a acao).
 --
 -- 5) CONTRATO JSON (kpis) — o @dev precisa acompanhar
---    REMOVIDOS: valorTocado, negociosTocados, valorAberto
+--    REMOVIDOS: valorTocado, negociosTocados, valorAberto, negociosAberto
+--               O bucket "aberto" sai INTEIRO: o card "Valor em Aberto" deixa o
+--               grid nesta entrega, e negociosAberto so existia como hint dele.
+--               Manter meio bucket (valor fora, contagem em 0) reproduziria o
+--               proprio defeito que originou esta demanda — numero plausivel
+--               que nao representa nada. "Pipeline aberto atual" e contrato de
+--               ESTOQUE, com data de competencia propria, e volta como campo
+--               novo quando for especificado, nao como resto de v8.
 --    MANTIDO:   negociosOutrosStatus, agora REALIMENTADO (v8 devolvia 0 fixo).
 --               Universo novo: negocio canonico que FECHOU na janela
 --               (ngo_datafechamento) com ngo_conclusao fora de
@@ -71,9 +78,6 @@
 --               silencio. Hoje o ERP so tem 3 status (verificado 2026-08-02),
 --               entao o esperado e 0. Zero aqui e sinal de saude, nao de campo
 --               morto.
---    MANTIDO:   negociosAberto (0). O card "Valor em Aberto" sai do grid nesta
---               entrega; "pipeline aberto atual" e contrato de ESTOQUE, com
---               data de competencia propria, fora deste escopo.
 --
 -- CTEs NOVAS:     negocios_base, negocios_canonicos, negocios_perdidos_periodo,
 --                 negocios_outros_status_periodo
@@ -253,7 +257,6 @@ BEGIN
       (SELECT COALESCE(SUM(ngo_vlrtotalnegociado), 0)
          FROM negocios_perdidos_periodo)                                             AS valor_perdido,
       (SELECT COUNT(*) FROM negocios_perdidos_periodo)                               AS neg_perdido,
-      0::int                                                                         AS neg_aberto,
       (SELECT COUNT(*) FROM negocios_outros_status_periodo)                          AS neg_outros
   ),
   kpi_agg AS (
@@ -284,7 +287,6 @@ BEGIN
       'visitas', (SELECT visitas FROM kpi_agg),
       'clientes', (SELECT clientes FROM kpi_agg),
       'tiposAcaoDistintos', (SELECT tipos_acao_distintos FROM kpi_agg),
-      'negociosAberto', (SELECT neg_aberto FROM valores_status),
       'valorGanho', (SELECT valor_ganho FROM valores_status),
       'negociosGanho', (SELECT neg_ganho FROM valores_status),
       'valorPerdido', (SELECT valor_perdido FROM valores_status),
@@ -436,6 +438,6 @@ END;
 $$;
 
 COMMENT ON FUNCTION public.rpc_acoes_bi(date, date, text, text, text) IS
-  'KPIs e graficos de /bi/acoes v9. Tres fontes separadas: oportunidades/visitas de crm_acoes (aco_dthconclusao), GANHOS de crm_pedidos Aprovado com negocio canonico Ganho (pdo_dthaprovacao, pdo_vlrpedido), PERDIDOS de crm_negocios canonico (ngo_datafechamento, ngo_vlrtotalnegociado). Todos excluem ngo_funil=REPASSE DE MAQUINA. crm_negocios canonizado por DISTINCT ON (ngo_numero) ORDER BY ngo_dataatualizacao DESC, dthregistro DESC — elimina fan-out de linha de produto. p_vendedor/p_cidade nos desfechos usam dono do negocio e fn_cli_cidade; p_tipo_acao so afeta acoes. kpis: valorTocado/negociosTocados/valorAberto REMOVIDOS; negociosOutrosStatus realimentado (detector de 4o status do ERP).';
+  'KPIs e graficos de /bi/acoes v9. Tres fontes separadas: oportunidades/visitas de crm_acoes (aco_dthconclusao), GANHOS de crm_pedidos Aprovado com negocio canonico Ganho (pdo_dthaprovacao, pdo_vlrpedido), PERDIDOS de crm_negocios canonico (ngo_datafechamento, ngo_vlrtotalnegociado). Todos excluem ngo_funil=REPASSE DE MAQUINA. crm_negocios canonizado por DISTINCT ON (ngo_numero) ORDER BY ngo_dataatualizacao DESC, dthregistro DESC — elimina fan-out de linha de produto. p_vendedor/p_cidade nos desfechos usam dono do negocio e fn_cli_cidade; p_tipo_acao so afeta acoes. kpis: bucket "aberto" REMOVIDO por inteiro (valorTocado, negociosTocados, valorAberto, negociosAberto); negociosOutrosStatus realimentado (detector de 4o status do ERP).';
 
 GRANT EXECUTE ON FUNCTION public.rpc_acoes_bi(date, date, text, text, text) TO anon, authenticated, service_role;
