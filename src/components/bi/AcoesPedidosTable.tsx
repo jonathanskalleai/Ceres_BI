@@ -13,7 +13,7 @@ const brl = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
 
 function matches(row: PedidoDetalheRow, term: string): boolean {
-  return [row.cliente, row.cidade, row.consultor, row.pedidoId]
+  return [row.cliente, row.cidade, row.consultor, row.pedidoCodigo]
     .some((v) => (v ?? "").toLowerCase().includes(term));
 }
 
@@ -102,8 +102,8 @@ export function AcoesPedidosTable({ rows, total, page, onPageChange, loading, er
           </thead>
           <tbody>
             {filtered.map((row, i) => (
-              <tr key={`${row.pedidoId}-${i}`} className="border-t border-[var(--voux-card-border)]/30">
-                <td className={`${TD} tabular-nums font-mono`}>{row.pedidoId}</td>
+              <tr key={`${row.pedidoCodigo}-${i}`} className="border-t border-[var(--voux-card-border)]/30">
+                <td className={`${TD} tabular-nums font-mono`}>{row.pedidoCodigo}</td>
                 <td className={`${TD} max-w-[180px] truncate`}>{row.cliente ?? DASH}</td>
                 <td className={`${TD} text-[var(--voux-text-soft)] max-w-[120px] truncate`}>{row.cidade ?? DASH}</td>
                 <td className={`${TD} text-[var(--voux-text-soft)] max-w-[150px] truncate`}>{row.consultor ?? DASH}</td>

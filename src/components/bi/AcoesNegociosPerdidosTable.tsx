@@ -107,7 +107,7 @@ export function AcoesNegociosPerdidosTable({ rows, total, page, onPageChange, lo
                 <td className={`${TD} text-[var(--voux-text-soft)] max-w-[120px] truncate`}>{row.cidade ?? DASH}</td>
                 <td className={`${TD} text-[var(--voux-text-soft)] max-w-[150px] truncate`}>{row.consultor ?? DASH}</td>
                 <td className={`${TD} whitespace-nowrap tabular-nums`}>{row.dataFechamento}</td>
-                <td className={`${TD} text-right tabular-nums whitespace-nowrap`}>{brl(row.valorNegociado)}</td>
+                <td className={`${TD} text-right tabular-nums whitespace-nowrap`}>{brl(row.valorPerdido)}</td>
               </tr>
             ))}
             {filtered.length === 0 && (

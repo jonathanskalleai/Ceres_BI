@@ -7,12 +7,14 @@ function unwrapRpc<T>(data: unknown): T {
 }
 
 export interface PedidoDetalheRow {
-  pedidoId: string;
+  /** Alias para `pedidoCodigo` retornado pela RPC (codigo interno do pedido). */
+  pedidoCodigo: string;
+  negocioNumero: string;
   cliente: string;
   cidade: string;
   consultor: string;
   dataAprovacao: string;
-  valorPedido: number;
+  valorPedido: number | null;
 }
 
 export interface RpcPedidosGanhos {
