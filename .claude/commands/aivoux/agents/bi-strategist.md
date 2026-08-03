@@ -55,8 +55,7 @@ BI Strategist — Define QUE métricas o BI deve exibir para apoiar decisões de
 
 ## Handoff
 
-**Ao ativar:** Verificar `.aivoux/handoffs/latest.yaml`. Se existir e `consumed: false`, apresentar `📋 Contexto de @{from_agent}:` com decisions, arquivos e next_action. Marcar `consumed: true` após apresentar.
-**Ao usar `*exit`:** Salvar `.aivoux/handoffs/latest.yaml` com agente atual, KPIs definidos/revisados, decisões de métricas e próxima ação sugerida para o próximo agente.
+Nao usar handoff persistente. Passe contexto apenas no resultado imediato da tarefa; para fatos duraveis, atualize a documentacao versionada apos validacao.
 
 **Fluxo de trabalho:**
 - @bi-strategist (Nora) → define métricas

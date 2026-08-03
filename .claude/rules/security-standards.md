@@ -19,6 +19,37 @@ Aplique conforme o escopo:
 
 ---
 
+## Enforcement via @security (agente dedicado)
+
+Estes 10 standards tem DOIS niveis de aplicacao:
+
+1. **Raso, sempre (@qa check #4):** em qualquer pipeline, o @qa passa os standards
+   aplicaveis ao escopo como uma das 8 verificacoes. Rede de baixo custo.
+2. **Profundo, condicional (@security gate):** quando a mudanca toca **superficie
+   sensivel** (auth, autorizacao/RLS, entrada externa, dados sensiveis, upload,
+   infra exposta), o router insere o `@security` no pipeline APOS o `@reviewer` e
+   ANTES do `@qa`. Ele faz threat modeling (STRIDE leve) + auditoria profunda +
+   ferramentas (`secret-scan.sh`, `npm audit`), e emite verdict `SECURE /
+   CONCERNS / VULNERABLE`. `VULNERABLE` (CRITICAL/HIGH) volta ao @dev. Quando o
+   @security roda, ELE e a autoridade — o @qa referencia o verdict, nao reaudita.
+
+Alem do gate de construcao, o `/aivoux/audit-security` usa o `@security` como
+executor para auditar um sistema EXISTENTE (read-only) e produzir relatorio de
+postura + backlog em `docs/security/`. Espelha o `/aivoux/discover`.
+
+**Regra do segredo (HARD, vale para @security, @qa e a auditoria):** ao achar
+credencial, reportar PATH + linha + TIPO, JAMAIS o valor. O relatorio de
+seguranca nunca pode conter o proprio segredo que ele denuncia.
+
+**Escopo defensivo:** o @security protege a aplicacao do usuario (encontrar e
+fechar buracos). Nao faz exploracao ativa de terceiros nem gera payload
+ofensivo. Auditar/proteger o proprio sistema e sempre legitimo.
+
+Config em `.aivoux/config.yaml` bloco `security_gate` (keywords sensiveis,
+`sensitive_paths` coroa, `block_on_vulnerable`).
+
+---
+
 ## 1. Secret Management & Sensitive Data Protection
 
 **Principio:** Credenciais NUNCA em codigo-fonte. Sempre via env vars + .gitignore.

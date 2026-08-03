@@ -10,6 +10,7 @@
 | CI/CD pipeline config | @devops |
 | Decisoes de arquitetura | @architect |
 | Quality gate verdicts | @qa |
+| Security gate verdicts (SECURE/VULNERABLE) | @security |
 | PRD / epic creation | @pm |
 | Story creation / validation | @pm |
 

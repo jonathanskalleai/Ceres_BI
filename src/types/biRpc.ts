@@ -21,3 +21,6 @@ export * from "./bi/parque";
 export * from "./bi/etl";
 export * from "./bi/operacional";
 export * from "./bi/produtos";
+export * from "./bi/acoesPedidosGanhos";
+export * from "./bi/acoesNegociosPerdidos";
+export * from "./bi/acoesEmAndamento";

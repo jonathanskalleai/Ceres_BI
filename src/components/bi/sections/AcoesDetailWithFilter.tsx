@@ -1,10 +1,18 @@
+import { useState } from "react";
 import { useNegociosFilter } from "@/contexts/NegociosFilterContext";
 import { AcoesDetailTable } from "@/components/bi/AcoesDetailTable";
+import { AcoesPedidosTable } from "@/components/bi/AcoesPedidosTable";
+import { AcoesNegociosPerdidosTable } from "@/components/bi/AcoesNegociosPerdidosTable";
+import { AcoesEmAndamentoTable } from "@/components/bi/AcoesEmAndamentoTable";
+import { usePedidosGanhosRpc } from "@/hooks/bi/usePedidosGanhosRpc";
+import { useNegociosPerdidosRpc } from "@/hooks/bi/useNegociosPerdidosRpc";
+import { useEmAndamentoRpc } from "@/hooks/bi/useEmAndamentoRpc";
 import type { AcoesDetalheItem } from "@/types/biRpc";
 
+/** Story 5-A: "Em Aberto" renomeado para "Em Andamento". */
 const STATUS_OPTIONS = [
   { value: "", label: "Todos" },
-  { value: "Em Andamento", label: "Em Aberto" },
+  { value: "Em Andamento", label: "Em Andamento" },
   { value: "Ganho", label: "Ganho" },
   { value: "Perdido", label: "Perdido" },
 ] as const;
@@ -16,7 +24,7 @@ const STATUS_COLORS: Record<string, string> = {
   "Perdido": "border-[#b8421c] text-[#b8421c]",
 };
 
-interface Props {
+interface LegacyProps {
   rows: AcoesDetalheItem[];
   total: number;
   page: number;
@@ -28,11 +36,48 @@ interface Props {
 }
 
 /**
- * Status filter chips + AcoesDetailTable with pagination and contextual badge.
- * Extracted from AcoesSection to keep component sizes under 200 lines.
+ * Roteador por statusNegocio (Story 4-A/4-B/5-A).
+ *
+ * Cada status renderiza a tabela correta:
+ *   "" (Todos)       → AcoesDetailTable  (legacy, unchanged)
+ *   "Em Andamento"   → AcoesEmAndamentoTable
+ *   "Ganho"          → AcoesPedidosTable
+ *   "Perdido"        → AcoesNegociosPerdidosTable
+ *
+ * As 3 tabelas novas gerenciam sua própria paginação internamente.
+ * O chip "Em Aberto" foi renomeado para "Em Andamento" (Story 5-A).
  */
-export function AcoesDetailWithFilter({ rows, total, page, pageSize, totalPages, onPageChange, loading, error }: Props) {
-  const { statusNegocio, setStatusNegocio } = useNegociosFilter();
+export function AcoesDetailWithFilter({ rows, total, page, pageSize, totalPages, onPageChange, loading, error }: LegacyProps) {
+  const { statusNegocio, setStatusNegocio, vendedor, cidade } = useNegociosFilter();
+
+  // Paginação interna de cada tabela drill-down
+  const [pedidosPage, setPedidosPage] = useState(1);
+  const [perdidosPage, setPerdidosPage] = useState(1);
+  const [andamentoPage, setAndamentoPage] = useState(1);
+
+  // Reset para página 1 ao trocar filtros que afetam todas as tabelas
+  // (a troca de statusNegocio já acontece no chip, não precisa de reset aqui)
+
+  const { data: pedidosData, isLoading: pedidosLoading, error: pedidosError } = usePedidosGanhosRpc({
+    vendedor: vendedor || undefined,
+    cidade: cidade || undefined,
+    page: pedidosPage,
+    enabled: statusNegocio === "Ganho",
+  });
+
+  const { data: negociosPerdidosData, isLoading: negociosPerdidosLoading, error: negociosPerdidosError } = useNegociosPerdidosRpc({
+    vendedor: vendedor || undefined,
+    cidade: cidade || undefined,
+    page: perdidosPage,
+    enabled: statusNegocio === "Perdido",
+  });
+
+  const { data: emAndamentoData, isLoading: emAndamentoLoading, error: emAndamentoError } = useEmAndamentoRpc({
+    vendedor: vendedor || undefined,
+    cidade: cidade || undefined,
+    page: andamentoPage,
+    enabled: statusNegocio === "Em Andamento",
+  });
 
   return (
     <div className="space-y-3">
@@ -46,7 +91,13 @@ export function AcoesDetailWithFilter({ rows, total, page, pageSize, totalPages,
             <button
               key={value}
               type="button"
-              onClick={() => setStatusNegocio(value)}
+              onClick={() => {
+                setStatusNegocio(value);
+                // Reset pages for drill-down tables when switching away from them
+                if (value !== "Ganho") setPedidosPage(1);
+                if (value !== "Perdido") setPerdidosPage(1);
+                if (value !== "Em Andamento") setAndamentoPage(1);
+              }}
               aria-pressed={active}
               className={`h-7 rounded-full border px-3 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--voux-champagne-400)] ${colorClass} ${
                 active ? "bg-foreground/10" : "bg-transparent hover:bg-foreground/5"
@@ -72,16 +123,49 @@ export function AcoesDetailWithFilter({ rows, total, page, pageSize, totalPages,
         </p>
       )}
 
-      <AcoesDetailTable
-        rows={rows}
-        total={total}
-        page={page}
-        pageSize={pageSize}
-        totalPages={totalPages}
-        onPageChange={onPageChange}
-        loading={loading}
-        error={error}
-      />
+      {/* Routed table */}
+      {statusNegocio === "Ganho" && (
+        <AcoesPedidosTable
+          rows={pedidosData?.rows ?? []}
+          total={pedidosData?.total ?? 0}
+          page={pedidosPage}
+          onPageChange={setPedidosPage}
+          loading={pedidosLoading}
+          error={pedidosError}
+        />
+      )}
+      {statusNegocio === "Perdido" && (
+        <AcoesNegociosPerdidosTable
+          rows={negociosPerdidosData?.rows ?? []}
+          total={negociosPerdidosData?.total ?? 0}
+          page={perdidosPage}
+          onPageChange={setPerdidosPage}
+          loading={negociosPerdidosLoading}
+          error={negociosPerdidosError}
+        />
+      )}
+      {statusNegocio === "Em Andamento" && (
+        <AcoesEmAndamentoTable
+          rows={emAndamentoData?.rows ?? []}
+          total={emAndamentoData?.total ?? 0}
+          page={andamentoPage}
+          onPageChange={setAndamentoPage}
+          loading={emAndamentoLoading}
+          error={emAndamentoError}
+        />
+      )}
+      {statusNegocio === "" && (
+        <AcoesDetailTable
+          rows={rows}
+          total={total}
+          page={page}
+          pageSize={pageSize}
+          totalPages={totalPages}
+          onPageChange={onPageChange}
+          loading={loading}
+          error={error}
+        />
+      )}
     </div>
   );
 }

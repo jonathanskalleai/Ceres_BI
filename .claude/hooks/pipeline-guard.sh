@@ -46,7 +46,7 @@ case "$TOOL" in
     ;;
   Write)
     # Write em paths internos do AIVOUX e permitido pro router (marker, handoffs, telemetry)
-    if echo "$INPUT" | grep -qE '\.aivoux/(\.pipeline-active|handoffs/|telemetry/)'; then
+    if echo "$INPUT" | grep -qE '\.aivoux/(\.pipeline-active|handoffs/|telemetry/|gates/)'; then
       exit 0
     fi
     print_warning

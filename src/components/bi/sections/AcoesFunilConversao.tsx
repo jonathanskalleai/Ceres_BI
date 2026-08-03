@@ -2,6 +2,7 @@ import { Eye, Target, Info } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BiGestaoErro } from "@/components/bi/BiGestaoErro";
 import { AcoesDesfechosPeriodo } from "@/components/bi/sections/AcoesDesfechosPeriodo";
+import { AcoesDegrauBar } from "@/components/bi/AcoesDegrauBar";
 import { funilRatios, fmtRatio } from "@/lib/bi/acoesGestaoUtils";
 import type { AcoesFunil, AcoesFunilMeta } from "@/types/biRpc";
 
@@ -46,43 +47,6 @@ const ESTAGIOS: Estagio[] = [
     hint: "negocios canonicos tocados por acao no periodo que seguem Em Andamento, sem REPASSE DE MAQUINA",
   },
 ];
-
-/** Largura relativa do degrau. Piso de 18% para o ultimo estagio nao sumir. */
-function larguraPct(valor: number, base: number): number {
-  if (base <= 0) return 18;
-  return Math.max(18, Math.round((valor / base) * 100));
-}
-
-function Degrau({ estagio, valor, base }: { estagio: Estagio; valor: number; base: number }) {
-  const Icon = estagio.icon;
-  return (
-    <div className="flex items-center gap-3" title={estagio.hint}>
-      <div
-        className="relative flex h-14 items-center rounded-xl px-4 transition-[width] duration-500"
-        style={{
-          width: `${larguraPct(valor, base)}%`,
-          minWidth: 150,
-          background: "linear-gradient(90deg, var(--voux-accent) 0%, var(--voux-champagne-400) 100%)",
-          opacity: 0.92,
-        }}
-      >
-        <Icon className="h-4 w-4 shrink-0 text-[var(--surface-raised)]" aria-hidden="true" />
-        <span
-          className="ml-2 text-lg font-semibold tabular-nums text-[var(--surface-raised)]"
-          style={{ fontFamily: "var(--voux-font-display)" }}
-        >
-          {valor.toLocaleString("pt-BR")}
-        </span>
-        <span
-          className="ml-2 truncate text-[10px] uppercase text-[var(--surface-raised)]"
-          style={{ fontFamily: MONO, letterSpacing: "0.22em", opacity: 0.85 }}
-        >
-          {estagio.label}
-        </span>
-      </div>
-    </div>
-  );
-}
 
 /** Razao entre dois degraus — a legenda que da sentido ao numero de cima. */
 function Conector({ valor, texto }: { valor: string; texto: string }) {
@@ -170,9 +134,9 @@ export function AcoesFunilConversao({ funil, meta, loading, error }: Props) {
       </p>
 
       <div className="space-y-2">
-        <Degrau estagio={ESTAGIOS[0]} valor={funil.visitas} base={base} />
+        <AcoesDegrauBar icon={ESTAGIOS[0].icon} label={ESTAGIOS[0].label} valor={funil.visitas} base={base} hint={ESTAGIOS[0].hint} />
         <Conector valor={fmtRatio(visitasPorOportunidade)} texto="visitas por oportunidade aberta" />
-        <Degrau estagio={ESTAGIOS[1]} valor={funil.oportunidades} base={base} />
+        <AcoesDegrauBar icon={ESTAGIOS[1].icon} label={ESTAGIOS[1].label} valor={funil.oportunidades} base={base} hint={ESTAGIOS[1].hint} />
         <p className="pl-6 text-[11px] text-[var(--voux-text-muted)]">
           {brl(funil.valorOportunidades)} em negociacao aberta
         </p>

@@ -35,10 +35,22 @@ Na ordem. Falhou qualquer um → `Status: BLOCKED`, reportar, NAO declarar suces
    - Webhook/API: enviar payload de teste representativo → resposta esperada
    - Cada tipo critico de input (ex: texto, audio, PDF, grupo) se o change os toca
    - DB: rodar a query/funcao alterada com dados reais e conferir o resultado
+3.1 **Re-smoke dos vizinhos (Regression Gate F4)** — no ambiente vivo, apos o
+   smoke da mudanca: rodar `blast-radius.sh --base <SHA do deploy anterior>`
+   (ou `--last-commit`) e re-executar o `## Smoke` de cada feature afetada +
+   `regression_gate.critical_paths`. Afetada quebrada pos-deploy = ROLLBACK
+   (SHA do gate 5). Detalhes em `regression-gate.md`.
 4. **SHA verificado no REMOTO** — confirmar o que foi publicado de fato:
    - `git ls-remote origin <branch>` / `gh` — comparar com o que voce acha que subiu
    - NUNCA reportar SHA do `main` local stale como se fosse o estado do remoto
 5. **Rollback pronto** — saber como reverter (SHA anterior, migration down) ANTES de subir
+6. **Observability (F5)** — em projeto com usuarios reais
+   (`observability.require_tracking_on_deploy: true`):
+   - Error tracking configurado (handler global) + **1 evento de teste RECEBIDO**
+     no canal (Sentry/GlitchTip/webhook) — "configurei" sem evento recebido nao conta
+   - `/health` respondendo no ambiente vivo (quando o projeto tem)
+   - Sem error tracking = o proximo erro de producao sera descoberto pelo USUARIO,
+     nao por voce. Detalhes em `observability-standards.md` #2/#3.
 
 ---
 
@@ -69,3 +81,7 @@ conforme `QA Runtime Verification`.
 - Quality Gates de `shared-config.md`: este gate roda DEPOIS dos 4 checks, antes do push final
 - Pipeline DEPLOY do router termina com este gate; sem ele → `BLOCKED`
 - `@devops` e dono; em deploy, **read-only no codigo** (vide CLAUDE.md "Deploy Tasks = Read-Only")
+- **Pipeline Integrity (F6):** ANTES deste gate, o hook `deploy-gate.sh` ja bloqueia
+  fisicamente o push/deploy sem QA PASS ancorado ao SHA atual (vide
+  `pipeline-integrity.md`). F6 impede o push sair sem pipeline; F1 valida o que
+  saiu (boot + smoke no ambiente vivo). Um nao substitui o outro.

@@ -1,0 +1,202 @@
+- generic [ref=f50e2]:
+  - region "Notifications (F8)":
+    - list
+  - region "Notifications alt+T"
+  - generic [ref=f50e8]:
+    - complementary [ref=f50e9]:
+      - generic [ref=f50e10]:
+        - img "Ceres BI" [ref=f50e11]
+        - button "Recolher sidebar" [ref=f50e12] [cursor=pointer]
+      - navigation [ref=f50e15]:
+        - generic [ref=f50e16]:
+          - button "Visao Geral" [ref=f50e17] [cursor=pointer]
+          - button "Acoes" [ref=f50e24] [cursor=pointer]
+          - button "Negocios" [ref=f50e28] [cursor=pointer]
+          - button "Pedidos" [ref=f50e32] [cursor=pointer]
+          - button "Servicos" [ref=f50e39] [cursor=pointer]
+          - button "Produtividade Tecnica" [ref=f50e46] [cursor=pointer]
+          - button "Base Instalada" [ref=f50e53] [cursor=pointer]
+          - button "Carteira de Clientes" [ref=f50e60] [cursor=pointer]
+          - button "Inteligencia" [ref=f50e65] [cursor=pointer]
+          - button "Painel Comercial" [ref=f50e69] [cursor=pointer]
+          - button "Equipe" [ref=f50e76] [cursor=pointer]
+          - button "Atividades" [ref=f50e83] [cursor=pointer]
+          - button "Mapa de Cobertura" [ref=f50e87] [cursor=pointer]
+          - button "Pipeline" [ref=f50e91] [cursor=pointer]
+          - button "Clientes sem Contato" [ref=f50e98] [cursor=pointer]
+          - button "Notas de Campo" [ref=f50e102] [cursor=pointer]
+          - button "Gestao Interna" [ref=f50e106] [cursor=pointer]
+          - button "Relatorio Anual" [ref=f50e111] [cursor=pointer]
+          - button "Meu Perfil" [ref=f50e118] [cursor=pointer]
+          - generic [ref=f50e123]:
+            - button "Configuracoes" [ref=f50e124] [cursor=pointer]
+            - generic [ref=f50e132]:
+              - button "Monitor ETL" [ref=f50e133] [cursor=pointer]
+              - button "Explorador de Dados" [ref=f50e139] [cursor=pointer]
+              - button "Gerenciar Usuarios" [ref=f50e145] [cursor=pointer]
+      - generic [ref=f50e152]:
+        - generic [ref=f50e153]:
+          - generic [ref=f50e154]: J
+          - generic [ref=f50e156]: Jonathan
+        - button "Modo escuro" [ref=f50e157] [cursor=pointer]
+        - button "Sair" [ref=f50e161] [cursor=pointer]
+    - main [ref=f50e166]:
+      - generic [ref=f50e167]:
+        - heading "Visao Geral" [level=1] [ref=f50e169]
+        - generic [ref=f50e171]:
+          - button "01 jul 2026 – 31 jul 2026" [ref=f50e172] [cursor=pointer]
+          - combobox [ref=f50e173] [cursor=pointer]:
+            - generic: Todos
+          - combobox [ref=f50e176] [cursor=pointer]:
+            - generic: Todos os funis
+          - combobox [ref=f50e179] [cursor=pointer]:
+            - generic: Todos vendedores
+          - combobox [ref=f50e182] [cursor=pointer]:
+            - generic: Todas cidades
+          - combobox [ref=f50e185] [cursor=pointer]:
+            - generic: Todos tipos
+          - button "Limpar" [ref=f50e188] [cursor=pointer]
+      - generic [ref=f50e189]:
+        - generic [ref=f50e191]:
+          - tablist [ref=f50e192]:
+            - tab "Cards" [selected] [ref=f50e193] [cursor=pointer]
+            - tab "Graficos" [ref=f50e194] [cursor=pointer]
+          - tabpanel "Cards" [ref=f50e195]:
+            - generic [ref=f50e196]:
+              - generic [ref=f50e197]:
+                - generic [ref=f50e198]: Total Negocios
+                - generic "133" [ref=f50e204]
+                - generic [ref=f50e205]:
+                  - generic [ref=f50e206]: ↓
+                  - generic [ref=f50e207]: 166 per. anterior
+                  - generic [ref=f50e208]: "Periodo anterior: 166"
+              - generic [ref=f50e209]:
+                - generic [ref=f50e210]: Ganhos
+                - generic "26" [ref=f50e216]
+                - generic [ref=f50e217]:
+                  - generic [ref=f50e218]: ↑
+                  - generic [ref=f50e219]: 24 per. anterior
+                  - generic [ref=f50e220]: "Periodo anterior: 24"
+              - generic [ref=f50e221]:
+                - generic [ref=f50e222]: Perdidos
+                - generic "2" [ref=f50e228]
+                - generic [ref=f50e229]:
+                  - generic [ref=f50e230]: ↓
+                  - generic [ref=f50e231]: 17 per. anterior
+                  - generic [ref=f50e232]: "Periodo anterior: 17"
+              - generic [ref=f50e233]:
+                - generic [ref=f50e234]: Em Andamento
+                - generic "105" [ref=f50e239]
+                - generic [ref=f50e240]:
+                  - generic [ref=f50e241]: ↓
+                  - generic [ref=f50e242]: 125 per. anterior
+                  - generic [ref=f50e243]: "Periodo anterior: 125"
+              - generic [ref=f50e244]:
+                - generic [ref=f50e245]: Taxa de Conversao
+                - generic "19.5%" [ref=f50e252]
+                - generic [ref=f50e253]:
+                  - generic [ref=f50e254]: ↑
+                  - generic [ref=f50e255]: 14.5% per. anterior
+                  - generic [ref=f50e256]: "Periodo anterior: 14.5%"
+              - generic [ref=f50e257]:
+                - generic [ref=f50e258]: Ciclo Medio
+                - generic "29 dias" [ref=f50e264]
+                - generic [ref=f50e265]:
+                  - generic [ref=f50e266]: ↑
+                  - generic [ref=f50e267]: 44 dias per. anterior
+                  - generic [ref=f50e268]: "Periodo anterior: 44 dias"
+              - generic [ref=f50e269]:
+                - generic [ref=f50e270]: Esforco Medio
+                - generic "1" [ref=f50e276]
+                - generic [ref=f50e277]:
+                  - generic [ref=f50e278]: →
+                  - generic [ref=f50e279]: 1 per. anterior
+                  - generic [ref=f50e280]: "Periodo anterior: 1"
+              - generic [ref=f50e281]:
+                - generic [ref=f50e282]: Conversao Pedido
+                - generic "100.0%" [ref=f50e289]
+                - generic [ref=f50e290]:
+                  - generic [ref=f50e291]: ↑
+                  - generic [ref=f50e292]: 70.8% per. anterior
+                  - generic [ref=f50e293]: "Periodo anterior: 70.8%"
+              - generic [ref=f50e294]:
+                - generic [ref=f50e295]: Valor Ganho
+                - generic "R$ 3.527.725,30" [ref=f50e300]: R$ 3,5 mi
+                - generic [ref=f50e301]:
+                  - generic [ref=f50e302]: ↑
+                  - generic [ref=f50e303]: R$ 2,8 mi per. anterior
+                  - generic [ref=f50e304]: "Periodo anterior: R$ 2,8 mi"
+              - generic [ref=f50e305]:
+                - generic [ref=f50e306]: Valor Perdido
+                - generic "R$ 275.000,00" [ref=f50e312]: R$ 275.000
+                - generic [ref=f50e313]:
+                  - generic [ref=f50e314]: ↓
+                  - generic [ref=f50e315]: R$ 2,7 mi per. anterior
+                  - generic [ref=f50e316]: "Periodo anterior: R$ 2,7 mi"
+              - generic [ref=f50e317]:
+                - generic [ref=f50e318]: Pipeline Aberto
+                - generic "R$ 17.188.726,25" [ref=f50e324]: R$ 17,2 mi
+                - generic [ref=f50e325]:
+                  - generic [ref=f50e326]: ↑
+                  - generic [ref=f50e327]: R$ 16,8 mi per. anterior
+                  - generic [ref=f50e328]: "Periodo anterior: R$ 16,8 mi"
+              - generic [ref=f50e329]:
+                - generic [ref=f50e330]: Ticket Medio
+                - generic "R$ 135.681,74" [ref=f50e335]: R$ 135.682
+                - generic [ref=f50e336]:
+                  - generic [ref=f50e337]: ↑
+                  - generic [ref=f50e338]: R$ 115.577 per. anterior
+                  - generic [ref=f50e339]: "Periodo anterior: R$ 115.577"
+              - generic [ref=f50e340]:
+                - generic [ref=f50e341]: Faturamento
+                - generic "R$ 3.339.890,00" [ref=f50e346]: R$ 3,3 mi
+                - generic [ref=f50e347]:
+                  - generic [ref=f50e348]: ↑
+                  - generic [ref=f50e349]: R$ 2,2 mi per. anterior
+                  - generic [ref=f50e350]: "Periodo anterior: R$ 2,2 mi"
+              - generic [ref=f50e351]:
+                - generic [ref=f50e352]: Total Pedidos
+                - generic "32" [ref=f50e359]
+                - generic [ref=f50e360]:
+                  - generic [ref=f50e361]: ↑
+                  - generic [ref=f50e362]: 17 per. anterior
+                  - generic [ref=f50e363]: "Periodo anterior: 17"
+              - generic [ref=f50e364]:
+                - generic [ref=f50e365]: Taxa Aprovacao
+                - generic "90.6%" [ref=f50e371]
+                - generic [ref=f50e372]:
+                  - generic [ref=f50e373]: ↓
+                  - generic [ref=f50e374]: 100.0% per. anterior
+                  - generic [ref=f50e375]: "Periodo anterior: 100.0%"
+              - generic [ref=f50e376]:
+                - generic [ref=f50e377]: Mix Financiamento
+                - generic "25.0%" [ref=f50e384]
+                - generic [ref=f50e385]:
+                  - generic [ref=f50e386]: ↑
+                  - generic [ref=f50e387]: 17.6% per. anterior
+                  - generic [ref=f50e388]: "Periodo anterior: 17.6%"
+              - generic [ref=f50e389]:
+                - generic [ref=f50e390]: Clientes Ativos
+                - generic "2.904" [ref=f50e398]
+                - generic [ref=f50e399]:
+                  - generic [ref=f50e400]: →
+                  - generic [ref=f50e401]: 0 per. anterior
+                  - generic [ref=f50e402]: "Periodo anterior: 0"
+              - generic [ref=f50e403]:
+                - generic [ref=f50e404]: Prospects
+                - generic "5.837" [ref=f50e412]
+                - generic [ref=f50e413]:
+                  - generic [ref=f50e414]: →
+                  - generic [ref=f50e415]: 0 per. anterior
+                  - generic [ref=f50e416]: "Periodo anterior: 0"
+              - generic [ref=f50e417]:
+                - generic [ref=f50e418]: Parque Maquinas
+                - generic "1.572" [ref=f50e423]
+                - generic [ref=f50e424]:
+                  - generic [ref=f50e425]: →
+                  - generic [ref=f50e426]: 0 per. anterior
+                  - generic [ref=f50e427]: "Periodo anterior: 0"
+            - heading "— ACOES / OPERACIONAL" [level=2] [ref=f50e428]
+        - button "Expand BI debug overlay" [ref=f50e430] [cursor=pointer]:
+          - generic [ref=f50e431]: +
+          - generic [ref=f50e432]: BI DEBUG

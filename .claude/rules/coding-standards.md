@@ -55,17 +55,19 @@ o @qa valida no review, e o @architect considera no design.
 
 **Principio:** Componentes grandes sao dificeis de testar, entender e reusar.
 
-**Aplicar:**
-- **Gate obrigatorio (HARD): <300 linhas por arquivo/componente** (incluindo imports).
-  Ultrapassar = FAIL no `@reviewer`/`@qa` e aviso do hook `quality-guard`. Sem excecoes silenciosas.
-- **Meta ideal: <200 linhas** — para codigo novo, buscar esse limite
-- Se aproximar de 300, quebrar em sub-componentes/hooks/utils ANTES de entregar — nao depois
+**Aplicar (3 niveis — config em `coding_standards` no `.aivoux/config.yaml`):**
+- **Meta ideal: <200 linhas** (`component_meta_lines`) — para codigo novo, buscar esse limite
+- **Aviso: 300 linhas** (`component_warn_lines`) — zona de risco; o hook `quality-guard`
+  avisa e o @dev deve planejar a quebra JA. Nao bloqueia (as vezes o corte natural
+  do componente da 320-360 linhas — aceito, mas e o teto da tolerancia)
+- **Gate obrigatorio (HARD): 400 linhas** (`component_hard_gate`) — acima disso e
+  monolito. FAIL no `@reviewer`/`@qa` e Write BLOQUEADO pelo hook. Sem excecoes silenciosas.
 - Cada componente tem uma responsabilidade clara (Single Responsibility)
 - Extrair logica complexa para custom hooks
 - Componentes "container" (logica) separados de "presentational" (UI)
 
 **Anti-padrao:** `Dashboard.tsx` com 800 linhas fazendo fetch, transforms, e renderizacao.
-**Anti-padrao:** entregar arquivo de 290 linhas "porque ainda passa" em vez de quebrar cedo.
+**Anti-padrao:** entregar arquivo de 390 linhas "porque ainda passa" em vez de quebrar cedo.
 
 ---
 
@@ -122,13 +124,19 @@ o @qa valida no review, e o @architect considera no design.
 
 **Aplicar:**
 - `try/catch` em todas as operacoes async (fetch, DB, file IO)
-- **Error Boundaries** em pontos estrategicos da arvore React
+- **Regra do catch (HARD):** NENHUM `catch` sem logar/reportar o erro antes de
+  tratar. Catch que so mostra toast generico e um SUPRESSOR de erro — o root
+  cause evapora e ninguem fica sabendo. Excecoes: rethrow ou comentario inline
+  justificando. Detalhes em `observability-standards.md` #1.
+- **Error Boundaries** em pontos estrategicos da arvore React (a raiz REPORTA
+  ao error tracking, nao so renderiza fallback)
 - Mensagens de erro **uteis ao usuario** (nao stack traces)
 - Logar erros estruturadamente (sem expor dados sensiveis)
 - Diferenciar erros recuperaveis de fatais
 - Estados de erro explicitos no UI (nao apenas loading + sucesso)
 
 **Anti-padrao:** `fetch(url).then(r => r.json())` sem `.catch()`.
+**Anti-padrao:** `catch (e) { toast("Erro ao salvar") }` — erro engolido, invisivel ao dono.
 
 ---
 
@@ -199,7 +207,15 @@ o @qa valida no review, e o @architect considera no design.
 validators) deve ter pelo menos 1 teste unitario no mesmo PR.
 Features de UI puras (componentes visuais sem logica) sao isentas de teste obrigatorio.
 
+**Gate BUG_FIX (regression test):** todo bug fix inclui **1 teste que reproduz o
+bug** (falha sem o fix, passa com ele). O router ja exige reproduzir antes de
+fixar (Reproduce-First) — transformar a reproducao em teste e quase de graca, e
+e assim que a suite cresce organicamente exatamente onde os bugs REALMENTE
+acontecem. Excecao: bug nao testavel em unit/integration (ex: visual puro,
+infra) — reportar o motivo no handoff, nunca omitir.
+
 **Anti-padrao:** Logica de negocio nova sem nenhum teste.
+**Anti-padrao:** Bug corrigido sem teste — o mesmo bug volta em 2 meses e ninguem percebe.
 
 > Meta de longo prazo: 80% de cobertura para logica critica.
 > Nao bloquear PRs por ausencia de cobertura em codigo existente nao testado.
@@ -214,7 +230,7 @@ Antes de marcar tarefa como completa, validar:
 - [ ] DRY: nao ha duplicacao com codigo existente
 - [ ] Sem dead code (imports/funcoes nao usadas removidos)
 - [ ] TypeScript estrito (sem `any` injustificado)
-- [ ] Componentes <300 linhas (HARD gate, FAIL acima); meta <200 para codigo novo
+- [ ] Componentes <=400 linhas (HARD gate, FAIL acima); >300 = aviso, planejar quebra; meta <200 para codigo novo
 - [ ] Estado bem gerenciado (sem prop drilling excessivo)
 - [ ] Hooks corretos (deps completas, sem violacao de regras)
 - [ ] Logica separada de presentacao

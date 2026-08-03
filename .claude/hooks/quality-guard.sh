@@ -1,16 +1,21 @@
 #!/usr/bin/env bash
 # AIVOUX quality-guard — PostToolUse hook (Edit|Write|NotebookEdit)
-# Enforcement DETERMINISTICO das 12 best practices estruturais.
+# Enforcement DETERMINISTICO das best practices estruturais + observability.
 # Roda SEMPRE, independente de o agente lembrar das regras — essa e a teeth
-# contra monolitos. Le o gate de .aivoux/config.yaml (code_quality.component_hard_gate).
+# contra monolitos e catches silenciosos.
+#
+# Config em .aivoux/config.yaml (coding_standards):
+#   component_warn_lines (default 300) — aviso, nao bloqueia
+#   component_hard_gate  (default 400) — bloqueia Write acima disso
 #
 # Contrato: exit 2 + mensagem em stderr -> Claude ve o feedback e deve agir.
 # Falhas internas sao silenciosas (exit 0) — nunca travar por bug do hook.
 #
 # Politica de tamanho (evita atrito em arquivos legados grandes):
-# - Write (arquivo criado/reescrito): >gate = BLOQUEIA (exit 2). Monolito nasce aqui.
-# - Edit/NotebookEdit (patch pontual): >gate = nota leve (exit 0). @reviewer/@qa pegam.
+# - Write >hard_gate: BLOQUEIA (exit 2). Monolito nasce aqui.
+# - Write/Edit >warn: nota leve (exit 0). @reviewer/@qa pegam se crescer.
 # - `any` injustificado: BLOQUEIA sempre, em qualquer tool.
+# - catch silencioso (sem log): nota leve (heuristica — @qa e quem da FAIL).
 
 set +e
 
@@ -47,11 +52,19 @@ case "$FILE" in
   *.test.*|*.spec.*|*.d.ts|*/node_modules/*|*/dist/*|*/build/*|*/.next/*) exit 0 ;;
 esac
 
-# --- gate de tamanho (config -> default 300) ---
-GATE=300
+# --- gates de tamanho (config -> defaults 300 warn / 400 hard) ---
+WARN=300
+GATE=400
 if [ -f "$CONFIG_FILE" ]; then
+  W=$(grep -E '^[[:space:]]*component_warn_lines:' "$CONFIG_FILE" 2>/dev/null | head -1 | sed -E 's/.*component_warn_lines:[[:space:]]*//; s/[^0-9].*$//')
+  [ -n "$W" ] && WARN="$W"
   C=$(grep -E '^[[:space:]]*component_hard_gate:' "$CONFIG_FILE" 2>/dev/null | head -1 | sed -E 's/.*component_hard_gate:[[:space:]]*//; s/[^0-9].*$//')
   [ -n "$C" ] && GATE="$C"
+  # retrocompat: config antigo usava max_component_lines como hard gate
+  if [ -z "$C" ]; then
+    C=$(grep -E '^[[:space:]]*max_component_lines:' "$CONFIG_FILE" 2>/dev/null | head -1 | sed -E 's/.*max_component_lines:[[:space:]]*//; s/[^0-9].*$//')
+    [ -n "$C" ] && GATE="$C"
+  fi
 fi
 
 LINES=$(wc -l < "$FILE" 2>/dev/null | tr -d ' ')
@@ -59,6 +72,21 @@ LINES=$(wc -l < "$FILE" 2>/dev/null | tr -d ' ')
 
 # --- any injustificado (heuristica) ---
 ANY=$(grep -nE ':[[:space:]]*any\b|as[[:space:]]+any|<any>' "$FILE" 2>/dev/null | grep -vE 'eslint|//.*any|/\*' | wc -l | tr -d ' ')
+
+# --- catch silencioso (heuristica observability — nunca bloqueia) ---
+# catch cujo corpo (ate 6 linhas) nao contem log/report/rethrow/justificativa.
+SILENT_CATCH=$(awk '
+  /catch[[:space:]]*(\(|\{)/ {
+    found=0
+    for (i=0; i<=6; i++) {
+      if ((getline line) <= 0) break
+      if (line ~ /logger|console\.(error|warn|log)|captureException|Sentry|reportError|log\.|throw|rethrow|fallback esperado/) { found=1; break }
+      if (line ~ /^[[:space:]]*\}/ && i>0) break
+    }
+    if (!found) n++
+  }
+  END { print n+0 }
+' "$FILE" 2>/dev/null)
 
 BLOCK=0          # exit 2 (Claude ve e deve agir)
 MSG=""
@@ -72,10 +100,15 @@ if [ "$LINES" -gt "$GATE" ]; then
    este arquivo ao @reviewer/@qa neste estado — sera FAIL automatico."
   else
     # Edit/patch pontual em arquivo grande (possivelmente legado): nota leve, nao bloqueia.
-    MSG="ℹ AIVOUX quality-guard: '$FILE' tem $LINES linhas (gate $GATE).
-   Arquivo grande (Best Practice #4). Se voce esta crescendo este arquivo,
-   considere quebrar agora. @reviewer/@qa darao FAIL se permanecer >$GATE."
+    MSG="ℹ AIVOUX quality-guard: '$FILE' tem $LINES linhas (HARD gate $GATE).
+   Arquivo acima do gate (Best Practice #4). Se voce esta crescendo este
+   arquivo, quebre agora. @reviewer/@qa darao FAIL se permanecer >$GATE."
   fi
+elif [ "$LINES" -gt "$WARN" ]; then
+  # zona de aviso (warn..gate): nao bloqueia, mas sinaliza a tendencia a monolito.
+  MSG="ℹ AIVOUX quality-guard: '$FILE' tem $LINES linhas (aviso: $WARN, HARD gate: $GATE).
+   Zona de risco de monolito (Best Practice #4, meta <200 para codigo novo).
+   Planeje a quebra em sub-componentes/hooks agora — acima de $GATE vira FAIL."
 fi
 
 if [ "${ANY:-0}" -gt 0 ]; then
@@ -84,6 +117,15 @@ if [ "${ANY:-0}" -gt 0 ]; then
 ⚠ AIVOUX quality-guard: $ANY uso(s) de 'any' em '$FILE' (Best Practice #3).
    Substitua por tipos especificos ou 'unknown' + narrowing, ou justifique
    com comentario inline. 'any' injustificado em codigo novo = FAIL no @qa."
+fi
+
+if [ "${SILENT_CATCH:-0}" -gt 0 ]; then
+  MSG="$MSG
+ℹ AIVOUX quality-guard: $SILENT_CATCH catch(es) possivelmente SILENCIOSO(s) em '$FILE'
+   (observability-standards: regra do catch). Catch sem log/report engole o
+   root cause — logue o erro antes de tratar, faca rethrow, ou justifique com
+   comentario inline. Catch silencioso em codigo novo = FAIL no @qa.
+   (Heuristica — se for falso positivo, comentario inline resolve.)"
 fi
 
 # Sempre emite a mensagem (se houver) em stderr; exit 2 so quando ha violacao bloqueante.

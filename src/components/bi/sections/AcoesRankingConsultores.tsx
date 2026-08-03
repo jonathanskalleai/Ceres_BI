@@ -34,7 +34,7 @@ function buildTooltip(datum: BarChartData): string {
     tooltipRow("Fechamentos", fmtNum(Number(datum.ganhos ?? 0))),
     tooltipRow("Valor ganho", fmtBRL(Number(datum.valorGanho ?? 0))),
     tooltipRow("Conversao", String(datum.taxaLabel ?? "—")),
-    `<div style="margin-top:5px;font-size:9px;color:var(--voux-tooltip-muted);max-width:230px;white-space:normal">Visitas/oportunidades por quem EXECUTOU a acao; fechamentos/valor por quem o negocio PERTENCE.</div>`,
+    `<div style="margin-top:5px;font-size:9px;color:var(--voux-tooltip-muted);max-width:230px;white-space:normal">Visitas/oportunidades por quem EXECUTOU a acao; fechamentos/valor (pedidos aprovados) por quem o negocio PERTENCE.</div>`,
   ].join("");
 }
 
@@ -89,7 +89,7 @@ export function AcoesRankingConsultores({ rows, meta, ganhosFunil, loading, erro
     <ChartCard
       title="Ranking de Consultores"
       description={`Top ${TOP_N} · ordenado por ${RANKING_CRITERIO_LABEL[criterio].toLowerCase()}`}
-      dataSource="rpc_acoes_funil_gestao · rankingConsultores · atribuicao hibrida (visitas/oportunidades por aco_vendedor; fechamentos/valor por ngo_vendedores→usuarios)"
+      dataSource="rpc_acoes_funil_gestao · rankingConsultores · atribuicao hibrida (visitas/oportunidades por aco_vendedor; fechamentos/valor por pedidos APROVADOS via ngo_numero→ngo_vendedores→usuarios)"
       /* 12 linhas x (26px de barra + 8px de gap) — menos que isto corta o rodape do ranking */
       height={430}
       loading={loading}

@@ -21,9 +21,16 @@ em **Haiku** para eficiencia maxima (leitura barata, nao raciocinio profundo).
 
 2. **Feature Docs** — apos feature completar (@qa PASS), gerar/atualizar
    `docs/features/{slug}.md` com <=400 tokens descrevendo o que existe,
-   onde, e como alterar com seguranca.
+   onde, e como alterar com seguranca. **Atualizar > criar:** se ja existe
+   doc de area relacionada, faca merge nela — nunca crie doc duplicada nem
+   recrie do zero o que ja esta documentado.
 
-3. **Cache de Scan** — salvar snapshot em `.aivoux/context-snapshot.md`
+3. **Docs Index** — manter `docs/features/index.md`: 1 linha por doc, com
+   slug, descricao curta e keywords. E este indice que o router le no
+   inicio de CADA demanda para decidir qual doc injetar como contexto.
+   Doc sem linha no indice = doc invisivel = doc inutil.
+
+4. **Cache de Scan** — salvar snapshot em `.aivoux/context-snapshot.md`
    com timestamp para reuso em sessoes futuras (evita re-escanear a cada
    demanda).
 
@@ -115,6 +122,13 @@ propagacao aos demais agentes.
 
 Quando chamado por `*doc-feature {slug}` (tipicamente apos @qa PASS):
 
+### 0. Consultar o indice ANTES de decidir criar
+
+Ler `docs/features/index.md`. Se existe doc de area relacionada a demanda
+(mesmo com slug diferente do sugerido), **atualize essa doc** em vez de criar
+nova. Criar doc nova e a EXCECAO (area genuinamente nova no projeto), nao a
+regra. Docs fragmentadas por demanda viram ruido que ninguem acha.
+
 ### 1. Ler contexto da feature
 
 - Arquivos modificados na pipeline (recebe via handoff)
@@ -160,16 +174,53 @@ status: active
 2. {o que NAO quebrar}
 3. {testes que precisam rodar}
 
+## Smoke
+- `{comando executavel}` → {resultado esperado}
+- `{comando executavel 2}` → {resultado esperado}
+
 ## Riscos / Acoplamentos
 - {acoplamento 1}
 - {acoplamento 2}
 ```
+
+**Secao `## Smoke` (regression gate — vide `.claude/rules/regression-gate.md`):**
+1-3 passos EXECUTAVEIS que provam que a feature ainda funciona (curl com payload,
+`npm test -- {escopo}`, SELECT com valor esperado, fluxo Playwright). Cada linha =
+comando + `→` + resultado esperado observavel. PROIBIDO smoke vago ("verificar se
+funciona"). Fontes, em ordem de preferencia:
+1. `smoke_executado_da_mudanca` do handoff do @qa (o que ele rodou de fato no PASS)
+2. Smoke ja existente na doc (preservar; so atualizar se o @qa provou que mudou)
+3. Nada disponivel → escrever `- (sem smoke registrado — regression gate nao cobre esta area)`
+   para o gap ficar visivel no blast-radius, nunca omitir a secao.
 
 ### 3. Gravar
 
 Escrever em `docs/features/{slug}.md`. Se arquivo existe, preservar campos
 custom do usuario (fora do frontmatter gerenciado) e atualizar apenas as
 secoes geradas.
+
+**Estilo:** resumo em linguagem natural, direto, contexto minimo util — o
+leitor e um agente futuro que precisa saber ONDE a coisa esta, COMO roda e
+O QUE nao quebrar. Fatos operacionais concretos valem mais que prosa:
+diretorio na VPS, como o processo roda (cron/systemd/docker/pm2), portas,
+paths de config, comando de teste. Nada de historia da demanda.
+
+### 4. Atualizar o indice (OBRIGATORIO)
+
+Gravar/atualizar a linha do slug em `docs/features/index.md`:
+
+```markdown
+# Feature Docs Index
+<!-- mantido pelo @scribe · 1 linha por doc · o router le este arquivo no inicio de cada demanda -->
+
+- `etl-vps` · ETL de importacao de pedidos na VPS · kw: etl, importacao, cron, pedidos, vps · 2026-07-03
+- `auth` · Login/sessao com Supabase Auth · kw: auth, login, sessao, jwt · 2026-06-20
+```
+
+Formato da linha: `- \`{slug}\` · {descricao <=10 palavras} · kw: {4-8 keywords
+que alguem usaria na demanda} · {data ISO}`. Keywords em pt-BR + termos tecnicos
+(pense: "que palavras o usuario falaria ao pedir mudanca nessa area?").
+Doc gravada sem linha no indice = trabalho perdido — o router nunca vai acha-la.
 
 ---
 
@@ -195,8 +246,9 @@ Ao finalizar, retornar:
 scribe_handoff:
   action: {scan | doc-feature | audit}
   files_written:
-    - .aivoux/context-snapshot.md
     - docs/features/{slug}.md
+    - docs/features/index.md        # SEMPRE presente em doc-feature
+  doc_action: {created | updated}   # updated deve ser o caso comum
   tokens_used: ~{N}
   cache_status: {hit | miss | refreshed}
   next_action: {ready | needs_review}

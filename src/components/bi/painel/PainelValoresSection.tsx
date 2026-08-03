@@ -23,7 +23,7 @@ export function PainelValoresSection({ kpis, loading }: Props) {
           trend={kpis.valorGanho.trend}
           loading={loading}
           accentColor="var(--voux-success)"
-          formula="Total em R$ dos negocios fechados com sucesso no periodo"
+          formula="Total em R$ dos PEDIDOS APROVADOS no periodo (pdo_situacaopedido='Aprovado')"
         />
       )}
       {(loading || !isEmpty(kpis.valorPerdido.value)) && (
@@ -37,7 +37,7 @@ export function PainelValoresSection({ kpis, loading }: Props) {
           invertTrend
           loading={loading}
           accentColor="var(--voux-danger)"
-          formula="Total em R$ dos negocios que nao fecharam no periodo"
+          formula="Total em R$ dos PEDIDOS CANCELADOS no periodo (pdo_situacaopedido='Cancelado')"
         />
       )}
       {(loading || !isEmpty(kpis.pipelineAberto.value)) && (

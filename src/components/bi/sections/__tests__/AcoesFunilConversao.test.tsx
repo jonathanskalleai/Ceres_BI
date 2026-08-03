@@ -52,7 +52,8 @@ describe("AcoesFunilConversao", () => {
     expect(screen.getByText("Perdidos")).toBeInTheDocument();
     // unidades diferentes: pedido de um lado, negocio do outro
     expect(screen.getByText("pedidos aprovados")).toBeInTheDocument();
-    expect(screen.getByText("negocios")).toBeInTheDocument();
+    // "negocios" aparece em mais de um lugar (header + footer novo); verifica que existe
+    expect(screen.getAllByText(/negocios/i).length).toBeGreaterThan(0);
     // cada desfecho carrega a sua data de competencia
     expect(screen.getByText(/data de aprovacao do pedido/)).toBeInTheDocument();
     expect(screen.getByText(/data de fechamento do negocio/)).toBeInTheDocument();

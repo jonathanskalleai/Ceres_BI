@@ -12,6 +12,7 @@
 | @data-engineer | SIM | SIM | NAO | NAO | SIM | SIM |
 | @ux | NAO | NAO | NAO | NAO | NAO | NAO |
 | @analyst | NAO | NAO | NAO | NAO | NAO | NAO |
+| @security | NAO | NAO | NAO | NAO | NAO | NAO |
 
 Operacoes bloqueadas devem ser delegadas ao @devops.
 
@@ -37,12 +38,30 @@ Aplicaveis conforme escopo (ver matrix em `security-standards.md`):
 8. **Dependency audit** - `npm audit --audit-level=high` deve retornar 0 issues HIGH/CRITICAL
 9. **RLS check** (quando ha schema novo) - tabelas Supabase com RLS habilitado
 10. **Headers check** (deploy) - HTTPS + HSTS + CSP configurados antes de release
+10.1 **Security gate** (escopo sensivel) - mudanca que toca auth/authz/entrada externa/dados sensiveis/upload/infra exposta passa pelo `@security` (apos @reviewer, antes do @qa); verdict VULNERABLE (CRITICAL/HIGH) volta ao @dev. Config em `security_gate` (ver `security-standards.md` secao Enforcement via @security)
 
 ## Change & Deploy Safety Gates
 
 11. **Environment preflight** (mutacao remota) - repo/branch/host/DB ALVO confirmados antes de push/SSH/SQL (ver `change-safety.md` A)
 12. **Mental-model confirm** (dados/semantica ambigua) - modelo + blast radius confirmados antes de editar (ver `change-safety.md` B)
 13. **Deploy boot + smoke** (deploy) - servico sobe + processa payload real + SHA no remoto antes de DONE (ver `deploy-safety.md`)
+14. **Regression gate** (codigo tocado) - blast radius computado + smokes das features afetadas e critical_paths executados pelo @qa; afetada SEM_SMOKE reportada explicitamente (ver `regression-gate.md`)
+
+## Observability Gates (F5)
+
+15. **Regra do catch** (codigo novo) - nenhum `catch` sem log/report do erro; catch silencioso = FAIL no @qa (ver `observability-standards.md` #1)
+16. **Log de fronteira** (backend/API/worker novo) - entrada de API/webhook, falha de chamada externa e job com log estruturado (ver `observability-standards.md` #1)
+17. **Error tracking** (deploy com usuarios reais) - handler global + canal configurado + 1 evento de teste RECEBIDO antes de DONE (ver `observability-standards.md` #2)
+
+## Pipeline Integrity Gates (F6 — MECANICOS, via hook)
+
+18. **Deploy hard gate** - push/PR/deploy BLOQUEADO (hook `deploy-gate.sh`, exit 2) sem `.aivoux/gates/qa-verdict.json` PASS ancorado ao SHA atual + spawn REAL de `aivoux-qa` registrado (`agents-run.log`) + `## Smoke` em todo critical_path. Override so com autorizacao explicita do usuario, uso unico, auditado (ver `pipeline-integrity.md`)
+19. **Scribe gate** - @qa PASS sem spawn de `aivoux-scribe` depois = fechamento da sessao bloqueado 1x (hook `scribe-gate.sh`) com a instrucao do PASSO 4.5
+20. **Subagente falhou ≠ pular etapa** - retry 1x, depois PARAR e perguntar ao usuario; inline so com autorizacao = `INLINE_DEGRADED` (nunca PASS)
+21. **Feature-Docs Lookup gate** - projeto com `docs/features/index.md`: spawn de aivoux-* BLOQUEADO (hook `docs-gate.sh`) ate o index ser lido na janela atual; ler o arquivo destrava automaticamente (`docs-lookup-trace.sh`). Em divergencia entre resumo do CLAUDE.md e router.md/rules, o router/rules VENCEM (ver `pipeline-integrity.md` Regra 8)
+22. **Security hard gate (CONDICIONAL)** - push/PR/deploy cujo diff toca superficie sensivel (auth/authz/RLS/entrada externa/dados sensiveis/upload/infra exposta) BLOQUEADO (hook `security-gate.sh`, exit 2) sem `.aivoux/gates/security-verdict.json` SECURE ancorado ao SHA atual + spawn REAL de `aivoux-security` (`agents-run.log`). Diff nao-sensivel passa em silencio (deteccao heuristica por path+conteudo). VULNERABLE bloqueia; falso positivo → override `skip-security-authorized`, uso unico, auditado (ver `security-standards.md` + `pipeline-integrity.md`)
+23. **Review hard gate (SEMPRE)** - @reviewer e obrigatorio em TODO pipeline que toca codigo, inclusive SIMPLE. Hook `review-gate.sh` BLOQUEIA spawn de `aivoux-qa` sem spawn de `aivoux-reviewer` apos o ultimo agente de codigo; `deploy-gate.sh` exige `.aivoux/gates/reviewer-verdict.json` PASS ancorado ao SHA. Complexidade NUNCA remove gate de qualidade. Override `skip-review-authorized`, uso unico, auditado (ver `pipeline-integrity.md` Regra 9)
+24. **Plan hard gate (SEMPRE — F7)** - nenhuma implementacao sem plano da solucao. Hook `plan-gate.sh` BLOQUEIA spawn de `aivoux-dev`/`aivoux-data-engineer` sem `.aivoux/gates/plan.md` valido (ancorado ao HEAD, fresco < 90min, secoes `## Abordagem`/`## Arquivos`/`## Validar` preenchidas). O router escreve o plano no PASSO 2.5; peso escala com a complexidade (SIMPLE = 4 linhas, MEDIUM+ consolida Discussion/@architect). Diagnosticar o problema NAO e planejar a solucao. Override `skip-plan-authorized`, uso unico, auditado (ver `plan-first.md`)
 
 ## 12 Best Practices
 
@@ -51,11 +70,11 @@ Quando `coding_standards.enforce: true` (default), @dev aplica e @qa valida:
 1. **DRY** - Evitar duplicacao
 2. **Dead Code** - Remover codigo nao usado
 3. **TypeScript** - Sem `any` injustificado
-4. **Component Size** - <300 linhas (HARD gate, FAIL acima; meta <200) — @reviewer + quality-guard hook
+4. **Component Size** - meta <200, aviso 300, HARD gate 400 (FAIL acima) — @reviewer + quality-guard hook
 5. **State Mgmt** - Sem prop drilling >2 niveis
 6. **React Hooks** - Rules e deps corretas
 7. **Logic/UI** - Separacao clara
-8. **Error Handling** - try/catch + boundaries
+8. **Error Handling** - try/catch + boundaries; catch SEMPRE loga (regra do catch)
 9. **Performance** - Medir antes de otimizar
 10. **Structure** - Organizacao por feature
 11. **Accessibility** - WCAG 2.1 AA minimo
@@ -69,6 +88,8 @@ Detalhes completos em `.claude/rules/coding-standards.md`.
 - Smart Router executa pipeline end-to-end automaticamente
 - Confirmacao apenas no inicio (apresentacao do plano)
 - Loop de QA automatico (max 3 iteracoes)
+- **yolo_mode ≠ skip_pipeline:** significa apenas "nao pausar entre etapas".
+  TODOS os agentes do pipeline rodam do mesmo jeito (ver `pipeline-integrity.md` Regra 4)
 
 ### Plan Mode (`plan_mode.enabled: true`, default)
 - Agentes de planejamento (@pm, @architect, @analyst, @ux) usam Opus

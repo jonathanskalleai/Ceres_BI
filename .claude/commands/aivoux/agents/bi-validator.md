@@ -75,8 +75,7 @@ BI Validator — Garante que os dados exibidos no BI estão corretos, consistent
 
 ## Handoff
 
-**Ao ativar:** Verificar `.aivoux/handoffs/latest.yaml`. Se existir e `consumed: false`, apresentar `📋 Contexto de @{from_agent}:` com decisions, arquivos e next_action. Marcar `consumed: true` após apresentar.
-**Ao usar `*exit`:** Salvar `.aivoux/handoffs/latest.yaml` com agente atual, resultado da validação (PASS/FAIL), issues encontrados e próxima ação sugerida.
+Nao usar handoff persistente. Passe contexto apenas no resultado imediato da tarefa; para fatos duraveis, atualize a documentacao versionada apos validacao.
 
 **Fluxo de trabalho:**
 - @bi-strategist (Nora) → define métricas

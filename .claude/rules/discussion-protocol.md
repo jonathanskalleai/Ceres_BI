@@ -31,9 +31,14 @@ Em SIMPLE a fase NUNCA ativa — mantem execucao rapida.
 | Agente | Incluir quando |
 |--------|----------------|
 | **@data-engineer** | Demanda envolve schema, migration, query, RLS, performance de DB |
+| **@security** | Demanda toca superficie sensivel: auth, autorizacao, pagamento, dados pessoais, upload, entrada externa, secrets, CORS |
 
 O router detecta componente de banco via keywords: "schema", "migration",
 "tabela", "RLS", "query", "index", "banco", "database", "supabase" + contexto.
+Detecta componente de seguranca via: "auth", "login", "senha", "pagamento",
+"upload", "webhook", "permissao", "role", "PII", "token", "secret" + contexto.
+No design de feature sensivel, o @security opina cedo (threat model) — barato
+comparado a descobrir a falha depois de construir.
 
 ---
 
@@ -56,14 +61,13 @@ router aborta a discussao e prossegue com plano do @architect apenas.
 
 ### FASE 1 — Opiniao Paralela
 
-Router spawna cada agente participante via **Task tool em paralelo**
-(nao sequencial) com modelo adequado:
+Router spawna cada agente participante via **Agent tool em paralelo**
+(nao sequencial). Sempre `subagent_type="aivoux-{nome}"` — o modelo e enforced
+via frontmatter do subagent; NUNCA passar `model` e NUNCA usar
+`general-purpose` (mesma regra absoluta do router.md):
 
 ```
-Task(subagent_type="general-purpose", model="opus", prompt="
-  Voce e @analyst do AIVOUX. Leia o agente em
-  .claude/commands/aivoux/agents/analyst.md.
-
+Agent(subagent_type="aivoux-analyst", prompt="
   Demanda do usuario: {demanda}
   Contexto: {config relevante do projeto}
 
@@ -79,8 +83,9 @@ Task(subagent_type="general-purpose", model="opus", prompt="
 ")
 ```
 
-Mesma estrutura para @pm (opus), @architect (opus), @ux (opus)
-e @data-engineer (sonnet) quando aplicavel.
+Mesma estrutura para `aivoux-pm`, `aivoux-architect`, `aivoux-ux`,
+`aivoux-data-engineer` e `aivoux-security` quando aplicaveis (todos Opus,
+enforced via frontmatter).
 
 **Paralelismo:** todas as opinioes sao colhidas simultaneamente em UMA
 unica mensagem do router com multiplos tool calls. Isso reduz latencia de
@@ -124,8 +129,8 @@ Router analisa as opinioes coletadas e gera um consolidated plan:
 Um unico round de replica para resolver divergencia especifica:
 
 ```
-Task(subagent_type="general-purpose", model="opus", prompt="
-  Voce e @architect. Outro agente (@pm) discordou do seu ponto X
+Agent(subagent_type="aivoux-architect", prompt="
+  Outro agente (@pm) discordou do seu ponto X
   por razao Y. Leia a posicao deles abaixo.
 
   Sua posicao anterior: {...}

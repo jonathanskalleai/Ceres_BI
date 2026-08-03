@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # AIVOUX statusline — exibe na barra inferior do Claude Code:
-#   AIVOUX · MODELO · pipeline-status
+#   AIVOUX · MODELO · T:N · CTX:XX% · pipeline-status
 # Sem tiers — todos os agentes rodam Opus (scribe em Haiku).
 #
-# Recebe JSON via stdin (sessionId, model.id, model.display_name, workspace.cwd, etc.)
+# Recebe JSON via stdin com context_window.used_percentage,
+# context_window.context_window_size, model.display_name, etc.
 # Retorna UMA linha de saida (primeira linha vira a status line).
 
 set -e
@@ -23,8 +24,27 @@ case "$MODEL_NAME" in
   *Opus*|*opus*) MODEL_SHORT="Opus" ;;
   *Sonnet*|*sonnet*) MODEL_SHORT="Sonnet" ;;
   *Haiku*|*haiku*) MODEL_SHORT="Haiku" ;;
+  *Fable*|*fable*) MODEL_SHORT="Fable" ;;
   *) MODEL_SHORT="$MODEL_NAME" ;;
 esac
+
+# --- Turnos (de session-state.json) ---
+STATE_FILE="$PROJECT_DIR/.aivoux/telemetry/session-state.json"
+TURNS=0
+if [ -f "$STATE_FILE" ]; then
+  TURNS=$(grep -o '"turns":[0-9]*' "$STATE_FILE" 2>/dev/null | grep -o '[0-9]*$' || true)
+  TURNS=${TURNS:-0}
+fi
+
+# --- Context window (porcentagem de uso) ---
+# Claude Code fornece context_window.used_percentage (inteiro 0-100)
+# e context_window.context_window_size no JSON via stdin.
+CTX_PCT=$(echo "$INPUT" | grep -oE '"used_percentage"[[:space:]]*:[[:space:]]*[0-9]+' | head -1 | grep -o '[0-9]*$' || true)
+
+CTX_DISPLAY=""
+if [ -n "$CTX_PCT" ]; then
+  CTX_DISPLAY=" · CTX:${CTX_PCT}%"
+fi
 
 # --- Pipeline ativo? ---
 MARKER="$PROJECT_DIR/.aivoux/.pipeline-active"
@@ -36,5 +56,5 @@ if [ -f "$MARKER" ]; then
 fi
 
 # --- Output (uma linha) ---
-# AIVOUX · Opus · pipeline:idle
-echo "AIVOUX · ${MODEL_SHORT} · pipeline:${PIPE_STATUS}"
+# AIVOUX · Opus · T:5 · CTX:12% · pipeline:idle
+echo "AIVOUX · ${MODEL_SHORT} · T:${TURNS}${CTX_DISPLAY} · pipeline:${PIPE_STATUS}"

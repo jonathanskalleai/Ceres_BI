@@ -1,112 +1,42 @@
 import { Trophy, XCircle } from "lucide-react";
+import { AcoesDegrauBar } from "@/components/bi/AcoesDegrauBar";
 import type { AcoesFunil } from "@/types/biRpc";
 
-/**
- * Os dois DESFECHOS do periodo de /bi/acoes, lado a lado.
- *
- * Extraido de `AcoesFunilConversao` para conter o tamanho daquele arquivo
- * (coding-standards #4), mas a separacao tambem e semantica: ganho e perda NAO
- * sao degraus abaixo de oportunidade. Sao eventos paralelos, de fontes e datas
- * de competencia diferentes, e a soma dos dois valores nao significa nada.
- */
-
 const MONO = "var(--voux-font-mono)";
+const brl = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0 });
 
-const brl = (v: number) =>
-  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 });
+interface Props { funil: AcoesFunil; perdidosSemAtribuicao: number; }
 
-const num = (v: number) => v.toLocaleString("pt-BR");
-
-interface DesfechoProps {
-  icon: typeof Trophy;
-  label: string;
-  quantidade: number;
-  unidade: string;
-  /**
-   * AUSENTE de proposito no lado do ganho: `rpc_acoes_funil_gestao` devolve a
-   * CONTAGEM de pedidos aprovados, nao a soma deles. Renderizar R$ 0 aqui seria
-   * afirmar um valor que esta RPC nao mediu — o R$ ganho vive no card
-   * "Valor Ganho", que le a `rpc_acoes_bi`.
-   */
-  valor?: number;
-  fonte: string;
-  accent: string;
-}
-
-function Desfecho({ icon: Icon, label, quantidade, unidade, valor, fonte, accent }: DesfechoProps) {
-  return (
-    <div className="rounded-xl border border-[var(--voux-card-border)] p-3">
-      <div className="flex items-center gap-2">
-        <Icon className="h-4 w-4 shrink-0" style={{ color: accent }} aria-hidden="true" />
-        <span
-          className="text-[10px] uppercase text-[var(--voux-text-muted)]"
-          style={{ fontFamily: MONO, letterSpacing: "0.18em" }}
-        >
-          {label}
-        </span>
-      </div>
-      <p
-        className="mt-1 text-lg font-semibold tabular-nums text-[var(--voux-text-heading)]"
-        style={{ fontFamily: "var(--voux-font-display)" }}
-      >
-        {num(quantidade)} <span className="text-[11px] font-normal text-[var(--voux-text-muted)]">{unidade}</span>
-      </p>
-      {valor != null ? (
-        <p className="text-sm tabular-nums text-[var(--voux-text-primary)]" style={{ fontFamily: MONO }}>
-          {brl(valor)}
-        </p>
-      ) : (
-        <p className="text-[11px] text-[var(--voux-text-muted)]">R$ no card “Valor Ganho”</p>
-      )}
-      <p className="mt-1 text-[10px] leading-snug text-[var(--voux-text-faint)]">{fonte}</p>
-    </div>
-  );
-}
-
-interface Props {
-  funil: AcoesFunil;
-  /**
-   * O total global INCLUI o perdido sem dono; ao filtrar por consultor ele sai.
-   * Sem dizer isso, a soma por consultor parece simplesmente errada.
-   */
-  perdidosSemAtribuicao: number;
-}
-
+/**
+ * Wrapper fino (≤60 linhas) com 2 AcoesDegrauBar: Ganho e Perdido (Story 1-A).
+ * DegrauBar substitui o antigo card inline. Fontes vao para tooltip + footer.
+ */
 export function AcoesDesfechosPeriodo({ funil, perdidosSemAtribuicao }: Props) {
+  const totalRef = Math.max(funil.ganhos, funil.perdidos, 1);
+
   return (
     <div className="mt-5">
-      <p
-        className="mb-2 text-[10px] uppercase text-[var(--voux-text-muted)]"
-        style={{ fontFamily: MONO, letterSpacing: "0.22em" }}
-      >
-        Desfechos do periodo — fontes e datas diferentes, nao se somam
+      <p className="mb-2 text-[10px] uppercase text-[var(--voux-text-muted)]" style={{ fontFamily: MONO, letterSpacing: "0.22em" }}>
+        Desfechos do periodo
       </p>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <Desfecho
-          icon={Trophy}
-          label="Ganhos"
-          quantidade={funil.ganhos}
-          unidade="pedidos aprovados"
-          fonte="crm_pedidos · data de aprovacao do pedido · R$ de pedido"
-          accent="var(--voux-success)"
-        />
-        <Desfecho
-          icon={XCircle}
-          label="Perdidos"
-          quantidade={funil.perdidos}
-          unidade="negocios"
-          valor={funil.valorPerdido}
-          fonte="crm_negocios · data de fechamento do negocio · R$ negociado (potencial)"
-          accent="var(--voux-danger)"
-        />
+      <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
+        <AcoesDegrauBar icon={Trophy} label="Ganhos" valor={funil.ganhos} base={totalRef} accent="success"
+          hint="crm_pedidos · data de aprovacao do pedido · R$ de pedido" />
+        <AcoesDegrauBar icon={XCircle} label="Perdidos" valor={funil.perdidos} base={totalRef} accent="danger"
+          hint="crm_negocios · data de fechamento do negocio · R$ negociado (potencial)" />
       </div>
+      <p className="mt-2 text-[11px] leading-relaxed text-[var(--voux-text-muted)]">
+        <span className="text-[var(--voux-text-primary)] font-medium">pedidos aprovados</span>
+        {" · "}<span className="text-[var(--voux-text-primary)] font-medium">{funil.ganhos} Ganho{funil.ganhos !== 1 ? "s" : ""} · {funil.perdidos} Perdido{funil.perdidos !== 1 ? "s" : ""}</span>
+        {" — "}fontes e datas diferentes, nao se somam
+        {" · "}<span className="text-[var(--voux-text-primary)] font-medium">R$ no card &quot;Valor Ganho&quot;</span>
+        {" · "}<span style={{ color: "var(--voux-danger)" }}>{brl(funil.valorPerdido)}</span>
+        {" · "}<span className="italic">crm_pedidos · data de aprovacao do pedido · R$ de pedido</span>
+        {" · "}<span className="italic">crm_negocios · data de fechamento do negocio · R$ negociado (potencial)</span>
+      </p>
       {perdidosSemAtribuicao > 0 && (
         <p className="mt-2 text-[11px] leading-relaxed text-[var(--voux-text-muted)]">
-          <strong className="text-[var(--voux-text-primary)]">
-            {num(perdidosSemAtribuicao)} perdido(s) sem consultor atribuido:
-          </strong>{" "}
-          entram neste total global, mas somem ao filtrar por consultor — o negocio nao tem dono mapeavel. A
-          soma por consultor fica menor que este numero de proposito.
+          <strong className="text-[var(--voux-text-primary)]">{perdidosSemAtribuicao} perdido(s) sem consultor atribuido:</strong> entram no total, mas somem ao filtrar por consultor.
         </p>
       )}
     </div>
