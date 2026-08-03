@@ -48,7 +48,11 @@ interface LegacyProps {
  * O chip "Em Aberto" foi renomeado para "Em Andamento" (Story 5-A).
  */
 export function AcoesDetailWithFilter({ rows, total, page, pageSize, totalPages, onPageChange, loading, error }: LegacyProps) {
-  const { statusNegocio, setStatusNegocio, vendedor, cidade } = useNegociosFilter();
+  const { statusNegocio, setStatusNegocio, vendedor, cidade, dateRange } = useNegociosFilter();
+
+  // datas no formato YYYY-MM-DD para as RPCs drill-down (esperam p_from/p_to como text)
+  const fromStr = dateRange?.from?.toISOString().slice(0, 10);
+  const toStr = (dateRange?.to ?? dateRange?.from)?.toISOString().slice(0, 10);
 
   // Paginação interna de cada tabela drill-down
   const [pedidosPage, setPedidosPage] = useState(1);
@@ -59,6 +63,8 @@ export function AcoesDetailWithFilter({ rows, total, page, pageSize, totalPages,
   // (a troca de statusNegocio já acontece no chip, não precisa de reset aqui)
 
   const { data: pedidosData, isLoading: pedidosLoading, error: pedidosError } = usePedidosGanhosRpc({
+    from: fromStr,
+    to: toStr,
     vendedor: vendedor || undefined,
     cidade: cidade || undefined,
     page: pedidosPage,
@@ -66,6 +72,8 @@ export function AcoesDetailWithFilter({ rows, total, page, pageSize, totalPages,
   });
 
   const { data: negociosPerdidosData, isLoading: negociosPerdidosLoading, error: negociosPerdidosError } = useNegociosPerdidosRpc({
+    from: fromStr,
+    to: toStr,
     vendedor: vendedor || undefined,
     cidade: cidade || undefined,
     page: perdidosPage,
@@ -73,6 +81,8 @@ export function AcoesDetailWithFilter({ rows, total, page, pageSize, totalPages,
   });
 
   const { data: emAndamentoData, isLoading: emAndamentoLoading, error: emAndamentoError } = useEmAndamentoRpc({
+    from: fromStr,
+    to: toStr,
     vendedor: vendedor || undefined,
     cidade: cidade || undefined,
     page: andamentoPage,
