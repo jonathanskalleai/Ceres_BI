@@ -47,10 +47,18 @@ describe("safeRatio — divisao por zero", () => {
 });
 
 describe("funilRatios", () => {
+  /**
+   * Desfechos e valores nao participam de NENHUMA razao (v6): ganho e perda sao
+   * paralelos, com reguas diferentes. Ficam zerados aqui de proposito — se um
+   * dia entrarem no calculo, estes testes tem que quebrar.
+   */
+  const DESFECHOS_ZERO = { valorOportunidades: 0, perdidos: 0, valorPerdido: 0 };
+
   const base: AcoesFunil = {
     visitas: 3679,
     oportunidades: 662,
     ganhos: 48,
+    ...DESFECHOS_ZERO,
     visitasPorOportunidade: 5.56,
     oportPorFechamento: 13.77,
   };
@@ -67,7 +75,7 @@ describe("funilRatios", () => {
 
   it("should return null for BOTH ratios when there are no oportunidades nor ganhos", () => {
     const r = funilRatios({
-      visitas: 120, oportunidades: 0, ganhos: 0,
+      visitas: 120, oportunidades: 0, ganhos: 0, ...DESFECHOS_ZERO,
       visitasPorOportunidade: null, oportPorFechamento: null,
     });
     expect(r.visitasPorOportunidade).toBeNull();
@@ -76,7 +84,7 @@ describe("funilRatios", () => {
 
   it("should return null only for oportPorFechamento when ganhos is zero", () => {
     const r = funilRatios({
-      visitas: 3679, oportunidades: 662, ganhos: 0,
+      visitas: 3679, oportunidades: 662, ganhos: 0, ...DESFECHOS_ZERO,
       visitasPorOportunidade: null, oportPorFechamento: null,
     });
     expect(r.visitasPorOportunidade).toBe(5.56);
@@ -85,7 +93,7 @@ describe("funilRatios", () => {
 
   it("should return null for every ratio on a fully empty funil (no division by zero leak)", () => {
     const r = funilRatios({
-      visitas: 0, oportunidades: 0, ganhos: 0,
+      visitas: 0, oportunidades: 0, ganhos: 0, ...DESFECHOS_ZERO,
       visitasPorOportunidade: null, oportPorFechamento: null,
     });
     expect(r).toEqual({ visitasPorOportunidade: null, oportPorFechamento: null });

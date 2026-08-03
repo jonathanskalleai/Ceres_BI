@@ -13,7 +13,17 @@
 // ─── rpc_acoes_funil_gestao ─────────────────────────────────────────────────
 
 /**
- * Funil visita -> oportunidade -> ganho.
+ * Funil visita -> oportunidade, mais os dois DESFECHOS do periodo.
+ *
+ * TRES fontes com data de competencia propria (rpc_acoes_funil_gestao v6):
+ *   visitas/oportunidades — mirror.crm_acoes,    `aco_dthconclusao`, negocio distinto
+ *   ganhos               — mirror.crm_pedidos,  `pdo_dthaprovacao`, PEDIDO / `pdo_vlrpedido`
+ *   perdidos             — mirror.crm_negocios, `ngo_datafechamento`, NEGOCIO / `ngo_vlrtotalnegociado`
+ *
+ * ATENCAO (v6): `ganhos` e `perdidos` sao desfechos PARALELOS, nao degraus
+ * consecutivos. Perdido NAO fica abaixo de Ganho no funil e NAO existe taxa
+ * `ganhos / (ganhos + perdidos)`: as reguas de valor sao diferentes (R$ de
+ * pedido vs R$ negociado) e as janelas tambem.
  *
  * ATENCAO de leitura (E6): `oportPorFechamento` NAO e taxa de conversao — e
  * artefato de JANELA. O ciclo de venda de maquina agricola e 6-18 meses, entao
@@ -21,9 +31,29 @@
  * comparavel ENTRE consultores, nunca em valor absoluto.
  */
 export interface AcoesFunil {
+  /**
+   * Acoes de contato presencial no periodo. NAO sofre recorte de
+   * `REPASSE DE MAQUINA` — o recorte de Repasse vale so para oportunidade,
+   * ganho e perdido.
+   */
   visitas: number;
+  /**
+   * Oportunidade LIQUIDA (v6): negocio canonico tocado por acao no periodo,
+   * sem Repasse, **e ainda `ngo_conclusao = 'Em Andamento'`**.
+   *
+   * E metrica de ESTADO, nao de evento: um mes ja fechado MUDA retroativamente
+   * quando um negocio daquele mes for concluido depois. Isso e a definicao
+   * funcionando, nao falha de carga — a UI precisa dizer isso ao gestor.
+   */
   oportunidades: number;
+  /** SUM(ngo_vlrtotalnegociado) do mesmo conjunto de `oportunidades`. */
+  valorOportunidades: number;
+  /** Contagem de PEDIDOS aprovados no periodo (nao de negocios). */
   ganhos: number;
+  /** Contagem de NEGOCIOS perdidos que fecharam no periodo. */
+  perdidos: number;
+  /** SUM(ngo_vlrtotalnegociado) dos perdidos — valor POTENCIAL, nao faturado. */
+  valorPerdido: number;
   /** NULL quando nao ha oportunidades (divisao por zero) — exibir "—". */
   visitasPorOportunidade: number | null;
   /** NULL quando nao ha ganhos (divisao por zero) — exibir "—". */
@@ -34,6 +64,7 @@ export interface AcoesFunil {
  * Linha do ranking. ATRIBUICAO HIBRIDA (E1), medida no banco vivo:
  *   visitas + oportunidades -> `aco_vendedor`   (quem EXECUTOU a acao)
  *   ganhos  + valorGanho    -> `ngo_vendedores` (a quem o negocio PERTENCE)
+ *     via pedidos APROVADOS (pdo_situacaopedido='Aprovado', pdo_dthaprovacao no periodo)
  * Por isso `taxaConversao` mistura as duas origens e pode passar de 100%:
  * serve para comparar consultores entre si, nao como taxa auditavel.
  */
@@ -64,6 +95,13 @@ export interface AcoesDiasParados {
 export interface AcoesFunilMeta {
   acoesSemConsultor: number;
   ganhosSemAtribuicao: number;
+  /**
+   * Espelho de `ganhosSemAtribuicao` do lado dos PERDIDOS (v6): negocio perdido
+   * cujo `ngo_vendedores` nao mapeia em `usuarios` nao entra em nenhuma linha
+   * de ranking. Sem expor isso, o registro some em silencio quando o usuario
+   * filtra por consultor.
+   */
+  perdidosSemAtribuicao: number;
   somaGanhosRanking: number;
 }
 

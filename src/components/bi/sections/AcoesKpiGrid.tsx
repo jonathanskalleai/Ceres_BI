@@ -1,16 +1,23 @@
-import { ClipboardList, MapPin, Users, Eye, UserCheck, Tag, Clock, Wallet, Trophy, XCircle, AlertTriangle, Target, Gauge, PauseCircle } from "lucide-react";
+import { ClipboardList, MapPin, Users, Eye, UserCheck, Tag, Clock, Trophy, XCircle, AlertTriangle, Target, Gauge, PauseCircle } from "lucide-react";
 import { KPICard } from "@/components/bi/KPICard";
 import { calcTrend } from "@/lib/dateUtils";
 import { funilRatios, fmtRatio, DASH } from "@/lib/bi/acoesGestaoUtils";
 import type { AcoesBIKpis, AcoesDiasParados, AcoesFunil } from "@/types/biRpc";
 
 /**
- * Semantica compartilhada pelos 3 cards de valor. Explicita de proposito:
- * `ngo_conclusao` e o status ATUAL do negocio, nao o status na data da acao —
- * um negocio trabalhado em maio e perdido em junho conta como Perdido em maio.
+ * NAO existe mais uma "base compartilhada" entre os cards de valor (v9).
+ *
+ * Ganho e Perdido medem coisas diferentes, em unidades diferentes, com datas de
+ * competencia diferentes — sao DESFECHOS PARALELOS, nao fatias do mesmo bolo.
+ * Por isso cada card carrega a sua propria fonte, e a tela NAO soma um com o
+ * outro em lugar nenhum: R$ de pedido faturado + R$ negociado potencial seria
+ * um numero sem significado.
  */
-const VALOR_BASE =
-  "mirror.crm_negocios · SUM(ngo_vlrtotalnegociado) dedup por ngo_numero · negocios TOCADOS por acao no periodo (aco_dthconclusao) · funis VENDAS/Vendas AP/REPASSE DE MAQUINA · status ATUAL do negocio (ngo_conclusao), nao o status na data da acao";
+const GANHO_SOURCE =
+  "mirror.crm_pedidos · SUM(pdo_vlrpedido) dedup por pdo_codigointerno · pdo_situacaopedido='Aprovado' · data de competencia: pdo_dthaprovacao · negocio canonico com ngo_conclusao='Ganho' e ngo_funil <> 'REPASSE DE MAQUINA'";
+
+const PERDIDO_SOURCE =
+  "mirror.crm_negocios canonizado por ngo_numero · SUM(ngo_vlrtotalnegociado) · ngo_conclusao='Perdido' · data de competencia: ngo_datafechamento · ngo_funil <> 'REPASSE DE MAQUINA' · nenhum pedido alimenta este card";
 
 const brl = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -45,13 +52,13 @@ function GestaoKpis({ funil, diasParados, loading }: { funil?: AcoesFunil; diasP
   return (
     <>
       <KPICard
-        title="Oportunidades Levantadas"
+        title="Oportunidades Abertas Tocadas"
         value={funil ? num(funil.oportunidades) : DASH}
         icon={Target}
         loading={loading}
-        hint={funil ? `${num(funil.ganhos)} fechadas ate agora` : undefined}
-        formula="Quantos negocios comerciais distintos foram trabalhados (tiveram pelo menos 1 acao registrada) no periodo selecionado"
-        dataSource="rpc_acoes_funil_gestao · negocios comerciais DISTINTOS tocados por acao no periodo (dedup por ngo_numero)" />
+        hint={funil ? brl(funil.valorOportunidades) : undefined}
+        formula="Negocios trabalhados (com pelo menos 1 acao concluida) no periodo que CONTINUAM Em Andamento. E uma foto do que segue em aberto, nao um contador de eventos: um mes ja fechado DIMINUI quando um negocio dele for ganho ou perdido depois. Isso e a definicao funcionando, nao falha de carga"
+        dataSource="rpc_acoes_funil_gestao · negocios canonicos DISTINTOS tocados por acao no periodo (aco_dthconclusao) com ngo_conclusao='Em Andamento' e ngo_funil <> 'REPASSE DE MAQUINA' · valor = SUM(ngo_vlrtotalnegociado)" />
 
       <KPICard
         title="Visitas por Oportunidade"
@@ -77,16 +84,20 @@ function GestaoKpis({ funil, diasParados, loading }: { funil?: AcoesFunil; diasP
 /**
  * Aviso de 4o status em `ngo_conclusao`.
  *
- * A RPC quebra o valor tocado em Em Andamento / Ganho / Perdido — os 3 valores
- * que existem hoje. Se o ERP introduzir um quarto, os negocios dele nao entram
- * em nenhum dos 3 cards e a soma passa a ser MENOR que o real, em silencio.
- * `negociosOutrosStatus` existe para isso; este bloco e o que faz alguem ficar
- * sabendo. Detector que ninguem le nao detecta nada.
+ * O card "Valor Perdido" passou a depender INTEIRAMENTE de
+ * `ngo_conclusao = 'Perdido'` (v9). Se o ERP introduzir um quarto status, os
+ * negocios dele deixam de aparecer em qualquer card e o Perdido encolhe em
+ * silencio — sem nada na tela indicando que faltou gente.
+ *
+ * Este detector NAO soma cards: Ganho (R$ de pedido) e Perdido (R$ negociado)
+ * sao reguas diferentes, e a versao anterior deste alerta comparava justamente
+ * a soma dos tres com um `valorTocado` que nem existe mais. O que ele afirma
+ * agora e so o que ele consegue medir: existe negocio fechado na janela com um
+ * status que a tela nao representa.
  */
 function StatusDesconhecidoAlert({ kpis }: { kpis: AcoesBIKpis }) {
   if (kpis.negociosOutrosStatus <= 0) return null;
 
-  const somaCards = kpis.valorAberto + kpis.valorGanho + kpis.valorPerdido;
   return (
     <div
       role="alert"
@@ -95,10 +106,11 @@ function StatusDesconhecidoAlert({ kpis }: { kpis: AcoesBIKpis }) {
       <AlertTriangle className="h-4 w-4 shrink-0 text-[var(--voux-danger)]" aria-hidden="true" />
       <p className="text-[var(--voux-text-primary)]">
         <span className="font-medium">
-          {num(kpis.negociosOutrosStatus)} negocio(s) com status fora de Em Andamento/Ganho/Perdido.
+          {num(kpis.negociosOutrosStatus)} negocio(s) fecharam no periodo com status fora de Em
+          Andamento/Ganho/Perdido.
         </span>{" "}
-        Os cards abaixo somam {brl(somaCards)} de um total tocado de {brl(kpis.valorTocado)} — a diferenca
-        esta num status que a tela ainda nao tem card. Avise o time de dados.
+        Eles nao entram em nenhum card desta tela — nem em Ganho, nem em Perdido. Existe um 4o status de
+        negocio no ERP que o BI ainda nao representa. Avise o time de dados.
       </p>
     </div>
   );
@@ -146,26 +158,24 @@ export function AcoesKpiGrid({ kpis, kpisPrev, loading, funil, diasParados, gest
         formula="Tempo medio em dias entre a abertura e a conclusao de uma acao. Mede quanto tempo o consultor leva para finalizar cada acao, nao o tempo ate o primeiro contato"
         dataSource="mirror.crm_acoes · AVG(aco_dthconclusao - aco_dthabertura) em dias — duracao da propria acao (abertura ate conclusao), NAO tempo ate o primeiro contato" />
 
-      <KPICard title="Valor em Aberto" value={brl(kpis.valorAberto)} icon={Wallet} loading={loading}
-        previousValue={brl(kpisPrev.valorAberto)} trend={calcTrend(kpis.valorAberto, kpisPrev.valorAberto)}
-        rawValue={kpis.valorAberto}
-        hint={`${num(kpis.negociosAberto)} negocios`}
-        formula="Soma do valor dos negocios que ainda estao Em Andamento e foram trabalhados (tiveram acao) no periodo. Receita potencial em jogo"
-        dataSource={`${VALOR_BASE} · recorte: Em Andamento`} />
+      {/* "Valor em Aberto" saiu do grid na v9: o bucket "aberto" foi removido da
+          RPC por inteiro. Manter o card mostrando R$ 0 com um tooltip herdado
+          seria pior que nao ter card — numero afirmado que ninguem mede.
+          "Pipeline aberto atual" e contrato de ESTOQUE e tera card proprio. */}
 
       <KPICard title="Valor Ganho" value={brl(kpis.valorGanho)} icon={Trophy} loading={loading}
         previousValue={brl(kpisPrev.valorGanho)} trend={calcTrend(kpis.valorGanho, kpisPrev.valorGanho)}
         rawValue={kpis.valorGanho}
-        hint={`${num(kpis.negociosGanho)} negocios`}
-        formula="Soma do valor dos negocios ja fechados (ganhos) que foram trabalhados no periodo. Receita efetivamente convertida"
-        dataSource={`${VALOR_BASE} · recorte: Ganho`} />
+        hint={`${num(kpis.negociosGanho)} pedidos aprovados`}
+        formula="Soma em R$ dos PEDIDOS aprovados no periodo, contados pela data de aprovacao do pedido, cujo negocio esta Ganho. E receita de pedido faturavel — regua DIFERENTE da do card Valor Perdido, que mede valor negociado. Os dois nao se somam"
+        dataSource={GANHO_SOURCE} />
 
       <KPICard title="Valor Perdido" value={brl(kpis.valorPerdido)} icon={XCircle} loading={loading}
         previousValue={brl(kpisPrev.valorPerdido)} trend={calcTrend(kpis.valorPerdido, kpisPrev.valorPerdido)} invertTrend
         rawValue={kpis.valorPerdido}
         hint={`${num(kpis.negociosPerdido)} negocios`}
-        formula="Soma do valor dos negocios perdidos que foram trabalhados no periodo. Receita que escapou — quanto menor, melhor"
-        dataSource={`${VALOR_BASE} · recorte: Perdido`} />
+        formula="Valor POTENCIAL dos negocios marcados como Perdido que fecharam no periodo, contados pela data de fechamento do negocio. E o que estava negociado e nao virou venda — nao e pedido cancelado, e nao se soma ao Valor Ganho"
+        dataSource={PERDIDO_SOURCE} />
 
       <GestaoKpis funil={funil} diasParados={diasParados} loading={gestaoLoading} />
       </div>

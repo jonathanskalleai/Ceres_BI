@@ -24,8 +24,8 @@ import type { AcoesFunil, AcoesFunilMeta, RpcAcoesBI } from "@/types/biRpc";
 const EMPTY: RpcAcoesBI = {
   kpis: {
     totalAcoes: 0, cidades: 0, consultores: 0, visitas: 0, clientes: 0, tiposAcaoDistintos: 0,
-    valorAberto: 0, negociosAberto: 0, valorGanho: 0, negociosGanho: 0, valorPerdido: 0, negociosPerdido: 0,
-    negociosTocados: 0, valorTocado: 0, negociosOutrosStatus: 0, tempoMedioContato: 0,
+    valorGanho: 0, negociosGanho: 0, valorPerdido: 0, negociosPerdido: 0,
+    negociosOutrosStatus: 0, tempoMedioContato: 0,
   },
   porVendedor: [], porCidade: [], porMes: [], porDiaSemana: [],
   porTipoAcao: [], porTipoContato: [], listaAnos: [], porVendedorCidade: [],
@@ -38,12 +38,12 @@ const EMPTY: RpcAcoesBI = {
  * um numero afirmado que ninguem mediu.
  */
 const EMPTY_FUNIL: AcoesFunil = {
-  visitas: 0, oportunidades: 0, ganhos: 0,
+  visitas: 0, oportunidades: 0, valorOportunidades: 0, ganhos: 0, perdidos: 0, valorPerdido: 0,
   visitasPorOportunidade: null, oportPorFechamento: null,
 };
 
 const EMPTY_META: AcoesFunilMeta = {
-  acoesSemConsultor: 0, ganhosSemAtribuicao: 0, somaGanhosRanking: 0,
+  acoesSemConsultor: 0, ganhosSemAtribuicao: 0, perdidosSemAtribuicao: 0, somaGanhosRanking: 0,
 };
 
 interface Props {
@@ -149,7 +149,8 @@ export default function AcoesSection({ active, dateRange }: Props) {
 
       {/* Gestao comercial — funil + ranking de consultores */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <AcoesFunilConversao funil={gestao?.funil ?? EMPTY_FUNIL} loading={gestaoLoading} error={gestaoError} />
+        <AcoesFunilConversao funil={gestao?.funil ?? EMPTY_FUNIL} meta={gestao?.meta ?? EMPTY_META}
+          loading={gestaoLoading} error={gestaoError} />
         <AcoesEsforcoRetorno
           ranking={gestao?.rankingConsultores ?? []}
           loading={gestaoLoading}

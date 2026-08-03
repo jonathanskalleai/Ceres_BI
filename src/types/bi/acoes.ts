@@ -8,23 +8,39 @@ export interface AcoesBIKpis {
   clientes: number;
   tiposAcaoDistintos: number;
   /**
-   * Valor dos negocios comerciais TOCADOS por acao no periodo, quebrado pelo
-   * status ATUAL do negocio (`ngo_conclusao`) — nao pelo status na data da acao.
-   * Fonte: SUM(ngo_vlrtotalnegociado) dedup por ngo_numero, funis comerciais.
+   * GANHO — regua de PEDIDO (rpc_acoes_bi v9).
+   *   fonte:      mirror.crm_pedidos, dedup por `pdo_codigointerno`
+   *   data:       `pdo_dthaprovacao` (data de competencia do ganho)
+   *   valor:      SUM(`pdo_vlrpedido`)
+   *   condicoes:  `pdo_situacaopedido = 'Aprovado'` + negocio canonico com
+   *               `ngo_conclusao = 'Ganho'` + `ngo_funil <> 'REPASSE DE MAQUINA'`
+   *
+   * `negociosGanho` conta PEDIDOS aprovados, nao negocios.
    */
-  valorAberto: number;
-  negociosAberto: number;
   valorGanho: number;
   negociosGanho: number;
+  /**
+   * PERDIDO — regua de NEGOCIO, DIFERENTE da regua do ganho (rpc_acoes_bi v9).
+   *   fonte:      mirror.crm_negocios canonizado por `ngo_numero`
+   *   data:       `ngo_datafechamento` (data de competencia da perda)
+   *   valor:      SUM(`ngo_vlrtotalnegociado`) — valor POTENCIAL negociado
+   *   condicoes:  `ngo_conclusao = 'Perdido'` + `ngo_funil <> 'REPASSE DE MAQUINA'`
+   *
+   * Nenhum pedido (nem `Cancelado`) alimenta este bucket. Somar `valorPerdido`
+   * com `valorGanho` seria somar R$ negociado com R$ de pedido — reguas
+   * diferentes; a tela nao faz essa soma em lugar nenhum.
+   */
   valorPerdido: number;
   negociosPerdido: number;
   /**
-   * Campos de CONTROLE (nao renderizados): existem para detectar um 4o status
-   * de `ngo_conclusao` no futuro. Se `negociosOutrosStatus > 0`, a soma dos 3
-   * cards de valor NAO fecha com `valorTocado` — o card novo esta faltando.
+   * DETECTOR (nao e card): negocios canonicos que FECHARAM na janela
+   * (`ngo_datafechamento`) com `ngo_conclusao` fora de Em Andamento / Ganho /
+   * Perdido — inclusive NULL.
+   *
+   * Perdido passou a depender inteiramente de `ngo_conclusao`, entao um 4o
+   * status do ERP encolheria o card em silencio. Hoje o ERP so tem 3 status:
+   * o esperado e 0, e zero AQUI e sinal de saude, nao campo morto.
    */
-  negociosTocados: number;
-  valorTocado: number;
   negociosOutrosStatus: number;
   tempoMedioContato: number;
 }

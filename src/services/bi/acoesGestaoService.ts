@@ -31,13 +31,21 @@ const FUNIL_DEFAULTS: RpcAcoesFunilGestao = {
   funil: {
     visitas: 0,
     oportunidades: 0,
+    valorOportunidades: 0,
     ganhos: 0,
+    perdidos: 0,
+    valorPerdido: 0,
     visitasPorOportunidade: null,
     oportPorFechamento: null,
   },
   rankingConsultores: [],
   diasParados: { mediana: null, media: null, negociosAbertos: 0 },
-  meta: { acoesSemConsultor: 0, ganhosSemAtribuicao: 0, somaGanhosRanking: 0 },
+  meta: {
+    acoesSemConsultor: 0,
+    ganhosSemAtribuicao: 0,
+    perdidosSemAtribuicao: 0,
+    somaGanhosRanking: 0,
+  },
 };
 
 /**
