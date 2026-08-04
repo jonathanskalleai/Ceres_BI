@@ -12,10 +12,21 @@ CREATE OR REPLACE FUNCTION public.set_user_permissions_tx(
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public
 AS $$
 BEGIN
+  -- SECURITY: Validate caller is admin
+  IF NOT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role = 'admin'
+  ) THEN
+    RAISE EXCEPTION 'Apenas administradores podem modificar permissoes';
+  END IF;
+
   -- Use advisory lock to prevent concurrent modifications to same user
-  SELECT pg_advisory_xact_lock(hashtext(p_user_id::text));
+  PERFORM pg_advisory_xact_lock(
+    ('x' || substr(p_user_id::text, 1, 16))::bit(64)::bigint
+  );
 
   -- Delete existing permissions for this user
   DELETE FROM public.user_permissions
@@ -26,8 +37,8 @@ BEGIN
     INSERT INTO public.user_permissions (user_id, module_id, is_visible, granted_by)
     SELECT
       p_user_id,
-      (elem->>'moduleId')::text,
-      (elem->>'isVisible')::boolean,
+      (elem->>'moduleId')::uuid,
+      COALESCE((elem->>'isVisible')::boolean, true),
       p_granted_by
     FROM jsonb_array_elements(p_permissions) AS elem;
   END IF;
