@@ -1,6 +1,4 @@
-import {
-  DollarSign, TrendingDown, Briefcase, Ticket,
-} from "lucide-react";
+import { DollarSign, TrendingDown, Briefcase, Ticket } from "lucide-react";
 import { KPICard } from "@/components/bi/KPICard";
 import { fmtBRLKpi, isEmpty } from "@/lib/formatters";
 import type { PainelKPIs } from "@/hooks/bi/usePainelKPIsRpc";
@@ -23,7 +21,8 @@ export function PainelValoresSection({ kpis, loading }: Props) {
           trend={kpis.valorGanho.trend}
           loading={loading}
           accentColor="var(--voux-success)"
-          formula="Total em R$ dos PEDIDOS APROVADOS no periodo (pdo_situacaopedido='Aprovado')"
+          formula="Soma em R$ dos PEDIDOS APROVADOS no periodo, contados pela data de aprovacao do pedido. E receita de pedido faturavel — regua DIFERENTE do Valor Perdido, que mede valor negociado perdido"
+          dataSource="mirror.crm_pedidos · SUM(pdo_vlrpedido) dedup por pdo_codigointerno · pdo_situacaopedido='Aprovado' · data de competencia: pdo_dthaprovacao"
         />
       )}
       {(loading || !isEmpty(kpis.valorPerdido.value)) && (
@@ -37,7 +36,8 @@ export function PainelValoresSection({ kpis, loading }: Props) {
           invertTrend
           loading={loading}
           accentColor="var(--voux-danger)"
-          formula="Total em R$ dos PEDIDOS CANCELADOS no periodo (pdo_situacaopedido='Cancelado')"
+          formula="Valor POTENCIAL dos negocios marcados como Perdido que fecharam no periodo, contados pela data de fechamento do negocio. E o que estava negociado e nao virou venda — nao e pedido cancelado"
+          dataSource="mirror.crm_negocios canonizado por ngo_numero · SUM(ngo_vlrtotalnegociado) · ngo_conclusao='Perdido' · data de competencia: ngo_datafechamento"
         />
       )}
       {(loading || !isEmpty(kpis.pipelineAberto.value)) && (
@@ -49,7 +49,8 @@ export function PainelValoresSection({ kpis, loading }: Props) {
           previousValue={fmtBRLKpi(kpis.pipelineAberto.previousValue)}
           trend={kpis.pipelineAberto.trend}
           loading={loading}
-          formula="Soma o valor de todos os negocios ainda abertos, sem resultado definido"
+          formula="Valor das oportunidades abertas TOCADAS no periodo — negocios trabalhados (com pelo menos 1 acao concluida) que CONTINUAM Em Andamento. E uma foto do que segue em aberto"
+          dataSource="rpc_acoes_funil_gestao · SUM(ngo_vlrtotalnegociado) de negocios canonicos DISTINTOS tocados por acao no periodo com ngo_conclusao='Em Andamento'"
         />
       )}
       {(loading || !isEmpty(kpis.ticketMedio.value)) && (
@@ -61,7 +62,7 @@ export function PainelValoresSection({ kpis, loading }: Props) {
           previousValue={fmtBRLKpi(kpis.ticketMedio.previousValue)}
           trend={kpis.ticketMedio.trend}
           loading={loading}
-          formula="Valor medio por negocio ganho — divide o total ganho pela quantidade"
+          formula="Valor medio por pedido aprovado — divide o total de Valor Ganho pela quantidade de pedidos aprovados"
         />
       )}
     </>

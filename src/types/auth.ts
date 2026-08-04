@@ -21,6 +21,7 @@ export interface UserPermission {
   id: string;
   user_id: string;
   module_id: string;
+  is_visible: boolean;
   granted_by: string | null;
   created_at: string;
 }

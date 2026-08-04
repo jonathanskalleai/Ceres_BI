@@ -33,7 +33,8 @@ export function PainelNegociosSection({ kpis, loading }: Props) {
           trend={kpis.ganhos.trend}
           loading={loading}
           accentColor="var(--voux-success)"
-          formula="Negocios fechados com sucesso no periodo"
+          formula="Quantidade de PEDIDOS APROVADOS no periodo (contados pela data de aprovacao), cujo negocio esta Ganho. E pedido, nao negocio — um negocio pode gerar varios pedidos"
+          dataSource="mirror.crm_pedidos dedup por pdo_codigointerno · pdo_situacaopedido='Aprovado' · negocio canonico com ngo_conclusao='Ganho'"
         />
       )}
       {(loading || !isEmpty(kpis.perdidos.value)) && (
@@ -46,7 +47,8 @@ export function PainelNegociosSection({ kpis, loading }: Props) {
           invertTrend
           loading={loading}
           accentColor="var(--voux-danger)"
-          formula="Negocios que nao fecharam — marcados como perdidos no periodo"
+          formula="Quantidade de NEGOCIOS que fecharam como Perdido no periodo (contados pela data de fechamento). Sao negocios, nao pedidos — um negocio perdido pode ter gerado varios pedidos cancelados"
+          dataSource="mirror.crm_negocios canonizado por ngo_numero · ngo_conclusao='Perdido' · data de competencia: ngo_datafechamento"
         />
       )}
       {(loading || !isEmpty(kpis.andamento.value)) && (

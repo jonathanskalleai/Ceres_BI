@@ -12,6 +12,7 @@ import { PainelPedidosSection } from "@/components/bi/painel/PainelPedidosSectio
 import { PainelClientesSection } from "@/components/bi/painel/PainelClientesSection";
 import { PainelServicosSection } from "@/components/bi/painel/PainelServicosSection";
 import { PainelAcoesSection } from "@/components/bi/painel/PainelAcoesSection";
+import { StatusDesconhecidoAlert } from "@/components/bi/painel/StatusDesconhecidoAlert";
 import CrmEvolucaoCharts from "@/components/crm/CrmEvolucaoCharts";
 
 export default function BiPainel() {
@@ -32,6 +33,7 @@ export default function BiPainel() {
           <TabsTrigger value="graficos">Graficos</TabsTrigger>
         </TabsList>
         <TabsContent value="cards" className="space-y-2">
+          <StatusDesconhecidoAlert count={kpis.negociosOutrosStatus} />
           <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
             <PainelNegociosSection kpis={kpis} loading={anyLoading} />
             <PainelCrossSection crossKpis={crossKpis} loading={anyLoading} />

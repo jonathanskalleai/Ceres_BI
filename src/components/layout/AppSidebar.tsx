@@ -24,11 +24,11 @@ export function AppSidebar({ onNavClick }: AppSidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { isDark, toggle: toggleTheme } = useTheme();
-  const { allowedModules, isLoading, isAdmin } = usePermissions();
+  const { visibleModules, isLoading, isAdmin } = usePermissions();
   const { profile, signOut } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
 
-  const navItems = useMemo(() => buildNavItems(allowedModules, isAdmin), [allowedModules, isAdmin]);
+  const navItems = useMemo(() => buildNavItems(visibleModules, isAdmin), [visibleModules, isAdmin]);
 
   const handleItemClick = (item: NavItem) => {
     navigate(item.route);

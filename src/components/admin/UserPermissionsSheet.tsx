@@ -6,10 +6,17 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 import type { AppModule, Profile } from '@/types/auth';
-import { getUserPermissions, setUserPermissions, listModules } from '@/services/adminService';
+import { listModules, getUserVisibility, setUserPermissions } from '@/services/adminService';
 import { useAuth } from '@/hooks/useAuth';
+
+/** Permission record with visibility state */
+interface ModulePermission {
+  moduleId: string;
+  hasAccess: boolean;
+  isVisible: boolean;
+}
 
 interface UserPermissionsSheetProps {
   open: boolean;
@@ -36,49 +43,84 @@ export function UserPermissionsSheet({
 }: UserPermissionsSheetProps) {
   const { user } = useAuth();
   const [modules, setModules] = useState<AppModule[]>([]);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  /** Module permissions: hasAccess (checked) and isVisible (eye toggle) */
+  const [permissions, setPermissions] = useState<Map<string, ModulePermission>>(new Map());
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load modules + current permissions when sheet opens
+  // Load modules + current permissions + visibility when sheet opens
   useEffect(() => {
     if (!open || !targetUser) return;
 
     setLoading(true);
     setError(null);
 
-    Promise.all([listModules(), getUserPermissions(targetUser.id)])
-      .then(([mods, perms]) => {
+    Promise.all([listModules(), getUserVisibility(targetUser.id)])
+      .then(([mods, visibility]) => {
         setModules(mods);
-        setSelected(new Set(perms));
+        const perms = new Map<string, ModulePermission>();
+        for (const mod of mods) {
+          const isVisible = visibility[mod.id] ?? true;
+          perms.set(mod.id, {
+            moduleId: mod.id,
+            hasAccess: isVisible, // If visible, user has access
+            isVisible,
+          });
+        }
+        setPermissions(perms);
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Erro'))
       .finally(() => setLoading(false));
   }, [open, targetUser]);
 
-  function toggleModule(moduleId: string) {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(moduleId)) {
-        next.delete(moduleId);
-      } else {
-        next.add(moduleId);
-      }
+  /** Toggle access (checkbox) - also sets visibility to true when granting access */
+  function toggleAccess(moduleId: string) {
+    setPermissions((prev) => {
+      const next = new Map(prev);
+      const current = next.get(moduleId);
+      if (!current) return prev;
+
+      const newHasAccess = !current.hasAccess;
+      // When granting access, default visibility to true
+      // When revoking access, set visibility to false
+      next.set(moduleId, {
+        ...current,
+        hasAccess: newHasAccess,
+        isVisible: newHasAccess,
+      });
+      return next;
+    });
+  }
+
+  /** Toggle visibility only (eye icon) - only works if hasAccess is true */
+  function toggleVisibility(moduleId: string) {
+    setPermissions((prev) => {
+      const next = new Map(prev);
+      const current = next.get(moduleId);
+      if (!current || !current.hasAccess) return prev;
+
+      next.set(moduleId, {
+        ...current,
+        isVisible: !current.isVisible,
+      });
       return next;
     });
   }
 
   function toggleGroup(groupModuleIds: string[]) {
-    const allSelected = groupModuleIds.every((id) => selected.has(id));
-    setSelected((prev) => {
-      const next = new Set(prev);
+    const allAccessed = groupModuleIds.every((id) => permissions.get(id)?.hasAccess);
+    setPermissions((prev) => {
+      const next = new Map(prev);
       for (const id of groupModuleIds) {
-        if (allSelected) {
-          next.delete(id);
-        } else {
-          next.add(id);
-        }
+        const current = next.get(id);
+        if (!current) continue;
+        const newHasAccess = !allAccessed;
+        next.set(id, {
+          ...current,
+          hasAccess: newHasAccess,
+          isVisible: newHasAccess, // Also toggle visibility with access
+        });
       }
       return next;
     });
@@ -90,7 +132,11 @@ export function UserPermissionsSheet({
     setError(null);
 
     try {
-      await setUserPermissions(targetUser.id, Array.from(selected), user.id);
+      const permArray = Array.from(permissions.values()).map((p) => ({
+        moduleId: p.moduleId,
+        isVisible: p.isVisible,
+      }));
+      await setUserPermissions(targetUser.id, permArray, user.id);
       onSaved();
       onOpenChange(false);
     } catch (err) {
@@ -127,16 +173,19 @@ export function UserPermissionsSheet({
 
         {!loading && (
           <div className="flex flex-col gap-6">
+            <p className="text-xs text-muted-foreground">
+              Marque para permitir acesso. Use o icone de olho para controlar a visibilidade na barra lateral.
+            </p>
             {Object.entries(grouped).map(([groupLabel, groupMods]) => {
               const groupIds = groupMods.map((m) => m.id);
-              const allSelected = groupIds.every((id) => selected.has(id));
+              const allAccessed = groupIds.every((id) => permissions.get(id)?.hasAccess);
 
               return (
                 <div key={groupLabel} className="flex flex-col gap-2">
                   <label className="flex items-center gap-2 cursor-pointer group">
                     <input
                       type="checkbox"
-                      checked={allSelected}
+                      checked={allAccessed}
                       onChange={() => toggleGroup(groupIds)}
                       className="h-4 w-4 rounded border-input bg-muted text-champagne-400 focus:ring-champagne-400/40"
                     />
@@ -146,20 +195,43 @@ export function UserPermissionsSheet({
                   </label>
 
                   <div className="flex flex-col gap-1 pl-6">
-                    {groupMods.map((mod) => (
-                      <label
-                        key={mod.id}
-                        className="flex items-center gap-2 cursor-pointer py-1 hover:bg-accent rounded px-2 -mx-2"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selected.has(mod.id)}
-                          onChange={() => toggleModule(mod.id)}
-                          className="h-3.5 w-3.5 rounded border-input bg-muted text-champagne-400 focus:ring-champagne-400/40"
-                        />
-                        <span className="text-sm text-muted-foreground">{mod.label}</span>
-                      </label>
-                    ))}
+                    {groupMods.map((mod) => {
+                      const perm = permissions.get(mod.id);
+                      const hasAccess = perm?.hasAccess ?? false;
+                      const isVisible = perm?.isVisible ?? true;
+
+                      return (
+                        <div
+                          key={mod.id}
+                          className="flex items-center gap-2 py-1 hover:bg-accent rounded px-2 -mx-2"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={hasAccess}
+                            onChange={() => toggleAccess(mod.id)}
+                            className="h-3.5 w-3.5 rounded border-input bg-muted text-champagne-400 focus:ring-champagne-400/40"
+                          />
+                          <span className="text-sm text-muted-foreground flex-1">{mod.label}</span>
+                          <button
+                            type="button"
+                            onClick={() => toggleVisibility(mod.id)}
+                            disabled={!hasAccess}
+                            className={`p-1 rounded transition-colors ${
+                              hasAccess
+                                ? 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                                : 'opacity-30 cursor-not-allowed text-muted-foreground'
+                            }`}
+                            title={hasAccess ? (isVisible ? 'Ocultar da barra lateral' : 'Mostrar na barra lateral') : 'Conceda acesso primeiro'}
+                          >
+                            {isVisible ? (
+                              <Eye className="h-3.5 w-3.5" />
+                            ) : (
+                              <EyeOff className="h-3.5 w-3.5" />
+                            )}
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );

@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 import { supabaseAdmin } from '@/integrations/supabase/adminClient';
-import type { Profile, AppModule } from '@/types/auth';
+import type { Profile, AppModule, UserPermission } from '@/types/auth';
 
 // ---------------------------------------------------------------------------
 // Users CRUD
@@ -47,8 +47,19 @@ export async function toggleUserActive(
 // Permissions
 // ---------------------------------------------------------------------------
 
+/** Get full permission records for a user (including is_visible). */
+export async function getUserPermissions(userId: string): Promise<UserPermission[]> {
+  const { data, error } = await supabase
+    .from('user_permissions')
+    .select('*')
+    .eq('user_id', userId);
+
+  if (error) throw new Error(`Erro ao buscar permissoes: ${error.message}`);
+  return data as UserPermission[];
+}
+
 /** Get module IDs that a user has access to. */
-export async function getUserPermissions(userId: string): Promise<string[]> {
+export async function getUserPermissionIds(userId: string): Promise<string[]> {
   const { data, error } = await supabase
     .from('user_permissions')
     .select('module_id')
@@ -58,10 +69,51 @@ export async function getUserPermissions(userId: string): Promise<string[]> {
   return (data ?? []).map((r) => r.module_id);
 }
 
-/** Replace all permissions for a user (delete + insert). */
+/** Get visibility settings for a user: map of moduleId -> is_visible. */
+export async function getUserVisibility(userId: string): Promise<Record<string, boolean>> {
+  const { data, error } = await supabase
+    .from('user_permissions')
+    .select('module_id, is_visible')
+    .eq('user_id', userId);
+
+  if (error) throw new Error(`Erro ao buscar visibilidade: ${error.message}`);
+
+  const visibility: Record<string, boolean> = {};
+  for (const row of data ?? []) {
+    // Default to true (is_visible is true by default in DB)
+    visibility[row.module_id] = row.is_visible !== false;
+  }
+  return visibility;
+}
+
+/** Set visibility for a specific module (preserves existing permission if exists). */
+export async function setUserVisibility(
+  userId: string,
+  moduleId: string,
+  isVisible: boolean,
+): Promise<void> {
+  const { error } = await supabase
+    .from('user_permissions')
+    .update({ is_visible: isVisible })
+    .eq('user_id', userId)
+    .eq('module_id', moduleId);
+
+  if (error) throw new Error(`Erro ao salvar visibilidade: ${error.message}`);
+}
+
+/**
+ * Permission record with visibility.
+ * Used by UI to track both the permission (access) and visibility state.
+ */
+export interface UserPermissionWithVisibility {
+  moduleId: string;
+  isVisible: boolean;
+}
+
+/** Replace all permissions for a user with visibility settings (delete + insert). */
 export async function setUserPermissions(
   userId: string,
-  moduleIds: string[],
+  permissions: UserPermissionWithVisibility[],
   grantedBy: string,
 ): Promise<void> {
   // Delete existing
@@ -72,12 +124,13 @@ export async function setUserPermissions(
 
   if (delErr) throw new Error(`Erro ao limpar permissoes: ${delErr.message}`);
 
-  if (moduleIds.length === 0) return;
+  if (permissions.length === 0) return;
 
-  // Insert new
-  const rows = moduleIds.map((moduleId) => ({
+  // Insert new with visibility
+  const rows = permissions.map((perm) => ({
     user_id: userId,
-    module_id: moduleId,
+    module_id: perm.moduleId,
+    is_visible: perm.isVisible,
     granted_by: grantedBy,
   }));
 
