@@ -8,7 +8,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import type { AppModule, Profile } from '@/types/auth';
-import { listModules, getUserVisibility, setUserPermissions } from '@/services/adminService';
+import { listModules, getUserPermissions, setUserPermissions } from '@/services/adminService';
 import { useAuth } from '@/hooks/useAuth';
 
 /** Permission record with visibility state */
@@ -49,22 +49,28 @@ export function UserPermissionsSheet({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load modules + current permissions + visibility when sheet opens
+  // Load modules + current permissions when sheet opens
   useEffect(() => {
     if (!open || !targetUser) return;
 
     setLoading(true);
     setError(null);
 
-    Promise.all([listModules(), getUserVisibility(targetUser.id)])
-      .then(([mods, visibility]) => {
+    Promise.all([listModules(), getUserPermissions(targetUser.id)])
+      .then(([mods, userPerms]) => {
         setModules(mods);
+        // Build permission map from existing records
+        // hasAccess = record exists (user has permission to this module)
+        // isVisible = is_visible field (default true if no record)
         const perms = new Map<string, ModulePermission>();
+        const permByModule = new Map(userPerms.map((p) => [p.module_id, p]));
         for (const mod of mods) {
-          const isVisible = visibility[mod.id] ?? true;
+          const rec = permByModule.get(mod.id);
+          const hasAccess = rec !== undefined;
+          const isVisible = rec?.is_visible ?? true;
           perms.set(mod.id, {
             moduleId: mod.id,
-            hasAccess: isVisible, // If visible, user has access
+            hasAccess,
             isVisible,
           });
         }
@@ -132,10 +138,14 @@ export function UserPermissionsSheet({
     setError(null);
 
     try {
-      const permArray = Array.from(permissions.values()).map((p) => ({
-        moduleId: p.moduleId,
-        isVisible: p.isVisible,
-      }));
+      // Send ONLY modules where user has access (hasAccess === true)
+      // isVisible is preserved from the UI state
+      const permArray = Array.from(permissions.values())
+        .filter((p) => p.hasAccess)
+        .map((p) => ({
+          moduleId: p.moduleId,
+          isVisible: p.isVisible,
+        }));
       await setUserPermissions(targetUser.id, permArray, user.id);
       onSaved();
       onOpenChange(false);

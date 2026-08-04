@@ -15,12 +15,12 @@ export interface PainelKPIs {
   perdidos: KPIWithPrev;
   andamento: KPIWithPrev;
   taxaConversao: KPIWithPrev;
-  // Valores (de rpc_acoes_bi v9)
+  // Valores (de rpc_acoes_bi v9) — AVISO: IGNORAM filtro de funis
   valorGanho: KPIWithPrev;
   valorPerdido: KPIWithPrev;
   pipelineAberto: KPIWithPrev;
   ticketMedio: KPIWithPrev;
-  // Acoes / Operacional
+  // Acoes / Operacional — AVISO: totalAcoes e totalVisitas IGNORAM filtro de funis
   totalAcoes: KPIWithPrev;
   totalVisitas: KPIWithPrev;
   totalOS: KPIWithPrev;
@@ -30,6 +30,18 @@ export interface PainelKPIs {
   visitasPorOportunidade: KPIWithPrev;
   diasParados: KPIWithPrev;
   negociosOutrosStatus: number;
+  // Metadata: quais KPIs ignoram o filtro de funis (para UI exibir warning)
+  ignoresFunilFilter: {
+    ganhos: boolean;
+    perdidos: boolean;
+    valorGanho: boolean;
+    valorPerdido: boolean;
+    totalAcoes: boolean;
+    totalVisitas: boolean;
+    ticketMedio: boolean;
+    totalOS: boolean;
+    negociosOutrosStatus: boolean;
+  };
 }
 
 export interface UsePainelResult {
@@ -199,7 +211,7 @@ export function usePainelKPIsRpc(
       perdidos: makeKPI(aa.negociosPerdido, ap.negociosPerdido), // v9: de acoes kpis
       andamento: makeKPI(naNeg.andamento, npNeg.andamento),
       taxaConversao: makeKPI(naNeg.taxaConversao, npNeg.taxaConversao),
-      // Valores v9 (de rpc_acoes_bi)
+      // Valores v9 (de rpc_acoes_bi) — RPC NAO aceita filtro de funis
       valorGanho: makeKPI(aa.valorGanho, ap.valorGanho),
       valorPerdido: makeKPI(aa.valorPerdido, ap.valorPerdido),
       // Pipeline Aberto v9: valorOportunidades do funil (oportunidades abertas tocadas)
@@ -208,7 +220,7 @@ export function usePainelKPIsRpc(
         aa.negociosGanho > 0 ? aa.valorGanho / aa.negociosGanho : 0,
         ap.negociosGanho > 0 ? ap.valorGanho / ap.negociosGanho : 0,
       ),
-      // Acoes
+      // Acoes — RPC NAO aceita filtro de funis
       totalAcoes: makeKPI(aa.totalAcoes, ap.totalAcoes),
       totalVisitas: makeKPI(aa.visitas, ap.visitas),
       totalOS: makeKPI(opData.kpis.eventosAgenda, 0),
@@ -218,6 +230,18 @@ export function usePainelKPIsRpc(
       visitasPorOportunidade: makeKPI(fa.visitasPorOportunidade ?? 0, fp.visitasPorOportunidade ?? 0),
       diasParados: makeKPI(fa.mediana ?? 0, fp.mediana ?? 0),
       negociosOutrosStatus: aa.negociosOutrosStatus,
+      // Metadata: KPIs que ignoram filtro de funis (rpc_acoes_bi v9 nao suporta p_funis)
+      ignoresFunilFilter: {
+        ganhos: true,
+        perdidos: true,
+        valorGanho: true,
+        valorPerdido: true,
+        totalAcoes: true,
+        totalVisitas: true,
+        ticketMedio: true,             // derivado de valorGanho/negociosGanho de rpc_acoes_bi
+        totalOS: true,                // derivado de eventosAgenda de rpc_operacional_bi
+        negociosOutrosStatus: true,   // de rpc_acoes_bi.negociosOutrosStatus
+      },
     };
   }, [negAtual, negAnterior, acoesAtual, acoesAnterior, funilAtual, funilAnterior, opData]);
 

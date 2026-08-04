@@ -110,35 +110,35 @@ export interface UserPermissionWithVisibility {
   isVisible: boolean;
 }
 
-/** Replace all permissions for a user with visibility settings (delete + insert). */
+/** Replace all permissions for a user with visibility settings (transactional delete + insert). */
 export async function setUserPermissions(
   userId: string,
   permissions: UserPermissionWithVisibility[],
   grantedBy: string,
 ): Promise<void> {
-  // Delete existing
-  const { error: delErr } = await supabase
-    .from('user_permissions')
-    .delete()
-    .eq('user_id', userId);
-
-  if (delErr) throw new Error(`Erro ao limpar permissoes: ${delErr.message}`);
-
-  if (permissions.length === 0) return;
-
-  // Insert new with visibility
-  const rows = permissions.map((perm) => ({
-    user_id: userId,
-    module_id: perm.moduleId,
-    is_visible: perm.isVisible,
-    granted_by: grantedBy,
+  // Build permissions payload for the transactional function
+  const permPayload = permissions.map((perm) => ({
+    moduleId: perm.moduleId,
+    isVisible: perm.isVisible,
   }));
 
-  const { error: insErr } = await supabase
-    .from('user_permissions')
-    .insert(rows);
+  // Use the transactional RPC function to prevent permission loss on failure
+  // The function uses advisory lock + atomic DELETE+INSERT
+  const { error } = await supabase.rpc('set_user_permissions_tx', {
+    p_user_id: userId,
+    p_permissions: JSON.stringify(permPayload),
+    p_granted_by: grantedBy,
+  });
 
-  if (insErr) throw new Error(`Erro ao salvar permissoes: ${insErr.message}`);
+  if (error) {
+    // Se a RPC falhar, lancamos erro indicando que a migration pode nao ter sido aplicada.
+    // Nao usamos fallback DELETE+INSERT sequencial porque ha risco de perda de permissoes
+    // se DELETE succeed mas INSERT falha.
+    throw new Error(
+      `Erro ao salvar permissoes: ${error.message}. ` +
+      `Se a funcao 'set_user_permissions_tx' nao existir, aplique a migration.`
+    );
+  }
 }
 
 // ---------------------------------------------------------------------------
