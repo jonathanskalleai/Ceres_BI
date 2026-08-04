@@ -65,6 +65,17 @@ export function formatDateBR(d: string): string {
   return d;
 }
 
+/** "2026-07-31T13:54:28.977" → "31/07/2026 13:54". Retorna "—" se vazio.
+ *  Aceita tambem "2026-07-31" (sem hora) → "31/07/2026".
+ *  Trunca segundos e milissegundos para manter coluna compacta. */
+export function formatDateTimeBR(d: string): string {
+  if (!d) return "—";
+  const datePart = d.slice(0, 10); // YYYY-MM-DD
+  const timeMatch = d.match(/T(\d{2}):(\d{2})/);
+  const dateStr = formatDateBR(datePart);
+  return timeMatch ? `${dateStr} ${timeMatch[1]}:${timeMatch[2]}` : dateStr;
+}
+
 /** Converte Date → "YYYY-MM-DD" no fuso local (sem deslocamento UTC). */
 export function toISODate(d: Date | undefined): string | undefined {
   if (!d) return undefined;

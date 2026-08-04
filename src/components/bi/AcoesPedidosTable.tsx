@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { BiTableCard } from "@/components/bi/BiTableCard";
 import { PaginationControls } from "@/components/bi/PaginationControls";
+import { formatDateTimeBR } from "@/lib/dateUtils";
 import type { PedidoDetalheRow } from "@/services/bi/acoesPedidosGanhosService";
 import { PEDIDOS_GANHOS_PAGE_SIZE } from "@/hooks/bi/usePedidosGanhosRpc";
 
@@ -107,7 +108,7 @@ export function AcoesPedidosTable({ rows, total, page, onPageChange, loading, er
                 <td className={`${TD} max-w-[180px] truncate`}>{row.cliente ?? DASH}</td>
                 <td className={`${TD} text-[var(--voux-text-soft)] max-w-[120px] truncate`}>{row.cidade ?? DASH}</td>
                 <td className={`${TD} text-[var(--voux-text-soft)] max-w-[150px] truncate`}>{row.consultor ?? DASH}</td>
-                <td className={`${TD} whitespace-nowrap tabular-nums`}>{row.dataAprovacao}</td>
+                <td className={`${TD} whitespace-nowrap tabular-nums`}>{formatDateTimeBR(row.dataAprovacao)}</td>
                 <td className={`${TD} text-right tabular-nums whitespace-nowrap`}>{brl(row.valorPedido)}</td>
               </tr>
             ))}

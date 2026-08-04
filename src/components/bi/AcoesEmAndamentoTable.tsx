@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { BiTableCard } from "@/components/bi/BiTableCard";
 import { PaginationControls } from "@/components/bi/PaginationControls";
+import { formatDateTimeBR } from "@/lib/dateUtils";
 import type { AcoesEmAndamentoRow } from "@/services/bi/acoesEmAndamentoService";
 import { EM_ANDAMENTO_PAGE_SIZE } from "@/hooks/bi/useEmAndamentoRpc";
 
@@ -119,7 +120,7 @@ export function AcoesEmAndamentoTable({ rows, total, page, onPageChange, loading
                     {brl(row.valor)}
                   </td>
                   <td className={`${TD} text-[var(--voux-text-soft)] max-w-[120px] truncate`}>{row.ultimaAcao ?? DASH}</td>
-                  <td className={`${TD} whitespace-nowrap tabular-nums`}>{row.dataUltimaAcao ?? DASH}</td>
+                  <td className={`${TD} whitespace-nowrap tabular-nums`}>{formatDateTimeBR(row.dataUltimaAcao) ?? DASH}</td>
                   <td className={`${TD} text-right tabular-nums whitespace-nowrap ${isStale ? "text-[var(--voux-danger)] font-semibold" : ""}`}>
                     {row.diasParado}
                   </td>
