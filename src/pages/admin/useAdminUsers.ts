@@ -28,6 +28,7 @@ export function useAdminUsers() {
   // Dialogs state
   const [createOpen, setCreateOpen] = useState(false);
   const [permissionsTarget, setPermissionsTarget] = useState<Profile | null>(null);
+  const [changePasswordTarget, setChangePasswordTarget] = useState<Profile | null>(null);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
 
   const fetchUsers = useCallback(async () => {
@@ -104,6 +105,8 @@ export function useAdminUsers() {
     setCreateOpen,
     permissionsTarget,
     setPermissionsTarget,
+    changePasswordTarget,
+    setChangePasswordTarget,
     confirmAction,
     setConfirmAction,
     fetchUsers,
