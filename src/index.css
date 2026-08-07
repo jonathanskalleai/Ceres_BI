@@ -1,0 +1,305 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Sidebar custom scrollbar ── */
+.sidebar-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: var(--voux-ink-700);
+  border-radius: 9999px;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--voux-ink-500);
+}
+.sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--voux-ink-700) transparent;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   VOUX DESIGN SYSTEM — Ceres BI
+   Camada 1: Primitivos (cores absolutas, NÃO flipam com tema)
+   Camada 2: Tokens semânticos shadcn (--background, --card…)
+   Camada 3: Tokens VOUX semânticos (--voux-text-*, --voux-card-*)
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Camada 1 — Primitivos (sempre fixos) ── */
+:root {
+  /* Ink (neutros quentes) */
+  --voux-ink-1000: #050403;
+  --voux-ink-950:  #0a0907;
+  --voux-ink-900:  #11100d;
+  --voux-ink-850:  #18160f;
+  --voux-ink-800:  #1f1c14;
+  --voux-ink-700:  #2a2620;
+  --voux-ink-600:  #3a342a;
+  --voux-ink-500:  #524a3e;
+  --voux-ink-400:  #6b6253;
+  --voux-ink-300:  #8a8273;
+  --voux-ink-200:  #b3ab9c;
+  --voux-ink-100:  #d6cfc1;
+  --voux-ink-50:   #ece5d4;
+  --voux-ink-0:    #f7f1e3;
+
+  /* Champagne (accent) */
+  --voux-champagne-950: #1d160c;
+  --voux-champagne-900: #2e2316;
+  --voux-champagne-800: #4a3920;
+  --voux-champagne-700: #6e542f;
+  --voux-champagne-600: #927142;
+  --voux-champagne-500: #b8945a;
+  --voux-champagne-400: #d4b896;
+  --voux-champagne-300: #e0c9aa;
+  --voux-champagne-200: #ead7be;
+
+  /* Status */
+  --voux-success: #2d7a3f;
+  --voux-warning: #d4a05a;
+  --voux-danger:  #b83a28;
+  --voux-info:    #8ea3b8;
+
+  /* Tipografia */
+  --voux-font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
+  --voux-font-sans:    "DM Sans", "Inter", system-ui, sans-serif;
+  --voux-font-label:   "Space Grotesk", "Inter", system-ui, sans-serif;
+  --voux-font-mono:    "JetBrains Mono", "IBM Plex Mono", monospace;
+
+  /* Timing */
+  --voux-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --voux-dur-fast: 120ms;
+  --voux-dur-base: 220ms;
+
+  /* ── Sidebar tokens FIXOS (sempre dark, em light e dark mode) ── */
+  --sidebar-background:         40 17% 5%;     /* ~#100e0a */
+  --sidebar-foreground:         40 30% 86%;    /* ~#e4dcc8 */
+  --sidebar-primary:            33 40% 71%;    /* champagne-400 */
+  --sidebar-primary-foreground: 30 17% 4%;
+  --sidebar-accent:             36 14% 13%;    /* hover */
+  --sidebar-accent-foreground:  40 44% 88%;
+  --sidebar-border:             36 14% 12%;
+  --sidebar-ring:               33 40% 71%;
+  --sidebar-text-muted:         36 10% 55%;
+  --sidebar-text-faint:         36 8% 42%;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Camada 2 + 3 — LIGHT MODE (warm editorial off-white)
+   ═══════════════════════════════════════════════════════════ */
+@layer base {
+  :root {
+    /* shadcn semantic */
+    --background:             36 24% 91%;       /* #ece5d4 ~ creme quente, dá contraste com cards brancos */
+    --foreground:             40 17% 8%;        /* ink-900 */
+    --card:                   0 0% 100%;        /* branco puro */
+    --card-foreground:        40 17% 8%;
+    --popover:                0 0% 100%;
+    --popover-foreground:     40 17% 8%;
+    --primary:                33 38% 42%;       /* champagne-600 */
+    --primary-foreground:     40 38% 97%;
+    --secondary:              40 22% 92%;
+    --secondary-foreground:   40 17% 14%;
+    --success:                145 40% 28%;
+    --success-foreground:     0 0% 100%;
+    --muted:                  40 22% 92%;
+    --muted-foreground:       36 12% 28%;
+    --accent:                 39 50% 90%;
+    --accent-foreground:      40 17% 8%;
+    --destructive:            9 65% 40%;
+    --destructive-foreground: 0 0% 100%;
+    --border:                 36 18% 86%;
+    --input:                  36 18% 86%;
+    --ring:                   33 38% 42%;
+
+    /* Charts — contraste em fundo claro */
+    --chart-1: 33 50% 38%;
+    --chart-2: 145 30% 32%;
+    --chart-3: 25 65% 45%;
+    --chart-4: 207 45% 38%;
+    --chart-5: 9 55% 48%;
+    --chart-6: 270 25% 45%;
+
+    /* VOUX semânticos derivados (light) — superfícies refinadas */
+    --voux-card-from:        #ffffff;
+    --voux-card-to:          #fdfbf6;
+    --voux-card-border:      hsl(36 20% 88%);
+    --voux-card-shadow:      0 1px 2px rgba(40,30,15,0.04), 0 8px 24px -8px rgba(40,30,15,0.08);
+    --voux-text-primary:     #1a1714;
+    --voux-text-heading:     #0e0d0a;
+    --voux-text-muted:       #2a2620;
+    --voux-text-faint:       #3d362d;
+    --voux-accent:           #6e542f;
+    --voux-skeleton:         #efe9dc;
+    --voux-surface:          #fdfbf6;
+    --voux-grid-line:        rgba(82,74,62,0.08);
+    --voux-tooltip-bg:       #1a1714;
+    --voux-tooltip-border:   rgba(212,184,150,0.20);
+    --voux-tooltip-text:     #ece5d4;
+    --voux-tooltip-muted:    #b3ab9c;
+    --voux-border-alpha:     rgba(82,74,62,0.10);
+    --voux-border-hover:     rgba(82,74,62,0.20);
+    --voux-label:            #0a0907;
+    /* Hierarquia de superfícies (3 níveis) */
+    --surface-base:          hsl(36 24% 91%);
+    --surface-raised:        #ffffff;
+    --surface-overlay:       #ffffff;
+    --surface-topbar:        rgba(236, 229, 212, 0.82);
+    --radius: 0.75rem;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     DARK MODE — VOUX editorial dark
+     ═══════════════════════════════════════════════════════════ */
+  .dark {
+    --background:             40 17% 3%;
+    --foreground:             40 44% 88%;
+    --card:                   40 23% 8%;
+    --card-foreground:        40 44% 88%;
+    --popover:                43 13% 6%;
+    --popover-foreground:     40 44% 88%;
+    --primary:                33 40% 71%;
+    --primary-foreground:     30 17% 2%;
+    --secondary:              32 14% 14%;
+    --secondary-foreground:   37 11% 66%;
+    --muted:                  40 22% 10%;
+    --muted-foreground:       36 8% 68%;
+    --accent:                 32 14% 14%;
+    --accent-foreground:      40 44% 88%;
+    --destructive:            9 55% 55%;
+    --destructive-foreground: 40 44% 88%;
+    --success:                145 35% 58%;
+    --success-foreground:     40 44% 4%;
+    --border:                 32 14% 14%;
+    --input:                  40 22% 10%;
+    --ring:                   33 40% 71%;
+
+    --chart-1: 33 40% 71%;
+    --chart-2: 110 16% 52%;
+    --chart-3: 33 61% 59%;
+    --chart-4: 207 19% 64%;
+    --chart-5: 9 46% 60%;
+    --chart-6: 34 42% 54%;
+
+    /* VOUX semânticos derivados (dark) */
+    --voux-card-from:        #18160f;
+    --voux-card-to:          #11100d;
+    --voux-card-border:      rgba(214,207,193,0.08);
+    --voux-card-shadow:      0 2px 8px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,250,230,0.03);
+    --voux-text-primary:     #ece5d4;
+    --voux-text-heading:     #ece5d4;
+    --voux-text-muted:       #b3a89a;
+    --voux-text-faint:       #a39a8c;
+
+    /* Status (dark: tons mais luminosos para contraste sobre fundo escuro) */
+    --voux-success: #7dc688;
+    --voux-danger:  #e07a6a;
+    --voux-accent:           #d4b896;
+    --voux-skeleton:         #2a2620;
+    --voux-surface:          #11100d;
+    --voux-grid-line:        rgba(214,207,193,0.07);
+    --voux-tooltip-bg:       rgba(17,16,13,0.96);
+    --voux-tooltip-border:   rgba(212,184,150,0.15);
+    --voux-tooltip-text:     #ece5d4;
+    --voux-tooltip-muted:    #b3a89a;
+    --voux-border-alpha:     rgba(214, 207, 193, 0.08);
+    --voux-border-hover:     rgba(214, 207, 193, 0.16);
+    --voux-label:            #ece5d4;
+    /* Hierarquia de superficies (dark) — sobrescreve as do :root */
+    --surface-base:          #0a0907;
+    --surface-raised:        #18160f;
+    --surface-overlay:       #1f1c14;
+    --surface-topbar:        rgba(10, 9, 7, 0.85);
+
+    /* Borda mais visivel sobre o card #18160f */
+    --voux-card-border:      rgba(214, 207, 193, 0.10);
+  }
+
+  * { @apply border-border; }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--voux-font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .dark body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(900px 500px at 80% -10%, rgba(212, 184, 150, 0.04), transparent 60%),
+      radial-gradient(600px 400px at -10% 50%, rgba(212, 184, 150, 0.02), transparent 60%);
+  }
+
+  ::selection {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   COMPONENT OVERRIDES — theme-aware (sem !important quando dá)
+   ═══════════════════════════════════════════════════════════ */
+
+/* Tabs — pill style (ambos os modos) */
+[role="tablist"] {
+  background: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
+  border-radius: 999px;
+  padding: 3px;
+  gap: 2px;
+  height: auto;
+}
+[role="tab"] {
+  border-radius: 999px;
+  font-family: var(--voux-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+  transition: all var(--voux-dur-fast) var(--voux-ease-out);
+  padding: 6px 14px;
+  height: auto;
+}
+[role="tab"][data-state="active"] {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  box-shadow: none;
+}
+
+/* Badges mono em dark */
+.dark .inline-flex[class*="rounded-full"] {
+  font-family: var(--voux-font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Scrollbar — adapta por tema */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Card shadow só em dark (no light usa box-shadow nativo) */
+.dark .shadow-sm,
+.dark .shadow-md {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 250, 230, 0.03);
+}
+
+/* Utilities */
+.font-display { font-family: var(--voux-font-display); }
+.font-mono-voux { font-family: var(--voux-font-mono); }
+.text-champagne { color: var(--voux-champagne-400); }

@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Comercial · Ceres BI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="assets/font-system.js"></script>
+  <link rel="stylesheet" href="assets/voux.css">
+  <link rel="stylesheet" href="assets/layout.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body data-page="comercial">
+  <div class="app">
+    <aside class="sidebar" data-sidebar></aside>
+    <main class="main">
+      <header class="topbar" data-topbar></header>
+      <div class="toolbar" data-toolbar></div>
+      <div class="content">
+
+        <!-- KPIs -->
+        <section class="kpis">
+          <div class="kpi">
+            <div class="kpi__head">
+              <span class="kpi__label">01 · Negócios</span>
+              <div class="kpi__icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><rect x="2" y="3" width="12" height="10" rx="1"/><path d="M5 3V2M11 3V2M2 7h12"/></svg></div>
+            </div>
+            <div class="kpi__value voux-num" id="kpi-total">—</div>
+            <div class="kpi__delta" id="kpi-total-sub" style="color:var(--voux-text-muted);">carregando…</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head">
+              <span class="kpi__label">02 · Taxa de Conversão</span>
+              <div class="kpi__icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><path d="M2 12L6 8l3 3 5-6"/></svg></div>
+            </div>
+            <div class="kpi__value voux-num" id="kpi-conversao">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">% (ganhos / concluídos)</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head">
+              <span class="kpi__label">03 · Pipeline Aberto</span>
+              <div class="kpi__icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><path d="M3 4h10M4 7h8M5 10h6M6 13h4"/></svg></div>
+            </div>
+            <div class="kpi__value voux-num" id="kpi-pipeline">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">em negociação</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head">
+              <span class="kpi__label">04 · Valor Ganho</span>
+              <div class="kpi__icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v6M6 7h3.5a1.5 1.5 0 0 1 0 3H6"/></svg></div>
+            </div>
+            <div class="kpi__value voux-num" id="kpi-ganho">—</div>
+            <div class="kpi__delta kpi__delta--up" id="kpi-ganho-ticket">—</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head">
+              <span class="kpi__label">05 · Ciclo de Vendas</span>
+              <div class="kpi__icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3.5l2.5 1.5"/></svg></div>
+            </div>
+            <div class="kpi__value voux-num" id="kpi-ciclo">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">média dos concluídos</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head">
+              <span class="kpi__label">06 · Esforço Médio</span>
+              <div class="kpi__icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><path d="M8 2v4M8 10v4M2 8h4M10 8h4"/></svg></div>
+            </div>
+            <div class="kpi__value voux-num" id="kpi-esforco">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">por negócio</div>
+          </div>
+        </section>
+
+        <!-- Funil + Origem -->
+        <div class="grid-12">
+          <article class="voux-card col-6">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">01 · Funil de Vendas</div>
+                <h3 class="voux-card__title">Pipeline <em>por Etapa</em></h3>
+              </div>
+            </div>
+            <p style="font-size:12px;color:var(--voux-text-muted);margin:0 0 12px;">Valor em aberto (R$) acumulado em cada etapa do funil</p>
+            <div class="chart-canvas" id="chart-funil" style="height:260px;"></div>
+          </article>
+
+          <article class="voux-card col-6">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">02 · Origem do Lead</div>
+                <h3 class="voux-card__title">Conversão <em>por Canal</em></h3>
+              </div>
+            </div>
+            <p style="font-size:12px;color:var(--voux-text-muted);margin:0 0 12px;">Negócios por canal de entrada (ganho / perdido / em aberto)</p>
+            <div class="chart-canvas" id="chart-origem" style="height:260px;"></div>
+          </article>
+        </div>
+
+        <!-- Motivos de perda + Ranking -->
+        <div class="grid-12">
+          <article class="voux-card col-6">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">03 · Motivos de Perda</div>
+                <h3 class="voux-card__title">Valor <em>Perdido</em></h3>
+              </div>
+            </div>
+            <p style="font-size:12px;color:var(--voux-text-muted);margin:0 0 12px;">Onde a receita está vazando (R$ em negócios perdidos)</p>
+            <div class="chart-canvas" id="chart-motivos-perda" style="height:240px;"></div>
+          </article>
+
+          <article class="voux-card col-6">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">04 · Ranking de Consultores</div>
+                <h3 class="voux-card__title">Valor <em>Ganho</em></h3>
+              </div>
+            </div>
+            <p style="font-size:12px;color:var(--voux-text-muted);margin:0 0 12px;">Top 10 por receita fechada</p>
+            <div class="chart-canvas" id="chart-ranking" style="height:240px;"></div>
+          </article>
+        </div>
+
+        <!-- Evolução mensal -->
+        <div class="grid-12">
+          <article class="voux-card col-6">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">05 · Evolução Mensal</div>
+                <h3 class="voux-card__title">Novos <em>Negócios</em></h3>
+              </div>
+            </div>
+            <p style="font-size:12px;color:var(--voux-text-muted);margin:0 0 12px;">Por data de cadastro</p>
+            <div class="chart-canvas" id="chart-mensal-novos" style="height:220px;"></div>
+          </article>
+
+          <article class="voux-card col-6">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">06 · Evolução Mensal</div>
+                <h3 class="voux-card__title">Valor <em>Criado</em></h3>
+              </div>
+            </div>
+            <p style="font-size:12px;color:var(--voux-text-muted);margin:0 0 12px;">Valor negociado por mês</p>
+            <div class="chart-canvas" id="chart-mensal-valor" style="height:220px;"></div>
+          </article>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="assets/supabase.js"></script>
+  <script src="assets/ceres-data.js"></script>
+  <script src="assets/charts.js"></script>
+  <script src="assets/layout.js"></script>
+  <script>
+    async function init() {
+      await window.CERES_DATA_READY;
+      const D = window.CERES_DATA;
+      const M = D.comercial;
+      const C = VOUX_CHART.COLORS;
+
+      VOUX_LAYOUT.renderTopbar({ section: "CRM", title: "Pipeline de Vendas <em>Ceres BI</em>" });
+      VOUX_LAYOUT.renderToolbar({ period: "Base atual", segments: [], filters: [{ label: "Funil", value: "Todos" }] });
+
+      // KPIs
+      document.getElementById("kpi-total").textContent      = D.fmtNum(M.totalNegocios);
+      document.getElementById("kpi-total-sub").textContent  = `${M.ganhos} ganhos · ${M.perdidos} perdidos · ${M.andamento} em aberto`;
+      document.getElementById("kpi-conversao").textContent  = D.fmtPct(M.taxaConversao);
+      document.getElementById("kpi-pipeline").textContent   = D.fmtBRL(M.pipelineAberto);
+      document.getElementById("kpi-ganho").textContent      = D.fmtBRL(M.valorGanho);
+      document.getElementById("kpi-ganho-ticket").textContent = `ticket médio: ${D.fmtBRL(M.ticketMedioGanho)}`;
+      document.getElementById("kpi-ciclo").textContent      = `${M.cicloMedioDias.toFixed(1)} dias`;
+      document.getElementById("kpi-esforco").textContent    = `${M.esforcoMedio.toFixed(1)} ações`;
+
+      // Chart 1: Funil por etapa
+      if (M.funilPorEtapa && M.funilPorEtapa.length) {
+        VOUX_CHART.barH(
+          document.getElementById("chart-funil"),
+          M.funilPorEtapa,
+          { color: C.accent, height: 250, rowH: 26, valueFormatter: D.fmtBRL }
+        );
+      }
+
+      // Chart 2: Por origem (stacked)
+      if (M.porOrigem && M.porOrigem.length) {
+        const labels  = M.porOrigem.map(r => r.label);
+        const series  = [
+          { name: "Ganhos",     color: C.success, values: M.porOrigem.map(r => r.ganhos    || 0) },
+          { name: "Perdidos",   color: C.danger,  values: M.porOrigem.map(r => r.perdidos  || 0) },
+          { name: "Em aberto",  color: C.info,    values: M.porOrigem.map(r => r.andamento || 0) },
+        ];
+        VOUX_CHART.barStacked(
+          document.getElementById("chart-origem"),
+          labels, series,
+          { height: 250 }
+        );
+      }
+
+      // Chart 3: Motivos de perda
+      if (M.motivosPerda && M.motivosPerda.length) {
+        VOUX_CHART.barH(
+          document.getElementById("chart-motivos-perda"),
+          M.motivosPerda,
+          { color: C.danger, height: 230, rowH: 26, valueFormatter: D.fmtBRL }
+        );
+      }
+
+      // Chart 4: Ranking consultor
+      if (M.rankingConsultor && M.rankingConsultor.length) {
+        VOUX_CHART.barH(
+          document.getElementById("chart-ranking"),
+          M.rankingConsultor,
+          { color: C.warning, height: 230, rowH: 26, valueFormatter: D.fmtBRL }
+        );
+      }
+
+      // Chart 5: Novos negócios por mês
+      if (M.evolucaoMensal && M.evolucaoMensal.length) {
+        VOUX_CHART.barV(
+          document.getElementById("chart-mensal-novos"),
+          M.evolucaoMensal.map(r => r.name),
+          M.evolucaoMensal.map(r => r.novos),
+          { color: C.info, height: 210 }
+        );
+      }
+
+      // Chart 6: Valor criado por mês (lineGrowth)
+      if (M.evolucaoMensal && M.evolucaoMensal.length) {
+        const growthData = M.evolucaoMensal.map((r, i, arr) => {
+          let growth = 0;
+          if (i > 0 && arr[i - 1].valorCriado > 0) {
+            growth = ((r.valorCriado - arr[i - 1].valorCriado) / arr[i - 1].valorCriado) * 100;
+          }
+          return { label: r.name, value: r.valorCriado, growth };
+        });
+        VOUX_CHART.lineGrowth(
+          document.getElementById("chart-mensal-valor"),
+          growthData,
+          { height: 210, color: C.accent, fmt: D.fmtBRL }
+        );
+      }
+    }
+    init();
+  </script>
+</body>
+</html>

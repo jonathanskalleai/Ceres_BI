@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ações CRM · Ceres BI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="assets/font-system.js"></script>
+  <link rel="stylesheet" href="assets/voux.css">
+  <link rel="stylesheet" href="assets/layout.css">
+  <style>
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 12px 0 16px;
+    }
+    .toolbar__filter {
+      background: var(--voux-surface-2, #1a1a1e);
+      color: var(--voux-text, #f0ece5);
+      border: 1px solid var(--voux-border, rgba(255,255,255,0.08));
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      cursor: pointer;
+      outline: none;
+      min-width: 150px;
+    }
+    .toolbar__filter:hover,
+    .toolbar__filter:focus {
+      border-color: var(--voux-champagne-400, #d4a853);
+    }
+    .toolbar__filter option {
+      background: #1a1a1e;
+      color: #f0ece5;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body data-page="acoes">
+  <div class="app">
+    <aside class="sidebar" data-sidebar></aside>
+    <main class="main">
+      <header class="topbar" data-topbar></header>
+      <div class="toolbar" data-toolbar></div>
+      <div class="content">
+
+        <!-- Filtros -->
+        <div class="filter-bar" id="filter-bar">
+          <select id="f-ano" class="toolbar__filter">
+            <option value="">Todos os Anos</option>
+          </select>
+          <select id="f-mes" class="toolbar__filter">
+            <option value="">Todos os Meses</option>
+            <option value="01">Janeiro</option>
+            <option value="02">Fevereiro</option>
+            <option value="03">Março</option>
+            <option value="04">Abril</option>
+            <option value="05">Maio</option>
+            <option value="06">Junho</option>
+            <option value="07">Julho</option>
+            <option value="08">Agosto</option>
+            <option value="09">Setembro</option>
+            <option value="10">Outubro</option>
+            <option value="11">Novembro</option>
+            <option value="12">Dezembro</option>
+          </select>
+          <select id="f-vendedor" class="toolbar__filter">
+            <option value="">Todos Consultores</option>
+          </select>
+          <select id="f-tipo-acao" class="toolbar__filter">
+            <option value="">Todos Tipos</option>
+          </select>
+          <select id="f-cidade" class="toolbar__filter">
+            <option value="">Todas Cidades</option>
+          </select>
+        </div>
+
+        <!-- KPIs -->
+        <section class="kpis">
+          <div class="kpi">
+            <div class="kpi__head">
+              <span class="kpi__label">01 · Total de Ações</span>
+              <div class="kpi__icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><path d="M8 2v4M8 10v4M2 8h4M10 8h4"/></svg></div>
+            </div>
+            <div class="kpi__value voux-num" id="kpi-total">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">atividades registradas</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head">
+              <span class="kpi__label">02 · Cidades Atendidas</span>
+              <div class="kpi__icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 2v12M2 8h12"/></svg></div>
+            </div>
+            <div class="kpi__value voux-num" id="kpi-cidades">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">municípios</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head">
+              <span class="kpi__label">03 · Consultores Ativos</span>
+              <div class="kpi__icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><circle cx="5" cy="5" r="2"/><circle cx="11" cy="5" r="2"/><path d="M1 13c0-2 1.5-3 4-3s4 1 4 3"/><path d="M9 12c0-1.5 1-2.5 3-2.5s3 1 3 2.5"/></svg></div>
+            </div>
+            <div class="kpi__value voux-num" id="kpi-consultores">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">com atividades</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head">
+              <span class="kpi__label">04 · Total de Visitas</span>
+              <div class="kpi__icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><path d="M8 2C5.8 2 4 4 4 6.5c0 3.5 4 8 4 8s4-4.5 4-8C12 4 10.2 2 8 2z"/><circle cx="8" cy="6.5" r="1.5"/></svg></div>
+            </div>
+            <div class="kpi__value voux-num" id="kpi-visitas">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">presenciais</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head">
+              <span class="kpi__label">05 · Clientes Únicos</span>
+              <div class="kpi__icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><circle cx="8" cy="6" r="3"/><path d="M2 13.5c0-3 2.5-5 6-5s6 2 6 5"/></svg></div>
+            </div>
+            <div class="kpi__value voux-num" id="kpi-clientes">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">clientes contactados</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head">
+              <span class="kpi__label">06 · Tipos de Ação</span>
+              <div class="kpi__icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg></div>
+            </div>
+            <div class="kpi__value voux-num" id="kpi-tipos">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">modalidades distintas</div>
+          </div>
+        </section>
+
+        <!-- Por consultor + Evolução mensal -->
+        <div class="grid-12">
+          <article class="voux-card col-6">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">01 · Ações por Consultor</div>
+                <h3 class="voux-card__title">Top 15 <em>por Volume</em></h3>
+              </div>
+            </div>
+            <div class="chart-canvas" id="chart-consultor" style="height:320px;"></div>
+          </article>
+
+          <article class="voux-card col-6">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">02 · Evolução Mensal</div>
+                <h3 class="voux-card__title">Ações <em>por Mês</em></h3>
+              </div>
+            </div>
+            <div class="chart-canvas" id="chart-mensal" style="height:320px;"></div>
+          </article>
+        </div>
+
+        <!-- Por cidade + Tipo de ação -->
+        <div class="grid-12">
+          <article class="voux-card col-6">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">03 · Ações por Cidade</div>
+                <h3 class="voux-card__title">Top 15 <em>Cidades</em></h3>
+              </div>
+            </div>
+            <div class="chart-canvas" id="chart-cidade" style="height:320px;"></div>
+          </article>
+
+          <article class="voux-card col-6">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">04 · Tipo de Ação</div>
+                <h3 class="voux-card__title">Distribuição <em>por Tipo</em></h3>
+              </div>
+            </div>
+            <p style="font-size:12px;color:var(--voux-text-muted);margin:0 0 12px;">Proporção de cada tipo de atividade</p>
+            <div class="chart-canvas" id="chart-tipo-acao" style="height:280px;"></div>
+          </article>
+        </div>
+
+        <!-- Dia da semana + Tipo de contato -->
+        <div class="grid-12">
+          <article class="voux-card col-6">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">05 · Dia da Semana</div>
+                <h3 class="voux-card__title">Concentração <em>Semanal</em></h3>
+              </div>
+            </div>
+            <p style="font-size:12px;color:var(--voux-text-muted);margin:0 0 12px;">Ações por dia da semana</p>
+            <div class="chart-canvas" id="chart-dia-semana" style="height:220px;"></div>
+          </article>
+
+          <article class="voux-card col-6">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">06 · Tipo de Contato</div>
+                <h3 class="voux-card__title">Canais <em>de Comunicação</em></h3>
+              </div>
+            </div>
+            <p style="font-size:12px;color:var(--voux-text-muted);margin:0 0 12px;">Distribuição dos canais utilizados</p>
+            <div class="chart-canvas" id="chart-tipo-contato" style="height:220px;"></div>
+          </article>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="assets/supabase.js"></script>
+  <script src="assets/ceres-data.js"></script>
+  <script src="assets/charts.js"></script>
+  <script src="assets/layout.js"></script>
+  <script>
+    // ── Helpers de filtragem ─────────────────────────────────────────────────
+
+    function countDistinctFilter(arr, key) {
+      return new Set(arr.map(r => r[key]).filter(Boolean)).size;
+    }
+
+    function computeFilteredStats(rows) {
+      const D = window.CERES_DATA;
+      const totalAcoes         = rows.length;
+      const cidades            = countDistinctFilter(rows, "emp_cidade");
+      const consultores        = countDistinctFilter(rows, "aco_vendedor");
+      const clientes           = countDistinctFilter(rows, "cli_nome");
+      const visitas            = rows.filter(r => (r.aco_tipo_contato || "").toLowerCase().includes("visita")).length;
+      const tiposAcaoDistintos = countDistinctFilter(rows, "aco_tipo_acao");
+
+      const vendMap = {};
+      rows.forEach(r => { const v = r.aco_vendedor || "Sem consultor"; vendMap[v] = (vendMap[v] || 0) + 1; });
+      const porVendedor = Object.entries(vendMap).map(([label, value]) => ({ label, value }))
+        .sort((a, b) => b.value - a.value).slice(0, 15);
+
+      const mensalMap = {};
+      rows.forEach(r => {
+        const m = (r.aco_dth_conclusao || "").slice(0, 7);
+        if (!m) return;
+        mensalMap[m] = (mensalMap[m] || 0) + 1;
+      });
+      const evolucaoMensal = Object.entries(mensalMap)
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([name, value]) => ({ name, value }));
+
+      const cidMap = {};
+      rows.forEach(r => { const c = r.emp_cidade || "Sem cidade"; cidMap[c] = (cidMap[c] || 0) + 1; });
+      const porCidade = Object.entries(cidMap).map(([label, value]) => ({ label, value }))
+        .sort((a, b) => b.value - a.value).slice(0, 15);
+
+      const tipoAcaoMap = {};
+      rows.forEach(r => { const t = r.aco_tipo_acao || "Sem tipo"; tipoAcaoMap[t] = (tipoAcaoMap[t] || 0) + 1; });
+      const porTipoAcao = Object.entries(tipoAcaoMap).map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value);
+
+      const DAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+      const diasMap = { Seg: 0, Ter: 0, Qua: 0, Qui: 0, Sex: 0, Sáb: 0, Dom: 0 };
+      rows.forEach(r => {
+        const d = r.aco_dth_conclusao;
+        if (!d) return;
+        const day = DAYS[new Date(d).getDay()];
+        if (day) diasMap[day]++;
+      });
+      const diasOrder = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+      const porDiaSemana = diasOrder.map(name => ({ name, value: diasMap[name] || 0 }));
+
+      const contatoMap = {};
+      rows.forEach(r => { const c = r.aco_tipo_contato || "Sem contato"; contatoMap[c] = (contatoMap[c] || 0) + 1; });
+      const porTipoContato = Object.entries(contatoMap).map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value);
+
+      return {
+        totalAcoes, cidades, consultores, visitas, clientes, tiposAcaoDistintos,
+        porVendedor, evolucaoMensal, porCidade, porTipoAcao, porDiaSemana, porTipoContato,
+      };
+    }
+
+    // ── Renderizar KPIs e charts ─────────────────────────────────────────────
+
+    function render(M) {
+      const D = window.CERES_DATA;
+      const C = VOUX_CHART.COLORS;
+
+      document.getElementById("kpi-total").textContent       = D.fmtNum(M.totalAcoes);
+      document.getElementById("kpi-cidades").textContent     = D.fmtNum(M.cidades);
+      document.getElementById("kpi-consultores").textContent = D.fmtNum(M.consultores);
+      document.getElementById("kpi-visitas").textContent     = D.fmtNum(M.visitas);
+      document.getElementById("kpi-clientes").textContent    = D.fmtNum(M.clientes);
+      document.getElementById("kpi-tipos").textContent       = D.fmtNum(M.tiposAcaoDistintos);
+
+      function clearChart(id) {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = "";
+      }
+
+      // Chart 1: Por consultor
+      clearChart("chart-consultor");
+      if (M.porVendedor && M.porVendedor.length) {
+        VOUX_CHART.barH(document.getElementById("chart-consultor"), M.porVendedor,
+          { color: C.accent, height: 310, rowH: 20 });
+      }
+
+      // Chart 2: Evolução mensal
+      clearChart("chart-mensal");
+      if (M.evolucaoMensal && M.evolucaoMensal.length) {
+        VOUX_CHART.barV(document.getElementById("chart-mensal"),
+          M.evolucaoMensal.map(r => r.name),
+          M.evolucaoMensal.map(r => r.value),
+          { color: C.info, height: 310 });
+      }
+
+      // Chart 3: Por cidade
+      clearChart("chart-cidade");
+      if (M.porCidade && M.porCidade.length) {
+        VOUX_CHART.barH(document.getElementById("chart-cidade"), M.porCidade,
+          { color: C.warning, height: 310, rowH: 20 });
+      }
+
+      // Chart 4: Tipo de ação (donut)
+      clearChart("chart-tipo-acao");
+      if (M.porTipoAcao && M.porTipoAcao.length) {
+        const colors = [C.accent, C.success, C.info, C.warning, C.danger, C.inkSoft];
+        VOUX_CHART.donut(document.getElementById("chart-tipo-acao"),
+          M.porTipoAcao.map((r, i) => ({ label: r.name, value: r.value, color: colors[i % colors.length] })),
+          { height: 270, innerLabel: D.fmtNum(M.totalAcoes), innerSub: "ações" });
+      }
+
+      // Chart 5: Por dia da semana
+      clearChart("chart-dia-semana");
+      if (M.porDiaSemana && M.porDiaSemana.length) {
+        VOUX_CHART.barV(document.getElementById("chart-dia-semana"),
+          M.porDiaSemana.map(r => r.name),
+          M.porDiaSemana.map(r => r.value),
+          { color: C.success, height: 210 });
+      }
+
+      // Chart 6: Tipo de contato (donut)
+      clearChart("chart-tipo-contato");
+      if (M.porTipoContato && M.porTipoContato.length) {
+        const colors2 = [C.info, C.accent, C.success, C.warning, C.danger];
+        VOUX_CHART.donut(document.getElementById("chart-tipo-contato"),
+          M.porTipoContato.map((r, i) => ({ label: r.name, value: r.value, color: colors2[i % colors2.length] })),
+          { height: 210 });
+      }
+    }
+
+    // ── Init ─────────────────────────────────────────────────────────────────
+
+    async function init() {
+      await window.CERES_DATA_READY;
+      const D = window.CERES_DATA;
+      const M = D.acoes;
+      const C = VOUX_CHART.COLORS;
+
+      VOUX_LAYOUT.renderTopbar({ section: "CRM", title: "Ações <em>Comerciais</em>" });
+      VOUX_LAYOUT.renderToolbar({ period: "Base atual", segments: [], filters: [] });
+
+      // Preencher selects
+      const selAno  = document.getElementById("f-ano");
+      const selVend = document.getElementById("f-vendedor");
+      const selTipo = document.getElementById("f-tipo-acao");
+      const selCid  = document.getElementById("f-cidade");
+
+      (M.listaAnos || []).forEach(a => {
+        const o = document.createElement("option");
+        o.value = a; o.textContent = a;
+        selAno.appendChild(o);
+      });
+      (M.listaVendedores || []).forEach(v => {
+        const o = document.createElement("option");
+        o.value = v; o.textContent = v;
+        selVend.appendChild(o);
+      });
+      (M.tiposAcao || []).forEach(t => {
+        const o = document.createElement("option");
+        o.value = t; o.textContent = t;
+        selTipo.appendChild(o);
+      });
+      (M.listaCidades || []).forEach(c => {
+        const o = document.createElement("option");
+        o.value = c; o.textContent = c;
+        selCid.appendChild(o);
+      });
+
+      // Renderização inicial com todos os dados
+      render(M);
+
+      // Se temos dados brutos para filtragem dinâmica
+      const rawRows = M._rawRows;
+      if (rawRows && rawRows.length) {
+        function applyFilters() {
+          const ano      = selAno.value;
+          const mes      = document.getElementById("f-mes").value;
+          const vendedor = selVend.value;
+          const tipo     = selTipo.value;
+          const cidade   = selCid.value;
+
+          const filtered = rawRows.filter(r => {
+            const dt = r.aco_dth_conclusao || "";
+            if (ano      && !dt.startsWith(ano))                             return false;
+            if (mes      && dt.slice(5, 7) !== mes)                          return false;
+            if (vendedor && r.aco_vendedor !== vendedor)                     return false;
+            if (tipo     && r.aco_tipo_acao !== tipo)                        return false;
+            if (cidade   && r.emp_cidade !== cidade)                         return false;
+            return true;
+          });
+
+          render(computeFilteredStats(filtered));
+        }
+
+        ["f-ano", "f-mes", "f-vendedor", "f-tipo-acao", "f-cidade"].forEach(id => {
+          document.getElementById(id).addEventListener("change", applyFilters);
+        });
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

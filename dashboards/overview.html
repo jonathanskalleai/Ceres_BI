@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Visão Geral CRM · Ceres BI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="assets/font-system.js"></script>
+  <link rel="stylesheet" href="assets/voux.css">
+  <link rel="stylesheet" href="assets/layout.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body data-page="overview">
+  <div class="app">
+    <aside class="sidebar" data-sidebar></aside>
+    <main class="main">
+      <header class="topbar" data-topbar></header>
+      <div class="toolbar" data-toolbar></div>
+      <div class="content">
+
+        <section class="kpis">
+          <div class="kpi">
+            <div class="kpi__head"><span class="kpi__label">01 · Total Registros</span>
+              <div class="kpi__icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><rect x="3" y="2" width="10" height="12" rx="1"/><path d="M6 5h4M6 8h4M6 11h2.5"/></svg></div>
+            </div>
+            <div class="kpi__value voux-num" id="kpi-registros">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">ações registradas</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head"><span class="kpi__label">02 · Clientes Únicos</span>
+              <div class="kpi__icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><circle cx="6" cy="5" r="2.5"/><path d="M1 13c0-2.5 2-4 5-4s5 1.5 5 4"/></svg></div>
+            </div>
+            <div class="kpi__value voux-num" id="kpi-clientes">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">com interações</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head"><span class="kpi__label">03 · Pipeline Total</span>
+              <div class="kpi__icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><path d="M2 12l4-5 3 3 5-7"/></svg></div>
+            </div>
+            <div class="kpi__value voux-num" id="kpi-pipeline">—</div>
+            <div class="kpi__delta kpi__delta--up">em negociação</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head"><span class="kpi__label">04 · Visitas</span>
+              <div class="kpi__icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><circle cx="8" cy="7" r="4"/><path d="M8 3v4l2 2"/></svg></div>
+            </div>
+            <div class="kpi__value voux-num" id="kpi-visitas">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">visitas presenciais</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head"><span class="kpi__label">05 · Consultores</span>
+              <div class="kpi__icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><circle cx="5" cy="5" r="2"/><circle cx="11" cy="5" r="2"/><path d="M1 13c0-2 1.5-3 4-3s4 1 4 3"/></svg></div>
+            </div>
+            <div class="kpi__value voux-num" id="kpi-consultores">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">ativos</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head"><span class="kpi__label">06 · Cidades</span>
+              <div class="kpi__icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 2v12M2 8h12"/></svg></div>
+            </div>
+            <div class="kpi__value voux-num" id="kpi-cidades">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">municípios</div>
+          </div>
+        </section>
+
+        <div class="grid-12">
+          <article class="voux-card col-8">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">01 · Evolução</div>
+                <h3 class="voux-card__title">Ações <em>por Mês</em></h3>
+              </div>
+            </div>
+            <div class="chart-canvas" id="chart-evolucao" style="height:260px;"></div>
+          </article>
+          <article class="voux-card col-4">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">02 · Tipos de Contato</div>
+                <h3 class="voux-card__title">Canal <em>de Interação</em></h3>
+              </div>
+            </div>
+            <div class="chart-canvas" id="chart-contatos" style="height:260px;"></div>
+          </article>
+        </div>
+
+        <div class="grid-12">
+          <article class="voux-card col-6">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">03 · Top Consultores</div>
+                <h3 class="voux-card__title">Ranking <em>de Atividade</em></h3>
+              </div>
+            </div>
+            <div class="chart-canvas" id="chart-consultores" style="height:300px;"></div>
+          </article>
+          <article class="voux-card col-6">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">04 · Tipos de Ação</div>
+                <h3 class="voux-card__title">Distribuição <em>por Tipo</em></h3>
+              </div>
+            </div>
+            <div class="chart-canvas" id="chart-tipos-acao" style="height:300px;"></div>
+          </article>
+        </div>
+
+        <article class="voux-card">
+          <div class="voux-card__head">
+            <div>
+              <div class="voux-card__label">05 · Top Regiões</div>
+              <h3 class="voux-card__title">Atividade <em>por Cidade</em></h3>
+            </div>
+          </div>
+          <div class="chart-canvas" id="chart-regioes" style="height:280px;"></div>
+        </article>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="assets/supabase.js"></script>
+  <script src="assets/ceres-data.js"></script>
+  <script src="assets/charts.js"></script>
+  <script src="assets/layout.js"></script>
+  <script>
+    async function init() {
+      await window.CERES_DATA_READY;
+      const D = window.CERES_DATA;
+      const K = D.crm.kpis;
+      const C = VOUX_CHART.COLORS;
+
+      VOUX_LAYOUT.renderTopbar({ section: "COMERCIAL CRM", title: "Visão Geral <em>CRM</em>" });
+      VOUX_LAYOUT.renderToolbar({ period: "Base atual", filters: [] });
+
+      document.getElementById("kpi-registros").textContent  = D.fmtNum(K.totalRegistros);
+      document.getElementById("kpi-clientes").textContent   = D.fmtNum(K.totalClientes);
+      document.getElementById("kpi-pipeline").textContent   = D.fmtBRLShort(K.totalPipeline);
+      document.getElementById("kpi-visitas").textContent    = D.fmtNum(K.totalVisitas);
+      document.getElementById("kpi-consultores").textContent = D.fmtNum(K.totalConsultores);
+      document.getElementById("kpi-cidades").textContent    = D.fmtNum(K.totalCidades);
+
+      // Evolução mensal
+      const evolData = D.crm.evolucaoGlobal.slice(-18);
+      if (evolData.length) {
+        VOUX_CHART.line(
+          document.getElementById("chart-evolucao"),
+          evolData.map(e => D.fmtMonthYear(e.YearMonth)),
+          [
+            { name: "Ações",  color: C.accent,  values: evolData.map(e => e.acoes) },
+            { name: "Visitas", color: C.success, values: evolData.map(e => e.visitas) },
+          ],
+          { height: 250 }
+        );
+      }
+
+      // Tipos de contato (donut)
+      const contatoEntries = Object.entries(D.crm.tiposContato)
+        .sort((a, b) => b[1] - a[1]).slice(0, 6);
+      if (contatoEntries.length) {
+        const colors = [C.accent, C.success, C.info, C.warning, C.danger, C.inkSoft];
+        VOUX_CHART.donut(
+          document.getElementById("chart-contatos"),
+          contatoEntries.map(([label, value], i) => ({ label, value, color: colors[i % colors.length] })),
+          { height: 250 }
+        );
+      }
+
+      // Top consultores (barH)
+      const consultores = D.crm.vendedores.filter(v => !v.isAdmin).slice(0, 10);
+      if (consultores.length) {
+        VOUX_CHART.barH(
+          document.getElementById("chart-consultores"),
+          consultores.map(v => ({ label: v.nome.split(" ").slice(-1)[0], value: v.totalAcoes })),
+          { color: C.accent, height: 290, rowH: 26 }
+        );
+      }
+
+      // Tipos de ação (barH)
+      const tiposAcao = Object.entries(D.crm.tiposAcao)
+        .sort((a, b) => b[1] - a[1]).slice(0, 10)
+        .map(([label, value]) => ({ label, value }));
+      if (tiposAcao.length) {
+        VOUX_CHART.barH(
+          document.getElementById("chart-tipos-acao"),
+          tiposAcao,
+          { color: C.info, height: 290, rowH: 26 }
+        );
+      }
+
+      // Regiões (barH)
+      const regioes = D.crm.regioes.slice(0, 15)
+        .map(r => ({ label: r.cidade, value: r.totalAcoes }));
+      if (regioes.length) {
+        VOUX_CHART.barH(
+          document.getElementById("chart-regioes"),
+          regioes,
+          { color: C.warning, height: 270, rowH: 22, labelW: 140 }
+        );
+      }
+    }
+    init();
+  </script>
+</body>
+</html>
