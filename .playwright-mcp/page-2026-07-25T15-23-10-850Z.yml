@@ -1,5 +1,0 @@
-- generic [ref=f5e2]:
-  - region "Notifications (F8)":
-    - list
-  - region "Notifications alt+T"
-  - generic [ref=f5e3]: Carregando...

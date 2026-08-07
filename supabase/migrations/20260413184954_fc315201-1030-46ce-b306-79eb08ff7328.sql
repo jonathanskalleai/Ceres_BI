@@ -1,1 +1,0 @@
-ALTER TABLE public.negocios_mensais ADD COLUMN IF NOT EXISTS usado numeric DEFAULT 0;
