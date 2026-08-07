@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__supabase__execute_sql",
+      "Bash(npm install *)",
+      "mcp__context7__query-docs",
+      "mcp__supabase__list_projects",
+      "mcp__mcp-tools-istefox__get_server_info",
+      "mcp__mcp-tools-istefox__list_vault_files",
+      "mcp__mcp-tools-istefox__create_vault_file",
+      "mcp__mcp-tools-istefox__patch_vault_file",
+      "mcp__mcp-tools-istefox__rename_vault_file",
+      "mcp__mcp-tools-istefox__get_vault_file"
+    ]
+  }
+}

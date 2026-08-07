@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Visão Geral · Ceres BI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="assets/font-system.js"></script>
+  <link rel="stylesheet" href="assets/voux.css">
+  <link rel="stylesheet" href="assets/layout.css">
+  <!-- Supabase CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body data-page="index">
+  <div class="app">
+    <aside class="sidebar" data-sidebar></aside>
+    <main class="main">
+      <header class="topbar" data-topbar></header>
+      <div class="toolbar" data-toolbar></div>
+      <div class="content">
+
+        <!-- KPIs principais -->
+        <section class="kpis">
+          <div class="kpi">
+            <div class="kpi__head">
+              <span class="kpi__label">01 · Clientes na Carteira</span>
+              <div class="kpi__icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><circle cx="6" cy="5" r="2.5"/><path d="M1 13c0-2.5 2-4 5-4s5 1.5 5 4"/><circle cx="12" cy="5" r="2"/><path d="M14 12.5c0-1.5-1-2.5-2-2.8"/></svg></div>
+            </div>
+            <div class="kpi__value voux-num" id="kpi-total">—</div>
+            <div class="kpi__delta" id="kpi-total-sub" style="color:var(--voux-text-muted);">carregando…</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head">
+              <span class="kpi__label">02 · Clientes Ativos</span>
+              <div class="kpi__icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><circle cx="8" cy="6" r="3"/><path d="M2 13.5c0-3 2.5-5 6-5s6 2 6 5"/><path d="M11.5 9.5l1.5 1.5 2.5-3" stroke-linecap="round"/></svg></div>
+            </div>
+            <div class="kpi__value voux-num" id="kpi-ativos">—</div>
+            <div class="kpi__delta kpi__delta--up" id="kpi-ativos-pct">—</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head">
+              <span class="kpi__label">03 · Prospects</span>
+              <div class="kpi__icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><circle cx="8" cy="6" r="3"/><path d="M2 13.5c0-3 2.5-5 6-5s6 2 6 5"/><path d="M13 4l1 1 2-2" style="display:none"/></svg></div>
+            </div>
+            <div class="kpi__value voux-num" id="kpi-prospects">—</div>
+            <div class="kpi__delta" id="kpi-prospects-pct" style="color:var(--voux-champagne-400);">—</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head">
+              <span class="kpi__label">04 · UFs Cobertas</span>
+              <div class="kpi__icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 2v12M2 8h12"/><path d="M4 4.5c1.5.5 2.5.5 4 0s2.5.5 4 0M4 11.5c1.5-.5 2.5-.5 4 0s2.5-.5 4 0"/></svg></div>
+            </div>
+            <div class="kpi__value voux-num" id="kpi-ufs">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">estados</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head">
+              <span class="kpi__label">05 · Consultores</span>
+              <div class="kpi__icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><circle cx="5" cy="5" r="2"/><circle cx="11" cy="5" r="2"/><path d="M1 13c0-2 1.5-3 4-3s4 1 4 3"/><path d="M9 12c0-1.5 1-2.5 3-2.5s3 1 3 2.5"/></svg></div>
+            </div>
+            <div class="kpi__value voux-num" id="kpi-consultores">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">com carteira</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head">
+              <span class="kpi__label">06 · Empresas</span>
+              <div class="kpi__icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><rect x="2" y="4" width="12" height="10" rx="1"/><path d="M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"/><path d="M2 8h12M6 8v6M10 8v6"/></svg></div>
+            </div>
+            <div class="kpi__value voux-num" id="kpi-empresas">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">PJ / Empresa</div>
+          </div>
+        </section>
+
+        <!-- Composição da carteira -->
+        <div class="grid-12">
+          <article class="voux-card col-4">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">07 · Carteira</div>
+                <h3 class="voux-card__title">Composição <em>ativos vs prospects</em></h3>
+              </div>
+            </div>
+            <div class="chart-canvas" id="chart-composicao" style="height:220px;"></div>
+          </article>
+
+          <!-- Cobertura por UF -->
+          <article class="voux-card col-8">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">08 · Cobertura</div>
+                <h3 class="voux-card__title">Clientes <em>por estado</em></h3>
+              </div>
+            </div>
+            <div class="chart-canvas" id="chart-ufs" style="height:220px;"></div>
+          </article>
+        </div>
+
+        <!-- Carteira por consultor + classificação -->
+        <div class="grid-12">
+          <article class="voux-card col-6">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">09 · Consultores</div>
+                <h3 class="voux-card__title">Carteira <em>por consultor</em></h3>
+              </div>
+            </div>
+            <div class="chart-canvas" id="chart-consultores" style="height:300px;"></div>
+          </article>
+
+          <article class="voux-card col-6">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">10 · Segmentação</div>
+                <h3 class="voux-card__title">Clientes <em>por classificação</em></h3>
+              </div>
+            </div>
+            <div class="chart-canvas" id="chart-classificacao" style="height:300px;"></div>
+          </article>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="assets/supabase.js"></script>
+  <script src="assets/ceres-data.js"></script>
+  <script src="assets/charts.js"></script>
+  <script src="assets/layout.js"></script>
+  <script>
+    async function init() {
+      await window.CERES_DATA_READY;
+      const D = window.CERES_DATA;
+      const A = D.admin;
+      const C = VOUX_CHART.COLORS;
+
+      // ── Sidebar / topbar / toolbar ────────────────────────────────────────
+      VOUX_LAYOUT.renderTopbar({
+        section: "Visão Geral",
+        title: `Carteira de Clientes <em>Ceres BI</em>`,
+      });
+      VOUX_LAYOUT.renderToolbar({
+        period: "Base atual",
+        segments: [],
+        filters: [
+          { label: "Consultor", value: "Todos" },
+          { label: "UF",        value: "Todas" },
+        ],
+      });
+
+      // ── KPIs ──────────────────────────────────────────────────────────────
+      document.getElementById("kpi-total").textContent        = D.fmtNum(A.totalClientes);
+      document.getElementById("kpi-total-sub").textContent    = `${A.ativos} ativos · ${A.prospects} prospects`;
+      document.getElementById("kpi-ativos").textContent       = D.fmtNum(A.ativos);
+      document.getElementById("kpi-ativos-pct").textContent   = `▲ ${D.fmtPct(A.ativos / A.totalClientes * 100)} da base`;
+      document.getElementById("kpi-prospects").textContent    = D.fmtNum(A.prospects);
+      document.getElementById("kpi-prospects-pct").textContent = `${D.fmtPct(A.prospects / A.totalClientes * 100)} da base`;
+      document.getElementById("kpi-ufs").textContent          = D.fmtNum(A.ufs);
+      document.getElementById("kpi-consultores").textContent  = D.fmtNum(A.consultores);
+      document.getElementById("kpi-empresas").textContent     = D.fmtNum(A.empresas);
+
+      // ── Charts ────────────────────────────────────────────────────────────
+
+      // Donut: ativos vs prospects
+      VOUX_CHART.donut(
+        document.getElementById("chart-composicao"),
+        [
+          { label: "Ativos",    value: A.ativos,    color: C.success },
+          { label: "Prospects", value: A.prospects, color: C.accent  },
+        ],
+        { height: 200, innerLabel: D.fmtNum(A.totalClientes), innerSub: "clientes" }
+      );
+
+      // Cobertura UF — barras horizontais
+      if (A.ufsCobertura && A.ufsCobertura.length) {
+        VOUX_CHART.barH(
+          document.getElementById("chart-ufs"),
+          A.ufsCobertura,
+          { color: C.info, height: 210, rowH: 22, labelW: 40, valueFormatter: v => v.toLocaleString("pt-BR") }
+        );
+      }
+
+      // Carteira por consultor
+      if (A.carteiraPorConsultor && A.carteiraPorConsultor.length) {
+        VOUX_CHART.barH(
+          document.getElementById("chart-consultores"),
+          A.carteiraPorConsultor,
+          { color: C.accent, height: 280, rowH: 26, valueFormatter: v => v.toLocaleString("pt-BR") }
+        );
+      }
+
+      // Classificação de clientes
+      if (A.classificacao && A.classificacao.length) {
+        VOUX_CHART.barH(
+          document.getElementById("chart-classificacao"),
+          A.classificacao,
+          { color: C.warning, height: 280, rowH: 26, valueFormatter: v => v.toLocaleString("pt-BR") }
+        );
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cobrança · Voux BI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="assets/font-system.js"></script>
+  <link rel="stylesheet" href="assets/voux.css">
+  <link rel="stylesheet" href="assets/layout.css">
+</head>
+<body data-page="cobranca">
+  <div class="app">
+    <aside class="sidebar" data-sidebar></aside>
+    <main class="main">
+      <header class="topbar" data-topbar></header>
+      <div class="toolbar" data-toolbar></div>
+      <div class="content">
+
+        <section class="kpis">
+          <div class="kpi">
+            <div class="kpi__head"><span class="kpi__label">01 · Pendentes</span></div>
+            <div class="kpi__value voux-num kpi__value--accent">R$ 65,6k</div>
+            <div class="kpi__delta kpi__delta--neutral">40 clientes pendentes</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head"><span class="kpi__label">02 · Original</span></div>
+            <div class="kpi__value voux-num">R$ 53,3k</div>
+            <div class="kpi__delta kpi__delta--neutral">faturas originais</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head"><span class="kpi__label">03 · Liquidado</span></div>
+            <div class="kpi__value voux-num" style="color:var(--voux-success);">R$ 37,1k</div>
+            <div class="kpi__delta kpi__delta--up">▲ 69.6% recuperação</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head"><span class="kpi__label">04 · Descontos</span></div>
+            <div class="kpi__value voux-num" style="color:var(--voux-danger);">-R$ 299,85</div>
+            <div class="kpi__delta kpi__delta--neutral">total cedido</div>
+          </div>
+        </section>
+
+        <section class="kpis" style="grid-template-columns:repeat(3,1fr);">
+          <div class="kpi">
+            <div class="kpi__head"><span class="kpi__label">05 · Não Liq. Total</span></div>
+            <div class="kpi__value voux-num">R$ 16,3k</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head"><span class="kpi__label">06 · Não Liq. No Prazo</span></div>
+            <div class="kpi__value voux-num">R$ 0,00</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head"><span class="kpi__label">07 · Não Liq. Fora Prazo</span></div>
+            <div class="kpi__value voux-num" style="color:var(--voux-danger);">R$ 16,1k</div>
+          </div>
+        </section>
+
+        <div class="grid-12">
+          <article class="voux-card col-3" style="padding:24px;">
+            <div class="filters-panel">
+              <div class="filters-panel__head">
+                <div class="filters-panel__title">Filtros</div>
+              </div>
+              <div><span class="voux-label">Data Vencimento</span>
+                <div style="display:flex; gap:6px;"><input class="voux-input" value="01/01/2022"/><input class="voux-input" value="31/12/2022"/></div>
+              </div>
+              <div><span class="voux-label">Data Cobrança</span>
+                <div style="display:flex; gap:6px;"><input class="voux-input" value="01/01/2022"/><input class="voux-input" value="06/06/2022"/></div>
+              </div>
+              <div><span class="voux-label">Cliente</span><select class="voux-select"><option>Todos</option></select></div>
+              <div><span class="voux-label">Cidade</span><select class="voux-select"><option>Todas</option></select></div>
+              <div><span class="voux-label">Operador</span><select class="voux-select"><option>Todos</option></select></div>
+              <div><span class="voux-label">Tipo Pessoa</span><select class="voux-select"><option>Todos</option></select></div>
+              <div><span class="voux-label">Contrato Cancelado</span><select class="voux-select"><option>Todos</option></select></div>
+            </div>
+          </article>
+
+          <div class="col-9" style="display:flex; flex-direction:column; gap:16px;">
+
+            <!-- Resumo cobranças -->
+            <article class="voux-card">
+              <div class="voux-card__head">
+                <div>
+                  <div class="voux-card__label">08 · Resumo</div>
+                  <h3 class="voux-card__title">Por <em>quantidade</em> de faturas</h3>
+                </div>
+                <div class="legend">
+                  <div class="legend__item" style="color:var(--voux-warning);"><span class="legend__swatch"></span>Acordo Nova Dt.</div>
+                  <div class="legend__item" style="color:var(--voux-info);"><span class="legend__swatch"></span>Não Liq. No Prazo</div>
+                  <div class="legend__item" style="color:var(--voux-danger);"><span class="legend__swatch"></span>Não Liq. Fora</div>
+                  <div class="legend__item" style="color:var(--voux-success);"><span class="legend__swatch"></span>Em Andamento</div>
+                </div>
+              </div>
+              <div class="chart-canvas chart-wrap-md" id="chart-resumo"></div>
+            </article>
+
+            <!-- Acordos por mês -->
+            <article class="voux-card">
+              <div class="voux-card__head">
+                <div>
+                  <div class="voux-card__label">09 · Acordos por Mês</div>
+                  <h3 class="voux-card__title">Liquidado <em>vs</em> Não Liquidado</h3>
+                </div>
+              </div>
+              <div class="chart-canvas chart-wrap-md" id="chart-acordos"></div>
+            </article>
+
+            <div class="grid-12">
+              <article class="voux-card col-4">
+                <div class="voux-card__head">
+                  <div>
+                    <div class="voux-card__label">10 · Clientes</div>
+                    <h3 class="voux-card__title">Cobrando vs Pendentes</h3>
+                  </div>
+                </div>
+                <div class="chart-canvas" id="chart-clientes" style="height:220px;"></div>
+                <div style="display:flex; justify-content:space-around; margin-top:14px;">
+                  <div style="text-align:center;">
+                    <div class="voux-card__label" style="color:var(--voux-info);">COBRANDO</div>
+                    <div class="voux-display" style="font-size:28px; color:var(--voux-info);">627</div>
+                    <div class="voux-card__sub">94%</div>
+                  </div>
+                  <div style="text-align:center;">
+                    <div class="voux-card__label" style="color:var(--voux-warning);">PENDENTES</div>
+                    <div class="voux-display" style="font-size:28px; color:var(--voux-warning);">40</div>
+                    <div class="voux-card__sub">6%</div>
+                  </div>
+                </div>
+              </article>
+
+              <article class="voux-card col-8">
+                <div class="voux-card__head">
+                  <div>
+                    <div class="voux-card__label">11 · Operador</div>
+                    <h3 class="voux-card__title">Cobrança realizada por <em>operador</em></h3>
+                  </div>
+                </div>
+                <div style="overflow-x:auto;">
+                  <table class="voux-table">
+                    <thead><tr>
+                      <th>Operador</th>
+                      <th class="num">Faturas N.L.</th><th class="num">Valor N.L.</th>
+                      <th class="num">Faturas L.</th><th class="num">Valor L.</th>
+                      <th class="num">Total</th><th class="num">% Liq.</th>
+                    </tr></thead>
+                    <tbody id="tbl-op"></tbody>
+                  </table>
+                </div>
+              </article>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Registro de contatos -->
+        <section style="margin-top:32px;">
+          <div class="section-head" style="margin-bottom:16px;">
+            <h3 class="section-head__title"><span class="section-head__title-num">— 12 · CONTATOS</span> Registro de <em>contatos</em></h3>
+            <span class="section-head__meta">20 Mar – 03 Jun · 2022</span>
+          </div>
+          <div class="grid-12">
+            <article class="voux-card col-4">
+              <div class="voux-card__head">
+                <div>
+                  <div class="voux-card__label">Realizados</div>
+                </div>
+              </div>
+              <div class="voux-display" style="font-size:64px; color:var(--voux-champagne-400); line-height:1;">406</div>
+              <div class="voux-card__sub" style="margin-top:8px;">contatos no período</div>
+              <div class="voux-card__label" style="margin-top:24px;">Clientes Contactados</div>
+              <div class="voux-display" style="font-size:38px;">349</div>
+            </article>
+            <article class="voux-card col-8">
+              <div class="voux-card__head">
+                <div>
+                  <div class="voux-card__label">Por Tipo de Contato</div>
+                  <h3 class="voux-card__title">Distribuição mensal</h3>
+                </div>
+              </div>
+              <div class="chart-canvas chart-wrap-md" id="chart-contatos"></div>
+            </article>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="assets/data.js"></script>
+  <script src="assets/charts.js"></script>
+  <script src="assets/layout.js"></script>
+  <script>
+    const D = VOUX_DATA;
+    const C = VOUX_CHART.COLORS;
+    VOUX_LAYOUT.renderTopbar({ section: "Financeiro · Cobrança", title: `Cobrança <em>operacional</em>` });
+    VOUX_LAYOUT.renderToolbar({
+      period: "01 Jan – 31 Dez · 2022",
+      segments: [{label:"Mês",active:true},{label:"Trim."},{label:"Ano"}],
+      filters: [{ label: "Status", value: "Todos" }],
+    });
+
+    VOUX_CHART.barStacked(document.getElementById("chart-resumo"),
+      D.cobranca.resumoFaturas.map(r => r.mes),
+      [
+        { name: "Acordo Nova", color: C.warning, values: D.cobranca.resumoFaturas.map(r => r.aNova) },
+        { name: "Não Liq. Prazo", color: C.info, values: D.cobranca.resumoFaturas.map(r => r.naLiqPrazo) },
+        { name: "Não Liq. Fora", color: C.danger, values: D.cobranca.resumoFaturas.map(r => r.naLiqFora) },
+        { name: "Em Andamento", color: C.success, values: D.cobranca.resumoFaturas.map(r => r.andamento) },
+      ],
+      { height: 240, totals: true });
+
+    VOUX_CHART.line(document.getElementById("chart-acordos"),
+      D.cobranca.acordosMes.map(a => a.mes),
+      [
+        { name:"Liquidado", color: C.success, values: D.cobranca.acordosMes.map(a => a.liq) },
+        { name:"Não Liquidado", color: C.danger, values: D.cobranca.acordosMes.map(a => a.naoLiq), area: false },
+      ],
+      { height: 240, points: true, dataLabels: true,
+        yFmt: v => "R$ " + VOUX_CHART.fmtCompact(v),
+        dataLabelFmt: v => "R$ " + VOUX_CHART.fmtCompact(v) });
+
+    VOUX_CHART.donut(document.getElementById("chart-clientes"),
+      [{label:"Cobrando",value:627,color:C.info},{label:"Pendentes",value:40,color:C.warning}],
+      { centerLabel:"TOTAL", centerValue:"667", thickness: 26, height: 220 });
+
+    document.getElementById("tbl-op").innerHTML = D.cobranca.porOperador.map(o => `
+      <tr>
+        <td>${o.op}</td>
+        <td class="num">${o.faturas}</td>
+        <td class="num">R$ ${o.valor.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+        <td class="num">${o.faturasS}</td>
+        <td class="num" style="color:var(--voux-success);">R$ ${o.valorS.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+        <td class="num" style="color:var(--voux-text);">R$ ${o.vT.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+        <td class="num" style="color:var(--voux-champagne-400);">${o.pctS.toFixed(1)}%</td>
+      </tr>
+    `).join("");
+
+    // contatos lines (multi-series)
+    VOUX_CHART.line(document.getElementById("chart-contatos"),
+      D.cobranca.contatosMes.map(c => c.mes),
+      [
+        { name:"00", color: C.accent, values: D.cobranca.contatosMes.map(c => c.a) },
+        { name:"01", color: C.info, values: D.cobranca.contatosMes.map(c => c.b), area: false },
+        { name:"02", color: C.success, values: D.cobranca.contatosMes.map(c => c.c), area: false },
+        { name:"03", color: C.warning, values: D.cobranca.contatosMes.map(c => c.d), area: false },
+        { name:"04", color: C.danger, values: D.cobranca.contatosMes.map(c => c.e), area: false },
+      ],
+      { height: 240, points: true, dataLabels: true, yFmt: v => v });
+  </script>
+</body>
+</html>

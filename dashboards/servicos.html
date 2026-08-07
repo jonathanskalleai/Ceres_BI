@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Serviços · Ceres BI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="assets/font-system.js"></script>
+  <link rel="stylesheet" href="assets/voux.css">
+  <link rel="stylesheet" href="assets/layout.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body data-page="servicos">
+  <div class="app">
+    <aside class="sidebar" data-sidebar></aside>
+    <main class="main">
+      <header class="topbar" data-topbar></header>
+      <div class="toolbar" data-toolbar></div>
+      <div class="content">
+
+        <!-- KPIs -->
+        <section class="kpis">
+          <div class="kpi">
+            <div class="kpi__head">
+              <span class="kpi__label">01 · Total OS</span>
+              <div class="kpi__icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><rect x="3" y="2" width="10" height="12" rx="1"/><path d="M6 5h4M6 8h4M6 11h2"/></svg></div>
+            </div>
+            <div class="kpi__value voux-num" id="kpi-total-os">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">ordens de serviço</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head">
+              <span class="kpi__label">02 · OS Abertas</span>
+              <div class="kpi__icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3h3"/></svg></div>
+            </div>
+            <div class="kpi__value voux-num" id="kpi-abertas">—</div>
+            <div class="kpi__delta kpi__delta--down">pendentes</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head">
+              <span class="kpi__label">03 · Taxa de Fechamento</span>
+              <div class="kpi__icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><path d="M3 8l3 3 7-6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            </div>
+            <div class="kpi__value voux-num" id="kpi-fechamento">—</div>
+            <div class="kpi__delta kpi__delta--up">OS encerradas</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head">
+              <span class="kpi__label">04 · Tempo Médio Resolução</span>
+              <div class="kpi__icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4v4l2.5 2.5"/></svg></div>
+            </div>
+            <div class="kpi__value voux-num" id="kpi-tempo-medio">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">dias em média</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head">
+              <span class="kpi__label">05 · Mediana Resolução</span>
+              <div class="kpi__icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><path d="M2 8h12M8 3v10"/></svg></div>
+            </div>
+            <div class="kpi__value voux-num" id="kpi-mediana">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">mediana em dias</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi__head">
+              <span class="kpi__label">06 · Total Ocorrências</span>
+              <div class="kpi__icon"><svg viewBox="0 0 16 16" fill="none" stroke-width="1.5"><rect x="2" y="3" width="12" height="11" rx="1"/><path d="M5 3V1M11 3V1M2 7h12"/></svg></div>
+            </div>
+            <div class="kpi__value voux-num" id="kpi-ocorrencias">—</div>
+            <div class="kpi__delta" style="color:var(--voux-text-muted);">em campo</div>
+          </div>
+        </section>
+
+        <!-- OS por Status + Tempo de resolução -->
+        <div class="grid-12">
+          <article class="voux-card col-4">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">01 · OS por Status</div>
+                <h3 class="voux-card__title">Distribuição <em>de OS</em></h3>
+              </div>
+            </div>
+            <p style="font-size:12px;color:var(--voux-text-muted);margin:0 0 12px;">Entre fechadas, abertas e canceladas</p>
+            <div class="chart-canvas" id="chart-status" style="height:240px;"></div>
+          </article>
+
+          <article class="voux-card col-8">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">02 · Tempo de Resolução</div>
+                <h3 class="voux-card__title">Faixas <em>de Prazo</em></h3>
+              </div>
+            </div>
+            <p style="font-size:12px;color:var(--voux-text-muted);margin:0 0 12px;">Quantas OS são resolvidas em cada janela de tempo</p>
+            <div class="chart-canvas" id="chart-faixas" style="height:240px;"></div>
+          </article>
+        </div>
+
+        <!-- Evolução mensal (full width) -->
+        <article class="voux-card">
+          <div class="voux-card__head">
+            <div>
+              <div class="voux-card__label">03 · Evolução Mensal de Aberturas</div>
+              <h3 class="voux-card__title">OS Abertas <em>por Mês</em></h3>
+            </div>
+          </div>
+          <p style="font-size:12px;color:var(--voux-text-muted);margin:0 0 12px;">Número de OS abertas por mês (por data de abertura)</p>
+          <div class="chart-canvas" id="chart-evolucao" style="height:220px;"></div>
+        </article>
+
+        <!-- Atividade de campo + Motivos de pausa -->
+        <div class="grid-12">
+          <article class="voux-card col-6">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">04 · Atividade de Campo</div>
+                <h3 class="voux-card__title">Ocorrências <em>por Status</em></h3>
+              </div>
+            </div>
+            <p style="font-size:12px;color:var(--voux-text-muted);margin:0 0 12px;">Deslocamento, atendimento e pausas</p>
+            <div class="chart-canvas" id="chart-ocorrencias" style="height:220px;"></div>
+          </article>
+
+          <article class="voux-card col-6">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">05 · Motivos de Pausa</div>
+                <h3 class="voux-card__title">Gargalos <em>Operacionais</em></h3>
+              </div>
+            </div>
+            <p style="font-size:12px;color:var(--voux-text-muted);margin:0 0 12px;">Tipos de serviço que causam interrupção</p>
+            <div class="chart-canvas" id="chart-motivos-pausa" style="height:220px;"></div>
+          </article>
+        </div>
+
+        <!-- Causas mais comuns (full width) -->
+        <article class="voux-card">
+          <div class="voux-card__head">
+            <div>
+              <div class="voux-card__label">06 · Causas de Atendimento Mais Comuns</div>
+              <h3 class="voux-card__title">Principais <em>Motivos de Chamado</em></h3>
+            </div>
+          </div>
+          <p style="font-size:12px;color:var(--voux-text-muted);margin:0 0 12px;">Principais motivos de chamado técnico</p>
+          <div class="chart-canvas" id="chart-causas" style="height:260px;"></div>
+        </article>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="assets/supabase.js"></script>
+  <script src="assets/ceres-data.js"></script>
+  <script src="assets/charts.js"></script>
+  <script src="assets/layout.js"></script>
+  <script>
+    async function init() {
+      await window.CERES_DATA_READY;
+      const D = window.CERES_DATA;
+      const M = D.servicos;
+      const C = VOUX_CHART.COLORS;
+
+      VOUX_LAYOUT.renderTopbar({ section: "Operação", title: "Ordens de <em>Serviço</em>" });
+      VOUX_LAYOUT.renderToolbar({ period: "Base atual", segments: [], filters: [] });
+
+      // KPIs
+      document.getElementById("kpi-total-os").textContent  = D.fmtNum(M.totalOS);
+      document.getElementById("kpi-abertas").textContent   = D.fmtNum(M.osAbertas);
+      document.getElementById("kpi-fechamento").textContent = D.fmtPct(M.taxaFechamento);
+      document.getElementById("kpi-tempo-medio").textContent = `${M.tempoMedioResolucao.toFixed(1)} dias`;
+      document.getElementById("kpi-mediana").textContent    = `${M.medianaResolucao.toFixed(1)} dias`;
+      document.getElementById("kpi-ocorrencias").textContent = D.fmtNum(M.totalOcorrencias);
+
+      // Chart 1: OS por status (donut)
+      if (M.porStatus && M.porStatus.length) {
+        const colors = [C.success, C.warning, C.danger, C.info, C.inkSoft];
+        VOUX_CHART.donut(
+          document.getElementById("chart-status"),
+          M.porStatus.map((r, i) => ({ label: r.label, value: r.value, color: colors[i % colors.length] })),
+          { height: 230, innerLabel: D.fmtNum(M.totalOS), innerSub: "OS total" }
+        );
+      }
+
+      // Chart 2: Faixas de resolução
+      if (M.faixasResolucao && M.faixasResolucao.length) {
+        VOUX_CHART.barV(
+          document.getElementById("chart-faixas"),
+          M.faixasResolucao.map(r => r.label),
+          M.faixasResolucao.map(r => r.value),
+          { color: C.info, height: 230 }
+        );
+      }
+
+      // Chart 3: Evolução mensal de aberturas
+      if (M.evolucaoAberturas && M.evolucaoAberturas.length) {
+        VOUX_CHART.barV(
+          document.getElementById("chart-evolucao"),
+          M.evolucaoAberturas.map(r => r.name),
+          M.evolucaoAberturas.map(r => r.value),
+          { color: C.accent, height: 210 }
+        );
+      }
+
+      // Chart 4: Ocorrências por status
+      if (M.situacaoOcorrencias && M.situacaoOcorrencias.length) {
+        VOUX_CHART.barH(
+          document.getElementById("chart-ocorrencias"),
+          M.situacaoOcorrencias,
+          { color: C.success, height: 210, rowH: 26, valueFormatter: v => D.fmtNum(v) }
+        );
+      }
+
+      // Chart 5: Motivos de pausa
+      if (M.motivosPausa && M.motivosPausa.length) {
+        VOUX_CHART.barH(
+          document.getElementById("chart-motivos-pausa"),
+          M.motivosPausa,
+          { color: C.warning, height: 210, rowH: 26, valueFormatter: v => D.fmtNum(v) }
+        );
+      }
+
+      // Chart 6: Causas de atendimento
+      if (M.causasAtendimento && M.causasAtendimento.length) {
+        VOUX_CHART.barH(
+          document.getElementById("chart-causas"),
+          M.causasAtendimento,
+          { color: C.info, height: 250, rowH: 24, valueFormatter: v => D.fmtNum(v) }
+        );
+      }
+    }
+    init();
+  </script>
+</body>
+</html>

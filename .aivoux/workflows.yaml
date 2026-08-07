@@ -1,0 +1,90 @@
+# AIVOUX - Workflow Definitions
+# Referencia para o Smart Router e execucao direta de workflows
+
+workflows:
+  # 1. Development Cycle (padrao para features)
+  - id: dev-cycle
+    name: Development Cycle
+    description: Fluxo padrao para implementacao de features
+    chain:
+      - agent: "@architect"
+        action: Design de arquitetura e plano de implementacao
+        output: Arquitetura + plano com tasks
+        skip_if: complexidade SIMPLE
+      - agent: "@data-engineer"
+        action: Schema design e migrations
+        output: Schema DDL + migration files
+        skip_if: sem componente de banco de dados
+      - agent: "@dev"
+        action: Implementacao de codigo + testes
+        output: Codigo implementado e testado
+      - agent: "@qa"
+        action: Review de qualidade e gate decision
+        output: PASS/CONCERNS/FAIL verdict
+        skip_if: complexidade SIMPLE
+      - agent: "@devops"
+        action: Push + PR creation
+        output: Codigo no remote + PR
+        skip_if: usuario nao solicitar
+
+  # 2. QA Loop (review iterativo)
+  - id: qa-loop
+    name: QA Loop
+    description: Ciclo review-fix ate aprovacao
+    max_iterations: 3
+    chain:
+      - agent: "@qa"
+        action: Review do codigo
+        output: PASS/FAIL com issues
+      - agent: "@dev"
+        action: Corrigir issues reportados
+        output: Fixes aplicados
+        condition: QA verdict FAIL
+      - agent: "@qa"
+        action: Re-review apos fixes
+        output: Verdict final
+
+  # 3. Spec Pipeline (pre-implementacao)
+  - id: spec-pipeline
+    name: Spec Pipeline
+    description: Transformar requisitos informais em spec executavel
+    chain:
+      - agent: "@pm"
+        action: Coletar e estruturar requisitos
+        output: Requirements document
+      - agent: "@architect"
+        action: Avaliar complexidade e definir arquitetura
+        output: Complexity assessment + architecture
+      - agent: "@analyst"
+        action: Pesquisa de mercado/tecnologia
+        output: Research findings
+        skip_if: complexidade SIMPLE
+      - agent: "@pm"
+        action: Escrever spec completa
+        output: Spec document
+      - agent: "@qa"
+        action: Critique da spec
+        output: APPROVED/NEEDS_REVISION
+
+  # 4. Brownfield Discovery (projetos existentes)
+  - id: brownfield
+    name: Brownfield Discovery
+    description: Assessment de projeto existente
+    chain:
+      - agent: "@architect"
+        action: Analise de arquitetura existente
+        output: System architecture assessment
+      - agent: "@data-engineer"
+        action: Audit de banco de dados
+        output: Schema audit + recommendations
+        skip_if: sem banco de dados
+      - agent: "@ux"
+        action: Audit de frontend
+        output: Frontend assessment
+        skip_if: sem frontend
+      - agent: "@qa"
+        action: Quality assessment geral
+        output: Quality report
+      - agent: "@pm"
+        action: Criar epic com stories de melhoria
+        output: Epic + stories priorizadas
