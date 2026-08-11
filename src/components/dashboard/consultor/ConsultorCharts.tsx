@@ -1,8 +1,9 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChartCard } from "@/components/bi/ChartCard";
 import { LineChart, BarChart, PieChart } from "@/components/bi/charts";
 import type { PieChartData } from "@/components/bi/charts";
-import { InfoTooltip } from "@/components/ui/InfoTooltip";
+import { SectionEyebrow } from "@/components/bi/SectionEyebrow";
 import { formatMonthYear } from "@/lib/dateUtils";
+import { CHART_COLORS } from "@/lib/chartTheme";
 import type { EvolucaoMensal, RegiaoVendedor } from "@/types/comercial";
 
 interface Props {
@@ -15,53 +16,55 @@ export function ConsultorCharts({ evolucao, tiposAcao, regioes }: Props) {
   const tiposAcaoData = Object.entries(tiposAcao).map(([name, value]) => ({ name, value }));
 
   return (
-    <>
-      <div className="grid lg:grid-cols-2 gap-6">
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">
-              Evolução Mensal <InfoTooltip text="Por data de conclusão da ação" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <LineChart
-              series={[
-                { name: "Ações",  data: evolucao.map((d) => ({ x: formatMonthYear(d.YearMonth), y: d.acoes })) },
-                { name: "Visitas", data: evolucao.map((d) => ({ x: formatMonthYear(d.YearMonth), y: d.visitas })) },
-              ]}
-              height={250}
-            />
-          </CardContent>
-        </Card>
+    <div className="space-y-4">
+      <SectionEyebrow label="Análise de Performance" />
 
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold">Tipos de Ação</CardTitle>
-          </CardHeader>
-          <CardContent className="flex justify-center">
-            <PieChart
-              data={tiposAcaoData.map((t): PieChartData => ({ id: t.name, name: t.name, value: t.value }))}
-              height={250}
-              enableLabels
-            />
-          </CardContent>
-        </Card>
+      <div className="grid lg:grid-cols-2 gap-4">
+        <ChartCard
+          title="Evolução Mensal"
+          description="Ações e visitas por mês (data de conclusão)"
+          label="TENDÊNCIA"
+          height={260}
+        >
+          <LineChart
+            series={[
+              { name: "Ações", data: evolucao.map((d) => ({ x: formatMonthYear(d.YearMonth), y: d.acoes })) },
+              { name: "Visitas", data: evolucao.map((d) => ({ x: formatMonthYear(d.YearMonth), y: d.visitas })) },
+            ]}
+            height={260}
+          />
+        </ChartCard>
+
+        <ChartCard
+          title="Tipos de Ação"
+          description="Distribuição proporcional por tipo"
+          label="COMPOSIÇÃO"
+          height={260}
+        >
+          <PieChart
+            data={tiposAcaoData.map((t): PieChartData => ({ id: t.name, name: t.name, value: t.value }))}
+            height={260}
+            enableLabels
+          />
+        </ChartCard>
       </div>
 
-      <Card className="border-0 shadow-sm">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold">Regiões de Atuação</CardTitle>
-        </CardHeader>
-        <CardContent>
+      {regioes.length > 0 && (
+        <ChartCard
+          title="Regiões de Atuação"
+          description="Top 10 cidades por volume de ações"
+          label="GEOGRÁFICO"
+          height={220}
+        >
           <BarChart
             data={regioes.map((r) => ({ name: r.cidade, acoes: r.acoes }))}
             layout="vertical"
             keys={["acoes"]}
-            height={200}
+            height={220}
             tooltipFormatter={(val) => `${val} ações`}
           />
-        </CardContent>
-      </Card>
-    </>
+        </ChartCard>
+      )}
+    </div>
   );
 }
