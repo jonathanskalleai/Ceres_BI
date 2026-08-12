@@ -1,13 +1,12 @@
 import { useMemo } from "react";
 import type { Vendedor, Registro } from "@/types/comercial";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CalendarDays, DollarSign, Target, TrendingUp, Users } from "lucide-react";
+import { ArrowLeft, CalendarDays } from "lucide-react";
 import { ConsultorCharts } from "./consultor/ConsultorCharts";
 import { ConsultorClienteCard } from "./consultor/ConsultorClienteCard";
 import type { RpcConsultorResumoAcoes } from "@/types/consultoresRpc";
 import { formatDateBR } from "@/lib/dateUtils";
+import { cn } from "@/lib/utils";
 
 interface Props {
   vendedor: Vendedor;
@@ -19,17 +18,13 @@ interface Props {
 }
 
 const fmtCurrency = (v: number) =>
-  v >= 1e6 ? `R$ ${(v / 1e6).toFixed(1)}M` : v >= 1e3 ? `R$ ${(v / 1e3).toFixed(0)}K` : `R$ ${v.toFixed(0)}`;
+  v >= 1e6 ? `R$ ${(v / 1e6).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} mi` : v >= 1e3 ? `R$ ${(v / 1e3).toLocaleString("pt-BR", { maximumFractionDigits: 0 })} mil` : `R$ ${v.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`;
 
-const crmGrade = (q: number) => {
-  if (q >= 70) return { label: "A - Excelente", className: "bg-success text-success-foreground" };
-  if (q >= 50) return { label: "B - Bom", className: "bg-warning text-warning-foreground" };
-  if (q >= 30) return { label: "C - Regular", className: "bg-destructive/80 text-destructive-foreground" };
-  return { label: "D - Insuficiente", className: "bg-destructive text-destructive-foreground" };
-};
+const CARD = "rounded-xl border bg-white p-5";
 
 export const DashboardConsultorDetail = ({ vendedor: v, resumo, registros, from, to, onBack }: Props) => {
-  const grade = crmGrade(v.crmQuality);
+  const gradeColor = v.crmQuality >= 70 ? "#1f6e3f" : v.crmQuality >= 50 ? "#9c5e1c" : "#b8421c";
+  const gradeLabel = v.crmQuality >= 70 ? "A — Excelente" : v.crmQuality >= 50 ? "B — Bom" : v.crmQuality >= 30 ? "C — Regular" : "D — Insuficiente";
 
   const clientActions = useMemo(() => {
     const map = new Map<string, Registro[]>();
@@ -44,88 +39,135 @@ export const DashboardConsultorDetail = ({ vendedor: v, resumo, registros, from,
     return map;
   }, [registros, v.nome]);
 
-  const resultadoPeriodo = [
-    { label: "Ações", value: Number(resumo.acoes).toLocaleString("pt-BR"), hint: "concluídas no período", icon: TrendingUp, color: "text-primary" },
-    { label: "Visitas", value: Number(resumo.visitas).toLocaleString("pt-BR"), hint: "ações presenciais", icon: Users, color: "text-accent" },
-    { label: "Clientes atendidos", value: Number(resumo.clientes).toLocaleString("pt-BR"), hint: "clientes únicos", icon: Users, color: "text-info" },
-    { label: "Pipeline em aberto", value: fmtCurrency(Number(resumo.pipeline_aberto_gerado)), hint: `${resumo.oportunidades_abertas} oportunidades abertas`, icon: Target, color: "text-warning" },
-    { label: "Vendas", value: fmtCurrency(Number(resumo.valor_ganho)), hint: `${resumo.ganhos} pedidos aprovados`, icon: DollarSign, color: "text-success" },
-    { label: "Conversão", value: resumo.taxa_ganho == null ? "—" : `${resumo.taxa_ganho}%`, hint: `${resumo.ganhos} ganhos ÷ ${resumo.oportunidades_geradas} oportunidades`, icon: Target, color: "text-chart-4" },
-  ];
-
-  const gestaoCarteira = [
-    { label: "Carteira ativa trabalhada", value: fmtCurrency(Number(resumo.carteira_ativa_trabalhada)), hint: `${resumo.negocios_abertos_tocados} negócios abertos tocados` },
-    { label: "Oportunidades geradas", value: Number(resumo.oportunidades_geradas).toLocaleString("pt-BR"), hint: `${resumo.oportunidades_abertas} continuam abertas` },
-    { label: "Perdidos", value: fmtCurrency(Number(resumo.valor_perdido)), hint: `${resumo.perdidos} negócios fechados como perda` },
-    { label: "Registro de atividade", value: `${resumo.crm_quality}%`, hint: grade.label },
-  ];
-
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 lg:p-8 space-y-8">
+      {/* Header */}
       <div className="flex flex-wrap items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={onBack}>
-          <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
+        <Button variant="ghost" size="sm" onClick={onBack} className="rounded-full">
+          <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div className="min-w-0">
-          <h2 className="text-2xl font-bold text-foreground">{v.nome}</h2>
-          <div className="mt-1 flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-[10px] font-mono text-muted-foreground">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-xl font-bold tracking-tight" style={{ color: "var(--voux-text-primary)" }}>{v.nome}</h2>
+          <div className="mt-1 flex flex-wrap items-center gap-3">
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px]"
+              style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-accent)", borderColor: "var(--voux-card-border)" }}
+            >
               <CalendarDays className="h-3 w-3" />
               {formatDateBR(from)} a {formatDateBR(to)}
             </span>
-            <span className="text-xs text-muted-foreground">Visão individual do período</span>
+            <span
+              className="text-[10px] font-bold px-2 py-0.5 rounded border"
+              style={{ borderColor: gradeColor, color: gradeColor, fontFamily: "var(--voux-font-mono)" }}
+            >
+              CRM {gradeLabel}
+            </span>
           </div>
         </div>
       </div>
 
-      <section className="space-y-3">
-        <div>
-          <h3 className="text-base font-semibold text-foreground">Resultado do período</h3>
-          <p className="text-xs text-muted-foreground">Atividade, pipeline e vendas consolidados pelo calendário selecionado.</p>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-          {resultadoPeriodo.map((k) => (
-            <Card key={k.label} className="border-border/70 shadow-sm">
-              <CardContent className="p-4">
-                <div className="mb-3 flex items-center gap-1.5">
-                  <k.icon className={`h-3.5 w-3.5 ${k.color}`} />
-                  <p className="text-[10px] font-mono uppercase tracking-[0.12em] text-muted-foreground">{k.label}</p>
-                </div>
-                <p className={`text-xl font-bold leading-none ${k.color}`}>{k.value}</p>
-                <p className="mt-2 text-[10px] text-muted-foreground">{k.hint}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <section className="rounded-xl border border-border/70 bg-muted/20 p-4 space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <h3 className="text-sm font-semibold text-foreground">Gestão da carteira</h3>
-            <p className="text-xs text-muted-foreground">Carteira é diferente do pipeline: reúne negócios abertos que receberam ação no período.</p>
+      {/* KPIs principais — estilo screenshot (eyebrow + valor grande + hint) */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        {[
+          { eyebrow: "VENDAS", value: fmtCurrency(Number(resumo.valor_ganho)), hint: `${resumo.ganhos} pedidos aprovados`, color: "#1f6e3f" },
+          { eyebrow: "PIPELINE ABERTO", value: fmtCurrency(Number(resumo.pipeline_aberto_gerado)), hint: `${resumo.oportunidades_abertas} oportunidades abertas`, color: "var(--voux-accent)" },
+          { eyebrow: "CONVERSÃO", value: resumo.taxa_ganho == null ? "—" : `${resumo.taxa_ganho}%`, hint: `${resumo.ganhos} ganhos ÷ ${resumo.oportunidades_geradas} oportunidades`, color: "var(--voux-text-primary)" },
+          { eyebrow: "AÇÕES", value: Number(resumo.acoes).toLocaleString("pt-BR"), hint: "concluídas no período", color: "var(--voux-text-primary)" },
+          { eyebrow: "VISITAS", value: Number(resumo.visitas).toLocaleString("pt-BR"), hint: "ações presenciais", color: "var(--voux-text-primary)" },
+          { eyebrow: "CLIENTES ATENDIDOS", value: Number(resumo.clientes).toLocaleString("pt-BR"), hint: "clientes únicos", color: "var(--voux-text-primary)" },
+        ].map((kpi) => (
+          <div
+            key={kpi.eyebrow}
+            className={cn(CARD)}
+            style={{ borderColor: "var(--voux-card-border)", boxShadow: "var(--voux-card-shadow)" }}
+          >
+            <p
+              className="text-[10px] tracking-[0.18em] uppercase font-medium mb-2"
+              style={{ fontFamily: "var(--voux-font-mono)", color: kpi.color }}
+            >
+              {kpi.eyebrow}
+            </p>
+            <p
+              className="text-2xl font-bold leading-none tracking-tight tabular-nums"
+              style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-primary)" }}
+            >
+              {kpi.value}
+            </p>
+            <p
+              className="mt-2 text-[11px]"
+              style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}
+            >
+              {kpi.hint}
+            </p>
           </div>
-          <Badge className={grade.className}>{grade.label}</Badge>
+        ))}
+      </div>
+
+      {/* Gestão da Carteira */}
+      <div
+        className={cn(CARD, "space-y-4")}
+        style={{ borderColor: "var(--voux-card-border)", boxShadow: "var(--voux-card-shadow)" }}
+      >
+        <div>
+          <p
+            className="text-[10px] tracking-[0.18em] uppercase font-medium"
+            style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}
+          >
+            GESTÃO DA CARTEIRA
+          </p>
+          <h3 className="text-base font-bold mt-1" style={{ color: "var(--voux-text-primary)" }}>
+            Carteira ativa e oportunidades
+          </h3>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {gestaoCarteira.map((k) => (
-            <div key={k.label} className="rounded-lg border border-border/70 bg-card p-3">
-              <p className="text-[10px] font-mono uppercase tracking-[0.12em] text-muted-foreground">{k.label}</p>
-              <p className="mt-2 text-lg font-bold text-foreground">{k.value}</p>
-              <p className="mt-1 text-[10px] text-muted-foreground">{k.hint}</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            { label: "CARTEIRA TRABALHADA", value: fmtCurrency(Number(resumo.carteira_ativa_trabalhada)), hint: `${resumo.negocios_abertos_tocados} negócios tocados` },
+            { label: "OPORTUNIDADES GERADAS", value: Number(resumo.oportunidades_geradas).toLocaleString("pt-BR"), hint: `${resumo.oportunidades_abertas} continuam abertas` },
+            { label: "PERDIDOS", value: fmtCurrency(Number(resumo.valor_perdido)), hint: `${resumo.perdidos} negócios perdidos` },
+            { label: "QUALIDADE CRM", value: `${resumo.crm_quality}%`, hint: gradeLabel },
+          ].map((item) => (
+            <div key={item.label} className="rounded-lg border p-3" style={{ borderColor: "var(--voux-card-border)" }}>
+              <p
+                className="text-[9px] tracking-[0.14em] uppercase mb-2"
+                style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}
+              >
+                {item.label}
+              </p>
+              <p className="text-lg font-bold leading-none tabular-nums" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-primary)" }}>
+                {item.value}
+              </p>
+              <p className="mt-1.5 text-[10px]" style={{ color: "var(--voux-text-faint)" }}>
+                {item.hint}
+              </p>
             </div>
           ))}
         </div>
-      </section>
+      </div>
 
+      {/* Gráficos */}
       <ConsultorCharts evolucao={v.evolucao} tiposAcao={v.tiposAcao} regioes={v.regioes} />
 
-      <Card className="border-0 shadow-sm">
-        <div className="p-4 pb-2">
-          <h3 className="text-sm font-semibold">Clientes atendidos no período</h3>
+      {/* Tabela de clientes */}
+      <div
+        className={cn(CARD, "p-0 overflow-hidden")}
+        style={{ borderColor: "var(--voux-card-border)", boxShadow: "var(--voux-card-shadow)" }}
+      >
+        <div className="px-5 pt-5 pb-3">
+          <p
+            className="text-[10px] tracking-[0.18em] uppercase font-medium"
+            style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}
+          >
+            POR CLIENTE
+          </p>
+          <h3 className="text-base font-bold mt-1" style={{ color: "var(--voux-text-primary)" }}>
+            Clientes atendidos no período
+          </h3>
         </div>
         <div className="px-4 pb-4">
-          <div className="grid grid-cols-[32px_1fr_100px_60px_60px_90px_80px_80px_32px] items-center px-2 py-2 border-b border-border text-xs font-semibold text-muted-foreground">
+          <div
+            className="grid grid-cols-[32px_1fr_100px_60px_60px_90px_80px_80px_32px] items-center px-2 py-2 border-b text-[9px] tracking-[0.14em] uppercase font-medium"
+            style={{ borderColor: "var(--voux-card-border)", fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}
+          >
             <span>#</span><span>Cliente</span><span>Cidade</span>
             <span className="text-center">Ações</span><span className="text-center">Visitas</span>
             <span className="text-right">Valor vinculado</span><span className="text-center">Dias s/ Contato</span>
@@ -141,7 +183,7 @@ export const DashboardConsultorDetail = ({ vendedor: v, resumo, registros, from,
             />
           ))}
         </div>
-      </Card>
+      </div>
     </div>
   );
 };
