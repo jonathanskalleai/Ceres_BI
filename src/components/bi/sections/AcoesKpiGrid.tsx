@@ -1,4 +1,4 @@
-import { ClipboardList, MapPin, Users, Eye, UserCheck, Tag, Clock, Trophy, XCircle, AlertTriangle, Target, Gauge, PauseCircle } from "lucide-react";
+import { Briefcase, ClipboardList, MapPin, Users, Eye, UserCheck, Percent, Clock, Trophy, XCircle, AlertTriangle, Target, Gauge, PauseCircle } from "lucide-react";
 import { KPICard } from "@/components/bi/KPICard";
 import { calcTrend } from "@/lib/dateUtils";
 import { funilRatios, fmtRatio, DASH } from "@/lib/bi/acoesGestaoUtils";
@@ -28,14 +28,21 @@ interface Props {
   kpis: AcoesBIKpis;
   kpisPrev: AcoesBIKpis;
   loading?: boolean;
-  /**
-   * Numeros de gestao (rpc_acoes_funil_gestao). Absorvidos NESTA faixa de KPI
-   * de proposito: uma segunda faixa logo abaixo empurraria os graficos para
-   * fora da dobra e ninguem leria nem uma nem outra.
-   */
+  /** Números de coorte, pipeline e carteira da RPC de gestão do período. */
   funil?: AcoesFunil;
+  funilPrev?: AcoesFunil;
   diasParados?: AcoesDiasParados;
   gestaoLoading?: boolean;
+  onOpenDiasSemAcao?: () => void;
+}
+
+/**
+ * Indice operacional: ganhos do periodo sobre as oportunidades que entraram
+ * no funil VENDAS no mesmo periodo. Perdas nao fazem parte do denominador.
+ */
+function taxaDeGanho(funil?: AcoesFunil): number | null {
+  if (!funil || funil.oportunidades <= 0) return null;
+  return Math.round((funil.ganhos * 1000) / funil.oportunidades) / 10;
 }
 
 /**
@@ -45,38 +52,101 @@ interface Props {
  * media seria puxada por negocios abandonados ha anos. E o unico indicador da
  * tela que aponta receita JA levantada e parada.
  */
-function GestaoKpis({ funil, diasParados, loading }: { funil?: AcoesFunil; diasParados?: AcoesDiasParados; loading?: boolean }) {
+function OportunidadesKpis({
+  funil,
+  loading,
+  taxaGanho,
+  taxaGanhoPrev,
+}: {
+  funil?: AcoesFunil;
+  loading?: boolean;
+  taxaGanho: number | null;
+  taxaGanhoPrev: number | null;
+}) {
   const ratios = funil ? funilRatios(funil) : null;
-  const mediana = diasParados?.mediana;
 
   return (
     <>
       <KPICard
-        title="Oportunidades Abertas Tocadas"
+        title="Oportunidades Geradas no Período"
         value={funil ? num(funil.oportunidades) : DASH}
         icon={Target}
         loading={loading}
-        hint={funil ? brl(funil.valorOportunidades) : undefined}
-        formula="Negocios trabalhados (com pelo menos 1 acao concluida) no periodo que CONTINUAM Em Andamento. E uma foto do que segue em aberto, nao um contador de eventos: um mes ja fechado DIMINUI quando um negocio dele for ganho ou perdido depois. Isso e a definicao funcionando, nao falha de carga"
-        dataSource="rpc_acoes_funil_gestao · negocios canonicos DISTINTOS tocados por acao no periodo (aco_dthconclusao) com ngo_conclusao='Em Andamento' e ngo_funil <> 'REPASSE DE MAQUINA' · valor = SUM(ngo_vlrtotalnegociado)" />
+        hint={funil
+          ? `${num(funil.oportunidadesAbertas)} ainda estão abertas`
+          : undefined}
+        formula="Negócios cuja primeira entrada histórica no funil VENDAS ocorreu no período. O resumo indica quantos deles continuam Em Andamento; ganhos e perdidos aparecem nos respectivos cards próprios."
+        dataSource="mirror.crm_funil_etapa · primeira entrada em funil_dsc='VENDAS' por fne_dthinicioetapa · exclui REPASSE DE MAQUINA" />
+
+      <KPICard
+        title="Pipeline Aberto no Período"
+        value={funil ? brl(funil.valorOportunidadesAbertas) : DASH}
+        rawValue={funil?.valorOportunidadesAbertas}
+        icon={Briefcase}
+        loading={loading}
+        hint={funil
+          ? `${num(funil.oportunidadesAbertas)} das ${num(funil.oportunidades)} oportunidades geradas ainda estão abertas`
+          : undefined}
+        formula="Soma apenas das oportunidades geradas no período selecionado que continuam Em Andamento. Não inclui oportunidades antigas, mesmo quando continuam sendo trabalhadas agora."
+        dataSource="primeira entrada em VENDAS no período + ngo_conclusao='Em Andamento' · SUM(ngo_vlrtotalnegociado) · sem REPASSE DE MAQUINA" />
+
+      <KPICard
+        title="Ganho sobre Oportunidades"
+        value={taxaGanho != null ? `${taxaGanho.toFixed(1)}%` : DASH}
+        icon={Percent}
+        loading={loading}
+        previousValue={taxaGanhoPrev != null ? `${taxaGanhoPrev.toFixed(1)}%` : undefined}
+        trend={taxaGanho != null && taxaGanhoPrev != null
+          ? calcTrend(taxaGanho, taxaGanhoPrev)
+          : undefined}
+        hint={funil ? `${num(funil.ganhos)} ganhos sobre ${num(funil.oportunidades)} oportunidades geradas` : undefined}
+        formula="Ganhos do período / oportunidades que entraram no funil VENDAS no mesmo período. Perdidos não entram no denominador."
+        dataSource="pedidos aprovados ganhos / primeira entrada no funil VENDAS" />
 
       <KPICard
         title="Visitas por Oportunidade"
         value={fmtRatio(ratios?.visitasPorOportunidade ?? null)}
         icon={Gauge}
         loading={loading}
-        hint="quanto esforco custa levantar 1 negocio"
-        formula="Quantas visitas presenciais foram necessarias, em media, para gerar cada oportunidade de negocio no periodo"
-        dataSource="rpc_acoes_funil_gestao · visitas / oportunidades no periodo · '—' quando nao ha oportunidade (divisao por zero, nao zero)" />
+        hint="quanto esforco custa gerar 1 oportunidade"
+        formula="Quantas visitas presenciais foram registradas, em media, para cada negocio que entrou no funil VENDAS no periodo. A etapa CRM 'OPORTUNIDADE' e apenas uma das etapas desse funil."
+        dataSource="rpc_acoes_funil_gestao_periodo · visitas / primeira entrada no funil VENDAS · '—' quando nao ha oportunidade (divisao por zero, nao zero)" />
+    </>
+  );
+}
+
+function CarteiraKpis({
+  funil, diasParados, loading, onOpenDiasSemAcao,
+}: {
+  funil?: AcoesFunil;
+  diasParados?: AcoesDiasParados;
+  loading?: boolean;
+  onOpenDiasSemAcao?: () => void;
+}) {
+  const mediana = diasParados?.mediana;
+  return (
+    <>
+      <KPICard
+        title="Carteira Ativa Trabalhada"
+        value={funil ? brl(funil.valorPipelineAbertoTocadoNoPeriodo) : DASH}
+        rawValue={funil?.valorPipelineAbertoTocadoNoPeriodo}
+        icon={Briefcase}
+        loading={loading}
+        hint={funil
+          ? `${num(funil.negociosAbertosTocadosNoPeriodo)} negócios em andamento com ação no período`
+          : undefined}
+        formula="Carteira operacional: negócios que continuam Em Andamento e tiveram ao menos uma ação concluída no período. Diferente do pipeline gerado no período, inclui negociações abertas em meses anteriores. Não é usado na taxa de ganho."
+        dataSource="crm_acoes + crm_negocios canônico · ação concluída no período + ngo_conclusao='Em Andamento' · sem REPASSE DE MAQUINA" />
 
       <KPICard
-        title="Dias Parados (mediana)"
+        title="Dias sem Ação — Carteira Total"
         value={mediana != null ? `${num(mediana)} dias` : DASH}
         icon={PauseCircle}
         loading={loading}
-        hint={diasParados ? `${num(diasParados.negociosAbertos)} negocios abertos` : undefined}
-        formula="Metade dos negocios em andamento esta sem contato ha mais dias que este numero, e metade ha menos. Mediana alta = carteira esfriando"
-        dataSource="rpc_acoes_funil_gestao · MEDIANA de dias desde a ultima acao em negocio comercial 'Em Andamento' — mediana, nao media: a distribuicao tem cauda longa" />
+        hint={diasParados ? "Duplo clique para ver alertas e detalhes da carteira" : undefined}
+        formula="Metade dos negócios abertos de toda a carteira comercial está sem contato há mais dias que este número, e metade há menos. Não é limitado às oportunidades criadas ou trabalhadas no período."
+        dataSource="MEDIANA de dias desde a última ação em negócio comercial Em Andamento; carteira total, não a coorte do calendário"
+        onDoubleClick={mediana != null ? onOpenDiasSemAcao : undefined} />
     </>
   );
 }
@@ -117,7 +187,13 @@ function StatusDesconhecidoAlert({ kpis }: { kpis: AcoesBIKpis }) {
 }
 
 /** Grid de KPIs da tela /bi/acoes — extraida de AcoesSection para conter o tamanho do arquivo. */
-export function AcoesKpiGrid({ kpis, kpisPrev, loading, funil, diasParados, gestaoLoading }: Props) {
+export function AcoesKpiGrid({
+  kpis, kpisPrev, loading, funil, diasParados, gestaoLoading, onOpenDiasSemAcao,
+  funilPrev,
+}: Props) {
+  const taxaGanho = taxaDeGanho(funil);
+  const taxaGanhoPrev = taxaDeGanho(funilPrev);
+
   return (
     <div className="space-y-4">
       <StatusDesconhecidoAlert kpis={kpis} />
@@ -127,30 +203,25 @@ export function AcoesKpiGrid({ kpis, kpisPrev, loading, funil, diasParados, gest
         formula="Total de acoes comerciais concluidas no periodo, independente do tipo de contato (visita, telefone, email, etc.)"
         dataSource="mirror.crm_acoes · COUNT(*) por aco_dthconclusao" />
 
-      <KPICard title="Cidades Atendidas" value={num(kpis.cidades)} icon={MapPin} loading={loading}
-        previousValue={num(kpisPrev.cidades)} trend={calcTrend(kpis.cidades, kpisPrev.cidades)}
-        formula="Quantas cidades diferentes tiveram clientes atendidos no periodo. Usa a cidade do cliente, nao da filial"
-        dataSource="COUNT(DISTINCT cli_cidade) — cidade do CLIENTE (crm_carteira_clientes), nao da filial" />
-
-      <KPICard title="Consultores Ativos" value={num(kpis.consultores)} icon={Users} loading={loading}
-        previousValue={num(kpisPrev.consultores)} trend={calcTrend(kpis.consultores, kpisPrev.consultores)}
-        formula="Quantos vendedores/consultores registraram pelo menos 1 acao concluida no periodo selecionado"
-        dataSource="mirror.crm_acoes · COUNT(DISTINCT aco_vendedor)" />
-
       <KPICard title="Total de Visitas" value={num(kpis.visitas)} icon={Eye} loading={loading}
         previousValue={num(kpisPrev.visitas)} trend={calcTrend(kpis.visitas, kpisPrev.visitas)}
         formula="Quantidade de acoes do tipo 'visita' (presencial) registradas no periodo. Um mesmo cliente visitado 3 vezes conta 3"
         dataSource="mirror.crm_acoes · COUNT(*) WHERE aco_tipocontato LIKE '%visita%'" />
+
+      <KPICard title="Cidades Atendidas" value={num(kpis.cidades)} icon={MapPin} loading={loading}
+        previousValue={num(kpisPrev.cidades)} trend={calcTrend(kpis.cidades, kpisPrev.cidades)}
+        formula="Quantas cidades diferentes tiveram clientes atendidos no periodo. Usa a cidade do cliente, nao da filial"
+        dataSource="COUNT(DISTINCT cli_cidade) — cidade do CLIENTE (crm_carteira_clientes), nao da filial" />
 
       <KPICard title="Clientes Unicos" value={num(kpis.clientes)} icon={UserCheck} loading={loading}
         previousValue={num(kpisPrev.clientes)} trend={calcTrend(kpis.clientes, kpisPrev.clientes)}
         formula="Quantos clientes diferentes receberam pelo menos 1 acao (qualquer tipo de contato) no periodo. Cada cliente conta 1 vez"
         dataSource="mirror.crm_acoes · COUNT(DISTINCT cli_nome)" />
 
-      <KPICard title="Tipos de Acao" value={num(kpis.tiposAcaoDistintos)} icon={Tag} loading={loading}
-        previousValue={num(kpisPrev.tiposAcaoDistintos)} trend={calcTrend(kpis.tiposAcaoDistintos, kpisPrev.tiposAcaoDistintos)}
-        formula="Quantos tipos de acao diferentes (ex: Prospeccao, Pos-Vendas, Cobranca) foram registrados no periodo. Mostra a diversidade do trabalho comercial"
-        dataSource="mirror.crm_acoes · COUNT(DISTINCT aco_tipoacao)" />
+      <KPICard title="Consultores Ativos" value={num(kpis.consultores)} icon={Users} loading={loading}
+        previousValue={num(kpisPrev.consultores)} trend={calcTrend(kpis.consultores, kpisPrev.consultores)}
+        formula="Quantos vendedores/consultores registraram pelo menos 1 acao concluida no periodo selecionado"
+        dataSource="mirror.crm_acoes · COUNT(DISTINCT aco_vendedor)" />
 
       <KPICard title="Duracao Media da Acao" value={`${kpis.tempoMedioContato} dias`} icon={Clock} loading={loading}
         previousValue={`${kpisPrev.tempoMedioContato} dias`} trend={calcTrend(kpis.tempoMedioContato, kpisPrev.tempoMedioContato)}
@@ -158,10 +229,7 @@ export function AcoesKpiGrid({ kpis, kpisPrev, loading, funil, diasParados, gest
         formula="Tempo medio em dias entre a abertura e a conclusao de uma acao. Mede quanto tempo o consultor leva para finalizar cada acao, nao o tempo ate o primeiro contato"
         dataSource="mirror.crm_acoes · AVG(aco_dthconclusao - aco_dthabertura) em dias — duracao da propria acao (abertura ate conclusao), NAO tempo ate o primeiro contato" />
 
-      {/* "Valor em Aberto" saiu do grid na v9: o bucket "aberto" foi removido da
-          RPC por inteiro. Manter o card mostrando R$ 0 com um tooltip herdado
-          seria pior que nao ter card — numero afirmado que ninguem mede.
-          "Pipeline aberto atual" e contrato de ESTOQUE e tera card proprio. */}
+      <OportunidadesKpis funil={funil} loading={gestaoLoading} taxaGanho={taxaGanho} taxaGanhoPrev={taxaGanhoPrev} />
 
       <KPICard title="Valor Ganho" value={brl(kpis.valorGanho)} icon={Trophy} loading={loading}
         previousValue={brl(kpisPrev.valorGanho)} trend={calcTrend(kpis.valorGanho, kpisPrev.valorGanho)}
@@ -177,7 +245,12 @@ export function AcoesKpiGrid({ kpis, kpisPrev, loading, funil, diasParados, gest
         formula="Valor POTENCIAL dos negocios marcados como Perdido que fecharam no periodo, contados pela data de fechamento do negocio. E o que estava negociado e nao virou venda — nao e pedido cancelado, e nao se soma ao Valor Ganho"
         dataSource={PERDIDO_SOURCE} />
 
-      <GestaoKpis funil={funil} diasParados={diasParados} loading={gestaoLoading} />
+      <CarteiraKpis
+        funil={funil}
+        diasParados={diasParados}
+        loading={gestaoLoading}
+        onOpenDiasSemAcao={onOpenDiasSemAcao}
+      />
       </div>
     </div>
   );

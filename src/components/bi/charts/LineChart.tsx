@@ -120,7 +120,7 @@ export default function LineChart({
                   alignItems: "center",
                   gap: 6,
                   fontFamily: "var(--voux-font-mono, monospace)",
-                  fontSize: 10,
+                  fontSize: 12,
                   color: "var(--voux-text-muted)",
                   letterSpacing: "0.14em",
                   textTransform: "uppercase",

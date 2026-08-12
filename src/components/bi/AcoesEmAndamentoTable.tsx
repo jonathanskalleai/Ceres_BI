@@ -14,7 +14,7 @@ const brl = (v: number | null) =>
   v != null ? v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 }) : DASH;
 
 function matches(row: AcoesEmAndamentoRow, term: string): boolean {
-  return [row.cliente, row.cidade, row.consultor, row.negocioNumero, row.etapa, row.ultimaAcao]
+  return [row.cliente, row.cidade, row.consultor, row.negocioNumero, row.etapa, row.produto, row.observacaoNegocio, row.ultimaAcao]
     .some((v) => (v ?? "").toLowerCase().includes(term));
 }
 
@@ -22,6 +22,7 @@ interface Props {
   rows: AcoesEmAndamentoRow[];
   total: number;
   page: number;
+  pageSize?: number;
   onPageChange: (page: number) => void;
   loading?: boolean;
   error?: Error | null;
@@ -29,12 +30,13 @@ interface Props {
 
 /**
  * Tabela de negócios em andamento — Story 5-A drill-down.
- * 9 colunas: Nº Negocio | Cliente | Cidade | Consultor | Etapa | Valor | Ultima Acao | Data | Dias Parado.
+ * 12 colunas: Nº Negocio | Cliente | Cidade | Consultor | Etapa | Produto |
+ * Obs. | Valor | Última Ação | Data da Ação | Criado em | Dias Parado.
  * Ordenacao: diasParado DESC (veem da RPC).
  * Destaque: diasParado > 90 → valor em vermelho (mesma convencao do mapa).
- * Badge: "Mostrando oportunidades em andamento — fonte: crm_acoes + crm_negocios · estado atual."
+ * Badge: "Mostrando negocios em andamento — fonte: crm_acoes + crm_negocios · estado atual."
  */
-export function AcoesEmAndamentoTable({ rows, total, page, onPageChange, loading, error }: Props) {
+export function AcoesEmAndamentoTable({ rows, total, page, pageSize = EM_ANDAMENTO_PAGE_SIZE, onPageChange, loading, error }: Props) {
   const [search, setSearch] = useState("");
 
   const filtered = useMemo(() => {
@@ -43,9 +45,9 @@ export function AcoesEmAndamentoTable({ rows, total, page, onPageChange, loading
     return rows.filter((r) => matches(r, term));
   }, [rows, search]);
 
-  const totalPages = Math.max(1, Math.ceil(total / EM_ANDAMENTO_PAGE_SIZE));
-  const rangeStart = total === 0 ? 0 : (page - 1) * EM_ANDAMENTO_PAGE_SIZE + 1;
-  const rangeEnd = Math.min(page * EM_ANDAMENTO_PAGE_SIZE, total);
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const rangeStart = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const rangeEnd = Math.min(page * pageSize, total);
   const rangeLabel = total > 0
     ? `Mostrando ${rangeStart.toLocaleString("pt-BR")}–${rangeEnd.toLocaleString("pt-BR")} de ${total.toLocaleString("pt-BR")}`
     : undefined;
@@ -61,7 +63,7 @@ export function AcoesEmAndamentoTable({ rows, total, page, onPageChange, loading
         type="search"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        placeholder="Buscar negocio, cliente..."
+        placeholder="Buscar negocio, cliente, produto..."
         aria-label="Buscar nos negocios em andamento"
         className="h-8 w-full sm:w-64 rounded-md border border-[var(--voux-card-border)] bg-transparent pl-8 pr-2 text-xs text-[var(--voux-text-primary)] placeholder:text-[var(--voux-text-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--voux-champagne-400)]"
       />
@@ -70,7 +72,7 @@ export function AcoesEmAndamentoTable({ rows, total, page, onPageChange, loading
 
   const badge = (
     <p className="text-[11px] italic text-[var(--voux-text-muted)]">
-      Mostrando oportunidades em andamento — fonte: crm_acoes + crm_negocios · estado atual.
+      Mostrando negocios em andamento — fonte: crm_acoes + crm_negocios · estado atual.
     </p>
   );
 
@@ -99,9 +101,12 @@ export function AcoesEmAndamentoTable({ rows, total, page, onPageChange, loading
               <th className={TH}>Cidade</th>
               <th className={TH}>Consultor</th>
               <th className={TH}>Etapa</th>
+              <th className={TH}>Produto(s)</th>
+              <th className={TH}>Obs. Negocio</th>
               <th className={`${TH} text-right`}>Valor</th>
               <th className={TH}>Ultima Acao</th>
-              <th className={TH}>Data</th>
+              <th className={TH}>Última ação em</th>
+              <th className={TH}>Criado em</th>
               <th className={`${TH} text-right`}>Dias Parado</th>
             </tr>
           </thead>
@@ -116,11 +121,14 @@ export function AcoesEmAndamentoTable({ rows, total, page, onPageChange, loading
                   <td className={`${TD} text-[var(--voux-text-soft)] max-w-[110px] truncate`}>{row.cidade ?? DASH}</td>
                   <td className={`${TD} text-[var(--voux-text-soft)] max-w-[140px] truncate`}>{row.consultor ?? DASH}</td>
                   <td className={`${TD} text-[var(--voux-text-soft)] max-w-[130px] truncate`}>{row.etapa ?? DASH}</td>
+                  <td className={`${TD} max-w-[180px] truncate`} title={row.produto ?? undefined}>{row.produto ?? "Sem produto vinculado"}</td>
+                  <td className={`${TD} text-[var(--voux-text-soft)] max-w-[240px] truncate`} title={row.observacaoNegocio ?? undefined}>{row.observacaoNegocio ?? DASH}</td>
                   <td className={`${TD} text-right tabular-nums whitespace-nowrap ${isStale ? "text-[var(--voux-danger)]" : ""}`}>
                     {brl(row.valor)}
                   </td>
                   <td className={`${TD} text-[var(--voux-text-soft)] max-w-[120px] truncate`}>{row.ultimaAcao ?? DASH}</td>
                   <td className={`${TD} whitespace-nowrap tabular-nums`}>{formatDateTimeBR(row.dataUltimaAcao) ?? DASH}</td>
+                  <td className={`${TD} whitespace-nowrap tabular-nums text-[var(--voux-text-soft)]`}>{formatDateTimeBR(row.dataCadastroNegocio) ?? DASH}</td>
                   <td className={`${TD} text-right tabular-nums whitespace-nowrap ${isStale ? "text-[var(--voux-danger)] font-semibold" : ""}`}>
                     {row.diasParado}
                   </td>
@@ -129,7 +137,7 @@ export function AcoesEmAndamentoTable({ rows, total, page, onPageChange, loading
             })}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={9} className="py-6 text-center text-[var(--voux-text-muted)]">
+                <td colSpan={12} className="py-6 text-center text-[var(--voux-text-muted)]">
                   {search.trim() ? "Nenhum negocio corresponde a busca." : "Nenhum negocio nesta pagina."}
                 </td>
               </tr>

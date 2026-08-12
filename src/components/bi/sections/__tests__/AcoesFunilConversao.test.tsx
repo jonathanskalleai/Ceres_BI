@@ -5,24 +5,32 @@ import type { AcoesFunil, AcoesFunilMeta } from "@/types/biRpc";
 
 /**
  * Fotografia de julho/2026 auditada no banco vivo (2026-08-02T23:00Z), usada
- * como FORMATO, nao como assercao de negocio: 546 visitas, 112 oportunidades
- * liquidas, 26 pedidos ganhos, 7 negocios perdidos / R$ 1.060.000,00.
+ * como FORMATO, nao como assercao de negocio: 546 visitas, 141 oportunidades
+ * no funil VENDAS, 110 ainda abertas, 26 pedidos ganhos, 7 negocios perdidos.
  */
 const funilCheio: AcoesFunil = {
   visitas: 546,
-  oportunidades: 112,
-  valorOportunidades: 13_264_057,
+  oportunidades: 141,
+  valorOportunidades: 16_065_886,
+  oportunidadesAbertas: 110,
+  valorOportunidadesAbertas: 12_407_661,
+  entradasEtapaOportunidade: 72,
+  emEtapaOportunidade: 61,
   ganhos: 26,
   perdidos: 7,
   valorPerdido: 1_060_000,
-  visitasPorOportunidade: 4.88,
-  oportPorFechamento: 4.31,
+  visitasPorOportunidade: 3.87,
+  oportPorFechamento: 5.42,
 };
 
 const funilVazio: AcoesFunil = {
   visitas: 120,
   oportunidades: 0,
   valorOportunidades: 0,
+  oportunidadesAbertas: 0,
+  valorOportunidadesAbertas: 0,
+  entradasEtapaOportunidade: 0,
+  emEtapaOportunidade: 0,
   ganhos: 0,
   perdidos: 0,
   valorPerdido: 0,
@@ -41,8 +49,9 @@ describe("AcoesFunilConversao", () => {
   it("should render visitas and oportunidades as the only activity stages", () => {
     render(<AcoesFunilConversao funil={funilCheio} />);
     expect(screen.getByText("546")).toBeInTheDocument();
-    expect(screen.getByText("112")).toBeInTheDocument();
-    expect(screen.getByText(/Oportunidades abertas/)).toBeInTheDocument();
+    expect(screen.getByText("141")).toBeInTheDocument();
+    expect(screen.getByText(/Oportunidades no funil VENDAS/)).toBeInTheDocument();
+    expect(screen.getByText(/Etapa inicial “Oportunidade”/)).toBeInTheDocument();
   });
 
   it("should render ganhos and perdidos as PARALLEL desfechos, each with its own source and unit", () => {
@@ -78,19 +87,19 @@ describe("AcoesFunilConversao", () => {
     expect(screen.queryByText(/^R\$\s?0$/)).toBeNull();
   });
 
-  it("should carry the literal period note — one selector, three competence dates", () => {
+  it("should carry the literal period note — one selector, five competence dates", () => {
     render(<AcoesFunilConversao funil={funilCheio} />);
     expect(
       screen.getByText(
-        "Período dos eventos: ações por conclusão, ganhos por aprovação de pedido e perdas por fechamento de negócio.",
+        "Período dos eventos: visitas por conclusão, oportunidades pela primeira entrada no funil VENDAS, etapa inicial por entrada na etapa, ganhos por aprovação de pedido e perdas por fechamento.",
       ),
     ).toBeInTheDocument();
   });
 
-  it("should warn that oportunidades is a STATE metric and that Tipo de Acao does not move desfechos", () => {
+  it("should explain the funnel opportunity and that Tipo de Acao is outside this quadro", () => {
     render(<AcoesFunilConversao funil={funilCheio} />);
-    expect(screen.getByText(/um ESTADO, nao um evento/i)).toBeInTheDocument();
-    expect(screen.getByText(/afeta so visitas e\s+oportunidades/i)).toBeInTheDocument();
+    expect(screen.getByText(/Oportunidade e a entrada no funil VENDAS/i)).toBeInTheDocument();
+    expect(screen.getByText(/nao e aplicado a este\s+quadro/i)).toBeInTheDocument();
   });
 
   it("should expose perdidosSemAtribuicao only when there is one to expose", () => {

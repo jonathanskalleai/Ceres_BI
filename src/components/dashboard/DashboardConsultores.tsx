@@ -1,21 +1,28 @@
 import { useMemo, useState } from "react";
 import type { Vendedor, Registro, Filters } from "@/types/comercial";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Trophy, Sparkles, TrendingUp, Users, DollarSign } from "lucide-react";
+import { ArrowRight, Trophy, Sparkles, TrendingUp, Users, DollarSign, CalendarDays, Target } from "lucide-react";
 import { filterRegistros, hasActiveFilters } from "@/lib/filterUtils";
 import { ConsultorReportSheet } from "./ConsultorReportSheet";
 import { RankingClientesNovos } from "./RankingClientesNovos";
+import { ConsultoresValidationTable } from "./ConsultoresValidationTable";
 import { cn } from "@/lib/utils";
+import type { RpcConsultorResumoAcoes } from "@/types/consultoresRpc";
+import { formatDateBR } from "@/lib/dateUtils";
 
 interface DashboardConsultoresProps {
   vendedores: Vendedor[];
   registros: Registro[];
   filters: Filters;
+  resumo: RpcConsultorResumoAcoes[];
   onSelectConsultor: (nome: string) => void;
 }
 
-const formatCurrency = (v: number) =>
-  v >= 1e6 ? `R$ ${(v / 1e6).toFixed(1)}M` : `R$ ${(v / 1e3).toFixed(0)}K`;
+const formatCurrency = (v: number) => {
+  if (v >= 1e6) return `R$ ${(v / 1e6).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} mi`;
+  if (v >= 1e3) return `R$ ${(v / 1e3).toLocaleString("pt-BR", { maximumFractionDigits: 0 })} mil`;
+  return `R$ ${v.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`;
+};
 
 const CARD_BASE =
   "relative overflow-hidden rounded-[20px] p-[22px_24px] border";
@@ -40,62 +47,52 @@ function CrmBadge({ q }: { q: number }) {
   );
 }
 
-export const DashboardConsultores = ({ vendedores, registros, filters, onSelectConsultor }: DashboardConsultoresProps) => {
+export const DashboardConsultores = ({ vendedores, registros, filters, resumo, onSelectConsultor }: DashboardConsultoresProps) => {
   const isFiltered = hasActiveFilters(filters);
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const vendedoresRanked = useMemo(() => {
-    if (!isFiltered) {
-      return [...vendedores].sort((a, b) => b.pipeline - a.pipeline);
-    }
+    // Ranking comercial objetivo: valor vendido, visitas e acoes. Os valores
+    // chegam agregados da RPC; nunca sao somados por acao no navegador.
+    const resumoPorConsultor = new Map(resumo.map((item) => [item.consultor, item]));
+    return [...vendedores].sort((a, b) => {
+      const aResumo = resumoPorConsultor.get(a.nome);
+      const bResumo = resumoPorConsultor.get(b.nome);
+      return Number(bResumo?.valor_ganho ?? 0) - Number(aResumo?.valor_ganho ?? 0)
+        || b.visitas - a.visitas
+        || b.totalAcoes - a.totalAcoes
+        || a.nome.localeCompare(b.nome, "pt-BR");
+    });
+  }, [vendedores, resumo]);
 
-    const filtered = filterRegistros(registros, filters);
-    const map = new Map<string, { acoes: number; pipeline: number; clientes: Set<string>; visitas: number }>();
-    for (const r of filtered) {
-      if (!map.has(r.vendedor)) map.set(r.vendedor, { acoes: 0, pipeline: 0, clientes: new Set(), visitas: 0 });
-      const s = map.get(r.vendedor)!;
-      s.acoes++;
-      s.pipeline += r.negocioValor || 0;
-      s.clientes.add(r.cliente);
-      if (r.tipoContato?.toLowerCase().includes("visita")) s.visitas++;
-    }
+  const resumoPorConsultor = useMemo(
+    () => new Map(resumo.map((item) => [item.consultor, item])),
+    [resumo],
+  );
 
-    return vendedores
-      .filter((v) => map.has(v.nome))
-      .map((v) => {
-        const s = map.get(v.nome)!;
-        return { ...v, totalAcoes: s.acoes, pipeline: s.pipeline, clientes: s.clientes.size, visitas: s.visitas };
-      })
-      .sort((a, b) => b.pipeline - a.pipeline);
-  }, [vendedores, registros, filters, isFiltered]);
+  const periodoLabel = filters.dateRange
+    ? `${formatDateBR(filters.dateRange.from)} a ${formatDateBR(filters.dateRange.to)}`
+    : "Período selecionado";
 
-  const maxVals = useMemo(() => ({
-    acoes: Math.max(...vendedoresRanked.map((v) => v.totalAcoes), 1),
-    conv: Math.max(...vendedoresRanked.map((v) => v.conversao), 1),
-    pipe: Math.max(...vendedoresRanked.map((v) => v.pipeline), 1),
-    cli: Math.max(...vendedoresRanked.map((v) => v.clientes), 1),
-    vis: Math.max(...vendedoresRanked.map((v) => v.visitas), 1),
-  }), [vendedoresRanked]);
-
-  const scored = useMemo(() => vendedoresRanked.map((v) => ({
-    ...v,
-    score: (v.totalAcoes / maxVals.acoes * 25 + v.conversao / maxVals.conv * 25 +
-      v.pipeline / maxVals.pipe * 25 + v.clientes / maxVals.cli * 15 + v.visitas / maxVals.vis * 10),
-  })).sort((a, b) => b.score - a.score), [vendedoresRanked, maxVals]);
-
-  const top5 = scored.slice(0, 5);
+  // Topo do ranking segue exatamente a mesma ordem comercial da tabela.
+  const top5 = vendedoresRanked.slice(0, 5);
   const rankLabel = ["01", "02", "03", "04", "05"];
 
   return (
     <div className="p-6 space-y-6">
-      {/* Action bar */}
-      <div className="flex items-center justify-between">
+      {/* Cabeçalho e contexto do calendário */}
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          {isFiltered && (
-            <p className="text-xs font-mono" style={{ color: "var(--voux-text-faint)" }}>
-              {vendedoresRanked.length} consultores filtrados
-            </p>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-xl font-bold tracking-tight" style={{ color: "var(--voux-text-primary)" }}>Desempenho dos consultores</h2>
+            <span className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[10px]" style={{ color: "var(--voux-accent)", borderColor: "var(--voux-card-border)" }}>
+              <CalendarDays className="h-3 w-3" />
+              {periodoLabel}
+            </span>
+          </div>
+          <p className="mt-1 text-xs" style={{ color: "var(--voux-text-faint)" }}>
+            {vendedoresRanked.length} consultores exibidos · ranking por vendas, visitas e ações
+          </p>
         </div>
         <Button
           onClick={() => setSheetOpen(true)}
@@ -118,12 +115,11 @@ export const DashboardConsultores = ({ vendedores, registros, filters, onSelectC
           <div className="flex items-center gap-2">
             <Trophy className="h-3.5 w-3.5" style={{ color: "var(--voux-accent)" }} />
             <span className="font-mono text-[10px] tracking-[0.22em] uppercase" style={{ color: "var(--voux-text-faint)" }}>
-              Ranking Top 5
+              Ranking comercial · vendas, visitas e ações
             </span>
           </div>
           <div
-            className="grid gap-4"
-            style={{ gridTemplateColumns: `repeat(${Math.min(top5.length, 5)}, 1fr)` }}
+            className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5"
           >
             {top5.map((v, i) => (
               <button
@@ -146,12 +142,12 @@ export const DashboardConsultores = ({ vendedores, registros, filters, onSelectC
                   <Trophy className="h-3 w-3 opacity-30" style={{ color: "var(--voux-text-faint)" }} />
                 </div>
                 {/* Nome */}
-                <p className="text-[22px] font-bold leading-none tracking-[-0.02em] mb-2" style={{ color: "var(--voux-text-primary)" }}>
-                  {v.nome.split(" ").slice(-1)[0]}
+                <p className="text-sm font-bold leading-tight tracking-[-0.02em] mb-2" style={{ color: "var(--voux-text-primary)" }}>
+                  {v.nome}
                 </p>
                 {/* Hint */}
                 <p className="font-mono text-[11px]" style={{ color: "var(--voux-text-faint)" }}>
-                  {v.score.toFixed(0)} pts · {formatCurrency(v.pipeline)}
+                  {formatCurrency(Number(resumoPorConsultor.get(v.nome)?.valor_ganho ?? 0))} vendidos · {v.visitas} visitas · {v.totalAcoes} ações
                 </p>
               </button>
             ))}
@@ -159,15 +155,16 @@ export const DashboardConsultores = ({ vendedores, registros, filters, onSelectC
         </div>
       )}
 
-      {/* Ranking de Abertura de Clientes */}
-      <RankingClientesNovos
-        registros={isFiltered ? filterRegistros(registros, filters) : registros}
-        filters={filters}
-      />
-
       {/* Cards de consultores */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {scored.map((v) => (
+      <section className="space-y-3">
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <h3 className="text-base font-semibold" style={{ color: "var(--voux-text-primary)" }}>Todos os consultores</h3>
+            <p className="text-xs" style={{ color: "var(--voux-text-faint)" }}>Vendas, pipeline, atividade e conversão no calendário selecionado.</p>
+          </div>
+        </div>
+      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {vendedoresRanked.map((v) => (
           <div
             key={v.nome}
             className={cn(CARD_BASE, "cursor-pointer group transition-colors")}
@@ -184,41 +181,75 @@ export const DashboardConsultores = ({ vendedores, registros, filters, onSelectC
               <CrmBadge q={v.crmQuality} />
             </div>
 
-            {/* Métricas */}
-            <div className="grid grid-cols-3 gap-3">
+            {/* Resultado comercial: pipeline e vendas no topo; esforço e conversão abaixo. */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="flex items-center gap-1 mb-1">
+                  <DollarSign className="h-3 w-3" style={{ color: "var(--voux-text-faint)" }} />
+                  <span className="font-mono text-[9px] tracking-[0.14em] uppercase" style={{ color: "var(--voux-text-faint)" }}>Vendas</span>
+                </div>
+                <p className="text-[18px] font-bold leading-none" style={{ color: "var(--voux-accent)" }}>{formatCurrency(Number(resumoPorConsultor.get(v.nome)?.valor_ganho ?? 0))}</p>
+                <span className="mt-1 block text-[10px] text-muted-foreground">{resumoPorConsultor.get(v.nome)?.ganhos ?? 0} pedidos aprovados</span>
+              </div>
+              <div>
+                <div className="flex items-center gap-1 mb-1">
+                  <Target className="h-3 w-3" style={{ color: "var(--voux-text-faint)" }} />
+                  <span className="font-mono text-[9px] tracking-[0.14em] uppercase" style={{ color: "var(--voux-text-faint)" }}>Pipeline aberto</span>
+                </div>
+                <p className="text-[18px] font-bold leading-none" style={{ color: "var(--voux-text-primary)" }}>{formatCurrency(Number(resumoPorConsultor.get(v.nome)?.pipeline_aberto_gerado ?? 0))}</p>
+                <span className="mt-1 block text-[10px] text-muted-foreground">
+                  {resumoPorConsultor.get(v.nome)?.oportunidades_abertas ?? 0} oportunidades abertas
+                </span>
+              </div>
+            </div>
+            <div className="mt-4 grid grid-cols-3 border-t pt-4" style={{ borderColor: "var(--voux-card-border)" }}>
               <div>
                 <div className="flex items-center gap-1 mb-1">
                   <TrendingUp className="h-3 w-3" style={{ color: "var(--voux-text-faint)" }} />
                   <span className="font-mono text-[9px] tracking-[0.14em] uppercase" style={{ color: "var(--voux-text-faint)" }}>Ações</span>
                 </div>
-                <p className="text-[22px] font-bold leading-none" style={{ color: "var(--voux-accent)" }}>{v.totalAcoes}</p>
+                <p className="text-xl font-bold leading-none" style={{ color: "var(--voux-text-primary)" }}>{v.totalAcoes}</p>
               </div>
               <div>
                 <div className="flex items-center gap-1 mb-1">
                   <Users className="h-3 w-3" style={{ color: "var(--voux-text-faint)" }} />
-                  <span className="font-mono text-[9px] tracking-[0.14em] uppercase" style={{ color: "var(--voux-text-faint)" }}>Conv.</span>
+                  <span className="font-mono text-[9px] tracking-[0.14em] uppercase" style={{ color: "var(--voux-text-faint)" }}>Visitas</span>
                 </div>
-                <p className="text-[22px] font-bold leading-none" style={{ color: "var(--voux-text-primary)" }}>{v.conversao}%</p>
+                <p className="text-xl font-bold leading-none" style={{ color: "var(--voux-text-primary)" }}>{v.visitas}</p>
               </div>
               <div>
                 <div className="flex items-center gap-1 mb-1">
-                  <DollarSign className="h-3 w-3" style={{ color: "var(--voux-text-faint)" }} />
-                  <span className="font-mono text-[9px] tracking-[0.14em] uppercase" style={{ color: "var(--voux-text-faint)" }}>Pipeline</span>
+                  <Target className="h-3 w-3" style={{ color: "var(--voux-text-faint)" }} />
+                  <span className="font-mono text-[9px] tracking-[0.14em] uppercase" style={{ color: "var(--voux-text-faint)" }}>Conversão</span>
                 </div>
-                <p className="text-[18px] font-bold leading-none" style={{ color: "var(--voux-text-primary)" }}>{formatCurrency(v.pipeline)}</p>
+                <p className="text-xl font-bold leading-none" style={{ color: "var(--voux-text-primary)" }}>{v.conversao == null ? "—" : `${v.conversao}%`}</p>
               </div>
             </div>
 
             {/* Rodapé */}
             <div className="mt-4 flex items-center justify-between">
               <span className="font-mono text-[10px]" style={{ color: "var(--voux-text-faint)" }}>
-                {v.clientes} clientes · {v.visitas} visitas
+                {v.clientes} clientes atendidos
               </span>
               <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-all" style={{ color: "var(--voux-text-faint)" }} />
             </div>
           </div>
         ))}
       </div>
+      </section>
+
+      <RankingClientesNovos
+        registros={isFiltered ? filterRegistros(registros, filters) : registros}
+        filters={filters}
+      />
+
+      {/* Quadro auditavel fica ao final para nao substituir a visao de cards. */}
+      <ConsultoresValidationTable
+        resumo={resumo}
+        from={filters.dateRange?.from ?? ""}
+        to={filters.dateRange?.to ?? ""}
+        onSelectConsultor={onSelectConsultor}
+      />
     </div>
   );
 };

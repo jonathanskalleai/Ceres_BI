@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useClientesPorVendedor, useRegistrosRecentes, useRankingVendedoresV2, useEvolucaoMensal } from "@/hooks/useComercialRpc";
+import { useClientesPorVendedor, useRegistrosRecentes, useEvolucaoMensal } from "@/hooks/useComercialRpc";
+import { useConsultoresResumoAcoes } from "@/hooks/useConsultoresRpc";
 import { useNegociosFilter } from "@/contexts/NegociosFilterContext";
 import { toISODate } from "@/lib/dateUtils";
 import { mapRegistroRecente } from "@/lib/comercialMappers";
@@ -23,7 +24,7 @@ function mapTopCliente(c: RpcClienteVendedor): TopCliente {
 export default function CrmConsultorDetail() {
   const { vendedor: vendedorParam } = useParams<{ vendedor: string }>();
   const navigate = useNavigate();
-  const { dateRange } = useNegociosFilter();
+  const { dateRange, cidade, tipoAcao } = useNegociosFilter();
 
   const nome = decodeURIComponent(vendedorParam || "");
   const from = toISODate(dateRange?.from) ?? "";
@@ -32,11 +33,22 @@ export default function CrmConsultorDetail() {
 
   const { data: clientesRpc, isLoading: loadClientes } = useClientesPorVendedor({ vendedor: nome, from, to, enabled });
   const { data: registrosRpc, isLoading: loadRegistros } = useRegistrosRecentes({ from, to, vendedor: nome, enabled });
-  const { data: rankingRpc, isLoading: loadRanking } = useRankingVendedoresV2({ from, to, limit: 50, enabled });
-  // Evolução mensal vem da RPC (12 meses rolling, server-side) — não derivada de [from,to]
+  const { data: resumoRpc, isLoading: loadResumo } = useConsultoresResumoAcoes({
+    from,
+    to,
+    vendedor: nome,
+    cidade: cidade || undefined,
+    tipoAcao: tipoAcao || undefined,
+    enabled,
+  });
+  // Evolucao mensal respeita o periodo selecionado no filtro global.
   const { data: evolucaoRpc, isLoading: loadEvolucao } = useEvolucaoMensal({ from, to, vendedor: nome, enabled });
 
   const registros = useMemo(() => (registrosRpc ?? []).map(mapRegistroRecente), [registrosRpc]);
+  const resumoConsultor = useMemo(
+    () => resumoRpc?.find((item) => item.consultor === nome) ?? null,
+    [resumoRpc, nome],
+  );
 
   const evolucao: EvolucaoMensal[] = useMemo(
     () =>
@@ -51,10 +63,10 @@ export default function CrmConsultorDetail() {
   );
 
   const vendedor: Vendedor | null = useMemo(() => {
-    if (!rankingRpc || !clientesRpc) return null;
+    if (!resumoRpc || !clientesRpc) return null;
 
-    const v2 = rankingRpc.find((r) => r.vendedor === nome);
-    if (!v2) return null;
+    const resumo = resumoConsultor;
+    if (!resumo) return null;
 
     // Derive tiposAcao from registros
     const tiposAcao: Record<string, number> = {};
@@ -84,21 +96,21 @@ export default function CrmConsultorDetail() {
 
     return {
       nome,
-      totalAcoes: Number(v2.acoes),
-      visitas: Number(v2.visitas),
-      clientes: Number(v2.clientes),
-      pipeline: Number(v2.pipeline),
-      negocios: Number(v2.negocios),
-      conversao: v2.conversao,
-      crmQuality: v2.crm_quality,
+      totalAcoes: Number(resumo.acoes),
+      visitas: Number(resumo.visitas),
+      clientes: Number(resumo.clientes),
+      pipeline: Number(resumo.carteira_ativa_trabalhada),
+      negocios: Number(resumo.negocios_abertos_tocados),
+      conversao: resumo.taxa_ganho,
+      crmQuality: resumo.crm_quality,
       evolucao,
       topClientes,
       regioes,
       tiposAcao,
     };
-  }, [rankingRpc, clientesRpc, registros, evolucao, nome]);
+  }, [resumoConsultor, clientesRpc, registros, evolucao, nome]);
 
-  const isLoading = loadClientes || loadRegistros || loadRanking || loadEvolucao;
+  const isLoading = loadClientes || loadRegistros || loadResumo || loadEvolucao;
 
   if (isLoading) {
     return (
@@ -112,7 +124,7 @@ export default function CrmConsultorDetail() {
     );
   }
 
-  if (!vendedor) {
+  if (!vendedor || !resumoConsultor) {
     return (
       <div className="flex h-full items-center justify-center p-8">
         <p className="text-muted-foreground">Consultor não encontrado.</p>
@@ -123,7 +135,10 @@ export default function CrmConsultorDetail() {
   return (
     <DashboardConsultorDetail
       vendedor={vendedor}
+      resumo={resumoConsultor}
       registros={registros}
+      from={from}
+      to={to}
       onBack={() => navigate("/crm/consultores")}
     />
   );

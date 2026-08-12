@@ -126,7 +126,10 @@ export async function setUserPermissions(
   // The function uses advisory lock + atomic DELETE+INSERT
   const { error } = await supabase.rpc('set_user_permissions_tx', {
     p_user_id: userId,
-    p_permissions: JSON.stringify(permPayload),
+    // Pass the array itself. Stringifying here makes PostgREST receive a JSONB
+    // string rather than a JSONB array, so the RPC deletes rows and skips its
+    // array-only INSERT branch.
+    p_permissions: permPayload,
     p_granted_by: grantedBy,
   });
 

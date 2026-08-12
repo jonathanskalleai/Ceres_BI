@@ -1,0 +1,346 @@
+- generic [ref=e2]:
+  - region "Notifications (F8)":
+    - list
+  - region "Notifications alt+T"
+  - generic [ref=e3]:
+    - complementary [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]: C
+        - generic [ref=e7]:
+          - generic [ref=e8]:
+            - text: Ceres
+            - emphasis [ref=e9]: BI
+          - generic [ref=e10]: Business Intelligence
+        - button [ref=e11] [cursor=pointer]:
+          - img [ref=e12]
+      - navigation [ref=e14]:
+        - generic [ref=e15]:
+          - button "COMERCIAL CRM" [ref=e16] [cursor=pointer]:
+            - generic [ref=e17]: COMERCIAL CRM
+            - img [ref=e19]
+          - generic [ref=e21]:
+            - button "Visão Geral 01" [ref=e22] [cursor=pointer]:
+              - img [ref=e23]
+              - generic [ref=e28]: Visão Geral
+              - generic [ref=e29]: "01"
+            - button "Consultores 02" [ref=e30] [cursor=pointer]:
+              - img [ref=e31]
+              - generic [ref=e36]: Consultores
+              - generic [ref=e37]: "02"
+            - button "Regiões 03" [ref=e38] [cursor=pointer]:
+              - img [ref=e39]
+              - generic [ref=e42]: Regiões
+              - generic [ref=e43]: "03"
+            - button "Registros 04" [ref=e44] [cursor=pointer]:
+              - img [ref=e45]
+              - generic [ref=e47]: Registros
+              - generic [ref=e48]: "04"
+            - button "Clientes Críticos 05" [ref=e49] [cursor=pointer]:
+              - img [ref=e50]
+              - generic [ref=e52]: Clientes Críticos
+              - generic [ref=e53]: "05"
+            - button "Mapa de Ações 06" [ref=e54] [cursor=pointer]:
+              - img [ref=e55]
+              - generic [ref=e57]: Mapa de Ações
+              - generic [ref=e58]: "06"
+            - button "Observações 07" [ref=e59] [cursor=pointer]:
+              - img [ref=e60]
+              - generic [ref=e62]: Observações
+              - generic [ref=e63]: "07"
+            - button "Negócios 08" [ref=e64] [cursor=pointer]:
+              - img [ref=e65]
+              - generic [ref=e70]: Negócios
+              - generic [ref=e71]: "08"
+            - button "Administrativo 09" [ref=e72] [cursor=pointer]:
+              - img [ref=e73]
+              - generic [ref=e76]: Administrativo
+              - generic [ref=e77]: "09"
+        - generic [ref=e78]:
+          - button "BI ANALYTICS" [ref=e79] [cursor=pointer]:
+            - generic [ref=e80]: BI ANALYTICS
+            - img [ref=e82]
+          - button "Dashboard BI 10" [ref=e85] [cursor=pointer]:
+            - img [ref=e86]
+            - generic [ref=e88]: Dashboard BI
+            - generic [ref=e89]: "10"
+        - button "FERRAMENTAS" [ref=e91] [cursor=pointer]:
+          - generic [ref=e92]: FERRAMENTAS
+          - img [ref=e94]
+      - generic [ref=e96]:
+        - paragraph [ref=e125]: "Sync: 19:39"
+        - button "Modo claro" [ref=e97] [cursor=pointer]:
+          - img [ref=e98]
+          - generic [ref=e104]: Modo claro
+    - main [ref=e105]:
+      - generic [ref=e106]:
+        - generic [ref=e107]:
+          - generic [ref=e108]: Ceres BI · BI ANALYTICS
+          - heading "Dashboard BI" [level=1] [ref=e397]
+        - button "Atualizar" [ref=e111] [cursor=pointer]:
+          - img
+          - text: Atualizar
+      - generic [ref=e398]:
+        - generic [ref=e399]:
+          - generic [ref=e400]:
+            - generic [ref=e401]: BI ANALYTICS
+            - heading "Dashboard BI" [level=2] [ref=e402]:
+              - text: Dashboard
+              - emphasis [ref=e403]: BI
+            - paragraph [ref=e404]: Análise completa — SQL Server
+          - generic [ref=e405]:
+            - button "Todas as datas" [ref=e406] [cursor=pointer]:
+              - img
+              - text: Todas as datas
+            - combobox [ref=e407] [cursor=pointer]:
+              - generic: Todos os funis
+              - img [ref=e408]
+            - generic [ref=e410]: Atualizado ha 12 min
+        - generic [ref=e411]:
+          - tablist [ref=e412]:
+            - tab "Comercial" [ref=e413] [cursor=pointer]
+            - tab "Pedidos" [active] [selected] [ref=e414] [cursor=pointer]
+            - tab "Produtos" [ref=e415] [cursor=pointer]
+            - tab "Servicos" [ref=e416] [cursor=pointer]
+            - tab "Operacional" [ref=e417] [cursor=pointer]
+            - tab "Admin" [ref=e418] [cursor=pointer]
+            - tab "Acoes" [ref=e419] [cursor=pointer]
+            - tab "Explorer" [ref=e420] [cursor=pointer]
+          - tabpanel "Pedidos" [ref=e977]:
+            - generic [ref=e978]:
+              - generic [ref=e979]:
+                - generic [ref=e980]:
+                  - generic [ref=e981]:
+                    - generic [ref=e982]: Total Pedidos
+                    - img [ref=e983]
+                  - generic [ref=e987]: "2.011"
+                - generic [ref=e988]:
+                  - generic [ref=e989]:
+                    - generic [ref=e990]: Faturamento (Aprovado)
+                    - img [ref=e991]
+                  - generic [ref=e993]: R$ 163.767.541,14
+                  - paragraph [ref=e994]: receita de pedidos aprovados
+                - generic [ref=e995]:
+                  - generic [ref=e996]:
+                    - generic [ref=e997]: Ticket Medio
+                    - img [ref=e998]
+                  - generic [ref=e1001]: R$ 111.104,17
+                  - paragraph [ref=e1002]: por pedido aprovado
+                - generic [ref=e1003]:
+                  - generic [ref=e1004]:
+                    - generic [ref=e1005]: Taxa de Aprovacao
+                    - img [ref=e1006]
+                  - generic [ref=e1010]: 73.3%
+                - generic [ref=e1011]:
+                  - generic [ref=e1012]:
+                    - generic [ref=e1013]: "% Financiado"
+                    - img [ref=e1014]
+                  - generic [ref=e1016]: 30.4%
+                  - paragraph [ref=e1017]: vs recurso proprio
+                - generic [ref=e1018]:
+                  - generic [ref=e1019]:
+                    - generic [ref=e1020]: Valor Cancelado
+                    - img [ref=e1021]
+                  - generic [ref=e1025]: R$ 76.073.301,58
+                  - paragraph [ref=e1026]: pedidos cancelados
+              - generic [ref=e1027]:
+                - generic [ref=e1028]:
+                  - generic [ref=e1030]:
+                    - heading "Evolucao Mensal do Faturamento" [level=3] [ref=e1031]:
+                      - text: Evolucao Mensal do Faturamento
+                      - img [ref=e1033]
+                    - paragraph [ref=e1035]: Receita aprovada e numero de pedidos por mes
+                  - generic [ref=e1039]:
+                    - img [ref=e1044]:
+                      - generic [ref=e1045]:
+                        - generic [ref=e1046]: jun/2025
+                        - generic [ref=e1049]: R$ 1.995.780,50
+                      - generic [ref=e1050]:
+                        - generic [ref=e1051]: jul/2025
+                        - generic [ref=e1054]: R$ 5.867.965,80
+                      - generic [ref=e1055]:
+                        - generic [ref=e1056]: ago/2025
+                        - generic [ref=e1059]: R$ 2.636.773,56
+                      - generic [ref=e1060]:
+                        - generic [ref=e1061]: set/2025
+                        - generic [ref=e1064]: R$ 4.259.080,00
+                      - generic [ref=e1065]:
+                        - generic [ref=e1066]: out/2025
+                        - generic [ref=e1069]: R$ 638.940,00
+                      - generic [ref=e1070]:
+                        - generic [ref=e1071]: nov/2025
+                        - generic [ref=e1074]: R$ 3.988.240,00
+                      - generic [ref=e1075]:
+                        - generic [ref=e1076]: dez/2025
+                        - generic [ref=e1079]: R$ 2.527.750,00
+                      - generic [ref=e1080]:
+                        - generic [ref=e1081]: jan/2026
+                        - generic [ref=e1084]: R$ 2.673.050,00
+                      - generic [ref=e1085]:
+                        - generic [ref=e1086]: fev/2026
+                        - generic [ref=e1089]: R$ 7.713.544,76
+                      - generic [ref=e1090]:
+                        - generic [ref=e1091]: mar/2026
+                        - generic [ref=e1094]: R$ 4.743.880,90
+                      - generic [ref=e1095]:
+                        - generic [ref=e1096]: abr/2026
+                        - generic [ref=e1099]: R$ 4.218.965,00
+                      - generic [ref=e1100]:
+                        - generic [ref=e1101]: mai/2026
+                        - generic [ref=e1104]: R$ 1.222.593,00
+                    - img [ref=e1108]:
+                      - generic [ref=e1110]: "0"
+                      - generic [ref=e1112]: 25,76
+                      - generic [ref=e1114]: 51,52
+                      - generic [ref=e1116]: 77,28
+                      - generic [ref=e1118]: 103,04
+                      - generic [ref=e1119]: jun/2025
+                      - generic [ref=e1120]: jul/2025
+                      - generic [ref=e1121]: ago/2025
+                      - generic [ref=e1122]: set/2025
+                      - generic [ref=e1123]: out/2025
+                      - generic [ref=e1124]: nov/2025
+                      - generic [ref=e1125]: dez/2025
+                      - generic [ref=e1126]: jan/2026
+                      - generic [ref=e1127]: fev/2026
+                      - generic [ref=e1128]: mar/2026
+                      - generic [ref=e1129]: abr/2026
+                      - generic [ref=e1130]: mai/2026
+                - generic [ref=e1146]:
+                  - generic [ref=e1148]:
+                    - heading "Mix de Pagamento" [level=3] [ref=e1149]
+                    - paragraph [ref=e1150]: Recurso proprio vs financiado (R$ aprovado)
+                  - generic [ref=e1154]:
+                    - img [ref=e1155]:
+                      - generic [ref=e1158]: 163.8M
+                    - generic [ref=e1159]:
+                      - generic [ref=e1160]:
+                        - generic [ref=e1162]: Recurso próprio
+                        - generic [ref=e1163]: 114M
+                      - generic [ref=e1164]:
+                        - generic [ref=e1166]: Financiado
+                        - generic [ref=e1167]: 49.8M
+                - generic [ref=e1168]:
+                  - generic [ref=e1170]:
+                    - heading "Valor por Situacao do Pedido" [level=3] [ref=e1171]
+                    - paragraph [ref=e1172]: R$ em cada status (aprovado, cancelado, etc.)
+                  - img [ref=e1178]:
+                    - generic [ref=e1179]:
+                      - generic [ref=e1180]: Aprovado
+                      - generic [ref=e1183]: R$ 163.767.541,14 (0 pedidos)
+                    - generic [ref=e1184]:
+                      - generic [ref=e1185]: Cancelado
+                      - generic [ref=e1188]: R$ 76.073.301,58 (0 pedidos)
+                    - generic [ref=e1189]:
+                      - generic [ref=e1190]: Sem Situação
+                      - generic [ref=e1193]: R$ 12.407.237,00 (0 pedidos)
+                    - generic [ref=e1194]:
+                      - generic [ref=e1195]: Aberto
+                      - generic [ref=e1198]: R$ 8.328.285,25 (0 pedidos)
+                    - generic [ref=e1199]:
+                      - generic [ref=e1200]: Aguardando Aprovação
+                      - generic [ref=e1203]: R$ 361.440,00 (0 pedidos)
+                - generic [ref=e1204]:
+                  - generic [ref=e1206]:
+                    - heading "Ranking Vendedores — Faturamento" [level=3] [ref=e1207]
+                    - paragraph [ref=e1208]: Top 10 por receita aprovada
+                  - img [ref=e1214]:
+                    - generic [ref=e1215]:
+                      - generic [ref=e1216]: DIEGO JOSE DO AMARAL
+                      - generic [ref=e1219]: R$ 33.023.738,18
+                    - generic [ref=e1220]:
+                      - generic [ref=e1221]: GERIEL DOS SANTOS
+                      - generic [ref=e1224]: R$ 24.629.033,46
+                    - generic [ref=e1225]:
+                      - generic [ref=e1226]: RAUNI FERNANDO PILONETTO
+                      - generic [ref=e1229]: R$ 17.246.861,76
+                    - generic [ref=e1230]:
+                      - generic [ref=e1231]: DIEGO KNOPF
+                      - generic [ref=e1234]: R$ 16.571.601,00
+                    - generic [ref=e1235]:
+                      - generic [ref=e1236]: ANDRE CANDIOTTO
+                      - generic [ref=e1239]: R$ 7.815.937,16
+                    - generic [ref=e1240]:
+                      - generic [ref=e1241]: RODRIGO LUIZ AMARO OSOWSKI
+                      - generic [ref=e1244]: R$ 7.464.984,00
+                    - generic [ref=e1245]:
+                      - generic [ref=e1246]: VIVIANI BASTEZINI
+                      - generic [ref=e1249]: R$ 6.564.200,00
+                    - generic [ref=e1250]:
+                      - generic [ref=e1251]: PEDRO DE CASTRO
+                      - generic [ref=e1254]: R$ 5.869.925,00
+                    - generic [ref=e1255]:
+                      - generic [ref=e1256]: EDIOMAR CARLOS ZILLI
+                      - generic [ref=e1259]: R$ 5.088.300,00
+                    - generic [ref=e1260]:
+                      - generic [ref=e1261]: MAURICIO RICARDO DA SILVA
+                      - generic [ref=e1264]: R$ 5.010.400,00
+                - generic [ref=e1265]:
+                  - generic [ref=e1267]:
+                    - heading "Top Cidades de Entrega" [level=3] [ref=e1268]
+                    - paragraph [ref=e1269]: Faturamento aprovado por cidade/UF
+                  - img [ref=e1275]:
+                    - generic [ref=e1276]:
+                      - generic [ref=e1277]: Vitorino/PR
+                      - generic [ref=e1280]: R$ 5.927.748,20
+                    - generic [ref=e1281]:
+                      - generic [ref=e1282]: Palma Sola/SC
+                      - generic [ref=e1285]: R$ 5.698.000,00
+                    - generic [ref=e1286]:
+                      - generic [ref=e1287]: Xanxerê/SC
+                      - generic [ref=e1290]: R$ 5.302.989,90
+                    - generic [ref=e1291]:
+                      - generic [ref=e1292]: Pato Branco/PR
+                      - generic [ref=e1295]: R$ 4.510.987,12
+                    - generic [ref=e1296]:
+                      - generic [ref=e1297]: Major Vieira/SC
+                      - generic [ref=e1300]: R$ 4.339.420,00
+                    - generic [ref=e1301]:
+                      - generic [ref=e1302]: Faxinal dos Guedes/SC
+                      - generic [ref=e1305]: R$ 4.319.056,50
+                    - generic [ref=e1306]:
+                      - generic [ref=e1307]: Coronel Domingos Soares/PR
+                      - generic [ref=e1310]: R$ 4.206.000,00
+                    - generic [ref=e1311]:
+                      - generic [ref=e1312]: Campos Novos/SC
+                      - generic [ref=e1315]: R$ 3.970.396,00
+                    - generic [ref=e1316]:
+                      - generic [ref=e1317]: Laranjeiras do Sul/PR
+                      - generic [ref=e1320]: R$ 3.915.005,00
+                    - generic [ref=e1321]:
+                      - generic [ref=e1322]: Campo Erê/SC
+                      - generic [ref=e1325]: R$ 3.685.000,00
+                - generic [ref=e1326]:
+                  - generic [ref=e1328]:
+                    - heading "Itens Mais Vendidos — Grupo" [level=3] [ref=e1329]
+                    - paragraph [ref=e1330]: Valor vendido por grupo de produto (itens dos pedidos)
+                  - img [ref=e1336]:
+                    - generic [ref=e1337]:
+                      - generic [ref=e1338]: PLATAFORMA DE SOJA
+                      - generic [ref=e1341]: R$ 75.135.500,00 (0 un)
+                    - generic [ref=e1342]:
+                      - generic [ref=e1343]: PLATAFORMA DE MILHO
+                      - generic [ref=e1346]: R$ 41.494.532,00 (0 un)
+                    - generic [ref=e1347]:
+                      - generic [ref=e1348]: DISTRIBUIDORES DE ARRASTO
+                      - generic [ref=e1351]: R$ 20.754.250,00 (0 un)
+                    - generic [ref=e1352]:
+                      - generic [ref=e1353]: CARRETA GRANELEIRA GTS
+                      - generic [ref=e1356]: R$ 16.148.500,00 (0 un)
+                    - generic [ref=e1357]:
+                      - generic [ref=e1358]: DESCOMPACTADOR
+                      - generic [ref=e1361]: R$ 13.786.200,00 (0 un)
+                    - generic [ref=e1362]:
+                      - generic [ref=e1363]: SRV AP
+                      - generic [ref=e1366]: R$ 10.899.404,93 (0 un)
+                    - generic [ref=e1367]:
+                      - generic [ref=e1368]: PLATAFORMA DE MILHO USADA
+                      - generic [ref=e1371]: R$ 9.692.898,00 (0 un)
+                    - generic [ref=e1372]:
+                      - generic [ref=e1373]: MAQUINAS NOVAS
+                      - generic [ref=e1376]: R$ 7.935.500,00 (0 un)
+                    - generic [ref=e1377]:
+                      - generic [ref=e1378]: PLATAFORMA DE SOJA USADA
+                      - generic [ref=e1381]: R$ 7.888.080,00 (0 un)
+                    - generic [ref=e1382]:
+                      - generic [ref=e1383]: MAQUINAS USADAS
+                      - generic [ref=e1386]: R$ 6.562.000,00 (0 un)

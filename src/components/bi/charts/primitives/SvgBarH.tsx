@@ -28,7 +28,7 @@ export function SvgBarH({
   showValues = true,
   max: maxProp,
   labelW: labelWProp = 220,
-  rowH = 26,
+  rowH = 30,
   onBarEnter,
   onBarLeave,
   onBarClick,
@@ -37,7 +37,10 @@ export function SvgBarH({
   const isNarrow = width < 400;
   const gap = 8;
   const padTop = 4;
-  const valueW = 60;
+  // `valueW` fixo cortava valores monetarios no fim da barra. Reservamos a
+  // largura do maior valor ja formatado antes de calcular a area da barra.
+  const longestValue = Math.max(...data.map((d) => valueFormatter(d.value).length), 0);
+  const valueW = Math.max(68, Math.min(176, longestValue * 7.5 + 14));
   const height = data.length * (rowH + gap) + padTop;
 
   const max = maxProp ?? Math.max(...data.map((d) => d.value), 1);
@@ -105,7 +108,7 @@ export function SvgBarH({
               y={y + rowH / 2 + 4}
               textAnchor="end"
               fontFamily="var(--voux-font-sans)"
-              fontSize={12}
+              fontSize={13}
               fontWeight={500}
               fill="var(--voux-text-primary)"
             >
@@ -145,7 +148,8 @@ export function SvgBarH({
                 x={barX + 8}
                 y={y + rowH / 2 + 4}
                 fontFamily="var(--voux-font-mono)"
-                fontSize={10}
+                fontSize={12}
+                fontWeight={600}
                 fill="var(--voux-text-primary)"
                 letterSpacing="0.02em"
               >

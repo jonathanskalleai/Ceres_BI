@@ -7,23 +7,17 @@ const STALE_TIME = 5 * 60_000; // 5 minutes
 interface UseAcoesMapaOptions {
   vendedor?: string;
   cidade?: string;
-  /** Quando preenchidos, filtra por oportunidades tocadas no periodo. */
+  /** Período da primeira entrada no funil VENDAS que alimenta o mapa. */
   from?: string;
   to?: string;
   /**
-   * O bloco do mapa nasce COLAPSADO: passe `false` enquanto fechado. Sao ~2.240
-   * pinos — buscar (e montar o Leaflet) junto com o resto da tela pesaria o
-   * carregamento inteiro por um bloco que o usuario pode nunca abrir.
+   * Passe `false` enquanto o bloco estiver fechado para não carregar o mapa.
    */
   enabled?: boolean;
 }
 
 /**
- * Hook for rpc_acoes_mapa_oportunidades — pinos das oportunidades abertas.
- *
- * Dois modos:
- * - Sem from/to → ESTOQUE (todas abertas)
- * - Com from/to → PERIODO (tocadas no periodo)
+ * Hook for rpc_acoes_mapa_oportunidades — coorte do funil do período.
  */
 export function useAcoesMapaRpc({ vendedor, cidade, from, to, enabled = true }: UseAcoesMapaOptions) {
   return useQuery<RpcAcoesMapaOportunidades, Error>({

@@ -29,7 +29,8 @@ export interface Vendedor {
   clientes: number;
   pipeline: number;
   negocios: number;
-  conversao: number;
+  /** NULL quando nao ha oportunidade no denominador. */
+  conversao: number | null;
   crmQuality: number;
   evolucao: EvolucaoMensal[];
   topClientes: TopCliente[];

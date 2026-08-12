@@ -44,10 +44,10 @@ export function SvgLine({
 
   if (width === 0 || series.length === 0) return null;
 
-  const padL = 44;
-  const padR = 24;
-  const padT = 24;
-  const padB = 32;
+  const padL = 50;
+  const padR = 28;
+  const padT = 30;
+  const padB = 38;
   const plotW = width - padL - padR;
   const plotH = height - padT - padB;
 
@@ -119,7 +119,7 @@ export function SvgLine({
               y={yy + 4}
               textAnchor="end"
               fontFamily="var(--voux-font-mono)"
-              fontSize={10}
+              fontSize={11}
               fill="var(--voux-text-muted)"
               letterSpacing="0.04em"
             >
@@ -141,7 +141,7 @@ export function SvgLine({
             y={height - padB + 18}
             textAnchor="middle"
             fontFamily="var(--voux-font-mono)"
-            fontSize={10}
+            fontSize={11}
             fill={VOUX_COLORS.inkMuted}
             letterSpacing="0.08em"
           >
@@ -221,7 +221,7 @@ export function SvgLine({
             {showValues && (() => {
               // Show values on ALL points — offset alternates by series to reduce overlap
               const indicesToShow = new Set(validPairs.map(p => p.i));
-              const offsetY = sIdx === 0 ? -10 : 14;
+              const offsetY = sIdx === 0 ? -12 : 16;
               return validPairs
                 .filter(({ v, i }) => v !== 0 && indicesToShow.has(i))
                 .map(({ v, i }) => (
@@ -231,9 +231,10 @@ export function SvgLine({
                     y={yPos(v) + offsetY}
                     textAnchor="middle"
                     fontFamily="var(--voux-font-mono)"
-                    fontSize={9}
-                    fill={s.color ?? VOUX_PALETTE[sIdx % VOUX_PALETTE.length]}
-                    opacity={0.8}
+                    fontSize={12}
+                    fontWeight={600}
+                    fill="var(--voux-chart-value-label)"
+                    opacity={0.95}
                     letterSpacing="0.02em"
                   >
                     {yFmt(v)}

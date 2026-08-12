@@ -35,7 +35,7 @@ export function ChipToggle<T extends string>({ options, value, onChange, ariaLab
     <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={ariaLabel}>
       {prefix && (
         <span
-          className="mr-1 text-[9px] uppercase text-[var(--voux-text-muted)]"
+          className="mr-1 text-[10px] font-medium uppercase text-[var(--voux-text-muted)]"
           style={{ fontFamily: "var(--voux-font-mono)", letterSpacing: "0.22em" }}
         >
           {prefix}
@@ -49,10 +49,10 @@ export function ChipToggle<T extends string>({ options, value, onChange, ariaLab
             type="button"
             onClick={() => onChange(opt.value)}
             aria-pressed={active}
-            className={`h-7 rounded-full border px-3 text-[10px] uppercase transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--voux-champagne-400)] ${
+            className={`h-8 rounded-lg border px-3.5 text-[11px] font-medium uppercase shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--voux-champagne-400)] ${
               active
-                ? "border-[var(--voux-champagne-400)] bg-[var(--voux-champagne-400)]/15 text-[var(--voux-champagne-400)]"
-                : "border-[var(--voux-card-border)] bg-transparent text-[var(--voux-text-muted)] hover:text-[var(--voux-text-primary)]"
+                ? "border-[var(--voux-champagne-400)] bg-[var(--voux-champagne-400)]/20 text-[var(--voux-text-primary)]"
+                : "border-[var(--voux-card-border)] bg-[var(--surface-raised)] text-[var(--voux-text-muted)] hover:border-[var(--voux-text-muted)] hover:text-[var(--voux-text-primary)]"
             }`}
             style={{ fontFamily: "var(--voux-font-mono)", letterSpacing: "0.14em" }}
           >

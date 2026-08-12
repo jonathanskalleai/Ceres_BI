@@ -1,0 +1,336 @@
+- generic [ref=f66e2]:
+  - region "Notifications (F8)":
+    - list
+  - region "Notifications alt+T"
+  - generic [ref=f66e3]:
+    - complementary [ref=f66e4]:
+      - generic [ref=f66e5]:
+        - img "Ceres BI" [ref=f66e6]
+        - button "Recolher sidebar" [ref=f66e7] [cursor=pointer]
+      - navigation [ref=f66e10]:
+        - generic [ref=f66e11]:
+          - button "Visao Geral" [ref=f66e12] [cursor=pointer]
+          - button "Acoes" [ref=f66e19] [cursor=pointer]
+          - button "Negocios" [ref=f66e23] [cursor=pointer]
+          - button "Pedidos" [ref=f66e27] [cursor=pointer]
+          - button "Servicos" [ref=f66e34] [cursor=pointer]
+          - button "Produtividade Tecnica" [ref=f66e41] [cursor=pointer]
+          - button "Base Instalada" [ref=f66e48] [cursor=pointer]
+          - button "Carteira de Clientes" [ref=f66e55] [cursor=pointer]
+          - button "Inteligencia" [ref=f66e60] [cursor=pointer]
+          - button "Painel Comercial" [ref=f66e64] [cursor=pointer]
+          - button "Equipe" [ref=f66e71] [cursor=pointer]
+          - button "Atividades" [ref=f66e78] [cursor=pointer]
+          - button "Mapa de Cobertura" [ref=f66e82] [cursor=pointer]
+          - button "Pipeline" [ref=f66e86] [cursor=pointer]
+          - button "Clientes sem Contato" [ref=f66e93] [cursor=pointer]
+          - button "Notas de Campo" [ref=f66e97] [cursor=pointer]
+          - button "Gestao Interna" [ref=f66e101] [cursor=pointer]
+          - button "Relatorio Anual" [ref=f66e106] [cursor=pointer]
+          - button "Meu Perfil" [ref=f66e113] [cursor=pointer]
+          - generic [ref=f66e118]:
+            - button "Configuracoes" [ref=f66e119] [cursor=pointer]
+            - generic [ref=f66e127]:
+              - button "Monitor ETL" [ref=f66e128] [cursor=pointer]
+              - button "Explorador de Dados" [ref=f66e134] [cursor=pointer]
+              - button "Gerenciar Usuarios" [ref=f66e140] [cursor=pointer]
+      - generic [ref=f66e147]:
+        - generic [ref=f66e148]:
+          - generic [ref=f66e149]: J
+          - generic [ref=f66e151]: Jonathan
+        - button "Modo escuro" [ref=f66e152] [cursor=pointer]
+        - button "Sair" [ref=f66e156] [cursor=pointer]
+    - main [ref=f66e161]:
+      - generic [ref=f66e162]:
+        - heading "Visao Geral" [level=1] [ref=f66e164]
+        - generic [ref=f66e166]:
+          - button "01 jul 2026 – 31 jul 2026" [ref=f66e167] [cursor=pointer]
+          - combobox [ref=f66e168] [cursor=pointer]:
+            - generic: Todos
+          - combobox [ref=f66e171] [cursor=pointer]:
+            - generic: Todos os funis
+          - combobox [ref=f66e174] [cursor=pointer]:
+            - generic: Todos vendedores
+          - combobox [ref=f66e177] [cursor=pointer]:
+            - generic: Todas cidades
+          - combobox [ref=f66e180] [cursor=pointer]:
+            - generic: Todos tipos
+          - button "Limpar" [ref=f66e183] [cursor=pointer]
+      - generic [ref=f66e184]:
+        - generic [ref=f66e186]:
+          - tablist [ref=f66e187]:
+            - tab "Cards" [selected] [ref=f66e188] [cursor=pointer]
+            - tab "Graficos" [ref=f66e189] [cursor=pointer]
+          - tabpanel "Cards" [ref=f66e190]:
+            - generic [ref=f66e191]:
+              - generic [ref=f66e192]:
+                - generic [ref=f66e193]: Total Negocios
+                - generic "133" [ref=f66e199]
+                - generic [ref=f66e200]:
+                  - generic [ref=f66e201]: ↓
+                  - generic [ref=f66e202]: 166 per. anterior
+                  - generic [ref=f66e203]: "Periodo anterior: 166"
+              - generic [ref=f66e204]:
+                - generic [ref=f66e205]: Ganhos
+                - generic "26" [ref=f66e211]
+                - generic [ref=f66e212]:
+                  - generic [ref=f66e213]: ↑
+                  - generic [ref=f66e214]: 24 per. anterior
+                  - generic [ref=f66e215]: "Periodo anterior: 24"
+              - generic [ref=f66e216]:
+                - generic [ref=f66e217]: Perdidos
+                - generic "2" [ref=f66e223]
+                - generic [ref=f66e224]:
+                  - generic [ref=f66e225]: ↓
+                  - generic [ref=f66e226]: 17 per. anterior
+                  - generic [ref=f66e227]: "Periodo anterior: 17"
+              - generic [ref=f66e228]:
+                - generic [ref=f66e229]: Em Andamento
+                - generic "105" [ref=f66e234]
+                - generic [ref=f66e235]:
+                  - generic [ref=f66e236]: ↓
+                  - generic [ref=f66e237]: 125 per. anterior
+                  - generic [ref=f66e238]: "Periodo anterior: 125"
+              - generic [ref=f66e239]:
+                - generic [ref=f66e240]: Taxa de Conversao
+                - generic "19.5%" [ref=f66e247]
+                - generic [ref=f66e248]:
+                  - generic [ref=f66e249]: ↑
+                  - generic [ref=f66e250]: 14.5% per. anterior
+                  - generic [ref=f66e251]: "Periodo anterior: 14.5%"
+              - generic [ref=f66e252]:
+                - generic [ref=f66e253]: Ciclo Medio
+                - generic "29 dias" [ref=f66e259]
+                - generic [ref=f66e260]:
+                  - generic [ref=f66e261]: ↑
+                  - generic [ref=f66e262]: 44 dias per. anterior
+                  - generic [ref=f66e263]: "Periodo anterior: 44 dias"
+              - generic [ref=f66e264]:
+                - generic [ref=f66e265]: Esforco Medio
+                - generic "1" [ref=f66e271]
+                - generic [ref=f66e272]:
+                  - generic [ref=f66e273]: →
+                  - generic [ref=f66e274]: 1 per. anterior
+                  - generic [ref=f66e275]: "Periodo anterior: 1"
+              - generic [ref=f66e276]:
+                - generic [ref=f66e277]: Conversao Pedido
+                - generic "100.0%" [ref=f66e284]
+                - generic [ref=f66e285]:
+                  - generic [ref=f66e286]: ↑
+                  - generic [ref=f66e287]: 70.8% per. anterior
+                  - generic [ref=f66e288]: "Periodo anterior: 70.8%"
+              - generic [ref=f66e289]:
+                - generic [ref=f66e290]: Valor Ganho
+                - generic "R$ 3.527.725,30" [ref=f66e295]: R$ 3,5 mi
+                - generic [ref=f66e296]:
+                  - generic [ref=f66e297]: ↑
+                  - generic [ref=f66e298]: R$ 2,8 mi per. anterior
+                  - generic [ref=f66e299]: "Periodo anterior: R$ 2,8 mi"
+              - generic [ref=f66e300]:
+                - generic [ref=f66e301]: Valor Perdido
+                - generic "R$ 275.000,00" [ref=f66e307]: R$ 275.000
+                - generic [ref=f66e308]:
+                  - generic [ref=f66e309]: ↓
+                  - generic [ref=f66e310]: R$ 2,7 mi per. anterior
+                  - generic [ref=f66e311]: "Periodo anterior: R$ 2,7 mi"
+              - generic [ref=f66e312]:
+                - generic [ref=f66e313]: Pipeline Aberto
+                - generic "R$ 17.188.726,25" [ref=f66e319]: R$ 17,2 mi
+                - generic [ref=f66e320]:
+                  - generic [ref=f66e321]: ↑
+                  - generic [ref=f66e322]: R$ 16,8 mi per. anterior
+                  - generic [ref=f66e323]: "Periodo anterior: R$ 16,8 mi"
+              - generic [ref=f66e324]:
+                - generic [ref=f66e325]: Ticket Medio
+                - generic "R$ 135.681,74" [ref=f66e330]: R$ 135.682
+                - generic [ref=f66e331]:
+                  - generic [ref=f66e332]: ↑
+                  - generic [ref=f66e333]: R$ 115.577 per. anterior
+                  - generic [ref=f66e334]: "Periodo anterior: R$ 115.577"
+              - generic [ref=f66e335]:
+                - generic [ref=f66e336]: Faturamento
+                - generic "R$ 3.339.890,00" [ref=f66e341]: R$ 3,3 mi
+                - generic [ref=f66e342]:
+                  - generic [ref=f66e343]: ↑
+                  - generic [ref=f66e344]: R$ 2,2 mi per. anterior
+                  - generic [ref=f66e345]: "Periodo anterior: R$ 2,2 mi"
+              - generic [ref=f66e346]:
+                - generic [ref=f66e347]: Total Pedidos
+                - generic "32" [ref=f66e354]
+                - generic [ref=f66e355]:
+                  - generic [ref=f66e356]: ↑
+                  - generic [ref=f66e357]: 17 per. anterior
+                  - generic [ref=f66e358]: "Periodo anterior: 17"
+              - generic [ref=f66e359]:
+                - generic [ref=f66e360]: Taxa Aprovacao
+                - generic "90.6%" [ref=f66e366]
+                - generic [ref=f66e367]:
+                  - generic [ref=f66e368]: ↓
+                  - generic [ref=f66e369]: 100.0% per. anterior
+                  - generic [ref=f66e370]: "Periodo anterior: 100.0%"
+              - generic [ref=f66e371]:
+                - generic [ref=f66e372]: Mix Financiamento
+                - generic "25.0%" [ref=f66e379]
+                - generic [ref=f66e380]:
+                  - generic [ref=f66e381]: ↑
+                  - generic [ref=f66e382]: 17.6% per. anterior
+                  - generic [ref=f66e383]: "Periodo anterior: 17.6%"
+              - generic [ref=f66e384]:
+                - generic [ref=f66e385]: Clientes Ativos
+                - generic "2.903" [ref=f66e393]
+                - generic [ref=f66e394]:
+                  - generic [ref=f66e395]: →
+                  - generic [ref=f66e396]: 0 per. anterior
+                  - generic [ref=f66e397]: "Periodo anterior: 0"
+              - generic [ref=f66e398]:
+                - generic [ref=f66e399]: Prospects
+                - generic "5.838" [ref=f66e407]
+                - generic [ref=f66e408]:
+                  - generic [ref=f66e409]: →
+                  - generic [ref=f66e410]: 0 per. anterior
+                  - generic [ref=f66e411]: "Periodo anterior: 0"
+              - generic [ref=f66e412]:
+                - generic [ref=f66e413]: Parque Maquinas
+                - generic "1.572" [ref=f66e418]
+                - generic [ref=f66e419]:
+                  - generic [ref=f66e420]: →
+                  - generic [ref=f66e421]: 0 per. anterior
+                  - generic [ref=f66e422]: "Periodo anterior: 0"
+            - heading "— ACOES / OPERACIONAL" [level=2] [ref=f66e423]
+            - generic [ref=f66e424]:
+              - generic [ref=f66e425]:
+                - generic [ref=f66e426]: Total Acoes
+                - generic "711" [ref=f66e432]
+                - generic [ref=f66e433]:
+                  - generic [ref=f66e434]: ↓
+                  - generic [ref=f66e435]: 756 per. anterior
+                  - generic [ref=f66e436]: "Periodo anterior: 756"
+              - generic [ref=f66e437]:
+                - generic [ref=f66e438]: Total Visitas
+                - generic "445" [ref=f66e444]
+                - generic [ref=f66e445]:
+                  - generic [ref=f66e446]: ↓
+                  - generic [ref=f66e447]: 461 per. anterior
+                  - generic [ref=f66e448]: "Periodo anterior: 461"
+              - generic [ref=f66e449]:
+                - generic [ref=f66e450]: 1 - Prospecção Maq
+                - generic "320" [ref=f66e456]
+                - generic [ref=f66e457]:
+                  - generic [ref=f66e458]: ↑
+                  - generic [ref=f66e459]: 215 per. anterior
+                  - generic [ref=f66e460]: "Periodo anterior: 215"
+              - generic [ref=f66e461]:
+                - generic [ref=f66e462]: 9 - Assuntos Financeiro
+                - generic "78" [ref=f66e468]
+                - generic [ref=f66e469]:
+                  - generic [ref=f66e470]: ↑
+                  - generic [ref=f66e471]: 44 per. anterior
+                  - generic [ref=f66e472]: "Periodo anterior: 44"
+              - generic [ref=f66e473]:
+                - generic [ref=f66e474]: 0 - Cliente Novo
+                - generic "75" [ref=f66e480]
+                - generic [ref=f66e481]:
+                  - generic [ref=f66e482]: ↓
+                  - generic [ref=f66e483]: 127 per. anterior
+                  - generic [ref=f66e484]: "Periodo anterior: 127"
+              - generic [ref=f66e485]:
+                - generic [ref=f66e486]: 11- Repasse de máquina
+                - generic "67" [ref=f66e492]
+                - generic [ref=f66e493]:
+                  - generic [ref=f66e494]: ↑
+                  - generic [ref=f66e495]: 36 per. anterior
+                  - generic [ref=f66e496]: "Periodo anterior: 36"
+              - generic [ref=f66e497]:
+                - generic [ref=f66e498]: 7 - Pós-Vendas AP
+                - generic "30" [ref=f66e504]
+                - generic [ref=f66e505]:
+                  - generic [ref=f66e506]: ↓
+                  - generic [ref=f66e507]: 112 per. anterior
+                  - generic [ref=f66e508]: "Periodo anterior: 112"
+              - generic [ref=f66e509]:
+                - generic [ref=f66e510]: 6 - Pós-Vendas Máquinas
+                - generic "27" [ref=f66e516]
+                - generic [ref=f66e517]:
+                  - generic [ref=f66e518]: ↑
+                  - generic [ref=f66e519]: 13 per. anterior
+                  - generic [ref=f66e520]: "Periodo anterior: 13"
+              - generic [ref=f66e521]:
+                - generic [ref=f66e522]: 2 - Prospecção AP
+                - generic "25" [ref=f66e528]
+                - generic [ref=f66e529]:
+                  - generic [ref=f66e530]: ↓
+                  - generic [ref=f66e531]: 115 per. anterior
+                  - generic [ref=f66e532]: "Periodo anterior: 115"
+              - generic [ref=f66e533]:
+                - generic [ref=f66e534]: 19 - Entrega agricultura de precisao
+                - generic "16" [ref=f66e540]
+                - generic [ref=f66e541]:
+                  - generic [ref=f66e542]: ↑
+                  - generic [ref=f66e543]: 0 per. anterior
+                  - generic [ref=f66e544]: "Periodo anterior: 0"
+              - generic [ref=f66e545]:
+                - generic [ref=f66e546]: 17- Prospecção de peças
+                - generic "8" [ref=f66e552]
+                - generic [ref=f66e553]:
+                  - generic [ref=f66e554]: ↑
+                  - generic [ref=f66e555]: 1 per. anterior
+                  - generic [ref=f66e556]: "Periodo anterior: 1"
+              - generic [ref=f66e557]:
+                - generic [ref=f66e558]: 16 - Alinhamento / Treinamento
+                - generic "7" [ref=f66e564]
+                - generic [ref=f66e565]:
+                  - generic [ref=f66e566]: ↑
+                  - generic [ref=f66e567]: 0 per. anterior
+                  - generic [ref=f66e568]: "Periodo anterior: 0"
+              - generic [ref=f66e569]:
+                - generic [ref=f66e570]: 10- Fechamento de AP( pedido fechado)
+                - generic "4" [ref=f66e576]
+                - generic [ref=f66e577]:
+                  - generic [ref=f66e578]: ↓
+                  - generic [ref=f66e579]: 10 per. anterior
+                  - generic [ref=f66e580]: "Periodo anterior: 10"
+              - generic [ref=f66e581]:
+                - generic [ref=f66e582]: 5 - Demonstração
+                - generic "3" [ref=f66e588]
+                - generic [ref=f66e589]:
+                  - generic [ref=f66e590]: ↓
+                  - generic [ref=f66e591]: 9 per. anterior
+                  - generic [ref=f66e592]: "Periodo anterior: 9"
+              - generic [ref=f66e593]:
+                - generic [ref=f66e594]: 3 - Documentação
+                - generic "2" [ref=f66e600]
+                - generic [ref=f66e601]:
+                  - generic [ref=f66e602]: ↓
+                  - generic [ref=f66e603]: 6 per. anterior
+                  - generic [ref=f66e604]: "Periodo anterior: 6"
+              - generic [ref=f66e605]:
+                - generic [ref=f66e606]: 4 - Entrega setor maquinas
+                - generic "2" [ref=f66e612]
+                - generic [ref=f66e613]:
+                  - generic [ref=f66e614]: ↓
+                  - generic [ref=f66e615]: 32 per. anterior
+                  - generic [ref=f66e616]: "Periodo anterior: 32"
+              - generic [ref=f66e617]:
+                - generic [ref=f66e618]: 8 - Agendamento de coleta
+                - generic "2" [ref=f66e624]
+                - generic [ref=f66e625]:
+                  - generic [ref=f66e626]: ↑
+                  - generic [ref=f66e627]: 1 per. anterior
+                  - generic [ref=f66e628]: "Periodo anterior: 1"
+              - generic [ref=f66e629]:
+                - generic [ref=f66e630]: 18- Prospecção serviços / revisão
+                - generic "1" [ref=f66e636]
+                - generic [ref=f66e637]:
+                  - generic [ref=f66e638]: ↑
+                  - generic [ref=f66e639]: 0 per. anterior
+                  - generic [ref=f66e640]: "Periodo anterior: 0"
+              - generic [ref=f66e641]:
+                - generic [ref=f66e642]: 12- Prospecção de SEGURO
+                - generic "1" [ref=f66e648]
+                - generic [ref=f66e649]:
+                  - generic [ref=f66e650]: ↑
+                  - generic [ref=f66e651]: 0 per. anterior
+                  - generic [ref=f66e652]: "Periodo anterior: 0"
+        - button "Expand BI debug overlay" [ref=f66e654] [cursor=pointer]:
+          - generic [ref=f66e655]: +
+          - generic [ref=f66e656]: BI DEBUG

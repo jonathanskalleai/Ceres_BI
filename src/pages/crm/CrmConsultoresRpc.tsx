@@ -1,28 +1,28 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardConsultores } from "@/components/dashboard/DashboardConsultores";
-import { useRankingVendedoresV2, useRegistrosRecentes } from "@/hooks/useComercialRpc";
+import { useRegistrosRecentes } from "@/hooks/useComercialRpc";
+import { useConsultoresResumoAcoes } from "@/hooks/useConsultoresRpc";
 import { useNegociosFilter } from "@/contexts/NegociosFilterContext";
 import { toISODate } from "@/lib/dateUtils";
 import type { Filters, Vendedor } from "@/types/comercial";
 import { Skeleton } from "@/components/ui/skeleton";
 import { mapRegistroRecente } from "@/lib/comercialMappers";
-import type { RpcRankingVendedorV2 } from "@/types/comercialRpc";
+import type { RpcConsultorResumoAcoes } from "@/types/consultoresRpc";
 
 /**
- * Maps a RpcRankingVendedorV2 row to the Vendedor domain shape.
- * Fields not provided by the RPC (evolucao, topClientes, regioes, tiposAcao)
- * are left as empty arrays/objects — DashboardConsultores only reads the scalar fields.
+ * Maps the Acoes-aligned consultant summary to the existing UI domain shape.
+ * The pipeline is Carteira Ativa Trabalhada, never a sum of action values.
  */
-function mapVendedor(r: RpcRankingVendedorV2): Vendedor {
+function mapVendedor(r: RpcConsultorResumoAcoes): Vendedor {
   return {
-    nome: r.vendedor,
+    nome: r.consultor,
     totalAcoes: Number(r.acoes),
     visitas: Number(r.visitas),
     clientes: Number(r.clientes),
-    pipeline: Number(r.pipeline),
-    negocios: Number(r.negocios),
-    conversao: r.conversao,
+    pipeline: Number(r.carteira_ativa_trabalhada),
+    negocios: Number(r.negocios_abertos_tocados),
+    conversao: r.taxa_ganho,
     crmQuality: r.crm_quality,
     evolucao: [],
     topClientes: [],
@@ -36,7 +36,7 @@ function mapVendedor(r: RpcRankingVendedorV2): Vendedor {
  * CrmConsultoresRpc — RPC-backed consultores page.
  */
 export default function CrmConsultoresRpc() {
-  const { dateRange, cidade } = useNegociosFilter();
+  const { dateRange, cidade, vendedor, tipoAcao, categoria, funil } = useNegociosFilter();
   const navigate = useNavigate();
 
   const from = toISODate(dateRange?.from) ?? "";
@@ -45,30 +45,34 @@ export default function CrmConsultoresRpc() {
 
   const filters: Filters = {
     cidade: cidade,
-    tipoAcao: "",
-    categoria: "",
-    funil: "",
+    tipoAcao,
+    categoria,
+    funil,
     dateRange: from && to ? { from, to } : undefined,
   };
 
-  const { data: rankingRpc, isLoading: loadingRanking } = useRankingVendedoresV2({
+  const { data: resumoRpc, isLoading: loadingResumo } = useConsultoresResumoAcoes({
     from,
     to,
+    vendedor: vendedor || undefined,
+    cidade: cidade || undefined,
+    tipoAcao: tipoAcao || undefined,
     enabled,
   });
 
-  // Fetch registros only when city or vendedor filter is active
-  // (the component uses them for filtered re-aggregation)
+  // Registro detalhado permanece somente para o ranking navegavel de clientes.
+  // Os cards e o Top 5 usam exclusivamente os agregados server-side acima.
   const { data: registrosRpc, isLoading: loadingRegistros } = useRegistrosRecentes({
     from,
     to,
+    vendedor: vendedor || undefined,
     cidade: cidade || undefined,
     enabled,
   });
 
   const vendedores = useMemo<Vendedor[]>(
-    () => (rankingRpc ?? []).map(mapVendedor),
-    [rankingRpc],
+    () => (resumoRpc ?? []).map(mapVendedor),
+    [resumoRpc],
   );
 
   const registros = useMemo(
@@ -76,7 +80,7 @@ export default function CrmConsultoresRpc() {
     [registrosRpc],
   );
 
-  if (loadingRanking || loadingRegistros) {
+  if (loadingResumo || loadingRegistros) {
     return (
       <div className="p-6 space-y-4">
         <Skeleton className="h-8 w-48" />
@@ -95,6 +99,7 @@ export default function CrmConsultoresRpc() {
       vendedores={vendedores}
       registros={registros}
       filters={filters}
+      resumo={resumoRpc ?? []}
       onSelectConsultor={(nome) => navigate(`/crm/consultores/${encodeURIComponent(nome)}`)}
     />
   );

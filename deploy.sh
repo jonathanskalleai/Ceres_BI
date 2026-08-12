@@ -26,8 +26,8 @@ if [ ! -f .env ]; then
   exit 1
 fi
 
-echo "==> Pulling latest main (as $(whoami))..."
-git pull origin main
+echo "==> Skipping git pull (code deployed via rsync from Mac)..."
+# git pull origin main   # disabled — code synced via rsync, no .git present
 
 echo "==> Building image ${IMAGE_TAG}..."
 sudo docker build -t "${IMAGE_TAG}" .

@@ -73,7 +73,7 @@ export const RankingClientesNovos = ({ registros, filters }: RankingClientesNovo
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
           <Users className="h-5 w-5 text-primary" />
-          <CardTitle className="text-sm font-semibold">Ranking — Abertura de Clientes</CardTitle>
+          <CardTitle className="text-sm font-semibold">Clientes atendidos por consultor</CardTitle>
         </div>
         <span className="text-xs text-muted-foreground">
           Clientes atendidos por consultor · Clique para expandir

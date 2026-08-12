@@ -1,0 +1,25 @@
+- generic [ref=f44e2]:
+  - region "Notifications (F8)":
+    - list
+  - region "Notifications alt+T":
+    - list:
+      - listitem [ref=f44e17]:
+        - generic [ref=f44e21]:
+          - generic [ref=f44e22]: Falha no login
+          - generic [ref=f44e23]: Invalid login credentials
+  - generic [ref=f44e5]:
+    - generic [ref=f44e6]:
+      - heading "CeresBI" [level=1] [ref=f44e7]
+      - paragraph [ref=f44e8]: Sistema de Business Intelligence
+    - generic [ref=f44e9]:
+      - generic [ref=f44e10]:
+        - generic [ref=f44e11]: Email
+        - textbox "Email" [ref=f44e12]:
+          - /placeholder: seu@email.com
+          - text: qa-gate-inexistente@example.invalid
+      - generic [ref=f44e13]:
+        - generic [ref=f44e14]: Senha
+        - textbox "Senha" [ref=f44e15]:
+          - /placeholder: "******"
+          - text: senha-invalida-qa-gate
+      - button "Entrar" [ref=f44e16] [cursor=pointer]

@@ -132,6 +132,7 @@
     --voux-text-heading:     #0e0d0a;
     --voux-text-muted:       #2a2620;
     --voux-text-faint:       #3d362d;
+    --voux-chart-value-label:#000000;
     --voux-accent:           #6e542f;
     --voux-skeleton:         #efe9dc;
     --voux-surface:          #fdfbf6;
@@ -193,6 +194,7 @@
     --voux-text-heading:     #ece5d4;
     --voux-text-muted:       #b3a89a;
     --voux-text-faint:       #a39a8c;
+    --voux-chart-value-label:#ffffff;
 
     /* Status (dark: tons mais luminosos para contraste sobre fundo escuro) */
     --voux-success: #7dc688;
@@ -303,3 +305,18 @@
 .font-display { font-family: var(--voux-font-display); }
 .font-mono-voux { font-family: var(--voux-font-mono); }
 .text-champagne { color: var(--voux-champagne-400); }
+
+/* Mapa de oportunidades: o hover usa o mesmo resumo completo do clique. */
+.leaflet-tooltip.mapa-oportunidade-tooltip {
+  max-width: 280px;
+  padding: 10px 12px;
+  white-space: normal;
+  color: var(--voux-text-primary);
+  background: var(--surface-raised);
+  border: 1px solid var(--voux-card-border);
+  border-radius: 12px;
+  box-shadow: var(--voux-card-shadow);
+}
+.leaflet-tooltip-top.mapa-oportunidade-tooltip::before {
+  border-top-color: var(--surface-raised);
+}

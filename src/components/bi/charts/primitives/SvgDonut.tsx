@@ -13,6 +13,8 @@ export interface SvgDonutProps {
   thickness?: number;
   centerLabel?: string;
   centerValue?: string;
+  /** Rotulos com linhas-guia; em cards estreitos o wrapper usa legenda HTML. */
+  showLabels?: boolean;
   /** Called with a value to produce the legend text */
   fmt?: (v: number) => string;
   onSegmentEnter?: (segIndex: number, x: number, y: number) => void;
@@ -50,6 +52,7 @@ export function SvgDonut({
   thickness = 22,
   centerLabel,
   centerValue,
+  showLabels = true,
   fmt = fmtCompact,
   onSegmentEnter,
   onSegmentLeave,
@@ -57,9 +60,9 @@ export function SvgDonut({
   if (width === 0) return null;
 
   // Horizontal padding for leader-line labels that extend beyond the donut
-  const labelPadX = 80;
+  const labelPadX = showLabels ? 150 : 0;
   const svgW = width + labelPadX * 2;
-  const svgH = height + 20;
+  const svgH = height + (showLabels ? 20 : 0);
   const cx = svgW / 2;
   const cy = svgH / 2;
   const r = Math.min(width / 2, height / 2) - 10;
@@ -104,7 +107,7 @@ export function SvgDonut({
         ))}
 
         {/* Leader lines + external labels */}
-        {segments.map((seg, i) => {
+        {showLabels && segments.map((seg, i) => {
           // Skip tiny slices (<3%) to avoid clutter
           if (seg.frac < 0.03) return null;
           const cos = Math.cos(seg.midAngle);

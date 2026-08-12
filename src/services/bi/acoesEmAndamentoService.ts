@@ -12,7 +12,11 @@ export interface AcoesEmAndamentoRow {
   cidade: string;
   consultor: string;
   etapa: string | null;
+  produto: string | null;
+  observacaoNegocio: string | null;
   valor: number | null;
+  /** Data de cadastro do negócio no CRM; distinta da data da última ação. */
+  dataCadastroNegocio: string | null;
   ultimaAcao: string | null;
   dataUltimaAcao: string | null;
   /** Dias desde a última ação. Ordenação da RPC: diasParado DESC. */

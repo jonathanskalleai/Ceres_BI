@@ -13,6 +13,7 @@ import type {
   RpcParqueRenovacaoBI,
   RpcOperacionalBI,
   RpcProdutosBI,
+  AcoesBIEvolucaoMensalAnoCorrente,
 } from "@/types/biRpc";
 
 /** Unwrap Supabase RPC response — single-JSON RPCs may return wrapped in array. */
@@ -165,7 +166,8 @@ export async function fetchAdminBI(cidade?: string): Promise<RpcAdminBI> {
 }
 
 /**
- * Calls rpc_acoes_bi — returns aggregated action metrics as JSON.
+ * Calls rpc_acoes_bi_periodo — returns action metrics with every visual
+ * aggregate constrained to the selected calendar interval.
  */
 export async function fetchAcoesBI(params: {
   from?: string;
@@ -182,11 +184,68 @@ export async function fetchAcoesBI(params: {
     if (params.tipoAcao) rpcParams.p_tipo_acao = params.tipoAcao;
     if (params.cidade) rpcParams.p_cidade = params.cidade;
 
-    const { data, error } = await supabase.rpc("rpc_acoes_bi", rpcParams);
+    const { data, error } = await supabase.rpc("rpc_acoes_bi_periodo", rpcParams);
     if (error) throw new Error(error.message);
     return unwrapRpc<RpcAcoesBI>(data);
   } catch (err) {
     throw new Error(`[biRpcService.fetchAcoesBI] ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
+}
+
+/**
+ * Calls rpc_acoes_visitas_mensal — serie de visitas por mes, no mesmo recorte
+ * de filtros de /bi/acoes. Separada do agregado principal para manter o
+ * contrato existente de rpc_acoes_bi estavel.
+ */
+export async function fetchAcoesVisitasMensal(params: {
+  from?: string;
+  to?: string;
+  vendedor?: string;
+  tipoAcao?: string;
+  cidade?: string;
+}): Promise<{ name: string; visitas: number }[]> {
+  try {
+    const rpcParams: Record<string, unknown> = {};
+    if (params.from) rpcParams.p_from = params.from;
+    if (params.to) rpcParams.p_to = params.to;
+    if (params.vendedor) rpcParams.p_vendedor = params.vendedor;
+    if (params.tipoAcao) rpcParams.p_tipo_acao = params.tipoAcao;
+    if (params.cidade) rpcParams.p_cidade = params.cidade;
+
+    const { data, error } = await supabase.rpc("rpc_acoes_visitas_mensal", rpcParams);
+    if (error) throw new Error(error.message);
+    // Esta RPC RETORNA um JSON array. Ao contrario das RPCs que retornam um
+    // objeto JSON, nao podemos usar `unwrapRpc`: ele pegaria apenas o primeiro
+    // mes e entregaria um objeto onde o grafico espera uma lista.
+    return Array.isArray(data) ? data as { name: string; visitas: number }[] : [];
+  } catch (err) {
+    throw new Error(`[biRpcService.fetchAcoesVisitasMensal] ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
+}
+
+/**
+ * Calls rpc_acoes_evolucao_mensal_ano_corrente. The two evolution charts in
+ * /bi/acoes intentionally always span January through the current month;
+ * unlike the remaining visuals, the calendar period does not constrain them.
+ */
+export async function fetchAcoesEvolucaoMensalAnoCorrente(params: {
+  vendedor?: string;
+  tipoAcao?: string;
+  cidade?: string;
+}): Promise<AcoesBIEvolucaoMensalAnoCorrente[]> {
+  try {
+    const rpcParams: Record<string, unknown> = {};
+    if (params.vendedor) rpcParams.p_vendedor = params.vendedor;
+    if (params.tipoAcao) rpcParams.p_tipo_acao = params.tipoAcao;
+    if (params.cidade) rpcParams.p_cidade = params.cidade;
+
+    const { data, error } = await supabase.rpc("rpc_acoes_evolucao_mensal_ano_corrente", rpcParams);
+    if (error) throw new Error(error.message);
+    // Esta RPC retorna diretamente uma lista JSON, sem o wrapper de objeto
+    // usado pelas demais agregacoes de BI.
+    return Array.isArray(data) ? data as AcoesBIEvolucaoMensalAnoCorrente[] : [];
+  } catch (err) {
+    throw new Error(`[biRpcService.fetchAcoesEvolucaoMensalAnoCorrente] ${err instanceof Error ? err.message : "Unknown error"}`);
   }
 }
 

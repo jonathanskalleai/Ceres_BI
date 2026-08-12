@@ -24,9 +24,12 @@ export function AppSidebar({ onNavClick }: AppSidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { isDark, toggle: toggleTheme } = useTheme();
-  const { visibleModules, isLoading, isAdmin } = usePermissions();
-  const { profile, signOut } = useAuth();
-  const [collapsed, setCollapsed] = useState(false);
+  const { visibleModules, isLoading } = usePermissions();
+  const { isAdmin, profile, signOut } = useAuth();
+  const [collapsed, setCollapsed] = useState(true);
+  // No desktop a barra inicia recolhida e so muda por clique. A versao mobile
+  // ocupa a largura do Sheet e deve permanecer expandida.
+  const isCollapsed = !onNavClick && collapsed;
 
   const navItems = useMemo(() => buildNavItems(visibleModules, isAdmin), [visibleModules, isAdmin]);
 
@@ -44,15 +47,15 @@ export function AppSidebar({ onNavClick }: AppSidebarProps) {
       <aside
         className={cn(
           'shrink-0 flex flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200 sidebar-scroll',
-          onNavClick ? 'w-full' : (collapsed ? 'w-[56px]' : 'w-[200px]'),
+          onNavClick ? 'w-full' : (isCollapsed ? 'w-[56px]' : 'w-[200px]'),
         )}
         style={onNavClick ? { height: '100%', overflowY: 'auto' } : { height: '100vh', position: 'sticky', top: 0, overflowY: 'auto' }}
       >
         {/* Brand */}
         <div
           className={cn(
-            'flex items-center border-b border-sidebar-border',
-            collapsed ? 'p-3 justify-center' : 'px-4 py-4 justify-between',
+            'relative flex items-center border-b border-sidebar-border',
+            isCollapsed ? 'p-3 justify-center' : 'px-4 py-4 justify-between',
           )}
         >
           <img
@@ -60,35 +63,29 @@ export function AppSidebar({ onNavClick }: AppSidebarProps) {
             alt="Ceres BI"
             className={cn(
               'object-contain',
-              collapsed ? 'h-8 w-8' : 'h-10 flex-1',
+              isCollapsed ? 'h-8 w-8' : 'h-10 flex-1',
             )}
           />
-          {!collapsed && (
+          {!onNavClick && (
             <button
-              onClick={() => setCollapsed(true)}
-              className="opacity-40 hover:opacity-80 transition-opacity text-sidebar-foreground"
-              aria-label="Recolher sidebar"
+              type="button"
+              onClick={() => setCollapsed((value) => !value)}
+              className={cn(
+                "rounded p-1 opacity-55 transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-primary",
+                isCollapsed && "absolute right-0.5 top-1/2 -translate-y-1/2",
+              )}
+              aria-label={isCollapsed ? "Expandir barra lateral" : "Recolher barra lateral"}
+              title={isCollapsed ? "Expandir barra lateral" : "Recolher barra lateral"}
             >
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M10 3L5 8l5 5" />
-              </svg>
-            </button>
-          )}
-          {collapsed && (
-            <button
-              onClick={() => setCollapsed(false)}
-              className="opacity-40 hover:opacity-80 transition-opacity text-sidebar-foreground mt-1"
-              aria-label="Expandir sidebar"
-            >
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M6 3l5 5-5 5" />
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden="true">
+                {isCollapsed ? <path d="M6 3l5 5-5 5" /> : <path d="M10 3L5 8l5 5" />}
               </svg>
             </button>
           )}
         </div>
 
         {/* Nav — flat list sorted by sort_order */}
-        <nav className={cn('flex-1 py-4', collapsed ? 'px-2' : 'px-3')}>
+        <nav className={cn('flex-1 py-4', isCollapsed ? 'px-2' : 'px-3')}>
           {isLoading ? (
             <div className="space-y-2 px-2">
               {Array.from({ length: 4 }).map((_, i) => (
@@ -110,7 +107,7 @@ export function AppSidebar({ onNavClick }: AppSidebarProps) {
                       icon={item.icon}
                       items={item.children}
                       defaultOpen={true}
-                      collapsed={collapsed}
+                      collapsed={isCollapsed}
                       isActive={isActive}
                       onItemClick={handleItemClick}
                     />
@@ -119,7 +116,7 @@ export function AppSidebar({ onNavClick }: AppSidebarProps) {
                       key={item.id}
                       item={item}
                       active={isActive(item)}
-                      collapsed={collapsed}
+                      collapsed={isCollapsed}
                       onClick={() => handleItemClick(item)}
                     />
                   )
@@ -133,11 +130,11 @@ export function AppSidebar({ onNavClick }: AppSidebarProps) {
         <div
           className={cn(
             'border-t border-sidebar-border',
-            collapsed ? 'p-2 flex flex-col items-center gap-2' : 'p-4 space-y-3',
+            isCollapsed ? 'p-2 flex flex-col items-center gap-2' : 'p-4 space-y-3',
           )}
         >
           {/* User info */}
-          {profile && !collapsed && (
+          {profile && !isCollapsed && (
             <div className="flex items-center gap-2 px-[10px]">
               <div className="flex-shrink-0 w-7 h-7 rounded-full bg-sidebar-accent flex items-center justify-center">
                 <span
@@ -158,13 +155,13 @@ export function AppSidebar({ onNavClick }: AppSidebarProps) {
             onClick={toggleTheme}
             className={cn(
               'flex items-center gap-2 rounded-lg text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors',
-              collapsed ? 'p-2' : 'w-full px-[10px] py-2 text-[12px]',
+              isCollapsed ? 'p-2' : 'w-full px-[10px] py-2 text-[12px]',
             )}
           >
             {isDark
               ? <Sun className="h-4 w-4 flex-shrink-0" />
               : <Moon className="h-4 w-4 flex-shrink-0" />}
-            {!collapsed && <span>{isDark ? 'Modo claro' : 'Modo escuro'}</span>}
+            {!isCollapsed && <span>{isDark ? 'Modo claro' : 'Modo escuro'}</span>}
           </button>
 
           {/* Logout */}
@@ -172,12 +169,12 @@ export function AppSidebar({ onNavClick }: AppSidebarProps) {
             onClick={signOut}
             className={cn(
               'flex items-center gap-2 rounded-lg text-sidebar-foreground/60 hover:text-destructive hover:bg-sidebar-accent transition-colors',
-              collapsed ? 'p-2' : 'w-full px-[10px] py-2 text-[12px]',
+              isCollapsed ? 'p-2' : 'w-full px-[10px] py-2 text-[12px]',
             )}
             aria-label="Sair"
           >
             <LogOut className="h-4 w-4 flex-shrink-0" />
-            {!collapsed && <span>Sair</span>}
+            {!isCollapsed && <span>Sair</span>}
           </button>
         </div>
       </aside>

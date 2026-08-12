@@ -3,6 +3,7 @@ import type {
   AcoesGestaoListaRow,
   AcoesGestaoListaTipo,
   AcoesGestaoListas,
+  AcoesTaxaGanhoNegocios,
   RpcAcoesFunilGestao,
   RpcAcoesMapaOportunidades,
 } from "@/types/biRpc";
@@ -32,6 +33,12 @@ const FUNIL_DEFAULTS: RpcAcoesFunilGestao = {
     visitas: 0,
     oportunidades: 0,
     valorOportunidades: 0,
+    oportunidadesAbertas: 0,
+    valorOportunidadesAbertas: 0,
+    negociosAbertosTocadosNoPeriodo: 0,
+    valorPipelineAbertoTocadoNoPeriodo: 0,
+    entradasEtapaOportunidade: 0,
+    emEtapaOportunidade: 0,
     ganhos: 0,
     perdidos: 0,
     valorPerdido: 0,
@@ -46,6 +53,12 @@ const FUNIL_DEFAULTS: RpcAcoesFunilGestao = {
     perdidosSemAtribuicao: 0,
     somaGanhosRanking: 0,
   },
+};
+
+const TAXA_GANHO_DEFAULTS: AcoesTaxaGanhoNegocios = {
+  ganhos: 0,
+  oportunidades: 0,
+  taxaGanho: null,
 };
 
 /**
@@ -84,6 +97,69 @@ export async function fetchAcoesFunilGestao(params: {
   }
 }
 
+/**
+ * Agregados da pagina /bi/acoes com oportunidades por COORTE: primeira entrada
+ * no funil VENDAS dentro do periodo selecionado. Mantem a RPC historica acima
+ * para os cards de estoque do painel geral, que nao podem trocar de significado.
+ */
+export async function fetchAcoesFunilGestaoPeriodo(params: {
+  from?: string;
+  to?: string;
+  vendedor?: string;
+  cidade?: string;
+}): Promise<RpcAcoesFunilGestao> {
+  try {
+    const rpcParams: Record<string, unknown> = {};
+    if (params.from) rpcParams.p_from = params.from;
+    if (params.to) rpcParams.p_to = params.to;
+    if (params.vendedor) rpcParams.p_vendedor = params.vendedor;
+    if (params.cidade) rpcParams.p_cidade = params.cidade;
+
+    const { data, error } = await supabase.rpc("rpc_acoes_funil_gestao_periodo", rpcParams);
+    if (error) throw new Error(error.message);
+
+    const raw = unwrapRpc<Partial<RpcAcoesFunilGestao> | null>(data);
+    return {
+      funil: { ...FUNIL_DEFAULTS.funil, ...raw?.funil },
+      rankingConsultores: raw?.rankingConsultores ?? [],
+      diasParados: { ...FUNIL_DEFAULTS.diasParados, ...raw?.diasParados },
+      meta: { ...FUNIL_DEFAULTS.meta, ...raw?.meta },
+    };
+  } catch (err) {
+    throw new Error(
+      `[acoesGestaoService.fetchAcoesFunilGestaoPeriodo] ${err instanceof Error ? err.message : "Unknown error"}`,
+    );
+  }
+}
+
+/**
+ * Taxa operacional: ganhos / oportunidades abertas tocadas no periodo. A RPC
+ * reutiliza o agregado de funil para manter exatamente o mesmo denominador.
+ */
+export async function fetchAcoesTaxaGanhoNegocios(params: {
+  from?: string;
+  to?: string;
+  vendedor?: string;
+  cidade?: string;
+}): Promise<AcoesTaxaGanhoNegocios> {
+  try {
+    const rpcParams: Record<string, unknown> = {};
+    if (params.from) rpcParams.p_from = params.from;
+    if (params.to) rpcParams.p_to = params.to;
+    if (params.vendedor) rpcParams.p_vendedor = params.vendedor;
+    if (params.cidade) rpcParams.p_cidade = params.cidade;
+
+    const { data, error } = await supabase.rpc("rpc_acoes_taxa_ganho_negocios", rpcParams);
+    if (error) throw new Error(error.message);
+
+    return { ...TAXA_GANHO_DEFAULTS, ...unwrapRpc<Partial<AcoesTaxaGanhoNegocios> | null>(data) };
+  } catch (err) {
+    throw new Error(
+      `[acoesGestaoService.fetchAcoesTaxaGanhoNegocios] ${err instanceof Error ? err.message : "Unknown error"}`,
+    );
+  }
+}
+
 export interface FetchAcoesGestaoListasParams {
   tipo: AcoesGestaoListaTipo;
   from?: string;
@@ -96,6 +172,8 @@ export interface FetchAcoesGestaoListasParams {
   /** Recorte da faixa clicada no chart "Clientes em Risco" (drill-down). */
   diasMin?: number;
   diasMax?: number;
+  /** Lista anual de carteira; nao usar nos graficos filtrados por calendario. */
+  anoCorrente?: boolean;
 }
 
 /**
@@ -109,18 +187,28 @@ export async function fetchAcoesGestaoListas<TRow extends AcoesGestaoListaRow>(
   params: FetchAcoesGestaoListasParams,
 ): Promise<AcoesGestaoListas<TRow>> {
   try {
-    const rpcParams: Record<string, unknown> = { p_tipo: params.tipo };
-    if (params.from) rpcParams.p_from = params.from;
-    if (params.to) rpcParams.p_to = params.to;
+    // "Muitas visitas, poucas oportunidades" e anual SOMENTE no card de
+    // gestao de carteira. O mesmo tipo de lista alimenta o modo Clientes do
+    // grafico Esforco x Retorno e, nesse caso, deve respeitar o calendario.
+    const isDesperdicioAno = params.tipo === "desperdicio" && params.anoCorrente === true;
+    const rpcName = isDesperdicioAno
+      ? "rpc_acoes_desperdicio_ano_corrente"
+      : "rpc_acoes_gestao_listas";
+    const rpcParams: Record<string, unknown> = isDesperdicioAno
+      ? {}
+      : { p_tipo: params.tipo };
+
+    if (!isDesperdicioAno && params.from) rpcParams.p_from = params.from;
+    if (!isDesperdicioAno && params.to) rpcParams.p_to = params.to;
     if (params.vendedor) rpcParams.p_vendedor = params.vendedor;
     if (params.cidade) rpcParams.p_cidade = params.cidade;
     if (params.limit != null) rpcParams.p_limit = params.limit;
     if (params.offset != null) rpcParams.p_offset = params.offset;
     if (params.search) rpcParams.p_search = params.search;
-    if (params.diasMin != null) rpcParams.p_dias_min = params.diasMin;
-    if (params.diasMax != null) rpcParams.p_dias_max = params.diasMax;
+    if (!isDesperdicioAno && params.diasMin != null) rpcParams.p_dias_min = params.diasMin;
+    if (!isDesperdicioAno && params.diasMax != null) rpcParams.p_dias_max = params.diasMax;
 
-    const { data, error } = await supabase.rpc("rpc_acoes_gestao_listas", rpcParams);
+    const { data, error } = await supabase.rpc(rpcName, rpcParams);
     if (error) throw new Error(error.message);
 
     const raw = unwrapRpc<Partial<AcoesGestaoListas<TRow>> | null>(data);
@@ -143,15 +231,13 @@ const MAPA_DEFAULTS: RpcAcoesMapaOportunidades = {
   semCoordenada: 0,
   valorTotal: 0,
   valorNoMapa: 0,
-  meta: { viaAcao: 0, viaCarteira: 0 },
+  meta: { viaAcao: 0, viaCarteira: 0, abertos: 0, ganhos: 0, perdidos: 0 },
 };
 
 /**
- * Calls rpc_acoes_mapa_oportunidades — pinos das oportunidades abertas.
- *
- * Dois modos (toggle no painel do mapa):
- * - Sem from/to → ESTOQUE: todas as oportunidades abertas (comportamento original)
- * - Com from/to → PERIODO: oportunidades que tiveram acao no periodo (filtro via JOIN)
+ * Calls rpc_acoes_mapa_oportunidades — a mesma coorte de oportunidades do
+ * funil: primeira entrada em VENDAS no período. Ganhos vêm de pedido aprovado,
+ * perdas de fechamento, e REPASSE DE MAQUINA nunca entra.
  */
 export async function fetchAcoesMapaOportunidades(params: {
   vendedor?: string;

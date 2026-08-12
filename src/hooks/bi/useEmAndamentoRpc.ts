@@ -13,6 +13,8 @@ interface UseEmAndamentoRpcOptions {
   cidade?: string;
   /** Pagina atual (1-based). Default 1. */
   page?: number;
+  /** Limite de linhas; o modal de alertas busca a carteira completa uma vez. */
+  limit?: number;
   enabled?: boolean;
 }
 
@@ -28,16 +30,16 @@ export function useEmAndamentoRpc({
   vendedor,
   cidade,
   page = 1,
+  limit = EM_ANDAMENTO_PAGE_SIZE,
   enabled = true,
 }: UseEmAndamentoRpcOptions) {
-  const limit = EM_ANDAMENTO_PAGE_SIZE;
-  const offset = (page - 1) * EM_ANDAMENTO_PAGE_SIZE;
+  const offset = (page - 1) * limit;
 
   return useQuery<RpcEmAndamento, Error>({
     queryKey: [
       "rpc", "acoes-em-andamento",
       from ?? null, to ?? null, vendedor ?? null, cidade ?? null,
-      page,
+      page, limit,
     ],
     queryFn: () => fetchAcoesEmAndamento({ from, to, vendedor, cidade, limit, offset }),
     staleTime: STALE_TIME,

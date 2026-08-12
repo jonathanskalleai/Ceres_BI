@@ -1,0 +1,139 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - emphasis [ref=e6]: V
+      - generic [ref=e7]:
+        - generic [ref=e8]:
+          - text: Ceres
+          - emphasis [ref=e9]: BI
+        - generic [ref=e10]: Business Intelligence
+    - generic [ref=e11]:
+      - generic [ref=e12]: Visão Geral
+      - link "Dashboard 01" [ref=e13] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e14]
+        - generic [ref=e19]: Dashboard
+        - generic [ref=e20]: "01"
+    - generic [ref=e21]:
+      - generic [ref=e22]: CRM
+      - link "Comercial 02" [ref=e23] [cursor=pointer]:
+        - /url: comercial.html
+        - img [ref=e24]
+        - generic [ref=e27]: Comercial
+        - generic [ref=e28]: "02"
+      - link "Pedidos 03" [ref=e29] [cursor=pointer]:
+        - /url: pedidos.html
+        - img [ref=e30]
+        - generic [ref=e33]: Pedidos
+        - generic [ref=e34]: "03"
+      - link "Ações CRM 04" [ref=e35] [cursor=pointer]:
+        - /url: acoes.html
+        - img [ref=e36]
+        - generic [ref=e39]: Ações CRM
+        - generic [ref=e40]: "04"
+    - generic [ref=e41]:
+      - generic [ref=e42]: Operação
+      - link "Operacional 05" [ref=e43] [cursor=pointer]:
+        - /url: operacional.html
+        - img [ref=e44]
+        - generic [ref=e46]: Operacional
+        - generic [ref=e47]: "05"
+      - link "Produtos 06" [ref=e48] [cursor=pointer]:
+        - /url: produtos.html
+        - img [ref=e49]
+        - generic [ref=e52]: Produtos
+        - generic [ref=e53]: "06"
+      - link "Serviços 07" [ref=e54] [cursor=pointer]:
+        - /url: servicos.html
+        - img [ref=e55]
+        - generic [ref=e58]: Serviços
+        - generic [ref=e59]: "07"
+    - generic [ref=e60]:
+      - generic [ref=e61]: CR
+      - generic [ref=e62]:
+        - generic [ref=e63]: Ceres BI
+        - generic [ref=e64]: CRM Analytics
+  - main [ref=e65]:
+    - generic [ref=e68]:
+      - generic [ref=e69]:
+        - generic [ref=e70]:
+          - generic [ref=e71]:
+            - generic [ref=e72]: 01 · Negócios
+            - img [ref=e74]
+          - generic [ref=e77]: —
+          - generic [ref=e78]: carregando…
+        - generic [ref=e79]:
+          - generic [ref=e80]:
+            - generic [ref=e81]: 02 · Taxa de Conversão
+            - img [ref=e83]
+          - generic [ref=e85]: —
+          - generic [ref=e86]: "% (ganhos / concluídos)"
+        - generic [ref=e87]:
+          - generic [ref=e88]:
+            - generic [ref=e89]: 03 · Pipeline Aberto
+            - img [ref=e91]
+          - generic [ref=e93]: —
+          - generic [ref=e94]: em negociação
+        - generic [ref=e95]:
+          - generic [ref=e96]:
+            - generic [ref=e97]: 04 · Valor Ganho
+            - img [ref=e99]
+          - generic [ref=e102]: —
+          - generic [ref=e103]: —
+        - generic [ref=e104]:
+          - generic [ref=e105]:
+            - generic [ref=e106]: 05 · Ciclo de Vendas
+            - img [ref=e108]
+          - generic [ref=e111]: —
+          - generic [ref=e112]: média dos concluídos
+        - generic [ref=e113]:
+          - generic [ref=e114]:
+            - generic [ref=e115]: 06 · Esforço Médio
+            - img [ref=e117]
+          - generic [ref=e119]: —
+          - generic [ref=e120]: por negócio
+      - generic [ref=e121]:
+        - article [ref=e122]:
+          - generic [ref=e124]:
+            - generic [ref=e125]: 01 · Funil de Vendas
+            - heading "Pipeline por Etapa" [level=3] [ref=e126]:
+              - text: Pipeline
+              - emphasis [ref=e127]: por Etapa
+          - paragraph [ref=e128]: Valor em aberto (R$) acumulado em cada etapa do funil
+        - article [ref=e130]:
+          - generic [ref=e132]:
+            - generic [ref=e133]: 02 · Origem do Lead
+            - heading "Conversão por Canal" [level=3] [ref=e134]:
+              - text: Conversão
+              - emphasis [ref=e135]: por Canal
+          - paragraph [ref=e136]: Negócios por canal de entrada (ganho / perdido / em aberto)
+      - generic [ref=e138]:
+        - article [ref=e139]:
+          - generic [ref=e141]:
+            - generic [ref=e142]: 03 · Motivos de Perda
+            - heading "Valor Perdido" [level=3] [ref=e143]:
+              - text: Valor
+              - emphasis [ref=e144]: Perdido
+          - paragraph [ref=e145]: Onde a receita está vazando (R$ em negócios perdidos)
+        - article [ref=e147]:
+          - generic [ref=e149]:
+            - generic [ref=e150]: 04 · Ranking de Consultores
+            - heading "Valor Ganho" [level=3] [ref=e151]:
+              - text: Valor
+              - emphasis [ref=e152]: Ganho
+          - paragraph [ref=e153]: Top 10 por receita fechada
+      - generic [ref=e155]:
+        - article [ref=e156]:
+          - generic [ref=e158]:
+            - generic [ref=e159]: 05 · Evolução Mensal
+            - heading "Novos Negócios" [level=3] [ref=e160]:
+              - text: Novos
+              - emphasis [ref=e161]: Negócios
+          - paragraph [ref=e162]: Por data de cadastro
+        - article [ref=e164]:
+          - generic [ref=e166]:
+            - generic [ref=e167]: 06 · Evolução Mensal
+            - heading "Valor Criado" [level=3] [ref=e168]:
+              - text: Valor
+              - emphasis [ref=e169]: Criado
+          - paragraph [ref=e170]: Valor negociado por mês

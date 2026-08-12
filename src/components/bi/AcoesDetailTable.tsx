@@ -24,7 +24,7 @@ interface Props {
 }
 
 function matches(row: AcoesDetalheItem, term: string): boolean {
-  return [row.consultor, row.cliente, row.cidade, row.tipoAcao, row.tipoContato, row.observacao, row.data, row.etapa]
+  return [row.consultor, row.cliente, row.cidade, row.tipoAcao, row.tipoContato, row.observacao, row.observacaoNegocio, row.produto, row.data, row.etapa]
     .some((v) => (v ?? "").toLowerCase().includes(term));
 }
 
@@ -49,9 +49,13 @@ function AcoesDetailRow({ row, index, expanded, onToggle }: RowProps) {
         <td className="py-2 px-2 text-[var(--voux-text-soft)] truncate max-w-[130px]">{row.tipoAcao ?? "—"}</td>
         <td className="py-2 px-2 text-[var(--voux-text-soft)] truncate max-w-[110px]">{row.tipoContato ?? "—"}</td>
         <td className="py-2 px-2 text-[var(--voux-text-soft)] truncate max-w-[120px]">{row.etapa ?? "—"}</td>
+        <td className="py-2 px-2 text-[var(--voux-text-primary)] truncate max-w-[180px]" title={row.produto ?? undefined}>{row.produto ?? "— sem produto vinculado —"}</td>
         <td className="py-2 px-2 text-[var(--voux-text-primary)] tabular-nums whitespace-nowrap">{row.valor != null ? `R$ ${row.valor.toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : "—"}</td>
         <td className="py-2 px-2 text-[var(--voux-text-soft)] max-w-[340px]">
           <span className="block truncate">{truncateObs(row.observacao ?? undefined, OBS_INLINE_CHARS)}</span>
+        </td>
+        <td className="py-2 px-2 text-[var(--voux-text-soft)] max-w-[300px]" title={row.observacaoNegocio ?? undefined}>
+          <span className="block truncate">{truncateObs(row.observacaoNegocio ?? undefined, OBS_INLINE_CHARS)}</span>
         </td>
         <td className="py-2 pl-2 w-8">
           <button
@@ -68,7 +72,7 @@ function AcoesDetailRow({ row, index, expanded, onToggle }: RowProps) {
       </tr>
       {expanded && (
         <tr className={zebra}>
-          <td colSpan={10} className="p-0">
+          <td colSpan={12} className="p-0">
             <div id={panelId} className="px-3 py-3 bg-foreground/[0.03] border-t border-[var(--voux-card-border)]/30 space-y-2">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-[11px]">
                 <div>
@@ -87,11 +91,21 @@ function AcoesDetailRow({ row, index, expanded, onToggle }: RowProps) {
                   <span className="text-[var(--voux-text-muted)]">Tipo de Contato</span>
                   <p className="font-medium text-[var(--voux-text-primary)]">{row.tipoContato ?? "—"}</p>
                 </div>
+                <div>
+                  <span className="text-[var(--voux-text-muted)]">Produto(s) do negocio</span>
+                  <p className="font-medium text-[var(--voux-text-primary)]">{row.produto ?? "— sem produto vinculado —"}</p>
+                </div>
               </div>
               <div>
-                <span className="text-[11px] text-[var(--voux-text-muted)]">Observacao completa</span>
+                <span className="text-[11px] text-[var(--voux-text-muted)]">Observacao completa da acao</span>
                 <p className="mt-1 text-xs leading-relaxed text-[var(--voux-text-primary)] whitespace-pre-wrap">
                   {row.observacao?.trim() ? row.observacao : "— sem observacao registrada —"}
+                </p>
+              </div>
+              <div>
+                <span className="text-[11px] text-[var(--voux-text-muted)]">Observacao do negocio</span>
+                <p className="mt-1 text-xs leading-relaxed text-[var(--voux-text-primary)] whitespace-pre-wrap">
+                  {row.observacaoNegocio?.trim() ? row.observacaoNegocio : "— sem observacao registrada —"}
                 </p>
               </div>
             </div>
@@ -139,7 +153,7 @@ export function AcoesDetailTable({ rows, total, page, pageSize, totalPages, onPa
         type="search"
         value={search}
         onChange={(e) => { setSearch(e.target.value); setExpandedIndex(null); }}
-        placeholder="Buscar cliente, consultor, observacao..."
+        placeholder="Buscar cliente, produto, observacao..."
         aria-label="Buscar nas acoes do periodo"
         className="h-8 w-full sm:w-72 rounded-md border border-[var(--voux-card-border)] bg-transparent pl-8 pr-2 text-xs text-[var(--voux-text-primary)] placeholder:text-[var(--voux-text-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--voux-champagne-400)]"
       />
@@ -177,8 +191,10 @@ export function AcoesDetailTable({ rows, total, page, pageSize, totalPages, onPa
               <th className={TH}>Tipo Acao</th>
               <th className={TH}>Contato</th>
               <th className={TH}>Etapa</th>
+              <th className={TH}>Produto(s)</th>
               <th className={TH}>Valor</th>
-              <th className={TH}>Observacao</th>
+              <th className={TH}>Obs. Acao</th>
+              <th className={TH}>Obs. Negocio</th>
               <th className="py-2 pl-2 w-8"><span className="sr-only">Detalhes</span></th>
             </tr>
           </thead>
@@ -194,7 +210,7 @@ export function AcoesDetailTable({ rows, total, page, pageSize, totalPages, onPa
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={10} className="py-6 text-center text-[var(--voux-text-muted)]">
+                <td colSpan={12} className="py-6 text-center text-[var(--voux-text-muted)]">
                   {search.trim() ? "Nenhuma acao corresponde a busca." : "Nenhuma acao nesta pagina."}
                 </td>
               </tr>

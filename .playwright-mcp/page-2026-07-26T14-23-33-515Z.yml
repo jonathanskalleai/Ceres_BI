@@ -1,0 +1,18 @@
+- generic [ref=f46e2]:
+  - region "Notifications (F8)":
+    - list
+  - region "Notifications alt+T"
+  - generic [ref=f46e5]:
+    - generic [ref=f46e6]:
+      - heading "CeresBI" [level=1] [ref=f46e7]
+      - paragraph [ref=f46e8]: Sistema de Business Intelligence
+    - generic [ref=f46e9]:
+      - generic [ref=f46e10]:
+        - generic [ref=f46e11]: Email
+        - textbox "Email" [ref=f46e12]:
+          - /placeholder: seu@email.com
+      - generic [ref=f46e13]:
+        - generic [ref=f46e14]: Senha
+        - textbox "Senha" [ref=f46e15]:
+          - /placeholder: "******"
+      - button "Entrar" [disabled] [ref=f46e16]

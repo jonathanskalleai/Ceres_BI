@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ModuleGuard } from "@/components/auth/ModuleGuard";
+import { FirstAccessibleModuleRedirect } from "@/components/auth/FirstAccessibleModuleRedirect";
 import { LoginPage } from "@/components/auth/LoginPage";
 import { AppShell } from "@/components/layout/AppShell";
 import BiLayout from "./components/bi/BiLayout";
@@ -91,8 +92,8 @@ const App = () => (
                 </ProtectedRoute>
               }
             >
-              {/* Root redirect */}
-              <Route index element={<Navigate to="/bi/painel" replace />} />
+              {/* A pagina inicial respeita a primeira permissao visivel do usuario. */}
+              <Route index element={<FirstAccessibleModuleRedirect />} />
 
               {/* CRM — wrapped by CrmLayout (shared filter context + topbar portal) */}
               <Route path="crm" element={<CrmLayout />}>
@@ -110,7 +111,7 @@ const App = () => (
 
               {/* BI — wrapped by BiLayout (shared filter context + topbar portal) */}
               <Route path="bi" element={<BiLayout />}>
-                <Route index element={<Navigate to="painel" replace />} />
+                <Route index element={<FirstAccessibleModuleRedirect modulePrefix="bi." />} />
                 <Route path="painel" element={<ModuleGuard moduleId="bi.painel"><LazySuspense><BiPainel /></LazySuspense></ModuleGuard>} />
                 <Route path="comercial" element={<ModuleGuard moduleId="bi.comercial"><LazySuspense><BiComercial /></LazySuspense></ModuleGuard>} />
                 <Route path="pedidos" element={<ModuleGuard moduleId="bi.pedidos"><LazySuspense><BiPedidos /></LazySuspense></ModuleGuard>} />

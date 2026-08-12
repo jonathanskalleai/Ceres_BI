@@ -61,7 +61,7 @@ function SemContatoTable({ rows }: { rows: AcoesSemContatoRow[] }) {
   );
 }
 
-/** Esforco gasto por cliente sem oportunidade levantada — UX Opcao D: InlineBar + badge NULL. */
+/** Esforco por cliente: a propria coluna de oportunidades informa o retorno levantado. */
 export function DesperdicioTable({ rows }: { rows: AcoesDesperdicioRow[] }) {
   // InlineBar: maximo local da pagina (nunca 0 aqui por regra da lista).
   const maxGravidade = Math.max(...rows.map((r) => r.visitasPorOportunidade ?? r.visitas), 1);
@@ -79,23 +79,10 @@ export function DesperdicioTable({ rows }: { rows: AcoesDesperdicioRow[] }) {
         </tr>
       </thead>
       <tbody>
-        {rows.map((r, i) => {
-          // Badge vermelho: oportunidades === 0 E visitas >= 10.
-          const isAlert = r.oportunidades === 0 && r.visitas >= 10;
-          const rowBg = isAlert
-            ? "bg-[color-mix(in_oklch,var(--voux-danger)_8%,transparent)]"
-            : zebra(i);
-
-          return (
-            <tr key={`${r.clienteId}-${i}`} className={`border-t border-[var(--voux-card-border)]/30 ${rowBg}`}>
+        {rows.map((r, i) => (
+          <tr key={`${r.clienteId}-${i}`} className={`border-t border-[var(--voux-card-border)]/30 ${zebra(i)}`}>
               <td className={`${TD} max-w-[200px]`}>
                 <div className="truncate" title={r.cliente ?? undefined}>{r.cliente ?? DASH}</div>
-                {isAlert && (
-                  <div className="mt-0.5 flex items-center gap-1 text-[10px] font-medium text-[var(--voux-danger)]">
-                    <AlertCircle className="h-3 w-3 shrink-0" aria-hidden="true" />
-                    SEM OPORTUNIDADE
-                  </div>
-                )}
               </td>
               <td className={`${TD_SOFT} max-w-[110px] truncate`}>{r.cidade ?? DASH}</td>
               <td className={`${TD} tabular-nums`}>{fmtNum(r.visitas)}</td>
@@ -108,9 +95,8 @@ export function DesperdicioTable({ rows }: { rows: AcoesDesperdicioRow[] }) {
                   format={(v) => fmtRatio(v === r.visitas && r.oportunidades === 0 ? null : r.visitasPorOportunidade)}
                 />
               </td>
-            </tr>
-          );
-        })}
+          </tr>
+        ))}
       </tbody>
     </Wrapper>
   );

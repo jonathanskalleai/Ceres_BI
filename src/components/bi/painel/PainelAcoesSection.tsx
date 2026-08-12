@@ -59,27 +59,27 @@ export function PainelAcoesSection({ kpis, loading }: Props) {
       <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4 opacity-90">
         {(loading || !isEmpty(kpis.oportunidadesAbertas.value)) && (
           <KPICard
-            title="Oportunidades Abertas Tocadas"
+            title="Negocios Abertos Trabalhados"
             value={fmtNum(kpis.oportunidadesAbertas.value)}
             icon={Target}
             previousValue={fmtNum(kpis.oportunidadesAbertas.previousValue)}
             trend={kpis.oportunidadesAbertas.trend}
             loading={loading}
             hint={kpis.pipelineAberto.value > 0 ? fmtBRLKpi(kpis.pipelineAberto.value) : undefined}
-            formula="Negocios trabalhados (com pelo menos 1 acao concluida) no periodo que CONTINUAM Em Andamento. E uma foto do que segue em aberto, nao um contador de eventos"
+            formula="Negocios trabalhados (com pelo menos 1 acao concluida) no periodo que CONTINUAM Em Andamento. Nao representa a etapa CRM 'Oportunidade'; e uma foto do estoque de negocios abertos."
             dataSource="rpc_acoes_funil_gestao · negocios canonicos DISTINTOS tocados por acao no periodo (aco_dthconclusao) com ngo_conclusao='Em Andamento'"
           />
         )}
         {(loading || !isEmpty(kpis.visitasPorOportunidade.value)) && (
           <KPICard
-            title="Visitas por Oportunidade"
+            title="Visitas por Negocio Aberto"
             value={fmtRatio(kpis.visitasPorOportunidade.value)}
             icon={Gauge}
             previousValue={fmtRatio(kpis.visitasPorOportunidade.previousValue)}
             trend={kpis.visitasPorOportunidade.trend}
             loading={loading}
-            formula="Quantas visitas presenciais foram necessarias, em media, para gerar cada oportunidade de negocio no periodo"
-            dataSource="rpc_acoes_funil_gestao · visitas / oportunidades no periodo"
+            formula="Visitas presenciais registradas por negocio aberto trabalhado. Nao e uma medida da etapa CRM 'Oportunidade'."
+            dataSource="rpc_acoes_funil_gestao · visitas / negocios abertos trabalhados no periodo"
           />
         )}
         {(loading || !isEmpty(kpis.diasParados.value)) && (

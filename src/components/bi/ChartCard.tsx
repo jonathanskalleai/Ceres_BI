@@ -1,12 +1,12 @@
 import { type ReactNode, useState } from "react";
-import { Database } from "lucide-react";
+import { CircleHelp } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { InfoTooltip } from "@/components/ui/InfoTooltip";
 
 interface ChartCardProps {
   title: string;
   description?: string;
+  /** Texto complementar legado; usado somente quando nao houver descricao. */
   infoTooltip?: string;
   height?: number;
   loading?: boolean;
@@ -29,11 +29,14 @@ export function ChartCard({
   className,
   children,
   label,
-  dataSource,
   actions,
   footer,
 }: ChartCardProps) {
-  const [showDataSource, setShowDataSource] = useState(false);
+  const [showDescription, setShowDescription] = useState(false);
+  // A explicacao funcional e a descricao. A origem tecnica continua aceita na
+  // API do componente para nao exigir mudancas em todos os cards, mas nao e
+  // apresentada na interface.
+  const helpText = description || infoTooltip;
 
   return (
     <div
@@ -62,20 +65,26 @@ export function ChartCard({
             style={{ fontFamily: "var(--voux-font-sans)", color: "var(--voux-text-heading)" }}
           >
             {title}
-            {infoTooltip && <InfoTooltip text={infoTooltip} />}
-            {dataSource && (
-              <span className="relative inline-flex">
-                <span
-                  className="cursor-help"
-                  aria-label="Origem dos dados"
-                  style={{ color: "var(--voux-text-faint)", opacity: 0.6 }}
-                  onMouseEnter={() => setShowDataSource(true)}
-                  onMouseLeave={() => setShowDataSource(false)}
+            {helpText && (
+              <span
+                className="relative inline-flex"
+                onMouseLeave={() => setShowDescription(false)}
+              >
+                <button
+                  type="button"
+                  className="inline-flex h-4 w-4 items-center justify-center rounded-full transition-colors hover:text-[var(--voux-text-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--voux-accent)]"
+                  aria-label={`Explicacao: ${title}`}
+                  aria-expanded={showDescription}
+                  onClick={() => setShowDescription((visible) => !visible)}
+                  onFocus={() => setShowDescription(true)}
+                  onBlur={() => setShowDescription(false)}
+                  style={{ color: "var(--voux-text-faint)" }}
                 >
-                  <Database className="h-3.5 w-3.5" />
-                </span>
-                {showDataSource && (
+                  <CircleHelp className="h-3.5 w-3.5" aria-hidden="true" />
+                </button>
+                {showDescription && (
                   <div
+                    role="tooltip"
                     className="absolute z-20 rounded-lg px-3 py-2 text-[11px] leading-snug"
                     style={{
                       top: "100%",
@@ -87,24 +96,17 @@ export function ChartCard({
                       fontFamily: "var(--voux-font-mono)",
                       boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
                       maxWidth: 340,
+                      minWidth: 180,
                       whiteSpace: "normal",
                       fontWeight: 400,
                     }}
                   >
-                    {dataSource}
+                    {helpText}
                   </div>
                 )}
               </span>
             )}
           </h3>
-          {description && (
-            <p
-              className="text-[11px]"
-              style={{ fontFamily: "var(--voux-font-mono)", letterSpacing: "0.02em", color: "var(--voux-text-faint)" }}
-            >
-              {description}
-            </p>
-          )}
         </div>
         {actions && <div className="shrink-0">{actions}</div>}
       </div>

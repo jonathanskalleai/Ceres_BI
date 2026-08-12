@@ -1,0 +1,240 @@
+- generic [ref=e2]:
+  - region "Notifications (F8)":
+    - list
+  - region "Notifications alt+T"
+  - generic [ref=e3]:
+    - complementary [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]: C
+        - generic [ref=e7]:
+          - generic [ref=e8]:
+            - text: Ceres
+            - emphasis [ref=e9]: BI
+          - generic [ref=e10]: Business Intelligence
+        - button [ref=e11] [cursor=pointer]:
+          - img [ref=e12]
+      - navigation [ref=e14]:
+        - generic [ref=e15]:
+          - button "COMERCIAL CRM" [ref=e16] [cursor=pointer]:
+            - generic [ref=e17]: COMERCIAL CRM
+            - img [ref=e19]
+          - generic [ref=e21]:
+            - button "Visão Geral 01" [ref=e22] [cursor=pointer]:
+              - img [ref=e23]
+              - generic [ref=e28]: Visão Geral
+              - generic [ref=e29]: "01"
+            - button "Consultores 02" [ref=e30] [cursor=pointer]:
+              - img [ref=e31]
+              - generic [ref=e36]: Consultores
+              - generic [ref=e37]: "02"
+            - button "Regiões 03" [ref=e38] [cursor=pointer]:
+              - img [ref=e39]
+              - generic [ref=e42]: Regiões
+              - generic [ref=e43]: "03"
+            - button "Registros 04" [ref=e44] [cursor=pointer]:
+              - img [ref=e45]
+              - generic [ref=e47]: Registros
+              - generic [ref=e48]: "04"
+            - button "Clientes Críticos 05" [ref=e49] [cursor=pointer]:
+              - img [ref=e50]
+              - generic [ref=e52]: Clientes Críticos
+              - generic [ref=e53]: "05"
+            - button "Mapa de Ações 06" [ref=e54] [cursor=pointer]:
+              - img [ref=e55]
+              - generic [ref=e57]: Mapa de Ações
+              - generic [ref=e58]: "06"
+            - button "Observações 07" [ref=e59] [cursor=pointer]:
+              - img [ref=e60]
+              - generic [ref=e62]: Observações
+              - generic [ref=e63]: "07"
+            - button "Negócios 08" [ref=e64] [cursor=pointer]:
+              - img [ref=e65]
+              - generic [ref=e70]: Negócios
+              - generic [ref=e71]: "08"
+            - button "Administrativo 09" [ref=e72] [cursor=pointer]:
+              - img [ref=e73]
+              - generic [ref=e76]: Administrativo
+              - generic [ref=e77]: "09"
+        - generic [ref=e78]:
+          - button "BI ANALYTICS" [ref=e79] [cursor=pointer]:
+            - generic [ref=e80]: BI ANALYTICS
+            - img [ref=e82]
+          - button "Dashboard BI 10" [ref=e85] [cursor=pointer]:
+            - img [ref=e86]
+            - generic [ref=e88]: Dashboard BI
+            - generic [ref=e89]: "10"
+        - button "FERRAMENTAS" [ref=e91] [cursor=pointer]:
+          - generic [ref=e92]: FERRAMENTAS
+          - img [ref=e94]
+      - generic [ref=e96]:
+        - paragraph [ref=e125]: "Sync: 19:39"
+        - button "Modo claro" [ref=e97] [cursor=pointer]:
+          - img [ref=e98]
+          - generic [ref=e104]: Modo claro
+    - main [ref=e105]:
+      - generic [ref=e106]:
+        - generic [ref=e107]:
+          - generic [ref=e108]: Ceres BI · BI ANALYTICS
+          - heading "Dashboard BI" [level=1] [ref=e397]
+        - button "Atualizar" [ref=e111] [cursor=pointer]:
+          - img
+          - text: Atualizar
+      - generic [ref=e398]:
+        - generic [ref=e399]:
+          - generic [ref=e400]:
+            - generic [ref=e401]: BI ANALYTICS
+            - heading "Dashboard BI" [level=2] [ref=e402]:
+              - text: Dashboard
+              - emphasis [ref=e403]: BI
+            - paragraph [ref=e404]: Análise completa — SQL Server
+          - generic [ref=e405]:
+            - button "Todas as datas" [ref=e406] [cursor=pointer]:
+              - img
+              - text: Todas as datas
+            - combobox [ref=e407] [cursor=pointer]:
+              - generic: Todos os funis
+              - img [ref=e408]
+            - generic [ref=e410]: Atualizado ha 12 min
+        - generic [ref=e411]:
+          - tablist [ref=e412]:
+            - tab "Comercial" [ref=e413] [cursor=pointer]
+            - tab "Pedidos" [ref=e414] [cursor=pointer]
+            - tab "Produtos" [active] [selected] [ref=e415] [cursor=pointer]
+            - tab "Servicos" [ref=e416] [cursor=pointer]
+            - tab "Operacional" [ref=e417] [cursor=pointer]
+            - tab "Admin" [ref=e418] [cursor=pointer]
+            - tab "Acoes" [ref=e419] [cursor=pointer]
+            - tab "Explorer" [ref=e420] [cursor=pointer]
+          - tabpanel "Produtos" [ref=e1387]:
+            - generic [ref=e1388]:
+              - generic [ref=e1389]:
+                - generic [ref=e1390]:
+                  - generic [ref=e1391]:
+                    - generic [ref=e1392]: Maquinas Instaladas
+                    - img [ref=e1393]
+                  - generic [ref=e1396]: "1.500"
+                  - paragraph [ref=e1397]: base instalada nos clientes
+                - generic [ref=e1398]:
+                  - generic [ref=e1399]:
+                    - generic [ref=e1400]: Clientes com Parque
+                    - img [ref=e1401]
+                  - generic [ref=e1406]: "669"
+                - generic [ref=e1407]:
+                  - generic [ref=e1408]:
+                    - generic [ref=e1409]: Grupos
+                    - img [ref=e1410]
+                  - generic [ref=e1414]: "20"
+                - generic [ref=e1415]:
+                  - generic [ref=e1416]:
+                    - generic [ref=e1417]: Marcas
+                    - img [ref=e1418]
+                  - generic [ref=e1421]: "38"
+              - generic [ref=e1422]:
+                - generic [ref=e1423]:
+                  - generic [ref=e1425]:
+                    - heading "Base Instalada por Grupo" [level=3] [ref=e1426]
+                    - paragraph [ref=e1427]: Quantidade de maquinas por tipo de equipamento
+                  - generic [ref=e1431]:
+                    - img [ref=e1432]:
+                      - generic [ref=e1443]: 1.5k
+                    - generic [ref=e1444]:
+                      - generic [ref=e1445]:
+                        - generic [ref=e1447]: Implemento
+                        - generic [ref=e1448]: 1.4k
+                      - generic [ref=e1449]:
+                        - generic [ref=e1451]: Plataforma
+                        - generic [ref=e1452]: "37"
+                      - generic [ref=e1453]:
+                        - generic [ref=e1455]: Colheitadeira
+                        - generic [ref=e1456]: "21"
+                      - generic [ref=e1457]:
+                        - generic [ref=e1459]: Trator
+                        - generic [ref=e1460]: "13"
+                      - generic [ref=e1461]:
+                        - generic [ref=e1463]: Semeadeira
+                        - generic [ref=e1464]: "9"
+                      - generic [ref=e1465]:
+                        - generic [ref=e1467]: Veiculo
+                        - generic [ref=e1468]: "8"
+                      - generic [ref=e1469]:
+                        - generic [ref=e1471]: Distribuidor
+                        - generic [ref=e1472]: "7"
+                      - generic [ref=e1473]:
+                        - generic [ref=e1475]: Equipamento
+                        - generic [ref=e1476]: "7"
+                      - generic [ref=e1477]:
+                        - generic [ref=e1479]: Plantadeira
+                        - generic [ref=e1480]: "4"
+                      - generic [ref=e1481]:
+                        - generic [ref=e1483]: Semeadora
+                        - generic [ref=e1484]: "3"
+                - generic [ref=e1485]:
+                  - generic [ref=e1487]:
+                    - heading "Base Instalada por Marca" [level=3] [ref=e1488]
+                    - paragraph [ref=e1489]: Top 10 marcas no parque dos clientes
+                  - img [ref=e1495]:
+                    - generic [ref=e1496]:
+                      - generic [ref=e1497]: GERAL
+                      - generic [ref=e1500]: "483"
+                    - generic [ref=e1501]:
+                      - generic [ref=e1502]: AGRES
+                      - generic [ref=e1505]: "478"
+                    - generic [ref=e1506]:
+                      - generic [ref=e1507]: GTS
+                      - generic [ref=e1510]: "284"
+                    - generic [ref=e1511]:
+                      - generic [ref=e1512]: AGROSYSTEM
+                      - generic [ref=e1515]: "60"
+                    - generic [ref=e1516]:
+                      - generic [ref=e1517]: PICCIN
+                      - generic [ref=e1520]: "57"
+                    - generic [ref=e1521]:
+                      - generic [ref=e1522]: CIMISA MAQUINAS POZZER LTDA
+                      - generic [ref=e1525]: "19"
+                    - generic [ref=e1526]:
+                      - generic [ref=e1527]: Sem marca
+                      - generic [ref=e1530]: "11"
+                    - generic [ref=e1531]:
+                      - generic [ref=e1532]: ESTACAO METEREOLOGICA
+                      - generic [ref=e1535]: "10"
+                    - generic [ref=e1536]:
+                      - generic [ref=e1537]: SEMEATO
+                      - generic [ref=e1540]: "8"
+                    - generic [ref=e1541]:
+                      - generic [ref=e1542]: RODMA
+                      - generic [ref=e1545]: "8"
+                - generic [ref=e1546]:
+                  - generic [ref=e1548]:
+                    - heading "Top Modelos no Parque" [level=3] [ref=e1549]
+                    - paragraph [ref=e1550]: Modelos mais presentes na base instalada
+                  - img [ref=e1556]:
+                    - generic [ref=e1557]:
+                      - generic [ref=e1558]: GERAL- GERAL
+                      - generic [ref=e1561]: "1.357"
+                    - generic [ref=e1562]:
+                      - generic [ref=e1563]: Sem modelo
+                      - generic [ref=e1566]: "48"
+                    - generic [ref=e1567]:
+                      - generic [ref=e1568]: MT 1000- MISTURADOR DE SEMENTE MT 1000
+                      - generic [ref=e1571]: "13"
+                    - generic [ref=e1572]:
+                      - generic [ref=e1573]: PLAT MILHO- PLATAFORMA DE MILHO
+                      - generic [ref=e1576]: "11"
+                    - generic [ref=e1577]:
+                      - generic [ref=e1578]: SEMEADORA- SEMEADORA DE GRAOS MIUDOS
+                      - generic [ref=e1581]: "10"
+                    - generic [ref=e1582]:
+                      - generic [ref=e1583]: CAR GRANE- CARRETA GRANELEIRA
+                      - generic [ref=e1586]: "10"
+                    - generic [ref=e1587]:
+                      - generic [ref=e1588]: COLHEITADEIR- COLHEITADEIRA DE GRAOS USADA
+                      - generic [ref=e1591]: "5"
+                    - generic [ref=e1592]:
+                      - generic [ref=e1593]: SUBSOLADOR- SUBSOLADOR USADO
+                      - generic [ref=e1596]: "5"
+                    - generic [ref=e1597]:
+                      - generic [ref=e1598]: CARRETATRANS- CARRETA DE TRANSPORTE RODMA
+                      - generic [ref=e1601]: "5"
+                    - generic [ref=e1602]:
+                      - generic [ref=e1603]: BIG BAG- GUINCHO BIG BAG
+                      - generic [ref=e1606]: "3"

@@ -37,10 +37,10 @@ export function SvgBarV({
   onBarLeave,
   onBarClick,
 }: SvgBarVProps) {
-  const padL = 32;
-  const padR = 16;
-  const padT = 24;
-  const padB = 28;
+  const padL = 38;
+  const padR = 20;
+  const padT = 30;
+  const padB = 34;
   const plotW = width - padL - padR;
   const plotH = height - padT - padB;
   const max = Math.max(...values, 1) * 1.15;
@@ -78,7 +78,7 @@ export function SvgBarV({
         }
         const lbl = labelRefs.current[i];
         if (lbl && shouldShowValues) {
-          lbl.setAttribute("y", String(by - 8));
+          lbl.setAttribute("y", String(by - 10));
           lbl.style.opacity = v === 0 ? "0" : "1";
         }
       });
@@ -145,7 +145,8 @@ export function SvgBarV({
                 y={padT + plotH - 8}
                 textAnchor="middle"
                 fontFamily="var(--voux-font-mono)"
-                fontSize={9}
+                fontSize={12}
+                fontWeight={600}
                 fill="var(--voux-text-primary)"
                 letterSpacing="0.02em"
                 style={{ opacity: 0 }}
@@ -161,7 +162,7 @@ export function SvgBarV({
                 y={padT + plotH + 18}
                 textAnchor="middle"
                 fontFamily="var(--voux-font-mono)"
-                fontSize={10}
+                fontSize={11}
                 fill={VOUX_COLORS.inkMuted}
                 letterSpacing="0.08em"
               >

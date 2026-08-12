@@ -44,7 +44,14 @@ export default function PieChart({
 
   const [tooltip, setTooltip] = useState<TooltipState>({ visible: false, x: 0, y: 0, content: "" });
 
-  const chartH = height ?? 300;
+  // Rotulos externos funcionam bem em cards largos, mas cortam nomes longos
+  // (ex.: Telefonema/Whatsapp) em colunas estreitas. Nelas usamos a legenda
+  // HTML quebravel abaixo do donut.
+  const useCompactLegend = width > 0 && (width < 640 || data.length > 4);
+  const frameHeight = height ?? 280;
+  const legendHeight = useCompactLegend ? 54 : 0;
+  const labelReserve = useCompactLegend ? 0 : 20;
+  const chartH = Math.max(frameHeight - legendHeight - labelReserve, 160);
 
   const donutData = data.map((d, i) => ({
     label: d.name,
@@ -62,7 +69,7 @@ export default function PieChart({
 
   return (
     <div ref={containerRef} style={{ position: "relative", width: "100%" }}>
-      <ChartFrame loading={loading || measuring} isEmpty={!data.length} height={height} rounded="full" ariaLabel={`Gráfico de pizza: ${data.map((d) => d.name).join(", ")}`}>
+      <ChartFrame loading={loading || measuring} isEmpty={!data.length} height={frameHeight} rounded="full" ariaLabel={`Gráfico de pizza: ${data.map((d) => d.name).join(", ")}`}>
         <div
           style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center" }}
         >
@@ -73,6 +80,7 @@ export default function PieChart({
               data={donutData}
               centerValue={centerValue}
               fmt={tooltipFormatter ?? fmtCompact}
+              showLabels={!useCompactLegend}
               onSegmentEnter={(segIdx, x, y) => {
                 const d = donutData[segIdx];
                 const formatted = tooltipFormatter ? tooltipFormatter(d.value) : fmtCompact(d.value);
@@ -86,6 +94,22 @@ export default function PieChart({
               }}
               onSegmentLeave={() => setTooltip((t) => ({ ...t, visible: false }))}
             />
+          )}
+          {useCompactLegend && (
+            <div
+              className="flex w-full flex-wrap justify-center gap-x-3 gap-y-1 px-1 text-[10px] leading-tight text-[var(--voux-text-muted)]"
+              style={{ fontFamily: "var(--voux-font-mono)" }}
+            >
+              {donutData.map((item) => {
+                const pct = total > 0 ? ((item.value / total) * 100).toFixed(0) : "0";
+                return (
+                  <span key={item.label} className="inline-flex max-w-full items-center gap-1">
+                    <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: item.color }} />
+                    <span className="truncate">{item.label} ({pct}%)</span>
+                  </span>
+                );
+              })}
+            </div>
           )}
         </div>
         {tooltip.visible && (

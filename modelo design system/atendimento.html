@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Atendimento · Voux BI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="assets/font-system.js"></script>
+  <link rel="stylesheet" href="assets/voux.css">
+  <link rel="stylesheet" href="assets/layout.css">
+</head>
+<body data-page="atendimento">
+  <div class="app">
+    <aside class="sidebar" data-sidebar></aside>
+    <main class="main">
+      <header class="topbar" data-topbar></header>
+      <div class="toolbar" data-toolbar></div>
+      <div class="content">
+
+        <!-- 3 KPI columns -->
+        <section class="grid-3">
+          <article class="voux-card" style="text-align:center;">
+            <div class="voux-card__label" style="color:var(--voux-champagne-400);">01 · ABERTOS NO MÊS</div>
+            <div class="voux-display" style="font-size:64px; color:var(--voux-champagne-400); margin:10px 0 4px;">1 141</div>
+            <div class="voux-card__sub">tempo médio 00:14:32</div>
+          </article>
+          <article class="voux-card" style="text-align:center;">
+            <div class="voux-card__label" style="color:var(--voux-info);">02 · ENCERRADOS NO MÊS</div>
+            <div class="voux-display" style="font-size:64px; color:var(--voux-info); margin:10px 0 4px;">1 185</div>
+            <div class="voux-card__sub">SLA 91.2%</div>
+          </article>
+          <article class="voux-card" style="text-align:center;">
+            <div class="voux-card__label" style="color:var(--voux-warning);">03 · ABERTOS E ENCERRADOS</div>
+            <div class="voux-display" style="font-size:64px; color:var(--voux-warning); margin:10px 0 4px;">1 087</div>
+            <div class="voux-card__sub">95.3% resolução</div>
+          </article>
+        </section>
+
+        <!-- Por processo -->
+        <section>
+          <div class="section-head" style="margin-bottom:16px;">
+            <h3 class="section-head__title"><span class="section-head__title-num">— 04 · POR PROCESSO</span> Tipologia de <em>chamados</em></h3>
+          </div>
+          <div class="grid-3">
+            <article class="voux-card">
+              <div class="voux-card__head"><div class="voux-card__label">Abertos</div></div>
+              <div id="proc-ab"></div>
+            </article>
+            <article class="voux-card">
+              <div class="voux-card__head"><div class="voux-card__label">Encerrados</div></div>
+              <div id="proc-enc"></div>
+            </article>
+            <article class="voux-card">
+              <div class="voux-card__head"><div class="voux-card__label">Abr. / Enc.</div></div>
+              <div id="proc-ae"></div>
+            </article>
+          </div>
+        </section>
+
+        <!-- Por operador -->
+        <section>
+          <div class="section-head" style="margin-bottom:16px;">
+            <h3 class="section-head__title"><span class="section-head__title-num">— 05 · POR OPERADOR</span> Distribuição do <em>time</em></h3>
+          </div>
+          <div class="grid-3">
+            <article class="voux-card">
+              <div class="voux-card__head"><div class="voux-card__label">Abertos</div></div>
+              <div id="op-ab"></div>
+            </article>
+            <article class="voux-card">
+              <div class="voux-card__head"><div class="voux-card__label">Encerrados</div></div>
+              <div id="op-enc"></div>
+            </article>
+            <article class="voux-card">
+              <div class="voux-card__head"><div class="voux-card__label">Abr. / Enc.</div></div>
+              <div id="op-ae"></div>
+            </article>
+          </div>
+        </section>
+
+        <!-- Por cidade -->
+        <section>
+          <div class="section-head" style="margin-bottom:16px;">
+            <h3 class="section-head__title"><span class="section-head__title-num">— 06 · POR CIDADE</span> Volume <em>geográfico</em></h3>
+          </div>
+          <div class="grid-3">
+            <article class="voux-card">
+              <div class="voux-card__head"><div class="voux-card__label">Abertos</div></div>
+              <div id="cid-ab"></div>
+            </article>
+            <article class="voux-card">
+              <div class="voux-card__head"><div class="voux-card__label">Encerrados</div></div>
+              <div id="cid-enc"></div>
+            </article>
+            <article class="voux-card">
+              <div class="voux-card__head"><div class="voux-card__label">Abr. / Enc.</div></div>
+              <div id="cid-ae"></div>
+            </article>
+          </div>
+        </section>
+
+        <!-- Com vs Sem OS -->
+        <section>
+          <div class="section-head" style="margin-bottom:16px;">
+            <h3 class="section-head__title"><span class="section-head__title-num">— 07 · COM × SEM O.S.</span> Necessidade de <em>operação</em></h3>
+          </div>
+          <div class="grid-3">
+            <article class="voux-card">
+              <div class="voux-card__head"><div class="voux-card__label">Abertos</div></div>
+              <div id="os-ab"></div>
+            </article>
+            <article class="voux-card">
+              <div class="voux-card__head"><div class="voux-card__label">Encerrados</div></div>
+              <div id="os-enc"></div>
+            </article>
+            <article class="voux-card">
+              <div class="voux-card__head"><div class="voux-card__label">Abr. / Enc.</div></div>
+              <div id="os-ae"></div>
+            </article>
+          </div>
+        </section>
+
+        <!-- Cadência diária -->
+        <div class="grid-2">
+          <article class="voux-card">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">08 · Cadência</div>
+                <h3 class="voux-card__title">Atendimentos <em>abertos</em> · diário</h3>
+              </div>
+              <span class="tag" style="color:var(--voux-info);"><span class="voux-dot"></span>Março</span>
+            </div>
+            <div class="chart-canvas chart-wrap-md" id="chart-ab-dia"></div>
+          </article>
+          <article class="voux-card">
+            <div class="voux-card__head">
+              <div>
+                <div class="voux-card__label">09 · Cadência</div>
+                <h3 class="voux-card__title">Atendimentos <em>encerrados</em> · diário</h3>
+              </div>
+              <span class="tag" style="color:var(--voux-warning);"><span class="voux-dot"></span>Maio</span>
+            </div>
+            <div class="chart-canvas chart-wrap-md" id="chart-enc-dia"></div>
+          </article>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="assets/data.js"></script>
+  <script src="assets/charts.js"></script>
+  <script src="assets/layout.js"></script>
+  <script>
+    const D = VOUX_DATA;
+    const C = VOUX_CHART.COLORS;
+    VOUX_LAYOUT.renderTopbar({ section: "Operação · Atendimento", title: `Atendimento <em>mensal</em>` });
+    VOUX_LAYOUT.renderToolbar({
+      period: "01 Mai – 31 Mai · 2022",
+      segments: [{label:"Dia"},{label:"Mês",active:true},{label:"Ano"}],
+      filters: [{ label: "Status", value: "Todos" }, { label: "Cidade", value: "Todas" }],
+    });
+
+    // Processo
+    VOUX_CHART.barH(document.getElementById("proc-ab"),
+      D.atendimento.porProcesso.abertos.map(p => ({ label: p.p, value: p.qtd })),
+      { color: C.accent, labelW: 170 });
+    VOUX_CHART.barH(document.getElementById("proc-enc"),
+      D.atendimento.porProcesso.encerrados.map(p => ({ label: p.p, value: p.qtd })),
+      { color: C.info, labelW: 170 });
+    VOUX_CHART.barH(document.getElementById("proc-ae"),
+      D.atendimento.porProcesso.abertos.slice(0,7).map((p,i) => ({ label: p.p, value: [390, 328, 134, 70, 49, 25, 19][i] || 10 })),
+      { color: C.warning, labelW: 170 });
+
+    // Operador
+    VOUX_CHART.barH(document.getElementById("op-ab"),
+      D.atendimento.porOperador.abertos.map(o => ({ label: o.op, value: o.qtd })),
+      { color: C.accent, labelW: 100 });
+    VOUX_CHART.barH(document.getElementById("op-enc"),
+      D.atendimento.porOperador.encerrados.map(o => ({ label: o.op, value: o.qtd })),
+      { color: C.info, labelW: 100 });
+    VOUX_CHART.barH(document.getElementById("op-ae"),
+      [{op:"AnaLuiza",qtd:404},{op:"augusto",qtd:346},{op:"jullyanne",qtd:329},{op:"Chaves",qtd:3},{op:"ceilson",qtd:2},{op:"guilherme",qtd:1},{op:"lara",qtd:1}].map(o => ({ label: o.op, value: o.qtd })),
+      { color: C.warning, labelW: 100 });
+
+    // Cidade
+    VOUX_CHART.barH(document.getElementById("cid-ab"),
+      D.atendimento.porCidade.abertos.map(c => ({ label: c.c, value: c.qtd })),
+      { color: C.accent, labelW: 110 });
+    VOUX_CHART.barH(document.getElementById("cid-enc"),
+      D.atendimento.porCidade.encerrados.map(c => ({ label: c.c, value: c.qtd })),
+      { color: C.info, labelW: 110 });
+    VOUX_CHART.barH(document.getElementById("cid-ae"),
+      [{c:"Porto Alegre",qtd:660},{c:"Caxias do Sul",qtd:390},{c:"Bagé",qtd:20},{c:"Canoas",qtd:17}].map(c => ({ label: c.c, value: c.qtd })),
+      { color: C.warning, labelW: 110 });
+
+    // OS dual
+    VOUX_CHART.barHDual(document.getElementById("os-ab"),
+      [{label:"Com O.S.",a:494,b:0},{label:"Sem O.S.",a:647,b:0}],
+      { colorA: C.accent });
+    VOUX_CHART.barHDual(document.getElementById("os-enc"),
+      [{label:"Com O.S.",a:429,b:0},{label:"Sem O.S.",a:756,b:0}],
+      { colorA: C.info });
+    VOUX_CHART.barHDual(document.getElementById("os-ae"),
+      [{label:"Com O.S.",a:444,b:0},{label:"Sem O.S.",a:643,b:0}],
+      { colorA: C.warning });
+
+    // Cadência
+    VOUX_CHART.line(document.getElementById("chart-ab-dia"),
+      Array.from({length: D.atendimento.abertosDia.length}, (_,i) => String(i+1)),
+      [{ name:"Abertos", color: C.info, values: D.atendimento.abertosDia }],
+      { height: 240, points: true, yFmt: v => v });
+    VOUX_CHART.line(document.getElementById("chart-enc-dia"),
+      Array.from({length: D.atendimento.encerradosDia.length}, (_,i) => String(i+1)),
+      [{ name:"Encerrados", color: C.warning, values: D.atendimento.encerradosDia }],
+      { height: 240, points: true, yFmt: v => v });
+  </script>
+</body>
+</html>

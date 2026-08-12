@@ -57,6 +57,19 @@ export interface AcoesBINameAcoes {
   acoes: number;
 }
 
+/** Serie mensal exclusiva de contatos presenciais (tipo de contato = visita). */
+export interface AcoesBIVisitasMensal {
+  name: string;
+  visitas: number;
+}
+
+/** Serie mensal fixa do ano corrente para os dois graficos de evolucao. */
+export interface AcoesBIEvolucaoMensalAnoCorrente {
+  name: string;
+  acoes: number;
+  visitas: number;
+}
+
 export interface AcoesBIPieDatum {
   id: string;
   name: string;
@@ -99,10 +112,14 @@ export interface AcoesDetalheItem {
   observacao: string | null;
   /** Etapa do negocio vinculado (ngo_etapa). Null se acao sem negocio. */
   etapa: string | null;
+  /** Produtos distintos do negocio, concatenados no servidor. Null se nao houver vinculo. */
+  produto: string | null;
   /** Valor total do negocio vinculado (ngo_vlrtotalnegociado). Null se acao sem negocio. */
   valor: number | null;
   /** Status do negocio vinculado (ngo_conclusao). Null se acao sem negocio. */
   status: string | null;
+  /** `ngo_obsnegocio`, diferente da observacao da propria acao. */
+  observacaoNegocio: string | null;
 }
 
 /** Full return type of rpc_acoes_detalhe. `total` = COUNT real do periodo (sem limit). */

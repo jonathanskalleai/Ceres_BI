@@ -44,13 +44,14 @@ export function funilRatios(funil: AcoesFunil): {
 
 // ─── Ranking de consultores ────────────────────────────────────────────────
 
-export const RANKING_CRITERIOS = ["visitas", "oportunidades", "ganhos", "valorGanho"] as const;
+export const RANKING_CRITERIOS = ["visitas", "oportunidades", "ganhos", "perdidos", "valorGanho"] as const;
 export type RankingCriterio = (typeof RANKING_CRITERIOS)[number];
 
 export const RANKING_CRITERIO_LABEL: Record<RankingCriterio, string> = {
   visitas: "Visitas",
   oportunidades: "Oportunidades",
-  ganhos: "Fechamentos",
+  ganhos: "Ganhos",
+  perdidos: "Perdidos",
   valorGanho: "Valor ganho",
 };
 

@@ -1,0 +1,4 @@
+# Scoped to this repository. It requires the local SSH tunnel on 127.0.0.1:18080.
+[mcp_servers.supabase-self-hosted]
+url = "http://127.0.0.1:18080/mcp"
+default_tools_approval_mode = "prompt"

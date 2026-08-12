@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Sheet,
   SheetContent,
@@ -42,6 +43,7 @@ export function UserPermissionsSheet({
   onSaved,
 }: UserPermissionsSheetProps) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [modules, setModules] = useState<AppModule[]>([]);
   /** Module permissions: hasAccess (checked) and isVisible (eye toggle) */
   const [permissions, setPermissions] = useState<Map<string, ModulePermission>>(new Map());
@@ -88,8 +90,9 @@ export function UserPermissionsSheet({
       if (!current) return prev;
 
       const newHasAccess = !current.hasAccess;
-      // When granting access, default visibility to true
-      // When revoking access, set visibility to false
+      // When granting access, make the dashboard visible again. This keeps the
+      // checkbox semantics intuitive: checked means it appears in the sidebar.
+      // The eye toggle is the explicit way to keep access while hiding it.
       next.set(moduleId, {
         ...current,
         hasAccess: newHasAccess,
@@ -147,6 +150,9 @@ export function UserPermissionsSheet({
           isVisible: p.isVisible,
         }));
       await setUserPermissions(targetUser.id, permArray, user.id);
+      await queryClient.invalidateQueries({
+        queryKey: ['user_permissions', targetUser.id],
+      });
       onSaved();
       onOpenChange(false);
     } catch (err) {

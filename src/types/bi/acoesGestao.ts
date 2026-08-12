@@ -1,8 +1,9 @@
 /**
  * Tipos das 3 RPCs de gestao comercial da tela /bi/acoes:
- *   rpc_acoes_funil_gestao       — agregados (funil, ranking, dias parados)
+ *   rpc_acoes_funil_gestao       — agregados de carteira (ranking, dias parados)
+ *   rpc_acoes_funil_gestao_periodo — agregados da tela /bi/acoes por coorte mensal
  *   rpc_acoes_gestao_listas      — listas de clientes, paginadas server-side
- *   rpc_acoes_mapa_oportunidades — pinos das oportunidades abertas
+ *   rpc_acoes_mapa_oportunidades — coorte de oportunidades do funil
  *
  * Os `| null` aqui NAO sao defensivos: sao contrato. As RPCs devolvem NULL
  * onde nao ha denominador (divisao por zero) ou onde o dado nao existe, de
@@ -10,13 +11,16 @@
  * que num BI sao numeros ERRADOS, nao ausencia de numero.
  */
 
-// ─── rpc_acoes_funil_gestao ─────────────────────────────────────────────────
+// ─── rpc_acoes_funil_gestao_periodo ─────────────────────────────────────────
 
 /**
- * Funil visita -> oportunidade, mais os dois DESFECHOS do periodo.
+ * Atividade, oportunidades no funil VENDAS, entradas na etapa inicial e os dois
+ * DESFECHOS do periodo.
  *
- * TRES fontes com data de competencia propria (rpc_acoes_funil_gestao v6):
- *   visitas/oportunidades — mirror.crm_acoes,    `aco_dthconclusao`, negocio distinto
+ * QUATRO fontes com data de competencia propria:
+ *   visitas              — mirror.crm_acoes,    `aco_dthconclusao`
+ *   oportunidades        — mirror.crm_funil_etapa, primeira entrada no VENDAS
+ *   etapa inicial        — mirror.crm_funil_etapa, `fne_dthinicioetapa`
  *   ganhos               — mirror.crm_pedidos,  `pdo_dthaprovacao`, PEDIDO / `pdo_vlrpedido`
  *   perdidos             — mirror.crm_negocios, `ngo_datafechamento`, NEGOCIO / `ngo_vlrtotalnegociado`
  *
@@ -25,10 +29,10 @@
  * `ganhos / (ganhos + perdidos)`: as reguas de valor sao diferentes (R$ de
  * pedido vs R$ negociado) e as janelas tambem.
  *
- * ATENCAO de leitura (E6): `oportPorFechamento` NAO e taxa de conversao — e
- * artefato de JANELA. O ciclo de venda de maquina agricola e 6-18 meses, entao
- * a oportunidade aberta neste ano ainda nao teve chance de fechar. So e
- * comparavel ENTRE consultores, nunca em valor absoluto.
+ * `oportunidades` e mantido como chave de compatibilidade, mas seu significado
+ * exibido e **oportunidades do funil VENDAS**: uma coorte pela primeira entrada
+ * no funil no intervalo. A etapa CRM `1-OPORTUNIDADE` e apenas a etapa inicial,
+ * exposta separadamente nos campos de etapa.
  */
 export interface AcoesFunil {
   /**
@@ -38,16 +42,25 @@ export interface AcoesFunil {
    */
   visitas: number;
   /**
-   * Oportunidade LIQUIDA (v6): negocio canonico tocado por acao no periodo,
-   * sem Repasse, **e ainda `ngo_conclusao = 'Em Andamento'`**.
-   *
-   * E metrica de ESTADO, nao de evento: um mes ja fechado MUDA retroativamente
-   * quando um negocio daquele mes for concluido depois. Isso e a definicao
-   * funcionando, nao falha de carga — a UI precisa dizer isso ao gestor.
+   * Chave legada: negocios cuja primeira entrada historica no funil VENDAS
+   * ocorreu no periodo, sem `REPASSE DE MAQUINA`, independentemente do status
+   * e do funil atuais. A UI chama esta metrica de "Oportunidades no funil VENDAS".
    */
   oportunidades: number;
-  /** SUM(ngo_vlrtotalnegociado) do mesmo conjunto de `oportunidades`. */
+  /** SUM(ngo_vlrtotalnegociado) da coorte de oportunidades geradas. */
   valorOportunidades: number;
+  /** Subconjunto da coorte que hoje segue `Em Andamento`. */
+  oportunidadesAbertas: number;
+  /** SUM(ngo_vlrtotalnegociado) do subconjunto ainda aberto. */
+  valorOportunidadesAbertas: number;
+  /** Negócios abertos com ao menos uma ação concluída no período (carteira ativa). */
+  negociosAbertosTocadosNoPeriodo: number;
+  /** Valor da carteira ativa: inclui negócios abertos em meses anteriores. */
+  valorPipelineAbertoTocadoNoPeriodo: number;
+  /** Entradas na etapa CRM `OPORTUNIDADE` (funil VENDAS) no periodo. */
+  entradasEtapaOportunidade: number;
+  /** Entradas da mesma janela que hoje seguem em `1-OPORTUNIDADE` e abertas. */
+  emEtapaOportunidade: number;
   /** Contagem de PEDIDOS aprovados no periodo (nao de negocios). */
   ganhos: number;
   /** Contagem de NEGOCIOS perdidos que fecharam no periodo. */
@@ -65,6 +78,7 @@ export interface AcoesFunil {
  *   visitas + oportunidades -> `aco_vendedor`   (quem EXECUTOU a acao)
  *   ganhos  + valorGanho    -> `ngo_vendedores` (a quem o negocio PERTENCE)
  *     via pedidos APROVADOS (pdo_situacaopedido='Aprovado', pdo_dthaprovacao no periodo)
+ *   perdidos                -> `ngo_vendedores` (negocio perdido por data de fechamento)
  * Por isso `taxaConversao` mistura as duas origens e pode passar de 100%:
  * serve para comparar consultores entre si, nao como taxa auditavel.
  */
@@ -73,6 +87,7 @@ export interface AcoesRankingConsultorItem {
   visitas: number;
   oportunidades: number;
   ganhos: number;
+  perdidos: number;
   valorGanho: number;
   /** NULL quando o consultor nao tem oportunidade no periodo — exibir "—". */
   taxaConversao: number | null;
@@ -110,6 +125,14 @@ export interface RpcAcoesFunilGestao {
   rankingConsultores: AcoesRankingConsultorItem[];
   diasParados: AcoesDiasParados;
   meta: AcoesFunilMeta;
+}
+
+/** Taxa operacional de ganho sobre oportunidades geradas no periodo. */
+export interface AcoesTaxaGanhoNegocios {
+  ganhos: number;
+  oportunidades: number;
+  /** NULL quando nao ha oportunidades geradas no recorte. */
+  taxaGanho: number | null;
 }
 
 // ─── rpc_acoes_gestao_listas ────────────────────────────────────────────────
@@ -197,6 +220,12 @@ export interface AcoesMapaPino {
   etapa: string | null;
   valor: number | null;
   consultor: string | null;
+  /** Resultado do período: pedido aprovado, fechamento perdido ou em aberto. */
+  situacao: "aberto" | "ganho" | "perdido";
+  /** Quantidade de ações concluídas e vinculadas à oportunidade no período. */
+  acoesNoPeriodo: number;
+  /** Data da última dessas ações, em ISO. */
+  ultimaAcaoPeriodo: string | null;
   lat: number;
   lon: number;
   /** Cascata de resolucao da coordenada: acao geolocalizada ou carteira. */
@@ -216,5 +245,11 @@ export interface RpcAcoesMapaOportunidades {
   semCoordenada: number;
   valorTotal: number;
   valorNoMapa: number;
-  meta: { viaAcao: number; viaCarteira: number };
+  meta: {
+    viaAcao: number;
+    viaCarteira: number;
+    abertos: number;
+    ganhos: number;
+    perdidos: number;
+  };
 }

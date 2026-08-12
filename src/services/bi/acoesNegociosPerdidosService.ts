@@ -11,6 +11,8 @@ export interface NegocioPerdidoRow {
   cliente: string;
   cidade: string;
   consultor: string;
+  produto: string | null;
+  observacaoNegocio: string | null;
   dataFechamento: string;
   /** Alias para `valorPerdido` retornado pela RPC (valor negociado do negocio perdido). */
   valorPerdido: number;

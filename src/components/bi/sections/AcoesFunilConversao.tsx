@@ -1,4 +1,4 @@
-import { Eye, Target, Info } from "lucide-react";
+import { Eye, Target } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BiGestaoErro } from "@/components/bi/BiGestaoErro";
 import { AcoesDesfechosPeriodo } from "@/components/bi/sections/AcoesDesfechosPeriodo";
@@ -17,10 +17,10 @@ const brl = (v: number) =>
 /**
  * Texto fixo, pedido literalmente pelo usuario. Nao e decoracao: e o unico
  * lugar da tela que avisa que o MESMO seletor de periodo esta sendo aplicado a
- * TRES datas de competencia diferentes.
+ * Cinco datas de competencia diferentes.
  */
 const NOTA_PERIODO =
-  "Período dos eventos: ações por conclusão, ganhos por aprovação de pedido e perdas por fechamento de negócio.";
+  "Período dos eventos: visitas por conclusão, oportunidades pela primeira entrada no funil VENDAS, etapa inicial por entrada na etapa, ganhos por aprovação de pedido e perdas por fechamento.";
 
 interface Estagio {
   key: keyof Pick<AcoesFunil, "visitas" | "oportunidades">;
@@ -30,8 +30,8 @@ interface Estagio {
 }
 
 /**
- * Somente os dois degraus de ATIVIDADE. Ganhos e Perdidos sairam daqui: nao sao
- * degraus abaixo de oportunidade, sao desfechos paralelos com fonte propria.
+ * Os dois degraus principais de atividade/origem. Ganhos e Perdidos sao
+ * desfechos paralelos, com fonte propria.
  */
 const ESTAGIOS: Estagio[] = [
   {
@@ -42,9 +42,9 @@ const ESTAGIOS: Estagio[] = [
   },
   {
     key: "oportunidades",
-    label: "Oportunidades abertas",
+    label: "Oportunidades no funil VENDAS",
     icon: Target,
-    hint: "negocios canonicos tocados por acao no periodo que seguem Em Andamento, sem REPASSE DE MAQUINA",
+    hint: "primeira entrada historica no funil VENDAS no periodo, sem REPASSE DE MAQUINA; Cotacao, Proposta e Pedido continuam sendo oportunidades",
   },
 ];
 
@@ -86,7 +86,7 @@ interface Props {
  * unidades sao diferentes (pedido vs negocio) e as janelas tambem.
  */
 export function AcoesFunilConversao({ funil, meta, loading, error }: Props) {
-  const { visitasPorOportunidade, oportPorFechamento } = funilRatios(funil);
+  const { visitasPorOportunidade } = funilRatios(funil);
   const base = funil.visitas;
   const perdidosSemAtribuicao = meta?.perdidosSemAtribuicao ?? 0;
 
@@ -121,7 +121,7 @@ export function AcoesFunilConversao({ funil, meta, loading, error }: Props) {
           Atividade e desfechos do periodo
         </h3>
         <p className="text-[11px] text-[var(--voux-text-faint)]" style={{ fontFamily: MONO, letterSpacing: "0.02em" }}>
-          Visitas e oportunidades (acoes) · ganhos (pedidos) · perdas (negocios)
+          Visitas (acoes) · oportunidades do funil VENDAS · etapa inicial · ganhos (pedidos) · perdas (negocios)
         </p>
       </header>
 
@@ -135,44 +135,21 @@ export function AcoesFunilConversao({ funil, meta, loading, error }: Props) {
 
       <div className="space-y-2">
         <AcoesDegrauBar icon={ESTAGIOS[0].icon} label={ESTAGIOS[0].label} valor={funil.visitas} base={base} hint={ESTAGIOS[0].hint} />
-        <Conector valor={fmtRatio(visitasPorOportunidade)} texto="visitas por oportunidade aberta" />
+        <Conector valor={fmtRatio(visitasPorOportunidade)} texto="visitas por oportunidade" />
         <AcoesDegrauBar icon={ESTAGIOS[1].icon} label={ESTAGIOS[1].label} valor={funil.oportunidades} base={base} hint={ESTAGIOS[1].hint} />
         <p className="pl-6 text-[11px] text-[var(--voux-text-muted)]">
-          {brl(funil.valorOportunidades)} em negociacao aberta
+          {brl(funil.valorOportunidades)} em oportunidades geradas · {funil.oportunidadesAbertas.toLocaleString("pt-BR")} ainda em aberto ({brl(funil.valorOportunidadesAbertas)})
         </p>
       </div>
 
-      <AcoesDesfechosPeriodo funil={funil} perdidosSemAtribuicao={perdidosSemAtribuicao} />
+      <p className="mt-4 rounded-lg bg-champagne-400/[0.08] px-3 py-2 text-[11px] leading-relaxed text-[var(--voux-text-muted)]">
+        <strong className="text-[var(--voux-text-primary)]">Etapa inicial “Oportunidade”:</strong>{" "}
+        {funil.entradasEtapaOportunidade.toLocaleString("pt-BR")} negocio(s) entraram em
+        {" "}<em>1-OPORTUNIDADE</em> no funil VENDAS; {funil.emEtapaOportunidade.toLocaleString("pt-BR")}
+        {" "}seguem em andamento nessa etapa. Cotacao, Proposta ao Cliente e Pedido sao etapas seguintes da mesma oportunidade comercial.
+      </p>
 
-      <footer className="mt-4 flex items-start gap-2 border-t border-[var(--voux-card-border)] pt-3">
-        <Info className="mt-[2px] h-3.5 w-3.5 shrink-0 text-[var(--voux-text-muted)]" aria-hidden="true" />
-        <div className="space-y-1.5 text-[11px] leading-relaxed text-[var(--voux-text-muted)]">
-          <p>
-            <strong className="text-[var(--voux-text-primary)]">Nao e funil:</strong> ganho e perda sao
-            desfechos <em>paralelos</em>, medidos em fontes e datas diferentes. Um ganho deste mes pode vir de
-            uma acao do ano passado. Por isso a tela nao calcula taxa de conversao entre eles — o resultado
-            seria um numero certo respondendo a pergunta errada.
-          </p>
-          <p>
-            <strong className="text-[var(--voux-text-primary)]">Oportunidades e um ESTADO, nao um evento:</strong>{" "}
-            conta o que foi tocado no periodo e <em>segue</em> Em Andamento. Um mes ja fechado diminui quando um
-            negocio dele for concluido depois. Isso e a definicao funcionando, nao falha de carga.
-          </p>
-          <p>
-            <strong className="text-[var(--voux-text-primary)]">O filtro "Tipo de Acao" afeta so visitas e
-            oportunidades.</strong> Pedido e negocio nao tem tipo de acao: ganhos e perdas permanecem iguais ao
-            trocar esse filtro.
-          </p>
-          <p>
-            <strong className="text-[var(--voux-text-primary)]">Indice de janela</strong> (nao e taxa de
-            conversao): {fmtRatio(oportPorFechamento)} oportunidades abertas para cada pedido aprovado no
-            periodo. O ciclo de venda de maquina agricola leva 6 a 18 meses, entao a oportunidade aberta agora
-            ainda nao teve chance de fechar — o numero so e comparavel{" "}
-            <strong className="text-[var(--voux-text-primary)]">entre consultores</strong>, nunca em valor
-            absoluto. Sem denominador, aparece “—”: divisao por zero e ausencia de dado, nao zero.
-          </p>
-        </div>
-      </footer>
+      <AcoesDesfechosPeriodo funil={funil} perdidosSemAtribuicao={perdidosSemAtribuicao} />
     </section>
   );
 }

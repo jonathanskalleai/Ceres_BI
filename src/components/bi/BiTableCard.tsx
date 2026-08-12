@@ -2,6 +2,7 @@ import { type ReactNode } from "react";
 import { AlertTriangle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isBiDebugEnabled } from "@/components/bi/debug/isBiDebugEnabled";
+import { cn } from "@/lib/utils";
 
 const CARD = "rounded-xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4";
 
@@ -57,6 +58,8 @@ interface BiTableCardProps {
   skeletonRows?: number;
   /** Rodape (paginacao, aviso de truncamento). */
   footer?: ReactNode;
+  /** Classes adicionais na casca do card (ex.: preencher uma coluna do grid). */
+  className?: string;
   children: ReactNode;
 }
 
@@ -68,11 +71,13 @@ interface BiTableCardProps {
  * pulse invisivel no dark e nenhuma tinha estado de erro.
  */
 export function BiTableCard({
-  title, actions, loading, error, isEmpty, emptyMessage, skeletonRows, footer, children,
+  title, actions, loading, error, isEmpty, emptyMessage, skeletonRows, footer, className, children,
 }: BiTableCardProps) {
+  const cardClassName = cn(CARD, className);
+
   if (loading) {
     return (
-      <div className={CARD}>
+      <div className={cardClassName}>
         <TableSkeleton rows={skeletonRows} />
       </div>
     );
@@ -80,7 +85,7 @@ export function BiTableCard({
 
   if (error) {
     return (
-      <div className={CARD}>
+      <div className={cardClassName}>
         <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--voux-text-muted)] mb-3">{title}</h3>
         <div role="alert" className="flex items-start gap-2 py-4 text-xs text-[var(--voux-text-primary)]">
           <AlertTriangle className="h-4 w-4 shrink-0 text-[var(--voux-danger)]" aria-hidden="true" />
@@ -107,7 +112,7 @@ export function BiTableCard({
   if (isEmpty) {
     if (!emptyMessage) return null;
     return (
-      <div className={CARD}>
+      <div className={cardClassName}>
         <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--voux-text-muted)] mb-3">{title}</h3>
         <p className="py-6 text-center text-xs text-[var(--voux-text-muted)]">{emptyMessage}</p>
       </div>
@@ -115,7 +120,7 @@ export function BiTableCard({
   }
 
   return (
-    <div className={CARD}>
+    <div className={cardClassName}>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--voux-text-muted)]">{title}</h3>
         {actions}

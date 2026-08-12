@@ -8,12 +8,11 @@ interface UsePermissionsReturn {
   allowedModules: AppModule[];
   visibleModules: AppModule[];
   canAccess: (moduleId: string) => boolean;
-  isAdmin: boolean;
   isLoading: boolean;
 }
 
 export function usePermissions(): UsePermissionsReturn {
-  const { user, isAdmin } = useAuth();
+  const { user } = useAuth();
 
   const { data: allModules = [], isLoading: modulesLoading } = useQuery<AppModule[]>({
     queryKey: ['app_modules'],
@@ -41,45 +40,33 @@ export function usePermissions(): UsePermissionsReturn {
       return data as UserPermission[];
     },
     staleTime: 10 * 60_000,
-    enabled: !!user && !isAdmin,
+    enabled: !!user,
   });
 
   const allowedModuleIds = new Set(userPermissions.map((p) => p.module_id));
 
-  // Modules the user has access to (canAccess check)
-  const allowedModules = isAdmin
-    ? allModules
-    : allModules.filter((m) => allowedModuleIds.has(m.id));
+  // Modules the user has explicit access to (permission record exists)
+  const allowedModules = allModules.filter((m) => allowedModuleIds.has(m.id));
 
-  // Modules visible in sidebar (allowed + is_visible !== false)
-  // For admin, all modules are visible by default
-  // For normal users, filter by is_visible flag
-  const visibleModules = isAdmin
-    ? allModules
-    : allModules.filter((m) => {
-        const perm = userPermissions.find((p) => p.module_id === m.id);
-        // If no permission record, module is not allowed (not visible)
-        if (!perm) return false;
-        // Default to visible (is_visible is true by default in DB)
-        return perm.is_visible !== false;
-      });
+  // Modules visible in sidebar (has permission + is_visible !== false)
+  const visibleModules = allModules.filter((m) => {
+    const perm = userPermissions.find((p) => p.module_id === m.id);
+    if (!perm) return false;
+    return perm.is_visible !== false;
+  });
 
   /**
    * canAccess() — does NOT check is_visible.
    * Only verifies the user has a permission record for the module.
    * is_visible controls sidebar visibility, not route accessibility.
    */
-  const canAccess = (moduleId: string): boolean => {
-    if (isAdmin) return true;
-    return allowedModuleIds.has(moduleId);
-  };
+  const canAccess = (moduleId: string): boolean => allowedModuleIds.has(moduleId);
 
   return {
     allModules,
     allowedModules,
     visibleModules,
     canAccess,
-    isAdmin,
     isLoading: modulesLoading || permissionsLoading,
   };
 }

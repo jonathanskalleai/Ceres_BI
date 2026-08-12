@@ -14,7 +14,7 @@ const brl = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
 
 function matches(row: NegocioPerdidoRow, term: string): boolean {
-  return [row.cliente, row.cidade, row.consultor, row.negocioNumero]
+  return [row.cliente, row.cidade, row.consultor, row.negocioNumero, row.produto, row.observacaoNegocio]
     .some((v) => (v ?? "").toLowerCase().includes(term));
 }
 
@@ -59,7 +59,7 @@ export function AcoesNegociosPerdidosTable({ rows, total, page, onPageChange, lo
         type="search"
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        placeholder="Buscar negocio, cliente..."
+        placeholder="Buscar negocio, cliente, produto..."
         aria-label="Buscar nos negocios perdidos"
         className="h-8 w-full sm:w-64 rounded-md border border-[var(--voux-card-border)] bg-transparent pl-8 pr-2 text-xs text-[var(--voux-text-primary)] placeholder:text-[var(--voux-text-muted)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--voux-champagne-400)]"
       />
@@ -96,6 +96,8 @@ export function AcoesNegociosPerdidosTable({ rows, total, page, onPageChange, lo
               <th className={TH}>Cliente</th>
               <th className={TH}>Cidade</th>
               <th className={TH}>Consultor</th>
+              <th className={TH}>Produto(s)</th>
+              <th className={TH}>Obs. Negocio</th>
               <th className={TH}>Data Fechamento</th>
               <th className={`${TH} text-right`}>Valor Negociado</th>
             </tr>
@@ -107,13 +109,15 @@ export function AcoesNegociosPerdidosTable({ rows, total, page, onPageChange, lo
                 <td className={`${TD} max-w-[180px] truncate`}>{row.cliente ?? DASH}</td>
                 <td className={`${TD} text-[var(--voux-text-soft)] max-w-[120px] truncate`}>{row.cidade ?? DASH}</td>
                 <td className={`${TD} text-[var(--voux-text-soft)] max-w-[150px] truncate`}>{row.consultor ?? DASH}</td>
+                <td className={`${TD} max-w-[180px] truncate`} title={row.produto ?? undefined}>{row.produto ?? "Sem produto vinculado"}</td>
+                <td className={`${TD} text-[var(--voux-text-soft)] max-w-[240px] truncate`} title={row.observacaoNegocio ?? undefined}>{row.observacaoNegocio ?? DASH}</td>
                 <td className={`${TD} whitespace-nowrap tabular-nums`}>{formatDateTimeBR(row.dataFechamento)}</td>
                 <td className={`${TD} text-right tabular-nums whitespace-nowrap`}>{brl(row.valorPerdido)}</td>
               </tr>
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={6} className="py-6 text-center text-[var(--voux-text-muted)]">
+                <td colSpan={8} className="py-6 text-center text-[var(--voux-text-muted)]">
                   {search.trim() ? "Nenhum negocio corresponde a busca." : "Nenhum negocio perdido nesta pagina."}
                 </td>
               </tr>

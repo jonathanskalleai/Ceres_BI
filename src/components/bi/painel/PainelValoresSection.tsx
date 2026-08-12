@@ -49,7 +49,7 @@ export function PainelValoresSection({ kpis, loading }: Props) {
           previousValue={fmtBRLKpi(kpis.pipelineAberto.previousValue)}
           trend={kpis.pipelineAberto.trend}
           loading={loading}
-          formula="Valor das oportunidades abertas TOCADAS no periodo — negocios trabalhados (com pelo menos 1 acao concluida) que CONTINUAM Em Andamento. E uma foto do que segue em aberto"
+          formula="Valor dos negocios abertos trabalhados no periodo — negocios com pelo menos uma acao concluida que continuam Em Andamento. Nao representa somente a etapa CRM 'Oportunidade'."
           dataSource="rpc_acoes_funil_gestao · SUM(ngo_vlrtotalnegociado) de negocios canonicos DISTINTOS tocados por acao no periodo com ngo_conclusao='Em Andamento'"
         />
       )}

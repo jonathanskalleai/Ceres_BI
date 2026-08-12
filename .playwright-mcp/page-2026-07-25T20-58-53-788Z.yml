@@ -1,0 +1,5 @@
+- generic [ref=f34e2]:
+  - region "Notifications (F8)":
+    - list
+  - region "Notifications alt+T"
+  - generic [ref=f34e3]: Carregando...

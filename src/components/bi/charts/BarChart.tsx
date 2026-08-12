@@ -101,10 +101,15 @@ export default function BarChart({
 
   // ── Horizontal layout ─────────────────────────────────────────────────────
   if (layout === "horizontal") {
+    // Em cards estreitos, encolher os tres elementos (rotulo, barra e valor)
+    // torna o ranking ilegivel. Mantemos uma largura minima e deixamos a
+    // moldura oferecer rolagem horizontal quando necessario.
+    const chartWidth = Math.max(width, 500);
+
     return (
       <div ref={containerRef} style={{ position: "relative", width: "100%" }}>
-        <ChartFrame loading={loading || measuring} isEmpty={isEmpty} height={height} ariaLabel={`Gráfico de barras: ${keys.join(", ")}`}>
-          <div style={{ width: "100%", position: "relative" }}>
+        <ChartFrame loading={loading || measuring} isEmpty={isEmpty} height={height} scrollY ariaLabel={`Gráfico de barras: ${keys.join(", ")}`}>
+          <div style={{ width: chartWidth, position: "relative" }}>
             {keys.map((key, ki) => {
               const color = resolveColor(ki, 0, palette, itemColors);
               const seriesData = data.map((d) => ({
@@ -121,7 +126,7 @@ export default function BarChart({
                     <SeriesLabel color={itemColors ? palette[0] : color} label={seriesLabels?.[key] ?? key} />
                   )}
                   <SvgBarH
-                    width={width}
+                    width={chartWidth}
                     data={seriesData}
                     color={itemColors ? resolveColor(ki, 0, palette, itemColors) : color}
                     valueFormatter={(v) => fmt(v)}

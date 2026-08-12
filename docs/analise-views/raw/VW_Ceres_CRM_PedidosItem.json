@@ -1,0 +1,254 @@
+{
+  "view": "VW_Ceres_CRM_PedidosItem",
+  "total": 2703,
+  "error": null,
+  "columns": [
+    {
+      "name": "PDO_CodigoInterno",
+      "types": [
+        "int-str"
+      ]
+    },
+    {
+      "name": "PDO_ItemId",
+      "types": [
+        "int-str"
+      ]
+    },
+    {
+      "name": "PDO_ItemIdGrupo",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "PDO_ItemGrupo",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "PDO_ItemIdMarca",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "PDO_ItemMarca",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "PDO_ItemIdModelo",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "PDO_ItemModelo",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "PDO_ItemIdProduto",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "PDO_ItemDescricao",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "PDO_ItemObs",
+      "types": [
+        "null",
+        "string"
+      ]
+    },
+    {
+      "name": "PDO_ItemQtde",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "PDO_ItemVlrUnitario",
+      "types": [
+        "int"
+      ]
+    },
+    {
+      "name": "dthRegistro",
+      "types": [
+        "datetime"
+      ]
+    }
+  ],
+  "sample": [
+    {
+      "PDO_CodigoInterno": "2407041541530008969",
+      "PDO_ItemId": "2407041541531878969",
+      "PDO_ItemIdGrupo": 16174,
+      "PDO_ItemGrupo": "IMPLEMENTOS NOVOS",
+      "PDO_ItemIdMarca": 12821,
+      "PDO_ItemMarca": "GERAL",
+      "PDO_ItemIdModelo": 51566,
+      "PDO_ItemModelo": "GERAL- GERAL",
+      "PDO_ItemIdProduto": 164450,
+      "PDO_ItemDescricao": "CARRETINHA DE TRANSPORTE                                     - Descricao adicional: CARRETINHA DE TRANSPORTE",
+      "PDO_ItemObs": null,
+      "PDO_ItemQtde": 1,
+      "PDO_ItemVlrUnitario": 38000,
+      "dthRegistro": "2026-06-19T13:19:22.017Z"
+    },
+    {
+      "PDO_CodigoInterno": "2602120857048658485",
+      "PDO_ItemId": "2602120857049878485",
+      "PDO_ItemIdGrupo": 16174,
+      "PDO_ItemGrupo": "IMPLEMENTOS NOVOS",
+      "PDO_ItemIdMarca": 12821,
+      "PDO_ItemMarca": "GERAL",
+      "PDO_ItemIdModelo": 51566,
+      "PDO_ItemModelo": "GERAL- GERAL",
+      "PDO_ItemIdProduto": 222651,
+      "PDO_ItemDescricao": "CONJUNTO FRONTAL AGRICOLA                                    - Descricao adicional: CONJUNTO FRONTAL AGRICOLA\nMODELO:\nMARCA:\nCOR:\nANO:",
+      "PDO_ItemObs": "CONJUNTO FRONTAL BANDEIRANTE 1450\n\nFINAME : 04192562\n\nAutonivelante\nCom concha\nLamina \nGuincho big bag\nComando joystick\nAdaptador TL\n\nR$ 57.000,00",
+      "PDO_ItemQtde": 1,
+      "PDO_ItemVlrUnitario": 57000,
+      "dthRegistro": "2026-06-19T13:19:22.017Z"
+    },
+    {
+      "PDO_CodigoInterno": "2604280827424668668",
+      "PDO_ItemId": "2604280827427138668",
+      "PDO_ItemIdGrupo": 16174,
+      "PDO_ItemGrupo": "IMPLEMENTOS NOVOS",
+      "PDO_ItemIdMarca": 12821,
+      "PDO_ItemMarca": "GERAL",
+      "PDO_ItemIdModelo": 51566,
+      "PDO_ItemModelo": "GERAL- GERAL",
+      "PDO_ItemIdProduto": 222651,
+      "PDO_ItemDescricao": "CONJUNTO FRONTAL AGRICOLA                                    - Descricao adicional: CONJUNTO FRONTAL AGRICOLA\nMODELO:\nMARCA:\nCOR:\nANO:",
+      "PDO_ItemObs": "Conjunto frontal novo, ano 2026, marca bandeirante, modelo plaina hexline 1450 autonivelante, contando com concha, joystick, pegador de pré-secado, e erguedor big bag, acoplamento trator John Deere 5078e. \nCodigo finame 04192562",
+      "PDO_ItemQtde": 1,
+      "PDO_ItemVlrUnitario": 76000,
+      "dthRegistro": "2026-06-19T13:19:22.017Z"
+    },
+    {
+      "PDO_CodigoInterno": "2409271039147027606",
+      "PDO_ItemId": "2409271039148357606",
+      "PDO_ItemIdGrupo": 16174,
+      "PDO_ItemGrupo": "IMPLEMENTOS NOVOS",
+      "PDO_ItemIdMarca": 12821,
+      "PDO_ItemMarca": "GERAL",
+      "PDO_ItemIdModelo": 51566,
+      "PDO_ItemModelo": "GERAL- GERAL",
+      "PDO_ItemIdProduto": 125557,
+      "PDO_ItemDescricao": "TANQUE COM ESCADA LATERAL TAMPA INTERMEDIARIA                - Descricao adicional: TANQUE DE POLIETILENO PARA LIQUIDOS\nMARCA: \nCOR:",
+      "PDO_ItemObs": null,
+      "PDO_ItemQtde": 1,
+      "PDO_ItemVlrUnitario": 16900,
+      "dthRegistro": "2026-06-19T13:19:22.017Z"
+    },
+    {
+      "PDO_CodigoInterno": "2502270939501328972",
+      "PDO_ItemId": "2502270939502648972",
+      "PDO_ItemIdGrupo": 16174,
+      "PDO_ItemGrupo": "IMPLEMENTOS NOVOS",
+      "PDO_ItemIdMarca": 12821,
+      "PDO_ItemMarca": "GERAL",
+      "PDO_ItemIdModelo": 51566,
+      "PDO_ItemModelo": "GERAL- GERAL",
+      "PDO_ItemIdProduto": 164450,
+      "PDO_ItemDescricao": "CARRETINHA DE TRANSPORTE                                     - Descricao adicional: CARRETINHA DE TRANSPORTE",
+      "PDO_ItemObs": "veículo 1070 usado",
+      "PDO_ItemQtde": 1,
+      "PDO_ItemVlrUnitario": 10000,
+      "dthRegistro": "2026-06-19T13:19:22.017Z"
+    },
+    {
+      "PDO_CodigoInterno": "2501211009036478972",
+      "PDO_ItemId": "2501211009037958972",
+      "PDO_ItemIdGrupo": 16174,
+      "PDO_ItemGrupo": "IMPLEMENTOS NOVOS",
+      "PDO_ItemIdMarca": 12821,
+      "PDO_ItemMarca": "GERAL",
+      "PDO_ItemIdModelo": 51566,
+      "PDO_ItemModelo": "GERAL- GERAL",
+      "PDO_ItemIdProduto": 164450,
+      "PDO_ItemDescricao": "CARRETINHA DE TRANSPORTE                                     - Descricao adicional: CARRETINHA DE TRANSPORTE",
+      "PDO_ItemObs": "CARRETA TRANSPORTE USADA 40 PES USADA ",
+      "PDO_ItemQtde": 1,
+      "PDO_ItemVlrUnitario": 25000,
+      "dthRegistro": "2026-06-19T13:19:22.017Z"
+    },
+    {
+      "PDO_CodigoInterno": "2602270858140138972",
+      "PDO_ItemId": "2602270858141508972",
+      "PDO_ItemIdGrupo": 16174,
+      "PDO_ItemGrupo": "IMPLEMENTOS NOVOS",
+      "PDO_ItemIdMarca": 12821,
+      "PDO_ItemMarca": "GERAL",
+      "PDO_ItemIdModelo": 51566,
+      "PDO_ItemModelo": "GERAL- GERAL",
+      "PDO_ItemIdProduto": 222651,
+      "PDO_ItemDescricao": "CONJUNTO FRONTAL AGRICOLA                                    - Descricao adicional: CONJUNTO FRONTAL AGRICOLA\nMODELO:\nMARCA:\nCOR:\nANO:",
+      "PDO_ItemObs": "BANDEIRANTES 1550 COM JOYSTICK",
+      "PDO_ItemQtde": 1,
+      "PDO_ItemVlrUnitario": 60000,
+      "dthRegistro": "2026-06-19T13:19:22.017Z"
+    },
+    {
+      "PDO_CodigoInterno": "2605291417351239361",
+      "PDO_ItemId": "2605291417352789361",
+      "PDO_ItemIdGrupo": 16175,
+      "PDO_ItemGrupo": "DISTRIBUIDORES DE ARRASTO",
+      "PDO_ItemIdMarca": 12821,
+      "PDO_ItemMarca": "GERAL",
+      "PDO_ItemIdModelo": 51566,
+      "PDO_ItemModelo": "GERAL- GERAL",
+      "PDO_ItemIdProduto": 378663,
+      "PDO_ItemDescricao": "DISTRIBUIDOR FERTILIZANTE THOR - Descricao adicional: DISTRIBUIDOR DE FERTILIZANTES THOR - NOVO\nMARCA: THOR\nCOR: CINZA\nANO:\nN/S:\n",
+      "PDO_ItemObs": "DISTRIBUIDOR DE SÓLIDOS JV PULVERTEC NOVO\n\n - MODELO THOR 10000\n- TAXA VARIÁVEL ISOBUS\n- COMPORTA DUPLA\n- LONA FÁCIL \n- EIXO DE 3.20M\n- CALÇO PARA AUMENTO DE ALTURA\n- SISTEMA HIDRÁULICO NO FLUXO CONTÍNUO \n- PNEUS 12.4X24\n- CAIXA EM INOX\n- BANDEJAS DE AFERIÇÕES \n- CHAPEU INTERNO \n- GRADES ANTI PEDRAS\n\nCÓDIGO FINAME: 3711851",
+      "PDO_ItemQtde": 1,
+      "PDO_ItemVlrUnitario": 263000,
+      "dthRegistro": "2026-06-19T13:19:22.017Z"
+    },
+    {
+      "PDO_CodigoInterno": "2606161047273999361",
+      "PDO_ItemId": "2606161047275449361",
+      "PDO_ItemIdGrupo": 16175,
+      "PDO_ItemGrupo": "DISTRIBUIDORES DE ARRASTO",
+      "PDO_ItemIdMarca": 12821,
+      "PDO_ItemMarca": "GERAL",
+      "PDO_ItemIdModelo": 51566,
+      "PDO_ItemModelo": "GERAL- GERAL",
+      "PDO_ItemIdProduto": 378663,
+      "PDO_ItemDescricao": "DISTRIBUIDOR FERTILIZANTE THOR - Descricao adicional: DISTRIBUIDOR DE FERTILIZANTES THOR - NOVO\nMARCA: THOR\nCOR: CINZA\nANO:\nN/S:\n",
+      "PDO_ItemObs": "DISTRIBUIDOR DE SOLIDOS JV PULVERTEC NOVO\n\n - MODELO THOR 10000\n- TAXA VARIAVEL ISOBUS\n- COMPORTA DUPLA\n- LONA FACIL \n- EIXO DE 3.20M\n- CALÇO PARA AUMENTO DE ALTURA\n- SISTEMA HIDRAULICO NO FLUXO CONTINUO \n- PNEUS 12.4X24\n- CAIXA EM INOX\n- BANDEJAS DE AFERIÇÕES \n- CHAPÉU INTERNO \n- GRADES ANTI PEDRAS\n\nCODIGO FINAME: 3711851 (Negócio origem: 2605291353049361)\n\n\nDO PAGAMENTO:\n\n- 4 COTAS DE CONSÓRCIO\n- COTAS ESTAS DE NÚMERO 1703, 1196, 2865, 9039\n\nO VALOR ACUMULADO DE AMBAS SÃO MAIOR QUE O VALOR DO EQUIPAMENTO \n",
+      "PDO_ItemQtde": 1,
+      "PDO_ItemVlrUnitario": 263000,
+      "dthRegistro": "2026-06-19T13:19:22.017Z"
+    },
+    {
+      "PDO_CodigoInterno": "2310201453308972",
+      "PDO_ItemId": "2310201453310328972",
+      "PDO_ItemIdGrupo": 16175,
+      "PDO_ItemGrupo": "DISTRIBUIDORES DE ARRASTO",
+      "PDO_ItemIdMarca": 12828,
+      "PDO_ItemMarca": "PICCIN",
+      "PDO_ItemIdModelo": 51566,
+      "PDO_ItemModelo": "GERAL- GERAL",
+      "PDO_ItemIdProduto": 115037,
+      "PDO_ItemDescricao": "DISTRIBUIDOR PICCIN 12000 DHSBR                              - Descricao adicional: DISTRIBUIDOR PICCIN 12000 DHSBR\nMARCA:PICCIN\nCOR:VERDE",
+      "PDO_ItemObs": null,
+      "PDO_ItemQtde": 1,
+      "PDO_ItemVlrUnitario": 185000,
+      "dthRegistro": "2026-06-19T13:19:22.017Z"
+    }
+  ]
+}

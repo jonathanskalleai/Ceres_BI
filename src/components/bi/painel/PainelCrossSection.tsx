@@ -1,6 +1,6 @@
-import { Clock, ClipboardList, Target } from "lucide-react";
+import { Clock, ClipboardList } from "lucide-react";
 import { KPICard } from "@/components/bi/KPICard";
-import { fmtDias, fmtNum, fmtPct, isEmpty } from "@/lib/formatters";
+import { fmtDias, fmtNum, isEmpty } from "@/lib/formatters";
 import type { CrossKPIs } from "@/hooks/bi/useCrossKPIsRpc";
 
 interface Props {
@@ -33,17 +33,6 @@ export function PainelCrossSection({ crossKpis, loading }: Props) {
           invertTrend
           loading={loading}
           formula="Quantas acoes em media ate fechar um negocio com sucesso"
-        />
-      )}
-      {(loading || !isEmpty(crossKpis.conversaoPedidoNegocio.value)) && (
-        <KPICard
-          title="Conversao Pedido"
-          value={fmtPct(crossKpis.conversaoPedidoNegocio.value)}
-          icon={Target}
-          previousValue={fmtPct(crossKpis.conversaoPedidoNegocio.previousValue)}
-          trend={crossKpis.conversaoPedidoNegocio.trend}
-          loading={loading}
-          formula="Dos negocios ganhos, quantos % geraram pedido emitido"
         />
       )}
     </>

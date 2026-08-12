@@ -29,6 +29,8 @@ interface MapViewProps {
   zoom?: number;
   /** Marcadores adicionais renderizados DENTRO do MapContainer (ex: clusters). */
   children?: ReactNode;
+  /** Resumo real quando há agrupamento de oportunidades no mesmo local. */
+  oportunidadesResumo?: { negocios: number; locais: number };
 }
 
 function MapMarkers({
@@ -106,6 +108,7 @@ export const MapView = ({
   hideModeSwitch = false,
   zoom = 7,
   children,
+  oportunidadesResumo,
 }: MapViewProps) => {
   return (
     <>
@@ -158,6 +161,7 @@ export const MapView = ({
           hideModeSwitch={hideModeSwitch}
           zoom={zoom}
           children={children}
+          oportunidadesResumo={oportunidadesResumo}
         />
       )}
     </>
@@ -177,6 +181,7 @@ function FullscreenOverlay({
   hideModeSwitch = false,
   zoom = 7,
   children,
+  oportunidadesResumo,
 }: Omit<MapViewProps, "fullscreen">) {
   return (
     <div className="fixed inset-0 z-[9999] flex flex-col" style={{ background: "var(--voux-card-to)" }}>
@@ -187,7 +192,9 @@ function FullscreenOverlay({
           <span className="text-[var(--voux-text-primary)] font-semibold text-sm">Mapa de Ações Comerciais</span>
           <span className="text-[var(--voux-text-faint)] text-[10px]" style={MONO}>
             {mapView === "oportunidades"
-              ? `${(oportunidades ?? []).length} oportunidades`
+              ? oportunidadesResumo
+                ? `${oportunidadesResumo.negocios} oportunidades em ${oportunidadesResumo.locais} locais`
+                : `${(oportunidades ?? []).length} oportunidades`
               : mapView === "clientes"
                 ? `${clientePoints.length} clientes`
                 : `${regions.length} regiões`}

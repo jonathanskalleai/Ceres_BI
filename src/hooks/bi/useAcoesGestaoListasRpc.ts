@@ -19,6 +19,7 @@ interface UseAcoesGestaoListasOptions {
   search?: string;
   diasMin?: number;
   diasMax?: number;
+  anoCorrente?: boolean;
   enabled?: boolean;
 }
 
@@ -44,16 +45,17 @@ export function useAcoesGestaoListasRpc<TRow extends AcoesGestaoListaRow>({
   search,
   diasMin,
   diasMax,
+  anoCorrente = false,
   enabled = true,
 }: UseAcoesGestaoListasOptions) {
   return useQuery<AcoesGestaoListas<TRow>, Error>({
     queryKey: [
       "rpc", "acoes-gestao-listas", tipo,
       from ?? null, to ?? null, vendedor ?? null, cidade ?? null,
-      limit, offset, search ?? null, diasMin ?? null, diasMax ?? null,
+      limit, offset, search ?? null, diasMin ?? null, diasMax ?? null, anoCorrente,
     ],
     queryFn: () =>
-      fetchAcoesGestaoListas<TRow>({ tipo, from, to, vendedor, cidade, limit, offset, search, diasMin, diasMax }),
+      fetchAcoesGestaoListas<TRow>({ tipo, from, to, vendedor, cidade, limit, offset, search, diasMin, diasMax, anoCorrente }),
     staleTime: STALE_TIME,
     placeholderData: keepPreviousData,
     enabled,

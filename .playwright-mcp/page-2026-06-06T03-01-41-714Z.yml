@@ -1,0 +1,138 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - emphasis [ref=e6]: V
+      - generic [ref=e7]:
+        - generic [ref=e8]:
+          - text: Ceres
+          - emphasis [ref=e9]: BI
+        - generic [ref=e10]: Business Intelligence
+    - generic [ref=e11]:
+      - generic [ref=e12]: Visão Geral
+      - link "Dashboard 01" [ref=e13] [cursor=pointer]:
+        - /url: index.html
+        - img [ref=e14]
+        - generic [ref=e19]: Dashboard
+        - generic [ref=e20]: "01"
+    - generic [ref=e21]:
+      - generic [ref=e22]: CRM
+      - link "Comercial 02" [ref=e23] [cursor=pointer]:
+        - /url: comercial.html
+        - img [ref=e24]
+        - generic [ref=e27]: Comercial
+        - generic [ref=e28]: "02"
+      - link "Pedidos 03" [ref=e29] [cursor=pointer]:
+        - /url: pedidos.html
+        - img [ref=e30]
+        - generic [ref=e33]: Pedidos
+        - generic [ref=e34]: "03"
+      - link "Ações CRM 04" [ref=e35] [cursor=pointer]:
+        - /url: acoes.html
+        - img [ref=e36]
+        - generic [ref=e39]: Ações CRM
+        - generic [ref=e40]: "04"
+    - generic [ref=e41]:
+      - generic [ref=e42]: Operação
+      - link "Operacional 05" [ref=e43] [cursor=pointer]:
+        - /url: operacional.html
+        - img [ref=e44]
+        - generic [ref=e46]: Operacional
+        - generic [ref=e47]: "05"
+      - link "Produtos 06" [ref=e48] [cursor=pointer]:
+        - /url: produtos.html
+        - img [ref=e49]
+        - generic [ref=e52]: Produtos
+        - generic [ref=e53]: "06"
+      - link "Serviços 07" [ref=e54] [cursor=pointer]:
+        - /url: servicos.html
+        - img [ref=e55]
+        - generic [ref=e58]: Serviços
+        - generic [ref=e59]: "07"
+    - generic [ref=e60]:
+      - generic [ref=e61]: CR
+      - generic [ref=e62]:
+        - generic [ref=e63]: Ceres BI
+        - generic [ref=e64]: CRM Analytics
+  - main [ref=e65]:
+    - generic [ref=e68]:
+      - generic [ref=e69]:
+        - generic [ref=e70]:
+          - generic [ref=e71]:
+            - generic [ref=e72]: 01 · Total OS
+            - img [ref=e74]
+          - generic [ref=e77]: —
+          - generic [ref=e78]: ordens de serviço
+        - generic [ref=e79]:
+          - generic [ref=e80]:
+            - generic [ref=e81]: 02 · OS Abertas
+            - img [ref=e83]
+          - generic [ref=e86]: —
+          - generic [ref=e87]: pendentes
+        - generic [ref=e88]:
+          - generic [ref=e89]:
+            - generic [ref=e90]: 03 · Taxa de Fechamento
+            - img [ref=e92]
+          - generic [ref=e94]: —
+          - generic [ref=e95]: OS encerradas
+        - generic [ref=e96]:
+          - generic [ref=e97]:
+            - generic [ref=e98]: 04 · Tempo Médio Resolução
+            - img [ref=e100]
+          - generic [ref=e103]: —
+          - generic [ref=e104]: dias em média
+        - generic [ref=e105]:
+          - generic [ref=e106]:
+            - generic [ref=e107]: 05 · Mediana Resolução
+            - img [ref=e109]
+          - generic [ref=e111]: —
+          - generic [ref=e112]: mediana em dias
+        - generic [ref=e113]:
+          - generic [ref=e114]:
+            - generic [ref=e115]: 06 · Total Ocorrências
+            - img [ref=e117]
+          - generic [ref=e120]: —
+          - generic [ref=e121]: em campo
+      - generic [ref=e122]:
+        - article [ref=e123]:
+          - generic [ref=e125]:
+            - generic [ref=e126]: 01 · OS por Status
+            - heading "Distribuição de OS" [level=3] [ref=e127]:
+              - text: Distribuição
+              - emphasis [ref=e128]: de OS
+          - paragraph [ref=e129]: Entre fechadas, abertas e canceladas
+        - article [ref=e131]:
+          - generic [ref=e133]:
+            - generic [ref=e134]: 02 · Tempo de Resolução
+            - heading "Faixas de Prazo" [level=3] [ref=e135]:
+              - text: Faixas
+              - emphasis [ref=e136]: de Prazo
+          - paragraph [ref=e137]: Quantas OS são resolvidas em cada janela de tempo
+      - article [ref=e139]:
+        - generic [ref=e141]:
+          - generic [ref=e142]: 03 · Evolução Mensal de Aberturas
+          - heading "OS Abertas por Mês" [level=3] [ref=e143]:
+            - text: OS Abertas
+            - emphasis [ref=e144]: por Mês
+        - paragraph [ref=e145]: Número de OS abertas por mês (por data de abertura)
+      - generic [ref=e147]:
+        - article [ref=e148]:
+          - generic [ref=e150]:
+            - generic [ref=e151]: 04 · Atividade de Campo
+            - heading "Ocorrências por Status" [level=3] [ref=e152]:
+              - text: Ocorrências
+              - emphasis [ref=e153]: por Status
+          - paragraph [ref=e154]: Deslocamento, atendimento e pausas
+        - article [ref=e156]:
+          - generic [ref=e158]:
+            - generic [ref=e159]: 05 · Motivos de Pausa
+            - heading "Gargalos Operacionais" [level=3] [ref=e160]:
+              - text: Gargalos
+              - emphasis [ref=e161]: Operacionais
+          - paragraph [ref=e162]: Tipos de serviço que causam interrupção
+      - article [ref=e164]:
+        - generic [ref=e166]:
+          - generic [ref=e167]: 06 · Causas de Atendimento Mais Comuns
+          - heading "Principais Motivos de Chamado" [level=3] [ref=e168]:
+            - text: Principais
+            - emphasis [ref=e169]: Motivos de Chamado
+        - paragraph [ref=e170]: Principais motivos de chamado técnico

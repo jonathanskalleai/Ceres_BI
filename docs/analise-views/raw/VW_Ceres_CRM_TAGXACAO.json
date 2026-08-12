@@ -1,0 +1,125 @@
+{
+  "view": "VW_Ceres_CRM_TAGXACAO",
+  "total": 6712,
+  "error": null,
+  "columns": [
+    {
+      "name": "TAGxACO_Codigo",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "TAG_Codigo",
+      "types": [
+        "null"
+      ]
+    },
+    {
+      "name": "TAG_Nome",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "TAG_Descricao",
+      "types": [
+        "string"
+      ]
+    },
+    {
+      "name": "ACO_idAcao",
+      "types": [
+        "int-str"
+      ]
+    },
+    {
+      "name": "dthRegistro",
+      "types": [
+        "datetime"
+      ]
+    }
+  ],
+  "sample": [
+    {
+      "TAGxACO_Codigo": "0c43b9ae-fadf-4003-9067-62566939e73f",
+      "TAG_Codigo": null,
+      "TAG_Nome": "AGRICULTURA",
+      "TAG_Descricao": "PEDIDO AGRICULTURA DE PRECISÃO",
+      "ACO_idAcao": "26041414010127027",
+      "dthRegistro": "2026-06-19T13:19:22.627Z"
+    },
+    {
+      "TAGxACO_Codigo": "ca76bd8b-d3df-4843-831e-d0c0a9d073aa",
+      "TAG_Codigo": null,
+      "TAG_Nome": "AGRICULTURA",
+      "TAG_Descricao": "PEDIDO AGRICULTURA DE PRECISÃO",
+      "ACO_idAcao": "26041414580427027",
+      "dthRegistro": "2026-06-19T13:19:22.627Z"
+    },
+    {
+      "TAGxACO_Codigo": "f63481f7-415e-468b-b877-9b74483afa6f",
+      "TAG_Codigo": null,
+      "TAG_Nome": "AGRICULTURA",
+      "TAG_Descricao": "PEDIDO AGRICULTURA DE PRECISÃO",
+      "ACO_idAcao": "26041415574127027",
+      "dthRegistro": "2026-06-19T13:19:22.627Z"
+    },
+    {
+      "TAGxACO_Codigo": "02341175-403d-4ba5-a814-834fb4d346cc",
+      "TAG_Codigo": null,
+      "TAG_Nome": "MAQUINA",
+      "TAG_Descricao": "PEDIDO MÁQUINA ",
+      "ACO_idAcao": "26041515022925060",
+      "dthRegistro": "2026-06-19T13:19:22.627Z"
+    },
+    {
+      "TAGxACO_Codigo": "f0962f8d-08b1-45ee-b876-4bfa53560ab0",
+      "TAG_Codigo": null,
+      "TAG_Nome": "MAQUINA",
+      "TAG_Descricao": "PEDIDO MÁQUINA ",
+      "ACO_idAcao": "26041515054825060",
+      "dthRegistro": "2026-06-19T13:19:22.627Z"
+    },
+    {
+      "TAGxACO_Codigo": "2dd3cde6-c1ad-43cd-bb99-bb632c61cb59",
+      "TAG_Codigo": null,
+      "TAG_Nome": "REPASSE",
+      "TAG_Descricao": "PEDIDO REPASSE DE MÁQUINA ",
+      "ACO_idAcao": "26041515054825060",
+      "dthRegistro": "2026-06-19T13:19:22.627Z"
+    },
+    {
+      "TAGxACO_Codigo": "5de6f470-2103-4446-80d3-1f35b441fbbf",
+      "TAG_Codigo": null,
+      "TAG_Nome": "MAQUINA",
+      "TAG_Descricao": "PEDIDO MÁQUINA ",
+      "ACO_idAcao": "26041608444425060",
+      "dthRegistro": "2026-06-19T13:19:22.627Z"
+    },
+    {
+      "TAGxACO_Codigo": "2bb316fb-27f3-45b1-8c46-a6756770312a",
+      "TAG_Codigo": null,
+      "TAG_Nome": "AGRICULTURA",
+      "TAG_Descricao": "PEDIDO AGRICULTURA DE PRECISÃO",
+      "ACO_idAcao": "26041608444425060",
+      "dthRegistro": "2026-06-19T13:19:22.627Z"
+    },
+    {
+      "TAGxACO_Codigo": "bf26a8aa-0936-4904-8b56-e11838db9d3a",
+      "TAG_Codigo": null,
+      "TAG_Nome": "MAQUINA",
+      "TAG_Descricao": "PEDIDO MÁQUINA ",
+      "ACO_idAcao": "26041608473125060",
+      "dthRegistro": "2026-06-19T13:19:22.627Z"
+    },
+    {
+      "TAGxACO_Codigo": "bba246db-781c-4941-8518-136f72cae4c3",
+      "TAG_Codigo": null,
+      "TAG_Nome": "MAQUINA",
+      "TAG_Descricao": "PEDIDO MÁQUINA ",
+      "ACO_idAcao": "26041608505525060",
+      "dthRegistro": "2026-06-19T13:19:22.627Z"
+    }
+  ]
+}

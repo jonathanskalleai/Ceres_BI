@@ -1,0 +1,265 @@
+- generic [ref=f52e2]:
+  - region "Notifications (F8)":
+    - list
+  - region "Notifications alt+T"
+  - generic [ref=f52e8]:
+    - complementary [ref=f52e9]:
+      - generic [ref=f52e10]:
+        - img "Ceres BI" [ref=f52e11]
+        - button "Recolher sidebar" [ref=f52e12] [cursor=pointer]
+      - navigation [ref=f52e15]:
+        - generic [ref=f52e16]:
+          - button "Visao Geral" [ref=f52e17] [cursor=pointer]
+          - button "Acoes" [ref=f52e24] [cursor=pointer]
+          - button "Negocios" [ref=f52e28] [cursor=pointer]
+          - button "Pedidos" [ref=f52e32] [cursor=pointer]
+          - button "Servicos" [ref=f52e39] [cursor=pointer]
+          - button "Produtividade Tecnica" [ref=f52e46] [cursor=pointer]
+          - button "Base Instalada" [ref=f52e53] [cursor=pointer]
+          - button "Carteira de Clientes" [ref=f52e60] [cursor=pointer]
+          - button "Inteligencia" [ref=f52e65] [cursor=pointer]
+          - button "Painel Comercial" [ref=f52e69] [cursor=pointer]
+          - button "Equipe" [ref=f52e76] [cursor=pointer]
+          - button "Atividades" [ref=f52e83] [cursor=pointer]
+          - button "Mapa de Cobertura" [ref=f52e87] [cursor=pointer]
+          - button "Pipeline" [ref=f52e91] [cursor=pointer]
+          - button "Clientes sem Contato" [ref=f52e98] [cursor=pointer]
+          - button "Notas de Campo" [ref=f52e102] [cursor=pointer]
+          - button "Gestao Interna" [ref=f52e106] [cursor=pointer]
+          - button "Relatorio Anual" [ref=f52e111] [cursor=pointer]
+          - button "Meu Perfil" [ref=f52e118] [cursor=pointer]
+          - generic [ref=f52e123]:
+            - button "Configuracoes" [ref=f52e124] [cursor=pointer]
+            - generic [ref=f52e132]:
+              - button "Monitor ETL" [ref=f52e133] [cursor=pointer]
+              - button "Explorador de Dados" [ref=f52e139] [cursor=pointer]
+              - button "Gerenciar Usuarios" [ref=f52e145] [cursor=pointer]
+      - generic [ref=f52e152]:
+        - generic [ref=f52e153]:
+          - generic [ref=f52e154]: J
+          - generic [ref=f52e156]: Jonathan
+        - button "Modo escuro" [ref=f52e157] [cursor=pointer]
+        - button "Sair" [ref=f52e161] [cursor=pointer]
+    - main [ref=f52e166]:
+      - generic [ref=f52e167]:
+        - heading "Acoes" [level=1] [ref=f52e169]
+        - generic [ref=f52e171]:
+          - button "01 jul 2026 – 31 jul 2026" [ref=f52e172] [cursor=pointer]
+          - combobox [ref=f52e173] [cursor=pointer]:
+            - generic: Todos
+          - combobox [ref=f52e176] [cursor=pointer]:
+            - generic: Todos os funis
+          - combobox [ref=f52e179] [cursor=pointer]:
+            - generic: Todos vendedores
+          - combobox [ref=f52e182] [cursor=pointer]:
+            - generic: Todas cidades
+          - combobox [ref=f52e185] [cursor=pointer]:
+            - generic: Todos tipos
+          - button "Limpar" [ref=f52e188] [cursor=pointer]
+      - generic [ref=f52e189]:
+        - generic [ref=f52e191]:
+          - generic [ref=f52e193]:
+            - generic [ref=f52e194]:
+              - generic [ref=f52e195]: Total de Acoes
+              - generic "0" [ref=f52e201]
+              - generic [ref=f52e202]:
+                - generic [ref=f52e203]: →
+                - generic [ref=f52e204]: 0 per. anterior
+                - generic [ref=f52e205]: "Periodo anterior: 0"
+            - generic [ref=f52e206]:
+              - generic [ref=f52e207]: Cidades Atendidas
+              - generic "0" [ref=f52e213]
+              - generic [ref=f52e214]:
+                - generic [ref=f52e215]: →
+                - generic [ref=f52e216]: 0 per. anterior
+                - generic [ref=f52e217]: "Periodo anterior: 0"
+            - generic [ref=f52e218]:
+              - generic [ref=f52e219]: Consultores Ativos
+              - generic "0" [ref=f52e227]
+              - generic [ref=f52e228]:
+                - generic [ref=f52e229]: →
+                - generic [ref=f52e230]: 0 per. anterior
+                - generic [ref=f52e231]: "Periodo anterior: 0"
+            - generic [ref=f52e232]:
+              - generic [ref=f52e233]: Total de Visitas
+              - generic "0" [ref=f52e239]
+              - generic [ref=f52e240]:
+                - generic [ref=f52e241]: →
+                - generic [ref=f52e242]: 0 per. anterior
+                - generic [ref=f52e243]: "Periodo anterior: 0"
+            - generic [ref=f52e244]:
+              - generic [ref=f52e245]: Clientes Unicos
+              - generic "0" [ref=f52e252]
+              - generic [ref=f52e253]:
+                - generic [ref=f52e254]: →
+                - generic [ref=f52e255]: 0 per. anterior
+                - generic [ref=f52e256]: "Periodo anterior: 0"
+            - generic [ref=f52e257]:
+              - generic [ref=f52e258]: Tipos de Acao
+              - generic "0" [ref=f52e264]
+              - generic [ref=f52e265]:
+                - generic [ref=f52e266]: →
+                - generic [ref=f52e267]: 0 per. anterior
+                - generic [ref=f52e268]: "Periodo anterior: 0"
+            - generic [ref=f52e269]:
+              - generic [ref=f52e270]: Duracao Media da Acao
+              - generic "0 dias" [ref=f52e276]
+              - generic [ref=f52e277]:
+                - generic [ref=f52e278]: →
+                - generic [ref=f52e279]: 0 dias per. anterior
+                - generic [ref=f52e280]: "Periodo anterior: 0 dias"
+            - generic [ref=f52e281]:
+              - generic [ref=f52e282]: Valor em Aberto
+              - generic "R$ 0,00" [ref=f52e288]: R$ 0
+              - generic [ref=f52e289]:
+                - generic [ref=f52e290]: →
+                - generic [ref=f52e291]: R$ 0 per. anterior
+                - generic [ref=f52e292]: "Periodo anterior: R$ 0"
+              - paragraph [ref=f52e293]: 0 negocios
+            - generic [ref=f52e294]:
+              - generic [ref=f52e295]: Valor Ganho
+              - generic "R$ 0,00" [ref=f52e304]: R$ 0
+              - generic [ref=f52e305]:
+                - generic [ref=f52e306]: →
+                - generic [ref=f52e307]: R$ 0 per. anterior
+                - generic [ref=f52e308]: "Periodo anterior: R$ 0"
+              - paragraph [ref=f52e309]: 0 negocios
+            - generic [ref=f52e310]:
+              - generic [ref=f52e311]: Valor Perdido
+              - generic "R$ 0,00" [ref=f52e318]: R$ 0
+              - generic [ref=f52e319]:
+                - generic [ref=f52e320]: →
+                - generic [ref=f52e321]: R$ 0 per. anterior
+                - generic [ref=f52e322]: "Periodo anterior: R$ 0"
+              - paragraph [ref=f52e323]: 0 negocios
+            - generic [ref=f52e324]:
+              - generic [ref=f52e325]: Oportunidades Levantadas
+              - generic "—" [ref=f52e332]
+            - generic [ref=f52e333]:
+              - generic [ref=f52e334]: Visitas por Oportunidade
+              - generic "—" [ref=f52e340]
+              - paragraph [ref=f52e341]: quanto esforco custa levantar 1 negocio
+            - generic [ref=f52e342]:
+              - generic [ref=f52e343]: Dias Parados (mediana)
+              - generic "—" [ref=f52e348]
+          - generic [ref=f52e349]:
+            - region "Funil de conversao comercial" [ref=f52e350]:
+              - alert [ref=f52e351]:
+                - generic [ref=f52e354]:
+                  - paragraph [ref=f52e355]: Nao foi possivel carregar o funil de conversao.
+                  - paragraph [ref=f52e356]: Os numeros NAO seriam “zero no periodo” — a consulta falhou. Recarregue a pagina; se persistir, avise o time de dados.
+                  - paragraph [ref=f52e357]: "[acoesGestaoService.fetchAcoesFunilGestao] Could not find the function public.rpc_acoes_funil_gestao(p_from, p_qa_forcado, p_to) in the schema cache"
+            - figure "Esforco x Retorno" [ref=f52e358]:
+              - heading "Esforco x Retorno" [level=3] [ref=f52e361]
+              - alert [ref=f52e364]:
+                - generic [ref=f52e367]:
+                  - paragraph [ref=f52e368]: Nao foi possivel carregar a dispersao de esforco x retorno.
+                  - paragraph [ref=f52e369]: Os numeros NAO seriam “zero no periodo” — a consulta falhou. Recarregue a pagina; se persistir, avise o time de dados.
+                  - paragraph [ref=f52e370]: "[acoesGestaoService.fetchAcoesFunilGestao] Could not find the function public.rpc_acoes_funil_gestao(p_from, p_qa_forcado, p_to) in the schema cache"
+          - figure "Ranking de Consultores" [ref=f52e371]:
+            - heading "Ranking de Consultores" [level=3] [ref=f52e374]
+            - alert [ref=f52e377]:
+              - generic [ref=f52e380]:
+                - paragraph [ref=f52e381]: Nao foi possivel carregar o ranking de consultores.
+                - paragraph [ref=f52e382]: Os numeros NAO seriam “zero no periodo” — a consulta falhou. Recarregue a pagina; se persistir, avise o time de dados.
+                - paragraph [ref=f52e383]: "[acoesGestaoService.fetchAcoesFunilGestao] Could not find the function public.rpc_acoes_funil_gestao(p_from, p_qa_forcado, p_to) in the schema cache"
+          - generic [ref=f52e384]:
+            - heading "Heatmap Comercial · Consultor × Cidade" [level=3] [ref=f52e385]
+            - alert [ref=f52e386]:
+              - generic [ref=f52e389]:
+                - paragraph [ref=f52e390]: Nao foi possivel carregar estes dados.
+                - paragraph [ref=f52e391]: A consulta falhou — o que voce ve abaixo NAO e "nenhum registro no periodo". Recarregue a pagina; se persistir, avise o time de dados.
+                - paragraph [ref=f52e392]: "[biRpcService.fetchAcoesBI] Could not find the function public.rpc_acoes_bi(p_from, p_qa_forcado, p_to) in the schema cache"
+          - generic [ref=f52e393]:
+            - figure "Acoes por Consultor" [ref=f52e394]:
+              - generic [ref=f52e396]:
+                - heading [level=3] [ref=f52e397]:
+                  - text: Acoes por Consultor
+                  - generic "Origem dos dados" [ref=f52e399]
+                - paragraph [ref=f52e404]: Top 15 por volume
+              - paragraph [ref=f52e411]: Sem dados para este período
+            - figure "Evolucao Mensal de Acoes" [ref=f52e412]:
+              - generic [ref=f52e414]:
+                - heading [level=3] [ref=f52e415]:
+                  - text: Evolucao Mensal de Acoes
+                  - generic "Origem dos dados" [ref=f52e417]
+                - paragraph [ref=f52e422]: Quantidade por mes
+              - paragraph [ref=f52e429]: Sem dados para este período
+            - figure "Acoes por Cidade" [ref=f52e430]:
+              - generic [ref=f52e432]:
+                - heading [level=3] [ref=f52e433]:
+                  - text: Acoes por Cidade
+                  - generic "Origem dos dados" [ref=f52e435]
+                - paragraph [ref=f52e440]: Top 15 cidades
+              - paragraph [ref=f52e447]: Sem dados para este período
+            - figure "Distribuicao por Tipo de Acao" [ref=f52e448]:
+              - generic [ref=f52e450]:
+                - heading [level=3] [ref=f52e451]:
+                  - text: Distribuicao por Tipo de Acao
+                  - generic "Origem dos dados" [ref=f52e453]
+                - paragraph [ref=f52e458]: Todos os tipos
+              - paragraph [ref=f52e465]: Sem dados para este período
+            - figure "Acoes por Dia da Semana" [ref=f52e466]:
+              - generic [ref=f52e468]:
+                - heading [level=3] [ref=f52e469]:
+                  - text: Acoes por Dia da Semana
+                  - generic "Origem dos dados" [ref=f52e471]
+                - paragraph [ref=f52e476]: Concentracao semanal
+              - paragraph [ref=f52e483]: Sem dados para este período
+            - figure "Tipo de Contato" [ref=f52e484]:
+              - generic [ref=f52e486]:
+                - heading [level=3] [ref=f52e487]:
+                  - text: Tipo de Contato
+                  - generic "Origem dos dados" [ref=f52e489]
+                - paragraph [ref=f52e494]: Distribuicao dos canais
+              - paragraph [ref=f52e501]: Sem dados para este período
+          - generic [ref=f52e502]:
+            - heading "Clientes Mais Atendidos · Ano Atual" [level=3] [ref=f52e503]
+            - alert [ref=f52e504]:
+              - generic [ref=f52e507]:
+                - paragraph [ref=f52e508]: Nao foi possivel carregar estes dados.
+                - paragraph [ref=f52e509]: A consulta falhou — o que voce ve abaixo NAO e "nenhum registro no periodo". Recarregue a pagina; se persistir, avise o time de dados.
+                - paragraph [ref=f52e510]: "[biRpcService.fetchAcoesBI] Could not find the function public.rpc_acoes_bi(p_from, p_qa_forcado, p_to) in the schema cache"
+          - figure "Clientes em Risco" [ref=f52e511]:
+            - generic [ref=f52e513]:
+              - heading [level=3] [ref=f52e514]:
+                - text: Clientes em Risco
+                - generic "Origem dos dados" [ref=f52e516]
+              - paragraph [ref=f52e521]: Dias sem acao comercial (toda a carteira)
+            - generic [ref=f52e522]:
+              - paragraph [ref=f52e528]: Sem dados para este período
+              - paragraph [ref=f52e530]: Clique numa faixa para abrir a lista de clientes dela em “Gestao da Carteira”.
+          - generic [ref=f52e531]:
+            - generic [ref=f52e532]:
+              - heading "Gestao da Carteira · Clientes sem contato · 0 de 0" [level=3] [ref=f52e533]
+              - alert [ref=f52e534]:
+                - generic [ref=f52e537]:
+                  - paragraph [ref=f52e538]: Nao foi possivel carregar estes dados.
+                  - paragraph [ref=f52e539]: A consulta falhou — o que voce ve abaixo NAO e "nenhum registro no periodo". Recarregue a pagina; se persistir, avise o time de dados.
+                  - paragraph [ref=f52e540]: "[acoesGestaoService.fetchAcoesGestaoListas:sem_contato] Could not find the function public.rpc_acoes_gestao_listas(p_from, p_limit, p_offset, p_qa_forcado, p_tipo, p_to) in the schema cache"
+            - paragraph [ref=f52e541]:
+              - text: Dias contados a partir da ultima acao no ano corrente — mesma regra do grafico “Clientes em Risco”, para as duas leituras baterem. Cliente sem nenhuma acao no ano aparece como
+              - strong [ref=f52e542]: “Sem acao no ano”
+              - text: ", nunca como “999 dias”."
+          - region "Mapa de oportunidades abertas" [ref=f52e543]:
+            - button "Mapa de Oportunidades Abertas Clique para carregar o mapa (o Leaflet so monta ao abrir)" [ref=f52e544] [cursor=pointer]:
+              - generic [ref=f52e550]:
+                - generic [ref=f52e551]: Mapa de Oportunidades Abertas
+                - generic [ref=f52e552]: Clique para carregar o mapa (o Leaflet so monta ao abrir)
+          - generic [ref=f52e553]:
+            - group "Filtrar por status do negocio" [ref=f52e554]:
+              - generic [ref=f52e555]: "Status:"
+              - button "Todos" [pressed] [ref=f52e556] [cursor=pointer]
+              - button "Em Aberto" [ref=f52e557] [cursor=pointer]
+              - button "Ganho" [ref=f52e558] [cursor=pointer]
+              - button "Perdido" [ref=f52e559] [cursor=pointer]
+            - generic [ref=f52e560]:
+              - heading "Acoes do Periodo" [level=3] [ref=f52e561]
+              - alert [ref=f52e562]:
+                - generic [ref=f52e565]:
+                  - paragraph [ref=f52e566]: Nao foi possivel carregar estes dados.
+                  - paragraph [ref=f52e567]: A consulta falhou — o que voce ve abaixo NAO e "nenhum registro no periodo". Recarregue a pagina; se persistir, avise o time de dados.
+                  - paragraph [ref=f52e568]: "[biRpcService.fetchAcoesDetalhe] Could not find the function public.rpc_acoes_detalhe(p_from, p_limit, p_qa_forcado, p_to) in the schema cache"
+        - button "Expand BI debug overlay" [ref=f52e570] [cursor=pointer]:
+          - generic [ref=f52e571]: +
+          - generic [ref=f52e572]: BI DEBUG

@@ -13,10 +13,10 @@ import {
 import type { AcoesFunil, AcoesRankingConsultorItem } from "@/types/biRpc";
 
 const ranking: AcoesRankingConsultorItem[] = [
-  { consultor: "CONSULTOR C", visitas: 381, oportunidades: 150, ganhos: 4, valorGanho: 900_000, taxaConversao: 2.7 },
-  { consultor: "CONSULTOR D", visitas: 615, oportunidades: 80, ganhos: 0, valorGanho: 0, taxaConversao: 0 },
-  { consultor: "CONSULTOR B", visitas: 461, oportunidades: 190, ganhos: 0, valorGanho: 0, taxaConversao: 0 },
-  { consultor: "CONSULTOR A", visitas: 100, oportunidades: 10, ganhos: 4, valorGanho: 2_500_000, taxaConversao: 40 },
+  { consultor: "CONSULTOR C", visitas: 381, oportunidades: 150, ganhos: 4, perdidos: 1, valorGanho: 900_000, taxaConversao: 2.7 },
+  { consultor: "CONSULTOR D", visitas: 615, oportunidades: 80, ganhos: 0, perdidos: 3, valorGanho: 0, taxaConversao: 0 },
+  { consultor: "CONSULTOR B", visitas: 461, oportunidades: 190, ganhos: 0, perdidos: 0, valorGanho: 0, taxaConversao: 0 },
+  { consultor: "CONSULTOR A", visitas: 100, oportunidades: 10, ganhos: 4, perdidos: 2, valorGanho: 2_500_000, taxaConversao: 40 },
 ];
 
 describe("safeRatio — divisao por zero", () => {
@@ -100,7 +100,7 @@ describe("funilRatios", () => {
   });
 });
 
-describe("sortRanking — os 4 criterios", () => {
+describe("sortRanking — os 5 criterios", () => {
   it("should sort by visitas desc", () => {
     expect(sortRanking(ranking, "visitas").map((r) => r.consultor)).toEqual([
       "CONSULTOR D", "CONSULTOR B", "CONSULTOR C", "CONSULTOR A",
@@ -118,6 +118,12 @@ describe("sortRanking — os 4 criterios", () => {
     // senao a lista troca de ordem entre renders.
     expect(sortRanking(ranking, "ganhos").map((r) => r.consultor)).toEqual([
       "CONSULTOR A", "CONSULTOR C", "CONSULTOR B", "CONSULTOR D",
+    ]);
+  });
+
+  it("should sort by perdidos desc, breaking ties by consultor name", () => {
+    expect(sortRanking(ranking, "perdidos").map((r) => r.consultor)).toEqual([
+      "CONSULTOR D", "CONSULTOR A", "CONSULTOR C", "CONSULTOR B",
     ]);
   });
 

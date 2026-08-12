@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
 import { BiTableCard } from "@/components/bi/BiTableCard";
 import { ChipToggle, type ChipOption } from "@/components/bi/ChipToggle";
-import { useAcoesGestaoListasRpc, GESTAO_LISTA_PAGE, GESTAO_LISTA_MAX } from "@/hooks/bi/useAcoesGestaoListasRpc";
+import { PaginationControls } from "@/components/bi/PaginationControls";
+import { useAcoesGestaoListasRpc, GESTAO_LISTA_PAGE } from "@/hooks/bi/useAcoesGestaoListasRpc";
 import { fmtNum } from "@/lib/formatters";
 import { DesperdicioTable, NegativasTable } from "./AcoesGestaoCarteiraTables";
 import type {
@@ -13,13 +14,13 @@ import type {
 
 /** Story 2-A: so desperdicio e negativas. sem_contato removido. */
 const TABS: readonly ChipOption<AcoesGestaoListaTipo>[] = [
-  { value: "desperdicio", label: "Desperdicio" },
-  { value: "negativas", label: "Negativas" },
+  { value: "desperdicio", label: "Muitas visitas, poucas oportunidades" },
+  { value: "negativas", label: "Clientes com 3 perdas seguidas" },
 ];
 
 const TITULO: Record<AcoesGestaoListaTipo, string> = {
-  desperdicio: "Gestao da Carteira · Esforco sem retorno",
-  negativas: "Gestao da Carteira · Clientes negativos",
+  desperdicio: "Gestao da Carteira · Muitas visitas, poucas oportunidades",
+  negativas: "Gestao da Carteira · Clientes com 3 perdas seguidas",
 };
 
 /** Faixa clicada no chart "Clientes em Risco" — drill-down vindo de fora. */
@@ -48,22 +49,24 @@ interface Props {
  */
 export function AcoesGestaoCarteira({ from, to, vendedor, cidade, active = true, drill, onClearDrill }: Props) {
   const [tab, setTab] = useState<AcoesGestaoListaTipo>("desperdicio");
-  const [verTodos, setVerTodos] = useState(false);
+  const [page, setPage] = useState(1);
 
   // Story 2-A: drill por faixa agora aponta para aba inexistente.
   // Silenciosamente ignoramos — sem erro, sem badge.
   const hasDrill = drill != null;
   const effectiveDrill = hasDrill ? null : null; // consume without using
 
-  // Trocar de aba volta para as 10 primeiras linhas.
-  useEffect(() => setVerTodos(false), [tab]);
+  // Qualquer troca de recorte volta para a primeira pagina. A consulta e
+  // paginada no servidor; nunca trazemos centenas de clientes ao navegador.
+  useEffect(() => setPage(1), [tab, from, to, vendedor, cidade]);
 
-  const limit = verTodos ? GESTAO_LISTA_MAX : GESTAO_LISTA_PAGE;
-  const base = { from, to, vendedor, cidade, limit };
+  const limit = GESTAO_LISTA_PAGE;
+  const base = { from, to, vendedor, cidade, limit, offset: (page - 1) * limit };
 
   const desperdicio = useAcoesGestaoListasRpc<AcoesDesperdicioRow>({
     ...base,
     tipo: "desperdicio",
+    anoCorrente: true,
     enabled: active && tab === "desperdicio",
   });
   const negativas = useAcoesGestaoListasRpc<AcoesNegativaRow>({
@@ -73,16 +76,23 @@ export function AcoesGestaoCarteira({ from, to, vendedor, cidade, active = true,
   });
 
   const atual = tab === "desperdicio" ? desperdicio : negativas;
+  // `keepPreviousData` preserva total e controles enquanto a proxima pagina
+  // chega. Sem este estado, os nomes da pagina anterior ficam visiveis por
+  // varios segundos e parece que o botao de pagina nao funcionou.
+  const carregandoPagina = atual.isLoading || atual.isPlaceholderData;
   const total = atual.data?.total ?? 0;
   const meta = atual.data?.meta;
   const exibidas = atual.data?.rows.length ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const inicio = total === 0 ? 0 : (page - 1) * limit + 1;
+  const fim = total === 0 ? 0 : Math.min(page * limit, total);
 
   const legenda = useMemo(() => {
     if (tab === "desperdicio") {
       return (
         <>
-          Clientes com {fmtNum(meta?.minVisitas ?? 3)}+ visitas no periodo, ordenados por menos oportunidades
-          levantadas.
+          Clientes com {fmtNum(meta?.minVisitas ?? 3)}+ visitas no ano corrente, ordenados por mais visitas e,
+          em caso de empate, por menos oportunidades levantadas.
           {meta?.semNenhumaOportunidade != null && (
             <> {fmtNum(meta.semNenhumaOportunidade)} nao geraram nenhuma oportunidade.</>
           )}{" "}
@@ -102,18 +112,13 @@ export function AcoesGestaoCarteira({ from, to, vendedor, cidade, active = true,
     );
   }, [tab, meta, total]);
 
-  const podeExpandir = !verTodos && total > exibidas;
-
-  const footer = podeExpandir ? (
-    <div className="mt-3">
-      <button
-        type="button"
-        onClick={() => setVerTodos(true)}
-        className="h-8 rounded-full border border-[var(--voux-card-border)] px-4 text-xs font-medium text-[var(--voux-text-primary)] transition-colors hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--voux-champagne-400)]"
-      >
-        Ver todos ({fmtNum(total)})
-      </button>
-    </div>
+  const footer = totalPages > 1 ? (
+    <PaginationControls
+      page={page}
+      totalPages={totalPages}
+      onPageChange={setPage}
+      rangeLabel={`Mostrando ${fmtNum(inicio)}–${fmtNum(fim)} de ${fmtNum(total)}`}
+    />
   ) : null;
 
   // Badge de drill (Story 2-A: nao renderiza mais — aba sem_contato nao existe)
@@ -123,16 +128,17 @@ export function AcoesGestaoCarteira({ from, to, vendedor, cidade, active = true,
     <div className="space-y-3">
       {drillBadge}
       <BiTableCard
-        title={`${TITULO[tab]} · ${fmtNum(exibidas)} de ${fmtNum(total)}`}
+        title={`${TITULO[tab]} · ${fmtNum(inicio)}–${fmtNum(fim)} de ${fmtNum(total)}`}
         actions={
           <ChipToggle
             options={TABS}
             value={tab}
             onChange={setTab}
             ariaLabel="Escolher lista da gestao da carteira"
+            prefix="Ver lista:"
           />
         }
-        loading={atual.isLoading}
+        loading={carregandoPagina}
         error={atual.error}
         isEmpty={exibidas === 0}
         emptyMessage="Nenhum cliente atende a regra desta lista no recorte atual."

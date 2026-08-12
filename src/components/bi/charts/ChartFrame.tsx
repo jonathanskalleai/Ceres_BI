@@ -11,6 +11,8 @@ interface ChartFrameProps {
   rounded?: "lg" | "full";
   /** Accessible label for the chart region */
   ariaLabel?: string;
+  /** Permite rolagem vertical para rankings maiores que a altura do card. */
+  scrollY?: boolean;
   children: ReactNode;
 }
 
@@ -26,6 +28,7 @@ export function ChartFrame({
   height,
   rounded = "lg",
   ariaLabel,
+  scrollY = false,
   children,
 }: ChartFrameProps) {
   const style = { height: height ?? "100%", width: "100%" } as const;
@@ -66,7 +69,7 @@ export function ChartFrame({
       role="img"
       aria-label={ariaLabel}
       className="w-full"
-      style={{ ...style, overflowX: "auto", overflowY: "hidden", minWidth: 0 }}
+      style={{ ...style, overflowX: "auto", overflowY: scrollY ? "auto" : "hidden", minWidth: 0 }}
     >
       {children}
     </div>

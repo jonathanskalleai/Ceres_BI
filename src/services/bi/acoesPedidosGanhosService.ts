@@ -13,6 +13,8 @@ export interface PedidoDetalheRow {
   cliente: string;
   cidade: string;
   consultor: string;
+  produto: string | null;
+  observacaoNegocio: string | null;
   dataAprovacao: string;
   valorPedido: number | null;
 }
