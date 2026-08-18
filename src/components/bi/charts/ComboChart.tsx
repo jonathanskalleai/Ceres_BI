@@ -72,7 +72,7 @@ function buildOption(
   const lineSeries = {
     name: seriesLabels?.[lineKey] ?? lineKey,
     type: "line" as const,
-    yAxisIndex: 1,
+    yAxisIndex: 0,
     data: data.map((d) => Number(d[lineKey] ?? 0)),
     smooth: true,
     showSymbol: true,
@@ -134,11 +134,6 @@ function buildOption(
       {
         ...valueAxis,
         axisLabel: { ...valueAxis.axisLabel, formatter: formatCompact },
-      },
-      {
-        ...valueAxis,
-        axisLabel: { ...valueAxis.axisLabel, formatter: formatCompact },
-        splitLine: { show: false },
       },
     ],
     series: [...barSeries, lineSeries],
