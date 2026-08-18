@@ -55,10 +55,10 @@ export default function BiPainel() {
               title="Evolução G/P/O"
               description="Ganhos, Perdidos e Oportunidades — 12 meses"
               label="G/P/O · EMPRESA"
-              height={300}
+              height={220}
               loading={gpoLoading}
             >
-              <EvolucaoGPOChart data={gpoData ?? []} height={300} />
+              <EvolucaoGPOChart data={gpoData ?? []} height={220} />
             </ChartCard>
           </div>
         </TabsContent>
