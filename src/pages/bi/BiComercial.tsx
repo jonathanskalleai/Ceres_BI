@@ -1,12 +1,11 @@
 import { lazy, Suspense, useState } from "react";
 import { BarChart3, PackageSearch, ShoppingCart } from "lucide-react";
 import { useNegociosFilter } from "@/contexts/NegociosFilterContext";
-import { ComercialAiInsightsCard } from "@/components/bi/ComercialAiInsightsCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const ComercialSection = lazy(() => import("@/components/bi/sections/ComercialSection"));
-const PedidosSection = lazy(() => import("@/components/bi/sections/PedidosSection"));
+const ResultadosComerciaisSection = lazy(() => import("@/components/bi/sections/ResultadosComerciaisSection"));
+const PedidosGanhosSection = lazy(() => import("@/components/bi/sections/PedidosGanhosSection"));
 const AdminSection = lazy(() => import("@/components/bi/sections/AdminSection"));
 const ProdutosSection = lazy(() => import("@/components/bi/sections/ProdutosSection"));
 const InteligenciaMercadoSection = lazy(async () => {
@@ -36,7 +35,7 @@ function PositionCurrentNotice({ children }: { children: React.ReactNode }) {
 }
 
 export default function BiComercial() {
-  const { dateRange, categoria, funil } = useNegociosFilter();
+  const { dateRange, vendedor, cidade } = useNegociosFilter();
   const [tab, setTab] = useState("vendas");
 
   return (
@@ -53,15 +52,24 @@ export default function BiComercial() {
         </TabsList>
 
         <TabsContent value="vendas">
-          <ComercialAiInsightsCard />
           <Suspense fallback={<SectionFallback />}>
-            <ComercialSection active={tab === "vendas"} dateRange={dateRange} categoria={categoria} funil={funil} />
+            <ResultadosComerciaisSection
+              active={tab === "vendas"}
+              dateRange={dateRange}
+              vendedor={vendedor || undefined}
+              cidade={cidade || undefined}
+            />
           </Suspense>
         </TabsContent>
 
         <TabsContent value="pedidos">
           <Suspense fallback={<SectionFallback />}>
-            <PedidosSection active={tab === "pedidos"} dateRange={dateRange} />
+            <PedidosGanhosSection
+              active={tab === "pedidos"}
+              dateRange={dateRange}
+              vendedor={vendedor || undefined}
+              cidade={cidade || undefined}
+            />
           </Suspense>
         </TabsContent>
 
