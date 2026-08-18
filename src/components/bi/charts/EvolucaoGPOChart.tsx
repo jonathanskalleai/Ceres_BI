@@ -61,6 +61,7 @@ export default function EvolucaoGPOChart({ data, height = 300, loading = false }
         lineColor={LINE_COLOR}
         height={height}
         loading={loading}
+        showDataLabels
         tooltipFormatter={(v, _key) => v.toLocaleString("pt-BR")}
       />
     </div>

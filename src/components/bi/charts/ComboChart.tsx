@@ -27,6 +27,8 @@ export interface ComboChartProps {
   title?: string;
   height?: number;
   loading?: boolean;
+  /** Mostrar valores em cima de cada barra/ponto */
+  showDataLabels?: boolean;
   tooltipFormatter?: (value: number, key: string) => string;
 }
 
@@ -43,6 +45,7 @@ function buildOption(
   legendColor: string,
   seriesLabels?: Record<string, string>,
   tooltipFormatter?: (value: number, key: string) => string,
+  showDataLabels = false,
 ): EChartsOption {
   const categories = data.map((d) => String(d.name));
 
@@ -57,7 +60,11 @@ function buildOption(
       borderRadius: [3, 3, 0, 0],
     },
     label: {
-      show: false,
+      show: showDataLabels,
+      position: "top" as const,
+      fontSize: 10,
+      color: labelColor,
+      formatter: (p: { value: number }) => (p.value === 0 ? "" : String(p.value)),
     },
   }));
 
@@ -71,7 +78,13 @@ function buildOption(
     symbolSize: data.length > 12 ? 3 : data.length > 6 ? 4 : 6,
     lineStyle: { color: lineColor, width: 2.5 },
     itemStyle: { color: lineColor },
-    label: { show: false },
+    label: {
+      show: showDataLabels,
+      position: "top" as const,
+      fontSize: 10,
+      color: lineColor,
+      formatter: (p: { value: number }) => (p.value === 0 ? "" : String(p.value)),
+    },
   };
 
   return {
@@ -139,6 +152,7 @@ export default function ComboChart({
   lineColor = CHART_COLORS[2],
   height,
   loading = false,
+  showDataLabels = false,
   tooltipFormatter,
 }: ComboChartProps) {
   const { tooltip, categoryAxis, valueAxis, vars } = useChartTheme();
@@ -158,8 +172,9 @@ export default function ComboChart({
         vars.legendText,
         seriesLabels,
         tooltipFormatter,
+        showDataLabels,
       ),
-    [data, barKeys, lineKey, barColors, lineColor, tooltip, categoryAxis, valueAxis, vars.axisText, vars.legendText, seriesLabels, tooltipFormatter],
+    [data, barKeys, lineKey, barColors, lineColor, tooltip, categoryAxis, valueAxis, vars.axisText, vars.legendText, seriesLabels, tooltipFormatter, showDataLabels],
   );
 
   return (
