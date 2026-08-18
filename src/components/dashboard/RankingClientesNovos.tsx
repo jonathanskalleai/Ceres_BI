@@ -1,9 +1,8 @@
 import { useState, useMemo } from "react";
 import type { Registro, Filters } from "@/types/comercial";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { ChevronDown, ChevronUp, Users, MapPin, Filter } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { hasActiveFilters } from "@/lib/filterUtils";
+import { cn } from "@/lib/utils";
 
 interface RankingClientesNovosProps {
   registros: Registro[];
@@ -24,7 +23,7 @@ const formatDate = (d: string) => {
   return d;
 };
 
-const medals = ["🥇", "🥈", "🥉"];
+const CARD = "rounded-xl border";
 
 export const RankingClientesNovos = ({ registros, filters }: RankingClientesNovosProps) => {
   const [expandedConsultor, setExpandedConsultor] = useState<string | null>(null);
@@ -68,89 +67,120 @@ export const RankingClientesNovos = ({ registros, filters }: RankingClientesNovo
   const toggle = (nome: string) =>
     setExpandedConsultor((prev) => (prev === nome ? null : nome));
 
+  if (ranking.length === 0) return null;
+
   return (
-    <Card className="border-0 shadow-sm">
-      <CardHeader className="pb-3">
-        <div className="flex items-center gap-2">
-          <Users className="h-5 w-5 text-primary" />
-          <CardTitle className="text-sm font-semibold">Clientes atendidos por consultor</CardTitle>
-        </div>
-        <span className="text-xs text-muted-foreground">
-          Clientes atendidos por consultor · Clique para expandir
-          {isFiltered && (
-            <Badge variant="secondary" className="ml-2 text-[10px] gap-1">
-              <Filter className="h-3 w-3" />
-              Filtrado
-            </Badge>
-          )}
-        </span>
-      </CardHeader>
-      <CardContent className="space-y-1">
-        {ranking.slice(0, 5).map((cons, idx) => {
+    <div
+      className={cn(CARD, "overflow-hidden")}
+      style={{ borderColor: "var(--voux-card-border)", background: "var(--surface-raised)" }}
+    >
+      {/* Header */}
+      <div className="px-4 pt-4 pb-3">
+        <p
+          className="text-[10px] tracking-[0.12em] uppercase font-medium"
+          style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}
+        >
+          POR CONSULTOR
+        </p>
+        <h3
+          className="text-sm font-semibold mt-1"
+          style={{ fontFamily: "var(--voux-font-display)", color: "var(--voux-text-heading)" }}
+        >
+          Clientes atendidos
+        </h3>
+        <p className="text-[11px] mt-0.5" style={{ color: "var(--voux-text-faint)" }}>
+          {ranking.length} consultores{isFiltered ? " (filtrado)" : ""} · clique para expandir
+        </p>
+      </div>
+
+      {/* List */}
+      <div>
+        {ranking.slice(0, 8).map((cons, idx) => {
           const isOpen = expandedConsultor === cons.nome;
           return (
-            <div key={cons.nome} className="border-b border-border/40 last:border-0">
+            <div key={cons.nome} className="border-t" style={{ borderColor: "var(--voux-card-border)" }}>
               <button
                 onClick={() => toggle(cons.nome)}
-                className="flex items-center gap-3 w-full px-3 py-2.5 text-left hover:bg-muted/30 rounded transition-colors"
+                className="flex items-center gap-3 w-full px-4 py-2.5 text-left transition-colors duration-150 hover:bg-[rgba(0,0,0,0.02)]"
               >
-                <span className="w-8 text-center text-sm font-bold text-muted-foreground">
-                  {idx < 3 ? medals[idx] : `${idx + 1}º`}
+                <span
+                  className="w-6 text-center text-[11px] font-bold shrink-0"
+                  style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}
+                >
+                  {idx + 1}
                 </span>
-                <span className="flex-1 text-sm font-medium truncate">{cons.nome}</span>
-                <Badge variant="secondary" className="text-xs gap-1">
-                  <Users className="h-3 w-3" />
-                  {cons.totalClientes}
-                </Badge>
-                <Badge variant="outline" className="text-xs gap-1">
-                  <MapPin className="h-3 w-3" />
-                  {cons.regioes.length}
-                </Badge>
-                {isOpen ? (
-                  <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                ) : (
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                )}
+                <span
+                  className="flex-1 text-[13px] font-medium truncate"
+                  style={{ fontFamily: "var(--voux-font-sans)", color: "var(--voux-text-heading)" }}
+                >
+                  {cons.nome}
+                </span>
+                <span
+                  className="text-[11px] tabular-nums shrink-0"
+                  style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-muted)" }}
+                >
+                  {cons.totalClientes} clientes
+                </span>
+                <span
+                  className="text-[11px] tabular-nums shrink-0"
+                  style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}
+                >
+                  {cons.regioes.length} cidades
+                </span>
+                {isOpen
+                  ? <ChevronUp className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--voux-text-faint)" }} />
+                  : <ChevronDown className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--voux-text-faint)" }} />}
               </button>
 
               {isOpen && (
-                <div className="px-4 pb-4 pt-1 space-y-4 animate-in slide-in-from-top-2 duration-200 bg-muted/10 rounded-b-lg">
+                <div className="px-4 pb-4 pt-2 space-y-3" style={{ background: "var(--surface-base)" }}>
                   {/* Regiões */}
                   <div>
-                    <h5 className="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5">
-                      <MapPin className="h-3.5 w-3.5 text-accent" />
-                      Regiões ({cons.regioes.length})
-                    </h5>
+                    <p
+                      className="text-[10px] tracking-[0.12em] uppercase font-medium mb-1.5"
+                      style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}
+                    >
+                      REGIÕES ({cons.regioes.length})
+                    </p>
                     <div className="flex flex-wrap gap-1.5">
                       {cons.regioes.map((r) => (
-                        <Badge key={r.cidade} variant="outline" className="text-[10px] gap-1">
+                        <span
+                          key={r.cidade}
+                          className="inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px]"
+                          style={{ borderColor: "var(--voux-card-border)", color: "var(--voux-text-primary)" }}
+                        >
                           {r.cidade}
-                          <span className="font-bold text-primary">{r.qtd}</span>
-                        </Badge>
+                          <span className="font-bold" style={{ color: "var(--voux-accent)" }}>{r.qtd}</span>
+                        </span>
                       ))}
                     </div>
                   </div>
 
                   {/* Clientes */}
                   <div>
-                    <h5 className="text-xs font-semibold text-foreground mb-2 flex items-center gap-1.5">
-                      <Users className="h-3.5 w-3.5 text-primary" />
-                      Clientes ({cons.clientes.length})
-                    </h5>
-                    <div className="max-h-64 overflow-y-auto space-y-1 pr-1">
+                    <p
+                      className="text-[10px] tracking-[0.12em] uppercase font-medium mb-1.5"
+                      style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}
+                    >
+                      CLIENTES ({cons.clientes.length})
+                    </p>
+                    <div className="max-h-56 overflow-y-auto space-y-1">
                       {cons.clientes.map((c) => (
                         <div
                           key={c.nome}
-                          className="flex items-center gap-2 bg-card rounded-lg px-3 py-2 shadow-sm border border-border/50"
+                          className="flex items-center gap-2 rounded-md border px-3 py-1.5"
+                          style={{ borderColor: "var(--voux-card-border)", background: "var(--surface-raised)" }}
                         >
-                          <span className="flex-1 text-xs font-medium truncate">{c.nome}</span>
-                          <Badge variant="outline" className="text-[10px] shrink-0">
+                          <span className="flex-1 text-[12px] font-medium truncate" style={{ color: "var(--voux-text-primary)" }}>
+                            {c.nome}
+                          </span>
+                          <span className="text-[10px] shrink-0" style={{ color: "var(--voux-text-faint)" }}>
                             {c.cidade || "—"}
-                          </Badge>
-                          <span className="text-[10px] text-muted-foreground shrink-0">
+                          </span>
+                          <span className="text-[10px] tabular-nums shrink-0" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-muted)" }}>
                             {c.acoes} ações
                           </span>
-                          <span className="text-[10px] text-muted-foreground shrink-0">
+                          <span className="text-[10px] tabular-nums shrink-0" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}>
                             {formatDate(c.ultimaAcao)}
                           </span>
                         </div>
@@ -162,7 +192,7 @@ export const RankingClientesNovos = ({ registros, filters }: RankingClientesNovo
             </div>
           );
         })}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

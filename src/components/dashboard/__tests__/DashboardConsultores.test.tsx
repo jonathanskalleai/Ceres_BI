@@ -4,8 +4,8 @@ import { DashboardConsultores } from "../DashboardConsultores";
 import type { Vendedor } from "@/types/comercial";
 import type { RpcConsultorResumoAcoes } from "@/types/consultoresRpc";
 
-vi.mock("../ConsultorReportSheet", () => ({
-  ConsultorReportSheet: () => null,
+vi.mock("../consultor/InsightsEquipeCard", () => ({
+  InsightsEquipeCard: () => <div>Resumo semanal da equipe</div>,
 }));
 
 const vendedores: Vendedor[] = [
@@ -46,7 +46,7 @@ const resumo: RpcConsultorResumoAcoes[] = [
 ];
 
 describe("DashboardConsultores", () => {
-  it("mantém a conferência, o ranking de clientes e os cards individuais", () => {
+  it("restaura o resumo semanal de IA, ranking de performance e conferência", () => {
     render(
       <DashboardConsultores
         vendedores={vendedores}
@@ -63,11 +63,12 @@ describe("DashboardConsultores", () => {
       />,
     );
 
+    expect(screen.getByText("Resumo semanal da equipe")).toBeInTheDocument();
+    expect(screen.getByText("Ranking de performance")).toBeInTheDocument();
+    expect(screen.getByText("Todos os consultores")).toBeInTheDocument();
     expect(screen.getByText("Ranking e conferência por consultor")).toBeInTheDocument();
-    expect(screen.getByText("Clientes atendidos por consultor")).toBeInTheDocument();
-    expect(screen.getByText("Ranking comercial · vendas, visitas e ações")).toBeInTheDocument();
     expect(screen.getAllByText("CARLOS AUGUSTO AUGUSTIN")).toHaveLength(3);
-    expect(screen.getByText("R$ 503.000,00")).toBeInTheDocument();
-    expect(screen.getByText("25 visitas · 27 clientes")).toBeInTheDocument();
+    expect(screen.getByText("0 vendas · 25 visitas · 31 ações")).toBeInTheDocument();
+    expect(screen.getAllByText("R$ 0")).not.toHaveLength(0);
   });
 });

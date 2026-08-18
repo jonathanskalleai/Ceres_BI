@@ -5,7 +5,8 @@ import {
 } from "@/services/consultoresRpcService";
 import type { RpcConsultorResumoAcoes } from "@/types/consultoresRpc";
 
-const STALE_TIME = 5 * 60_000;
+const STALE_TIME = 10 * 60_000; // 10 min — dados mudam apenas com ETL (~15min)
+const GC_TIME = 60 * 60_000;   // 1h — mantém em memória para back/forward
 
 export function useConsultoresResumoAcoes(
   params: ConsultoresResumoParams & { enabled?: boolean },
@@ -24,6 +25,7 @@ export function useConsultoresResumoAcoes(
     ],
     queryFn: () => fetchConsultoresResumoAcoes(rpcParams),
     staleTime: STALE_TIME,
+    gcTime: GC_TIME,
     placeholderData: keepPreviousData,
     enabled: enabled && !!rpcParams.from && !!rpcParams.to,
   });

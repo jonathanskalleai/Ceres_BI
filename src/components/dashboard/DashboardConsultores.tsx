@@ -1,9 +1,8 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import type { Vendedor, Registro, Filters } from "@/types/comercial";
-import { Button } from "@/components/ui/button";
-import { ArrowRight, Sparkles, CalendarDays } from "lucide-react";
+import { ArrowRight, CalendarDays, Trophy } from "lucide-react";
 import { filterRegistros, hasActiveFilters } from "@/lib/filterUtils";
-import { ConsultorReportSheet } from "./ConsultorReportSheet";
+import { InsightsEquipeCard } from "./consultor/InsightsEquipeCard";
 import { RankingClientesNovos } from "./RankingClientesNovos";
 import { ConsultoresValidationTable } from "./ConsultoresValidationTable";
 import { cn } from "@/lib/utils";
@@ -24,19 +23,22 @@ const formatCurrency = (v: number) => {
   return `R$ ${v.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`;
 };
 
-const CARD =
-  "rounded-xl border bg-white p-5 transition-all duration-150";
+const MEDAL_COLORS = [
+  { bg: "linear-gradient(135deg, #ffd700 0%, #f5c842 100%)", text: "#7a5c00", ring: "rgba(255,215,0,0.3)" },  // Ouro
+  { bg: "linear-gradient(135deg, #c0c0c0 0%, #e0e0e0 100%)", text: "#4a4a4a", ring: "rgba(192,192,192,0.3)" },  // Prata
+  { bg: "linear-gradient(135deg, #cd7f32 0%, #e8a855 100%)", text: "#5c3600", ring: "rgba(205,127,50,0.3)" },  // Bronze
+  { bg: "linear-gradient(135deg, #8a7a6a 0%, #a09080 100%)", text: "#3d3530", ring: "rgba(138,122,106,0.2)" },
+  { bg: "linear-gradient(135deg, #8a7a6a 0%, #a09080 100%)", text: "#3d3530", ring: "rgba(138,122,106,0.2)" },
+];
 
 export const DashboardConsultores = ({ vendedores, registros, filters, resumo, onSelectConsultor }: DashboardConsultoresProps) => {
   const isFiltered = hasActiveFilters(filters);
-  const [sheetOpen, setSheetOpen] = useState(false);
 
   const resumoPorConsultor = useMemo(
     () => new Map(resumo.map((item) => [item.consultor, item])),
     [resumo],
   );
 
-  // Ranking comercial: valor vendido (ganhos), visitas, ações — já vem ordenado da RPC
   const vendedoresRanked = useMemo(() => {
     return [...vendedores].sort((a, b) => {
       const aR = resumoPorConsultor.get(a.nome);
@@ -53,180 +55,149 @@ export const DashboardConsultores = ({ vendedores, registros, filters, resumo, o
     : "Período selecionado";
 
   const top5 = vendedoresRanked.slice(0, 5);
-
-  // Totais do período para os KPIs de resumo
-  const totals = useMemo(() => {
-    let vendas = 0, pipeline = 0, oportunidades = 0, perdidos = 0;
-    for (const r of resumo) {
-      vendas += Number(r.valor_ganho ?? 0);
-      pipeline += Number(r.pipeline_aberto_gerado ?? 0);
-      oportunidades += Number(r.oportunidades_geradas ?? 0);
-      perdidos += Number(r.valor_perdido ?? 0);
-    }
-    const totalGanhos = resumo.reduce((s, r) => s + Number(r.ganhos ?? 0), 0);
-    const totalPerdidos = resumo.reduce((s, r) => s + Number(r.perdidos ?? 0), 0);
-    return { vendas, pipeline, oportunidades, perdidos, totalGanhos, totalPerdidos };
-  }, [resumo]);
+  const maxVendas = Math.max(...top5.map((v) => Number(resumoPorConsultor.get(v.nome)?.valor_ganho ?? 0)), 1);
 
   return (
     <div className="p-6 lg:p-8 space-y-8">
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-xl font-bold tracking-tight" style={{ color: "var(--voux-text-primary)" }}>
-              Desempenho dos consultores
-            </h2>
+          <h2
+            className="text-xl font-bold tracking-tight"
+            style={{ fontFamily: "var(--voux-font-display)", color: "var(--voux-text-heading)" }}
+          >
+            Consultores
+          </h2>
+          <div className="flex items-center gap-2 mt-1.5">
             <span
-              className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[10px]"
-              style={{ color: "var(--voux-accent)", borderColor: "var(--voux-card-border)" }}
+              className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] tabular-nums"
+              style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-accent)", borderColor: "var(--voux-card-border)" }}
             >
               <CalendarDays className="h-3 w-3" />
               {periodoLabel}
             </span>
+            <span className="text-[12px]" style={{ color: "var(--voux-text-faint)" }}>
+              {vendedoresRanked.length} ativos
+            </span>
           </div>
-          <p className="mt-1 text-xs" style={{ color: "var(--voux-text-faint)" }}>
-            {vendedoresRanked.length} consultores · ranking por vendas, visitas e ações
-          </p>
         </div>
-        <Button
-          onClick={() => setSheetOpen(true)}
-          className="rounded-full shadow-md font-semibold text-sm px-5"
-          style={{ backgroundColor: "var(--voux-accent)", color: "#fff" }}
-        >
-          <Sparkles className="h-4 w-4 mr-2" />
-          Insights de IA
-        </Button>
       </div>
 
-      <ConsultorReportSheet open={sheetOpen} onOpenChange={setSheetOpen} vendedores={vendedores} />
+      {/* Insights IA da Equipe */}
+      <InsightsEquipeCard consultores={vendedoresRanked.map((v) => v.nome)} />
 
-      {/* KPIs de resumo — estilo screenshot */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { eyebrow: "VENDAS NO PERÍODO", value: formatCurrency(totals.vendas), hint: `${totals.totalGanhos} pedidos aprovados`, color: "#1f6e3f" },
-          { eyebrow: "PIPELINE ABERTO", value: formatCurrency(totals.pipeline), hint: `${totals.oportunidades} oportunidades geradas`, color: "var(--voux-accent)" },
-          { eyebrow: "PERDIDOS", value: formatCurrency(totals.perdidos), hint: `${totals.totalPerdidos} negócios perdidos`, color: "#b8421c" },
-          { eyebrow: "TAXA DE CONVERSÃO", value: totals.oportunidades > 0 ? `${((totals.totalGanhos / totals.oportunidades) * 100).toFixed(1)}%` : "—", hint: `${totals.totalGanhos} ganhos ÷ ${totals.oportunidades} oportunidades`, color: "var(--voux-text-primary)" },
-        ].map((kpi) => (
-          <div
-            key={kpi.eyebrow}
-            className={cn(CARD)}
-            style={{ borderColor: "var(--voux-card-border)", boxShadow: "var(--voux-card-shadow)" }}
-          >
-            <p
-              className="text-[10px] tracking-[0.18em] uppercase font-medium mb-2"
-              style={{ fontFamily: "var(--voux-font-mono)", color: kpi.color }}
-            >
-              {kpi.eyebrow}
-            </p>
-            <p
-              className="text-2xl lg:text-[28px] font-bold leading-none tracking-tight tabular-nums"
-              style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-primary)" }}
-            >
-              {kpi.value}
-            </p>
-            <p
-              className="mt-2 text-[11px]"
-              style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}
-            >
-              {kpi.hint}
-            </p>
-          </div>
-        ))}
-      </div>
-
-      {/* Ranking Top 5 — estilo tabela "Quem vende mais" */}
+      {/* ═══════════════════════════════════════
+          RANKING TOP 5 — Visual impactante
+          ═══════════════════════════════════════ */}
       {top5.length > 0 && (
-        <div
-          className={cn(CARD, "p-0 overflow-hidden")}
-          style={{ borderColor: "var(--voux-card-border)", boxShadow: "var(--voux-card-shadow)" }}
-        >
-          <div className="px-5 pt-5 pb-3">
-            <p
-              className="text-[10px] tracking-[0.18em] uppercase font-medium"
+        <section className="space-y-5">
+          <div className="flex items-center gap-2">
+            <Trophy className="h-4 w-4" style={{ color: "var(--voux-accent)" }} />
+            <span
+              className="text-[12px] tracking-[0.22em] uppercase font-medium"
               style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}
             >
-              POR VENDEDOR
-            </p>
-            <h3 className="text-base font-bold mt-1" style={{ color: "var(--voux-text-primary)" }}>
-              Quem vende mais
-            </h3>
+              Ranking de performance
+            </span>
           </div>
-          {/* Table header */}
-          <div
-            className="grid grid-cols-[2fr_80px_70px_100px_100px_36px] items-center px-5 py-2 border-b text-[10px] tracking-[0.14em] uppercase font-medium"
-            style={{ borderColor: "var(--voux-card-border)", fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}
-          >
-            <span>CONSULTOR</span>
-            <span className="text-center">VENDAS</span>
-            <span className="text-center">VISITAS</span>
-            <span className="text-right">VALOR VENDIDO</span>
-            <span className="text-right">PIPELINE</span>
-            <span></span>
-          </div>
-          {/* Table rows */}
-          {top5.map((v, i) => {
-            const r = resumoPorConsultor.get(v.nome);
-            return (
-              <button
-                key={v.nome}
-                onClick={() => onSelectConsultor(v.nome)}
-                className="grid grid-cols-[2fr_80px_70px_100px_100px_36px] items-center px-5 py-3 w-full text-left hover:bg-[rgba(31,110,63,0.04)] transition-colors border-b last:border-b-0"
-                style={{ borderColor: "var(--voux-card-border)" }}
-              >
-                <span className="flex items-center gap-3">
-                  <span
-                    className="inline-flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-bold shrink-0"
+
+          <div className="space-y-2">
+            {top5.map((v, i) => {
+              const r = resumoPorConsultor.get(v.nome);
+              const valorGanho = Number(r?.valor_ganho ?? 0);
+              const pct = maxVendas > 0 ? (valorGanho / maxVendas) * 100 : 0;
+              const medal = MEDAL_COLORS[i];
+
+              return (
+                <button
+                  key={v.nome}
+                  onClick={() => onSelectConsultor(v.nome)}
+                  className={cn(
+                    "w-full flex items-center gap-4 rounded-xl border p-4 text-left transition-all duration-200",
+                    "hover:shadow-lg hover:scale-[1.005] hover:border-[var(--voux-accent)]",
+                    i === 0 && "p-5",
+                  )}
+                  style={{
+                    background: "var(--surface-raised)",
+                    borderColor: "var(--voux-card-border)",
+                    boxShadow: i === 0 ? "0 4px 20px -4px rgba(31,110,63,0.12)" : "var(--voux-card-shadow)",
+                  }}
+                >
+                  {/* Medalha/Posição */}
+                  <div
+                    className="flex items-center justify-center shrink-0 rounded-full font-bold"
                     style={{
-                      background: i === 0 ? "rgba(31,110,63,0.12)" : "rgba(0,0,0,0.04)",
-                      color: i === 0 ? "#1f6e3f" : "var(--voux-text-faint)",
+                      width: i === 0 ? 44 : 36,
+                      height: i === 0 ? 44 : 36,
+                      background: medal.bg,
+                      color: medal.text,
+                      fontSize: i === 0 ? 16 : 13,
                       fontFamily: "var(--voux-font-mono)",
+                      boxShadow: `0 2px 8px ${medal.ring}`,
                     }}
                   >
-                    {i + 1}
-                  </span>
-                  <span className="font-medium text-sm truncate" style={{ color: "var(--voux-text-primary)" }}>
-                    {v.nome}
-                  </span>
-                </span>
-                <span
-                  className="text-center text-sm font-bold tabular-nums"
-                  style={{ fontFamily: "var(--voux-font-mono)", color: "#1f6e3f" }}
-                >
-                  {r?.ganhos ?? 0}
-                </span>
-                <span
-                  className="text-center text-sm tabular-nums"
-                  style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-primary)" }}
-                >
-                  {v.visitas}
-                </span>
-                <span
-                  className="text-right text-sm font-bold tabular-nums"
-                  style={{ fontFamily: "var(--voux-font-mono)", color: "#1f6e3f" }}
-                >
-                  {formatCurrency(Number(r?.valor_ganho ?? 0))}
-                </span>
-                <span
-                  className="text-right text-sm tabular-nums"
-                  style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-primary)" }}
-                >
-                  {formatCurrency(Number(r?.pipeline_aberto_gerado ?? 0))}
-                </span>
-                <ArrowRight className="h-3.5 w-3.5 ml-auto" style={{ color: "var(--voux-text-faint)" }} />
-              </button>
-            );
-          })}
-        </div>
+                    {i + 1}º
+                  </div>
+
+                  {/* Nome + métricas secundárias */}
+                  <div className="flex-1 min-w-0">
+                    <p
+                      className={cn("font-bold truncate", i === 0 ? "text-base" : "text-sm")}
+                      style={{ color: "var(--voux-text-heading)", fontFamily: "var(--voux-font-sans)" }}
+                    >
+                      {v.nome}
+                    </p>
+                    <p className="text-[12px] mt-0.5" style={{ fontFamily: "var(--voux-font-sans)", color: "var(--voux-text-faint)" }}>
+                      {r?.ganhos ?? 0} vendas · {v.visitas} visitas · {v.totalAcoes} ações
+                    </p>
+                  </div>
+
+                  {/* Barra de performance relativa */}
+                  <div className="hidden md:flex items-center gap-3 w-[200px] shrink-0">
+                    <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "var(--voux-card-border)" }}>
+                      <div
+                        className="h-full rounded-full transition-all duration-700 ease-out"
+                        style={{
+                          width: `${Math.max(pct, 4)}%`,
+                          background: i === 0 ? "#1f6e3f" : i < 3 ? "var(--voux-accent)" : "var(--voux-text-faint)",
+                          opacity: i < 3 ? 1 : 0.5,
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Valor vendido */}
+                  <div className="text-right shrink-0">
+                    <p
+                      className={cn("font-bold tabular-nums", i === 0 ? "text-lg" : "text-sm")}
+                      style={{ fontFamily: "var(--voux-font-sans)", color: "#1f6e3f" }}
+                    >
+                      {formatCurrency(valorGanho)}
+                    </p>
+                    <p className="text-[12px]" style={{ fontFamily: "var(--voux-font-sans)", color: "var(--voux-text-faint)" }}>
+                      vendido
+                    </p>
+                  </div>
+
+                  {/* Arrow */}
+                  <ArrowRight className="h-4 w-4 shrink-0 opacity-30 group-hover:opacity-100" style={{ color: "var(--voux-text-faint)" }} />
+                </button>
+              );
+            })}
+          </div>
+        </section>
       )}
 
-      {/* Cards de todos os consultores */}
+      {/* ═══════════════════════════════════════
+          TODOS OS CONSULTORES — Cards
+          ═══════════════════════════════════════ */}
       <section className="space-y-4">
         <div>
-          <h3 className="text-base font-bold" style={{ color: "var(--voux-text-primary)" }}>Todos os consultores</h3>
-          <p className="text-xs mt-0.5" style={{ color: "var(--voux-text-faint)" }}>
-            Vendas, pipeline, atividade e conversão no calendário selecionado.
+          <h3 className="text-base font-bold" style={{ color: "var(--voux-text-heading)", fontFamily: "var(--voux-font-display)" }}>
+            Todos os consultores
+          </h3>
+          <p className="text-[12px] mt-0.5" style={{ color: "var(--voux-text-faint)" }}>
+            Clique para ver a visão individual completa.
           </p>
         </div>
         <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -235,17 +206,20 @@ export const DashboardConsultores = ({ vendedores, registros, filters, resumo, o
             return (
               <div
                 key={v.nome}
-                className={cn(CARD, "cursor-pointer group hover:shadow-md")}
+                className="rounded-xl border bg-white p-5 cursor-pointer group transition-all duration-200 hover:shadow-md hover:border-[var(--voux-accent)]"
                 style={{ borderColor: "var(--voux-card-border)", boxShadow: "var(--voux-card-shadow)" }}
                 onClick={() => onSelectConsultor(v.nome)}
               >
-                {/* Nome */}
+                {/* Nome + CRM badge */}
                 <div className="flex items-center justify-between mb-4">
-                  <h4 className="font-semibold text-sm truncate flex-1" style={{ color: "var(--voux-text-primary)" }}>
+                  <h4
+                    className="font-semibold text-sm truncate flex-1"
+                    style={{ color: "var(--voux-text-heading)", fontFamily: "var(--voux-font-sans)" }}
+                  >
                     {v.nome}
                   </h4>
                   <span
-                    className="text-[10px] font-bold px-1.5 py-0.5 rounded border"
+                    className="text-[12px] font-bold px-1.5 py-0.5 rounded border"
                     style={{
                       borderColor: v.crmQuality >= 70 ? "#1f6e3f" : v.crmQuality >= 50 ? "#9c5e1c" : "#b8421c",
                       color: v.crmQuality >= 70 ? "#1f6e3f" : v.crmQuality >= 50 ? "#9c5e1c" : "#b8421c",
@@ -256,64 +230,52 @@ export const DashboardConsultores = ({ vendedores, registros, filters, resumo, o
                   </span>
                 </div>
 
-                {/* Resultado principal: Vendas + Pipeline */}
+                {/* Vendas + Pipeline */}
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
-                    <p className="text-[9px] tracking-[0.14em] uppercase mb-1" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}>
+                    <p className="text-[11px] tracking-[0.14em] uppercase mb-1" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}>
                       Vendas
                     </p>
-                    <p className="text-lg font-bold leading-none tabular-nums" style={{ fontFamily: "var(--voux-font-mono)", color: "#1f6e3f" }}>
+                    <p className="text-lg font-bold leading-none tabular-nums" style={{ fontFamily: "var(--voux-font-sans)", color: "#1f6e3f" }}>
                       {formatCurrency(Number(r?.valor_ganho ?? 0))}
                     </p>
-                    <p className="mt-1 text-[10px]" style={{ color: "var(--voux-text-faint)" }}>
-                      {r?.ganhos ?? 0} pedidos aprovados
+                    <p className="mt-1 text-[12px]" style={{ fontFamily: "var(--voux-font-sans)", color: "var(--voux-text-faint)" }}>
+                      {r?.ganhos ?? 0} pedidos
                     </p>
                   </div>
                   <div>
-                    <p className="text-[9px] tracking-[0.14em] uppercase mb-1" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}>
-                      Pipeline aberto
+                    <p className="text-[11px] tracking-[0.14em] uppercase mb-1" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}>
+                      Pipeline
                     </p>
-                    <p className="text-lg font-bold leading-none tabular-nums" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-primary)" }}>
+                    <p className="text-lg font-bold leading-none tabular-nums" style={{ fontFamily: "var(--voux-font-sans)", color: "var(--voux-text-primary)" }}>
                       {formatCurrency(Number(r?.pipeline_aberto_gerado ?? 0))}
                     </p>
-                    <p className="mt-1 text-[10px]" style={{ color: "var(--voux-text-faint)" }}>
+                    <p className="mt-1 text-[12px]" style={{ fontFamily: "var(--voux-font-sans)", color: "var(--voux-text-faint)" }}>
                       {r?.oportunidades_abertas ?? 0} oportunidades
                     </p>
                   </div>
                 </div>
 
-                {/* Atividade: ações, visitas, conversão */}
+                {/* Ações, Visitas, Conversão */}
                 <div className="grid grid-cols-3 gap-3 pt-3 border-t" style={{ borderColor: "var(--voux-card-border)" }}>
                   <div>
-                    <p className="text-[9px] tracking-[0.14em] uppercase mb-1" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}>
-                      Ações
-                    </p>
-                    <p className="text-base font-bold leading-none tabular-nums" style={{ color: "var(--voux-text-primary)" }}>
-                      {v.totalAcoes}
-                    </p>
+                    <p className="text-[11px] tracking-[0.14em] uppercase mb-1" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}>Ações</p>
+                    <p className="text-base font-bold tabular-nums" style={{ fontFamily: "var(--voux-font-sans)", color: "var(--voux-text-primary)" }}>{v.totalAcoes}</p>
                   </div>
                   <div>
-                    <p className="text-[9px] tracking-[0.14em] uppercase mb-1" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}>
-                      Visitas
-                    </p>
-                    <p className="text-base font-bold leading-none tabular-nums" style={{ color: "var(--voux-text-primary)" }}>
-                      {v.visitas}
-                    </p>
+                    <p className="text-[11px] tracking-[0.14em] uppercase mb-1" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}>Visitas</p>
+                    <p className="text-base font-bold tabular-nums" style={{ fontFamily: "var(--voux-font-sans)", color: "var(--voux-text-primary)" }}>{v.visitas}</p>
                   </div>
                   <div>
-                    <p className="text-[9px] tracking-[0.14em] uppercase mb-1" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}>
-                      Conversão
-                    </p>
-                    <p className="text-base font-bold leading-none tabular-nums" style={{ color: "var(--voux-text-primary)" }}>
-                      {r?.taxa_ganho == null ? "—" : `${r.taxa_ganho}%`}
-                    </p>
+                    <p className="text-[11px] tracking-[0.14em] uppercase mb-1" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}>Conv.</p>
+                    <p className="text-base font-bold tabular-nums" style={{ fontFamily: "var(--voux-font-sans)", color: "var(--voux-text-primary)" }}>{r?.taxa_ganho == null ? "—" : `${r.taxa_ganho}%`}</p>
                   </div>
                 </div>
 
                 {/* Footer */}
                 <div className="mt-3 flex items-center justify-between pt-3 border-t" style={{ borderColor: "var(--voux-card-border)" }}>
-                  <span className="text-[10px]" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}>
-                    {v.clientes} clientes atendidos
+                  <span className="text-[12px]" style={{ fontFamily: "var(--voux-font-sans)", color: "var(--voux-text-faint)" }}>
+                    {v.clientes} clientes
                   </span>
                   <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-transform" style={{ color: "var(--voux-text-faint)" }} />
                 </div>

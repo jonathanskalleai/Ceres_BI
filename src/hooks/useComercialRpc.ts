@@ -153,7 +153,8 @@ export function useRegistrosRecentes({ from, to, vendedor, cidade, limit, enable
   return useQuery<RpcRegistroRecente[], Error>({
     queryKey: ["rpc", "registros-recentes", from ?? null, to ?? null, vendedor ?? null, cidade ?? null, limit ?? null],
     queryFn: () => fetchRegistrosRecentes(from || "", to || "", vendedor, cidade, limit),
-    staleTime: STALE_TIME,
+    staleTime: 10 * 60_000, // 10 min — dados mudam com ETL
+    gcTime: 30 * 60_000,    // 30 min — mantém cache para back/forward
     placeholderData: keepPreviousData,
     enabled,
   });

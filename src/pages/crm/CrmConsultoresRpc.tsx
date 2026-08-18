@@ -67,6 +67,7 @@ export default function CrmConsultoresRpc() {
     to,
     vendedor: vendedor || undefined,
     cidade: cidade || undefined,
+    limit: 100,
     enabled,
   });
 

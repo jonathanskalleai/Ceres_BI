@@ -27,6 +27,8 @@ export interface LineChartProps {
   color?: string;
   strokeWidth?: number;
   area?: boolean;
+  /** Each series gets its own Y scale (spreads lines apart). Hides Y axis. */
+  independentAxes?: boolean;
   tooltipFormatter?: (value: number) => string;
 }
 
@@ -44,6 +46,7 @@ export default function LineChart({
   loading = false,
   color = VOUX_PALETTE[0],
   seriesName,
+  independentAxes,
   tooltipFormatter,
 }: LineChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -149,6 +152,7 @@ export default function LineChart({
               labels={labels}
               series={svgSeries}
               points
+              independentAxes={independentAxes}
               yFmt={tooltipFormatter}
               hoveredIdx={hoveredIdx}
               onHover={(idx, x, y) => {

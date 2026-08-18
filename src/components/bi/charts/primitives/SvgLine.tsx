@@ -16,6 +16,8 @@ export interface SvgLineProps {
   points?: boolean;
   /** Show values directly on chart points (default true) */
   showValues?: boolean;
+  /** Each series uses its own Y scale (spreads lines apart). Hides Y axis. */
+  independentAxes?: boolean;
   yFmt?: (v: number) => string;
   onHover?: (labelIndex: number, x: number, y: number) => void;
   onLeave?: () => void;
@@ -33,6 +35,7 @@ export function SvgLine({
   series,
   points = true,
   showValues = true,
+  independentAxes = false,
   yFmt = fmtCompact,
   onHover,
   onLeave,
@@ -44,13 +47,14 @@ export function SvgLine({
 
   if (width === 0 || series.length === 0) return null;
 
-  const padL = 50;
+  const padL = independentAxes ? 36 : 50;
   const padR = 28;
   const padT = 30;
   const padB = 38;
   const plotW = width - padL - padR;
   const plotH = height - padT - padB;
 
+  // Shared axis calculation (used when independentAxes is false)
   const allVals = series.flatMap((s) => s.values).filter((v): v is number => v != null);
   const dataMin = allVals.length > 0 ? Math.min(...allVals) : 0;
   const dataMax = allVals.length > 0 ? Math.max(...allVals) : 1;
@@ -61,10 +65,32 @@ export function SvgLine({
   const n = labels.length;
   const xPos = (i: number) =>
     n <= 1 ? padL + plotW / 2 : padL + (i / (n - 1)) * plotW;
-  const yPos = (v: number) =>
-    padT + plotH - ((v - yMin) / (yMax - yMin)) * plotH;
 
-  const ticks = niceTicks(yMin, yMax, 4);
+  // Per-series Y position functions
+  const yPosFns: ((v: number, seriesIdx: number) => number)[] = [];
+  if (independentAxes && series.length > 1) {
+    // Each series gets a vertical band — distributes them across plotH
+    const bandH = plotH / series.length;
+    const bandPad = bandH * 0.15; // padding within each band
+    for (let sIdx = 0; sIdx < series.length; sIdx++) {
+      const sVals = series[sIdx].values.filter((v): v is number => v != null);
+      const sMin = sVals.length > 0 ? Math.min(0, Math.min(...sVals)) : 0;
+      let sMax = sVals.length > 0 ? Math.max(...sVals) * 1.12 : 1;
+      if (sMax === sMin) sMax = sMin + 1;
+      const bandTop = padT + sIdx * bandH + bandPad;
+      const bandBot = padT + (sIdx + 1) * bandH - bandPad;
+      const usableH = bandBot - bandTop;
+      yPosFns.push((_v: number) => bandBot - ((_v - sMin) / (sMax - sMin)) * usableH);
+    }
+  } else {
+    // Single shared yPos for all series
+    const sharedFn = (v: number) => padT + plotH - ((v - yMin) / (yMax - yMin)) * plotH;
+    for (let i = 0; i < series.length; i++) yPosFns.push(sharedFn);
+  }
+
+  const yPos = (v: number, sIdx = 0) => yPosFns[sIdx]?.(v) ?? (padT + plotH - ((v - yMin) / (yMax - yMin)) * plotH);
+
+  const ticks = independentAxes ? [] : niceTicks(yMin, yMax, 4);
   // Stable ID scoped to this component instance
   const areaGradId = `svgline-area-${instanceId.current}`;
 
@@ -85,25 +111,25 @@ export function SvgLine({
       onMouseLeave={onLeave}
     >
       <defs>
-        {series[0] && (
-          <linearGradient id={areaGradId} x1="0" y1="0" x2="0" y2="1">
+        {series.map((s, sIdx) => (
+          <linearGradient key={sIdx} id={`${areaGradId}-${sIdx}`} x1="0" y1="0" x2="0" y2="1">
             <stop
               offset="0%"
-              stopColor={series[0].color ?? VOUX_PALETTE[0]}
-              stopOpacity={0.40}
+              stopColor={s.color ?? VOUX_PALETTE[sIdx % VOUX_PALETTE.length]}
+              stopOpacity={0.35}
             />
             <stop
               offset="100%"
-              stopColor={series[0].color ?? VOUX_PALETTE[0]}
+              stopColor={s.color ?? VOUX_PALETTE[sIdx % VOUX_PALETTE.length]}
               stopOpacity={0}
             />
           </linearGradient>
-        )}
+        ))}
       </defs>
 
       {/* Y gridlines + labels */}
       {ticks.map((tv, ti) => {
-        const yy = yPos(tv);
+        const yy = yPos(tv, 0);
         return (
           <g key={ti}>
             <line
@@ -178,23 +204,24 @@ export function SvgLine({
           if (v == null) return;
           const cmd =
             pathD === "" || s.values[i - 1] == null ? "M" : "L";
-          pathD += `${cmd} ${xPos(i)} ${yPos(v)} `;
+          pathD += `${cmd} ${xPos(i)} ${yPos(v, sIdx)} `;
         });
 
         const firstI = validPairs[0].i;
         const lastI = validPairs[validPairs.length - 1].i;
 
-        // Area fill under first series only
-        const areaD =
-          sIdx === 0 && pathD
-            ? pathD +
-              `L ${xPos(lastI)} ${padT + plotH} L ${xPos(firstI)} ${padT + plotH} Z`
-            : null;
+        // Area fill under each series — uses per-series band bottom in independentAxes mode
+        const bandBottom = independentAxes && series.length > 1
+          ? padT + ((sIdx + 1) * (plotH / series.length)) - (plotH / series.length * 0.15)
+          : padT + plotH;
+        const areaD = pathD
+          ? pathD + `L ${xPos(lastI)} ${bandBottom} L ${xPos(firstI)} ${bandBottom} Z`
+          : null;
 
         return (
           <g key={sIdx}>
             {areaD && (
-              <path d={areaD} fill={`url(#${areaGradId})`} stroke="none" />
+              <path d={areaD} fill={`url(#${areaGradId}-${sIdx})`} stroke="none" />
             )}
             <path
               d={pathD}
@@ -210,7 +237,7 @@ export function SvgLine({
                 <circle
                   key={i}
                   cx={xPos(i)}
-                  cy={yPos(v)}
+                  cy={yPos(v, sIdx)}
                   r={3}
                   fill={VOUX_COLORS.surface}
                   stroke={color}
@@ -228,7 +255,7 @@ export function SvgLine({
                   <text
                     key={`val-${sIdx}-${i}`}
                     x={xPos(i)}
-                    y={yPos(v) + offsetY}
+                    y={yPos(v, sIdx) + offsetY}
                     textAnchor="middle"
                     fontFamily="var(--voux-font-mono)"
                     fontSize={12}

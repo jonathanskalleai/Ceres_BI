@@ -1,143 +1,338 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import type { Registro, Filters } from "@/types/comercial";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Search, Edit2, Check, X } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { filterRegistros } from "@/lib/filterUtils";
+import { formatDateTimeBR } from "@/lib/dateUtils";
+import { cn } from "@/lib/utils";
 
 interface DashboardRegistrosProps {
   registros: Registro[];
   filters: Filters;
+  clientSearch?: string;
+  onClientSearchChange?: (v: string) => void;
+  isSearchingYear?: boolean;
 }
 
-const formatCurrency = (v: number) => v > 0 ? `R$ ${(v / 1e3).toFixed(0)}K` : "-";
+const PAGE_SIZE = 50;
 
-export const DashboardRegistros = ({ registros, filters }: DashboardRegistrosProps) => {
-  const [search, setSearch] = useState("");
-  const [nrFilter, setNrFilter] = useState("");
-  const [editingIdx, setEditingIdx] = useState<number | null>(null);
-  const [records, setRecords] = useState<Registro[]>(registros);
-  const [editValues, setEditValues] = useState<Partial<Registro>>({});
+const fmtCurrency = (v: number) => v > 0 ? `R$ ${(v / 1e3).toFixed(0)}K` : "—";
 
-  useEffect(() => {
-    setRecords(registros);
-  }, [registros]);
+/** Mapa de cores para tipos de ação — fundo sólido forte (mesma paleta do gráfico de pizza) */
+const ACAO_COLORS: Record<string, { bg: string; text: string }> = {
+  "0 - Cliente Novo":           { bg: "#4caf7a", text: "#fff" },
+  "1 - Prospecção Maq":         { bg: "#c97565", text: "#fff" },
+  "2 - Prospecção AP":          { bg: "#d4a05a", text: "#fff" },
+  "3 - Documentação":           { bg: "#6e542f", text: "#fff" },
+  "4 - Entrega setor maquinas": { bg: "#7a9b6f", text: "#fff" },
+  "5 - Demonstração":           { bg: "#8ea3b8", text: "#1a1a1a" },
+  "6 - Pós-Vendas Máquinas":    { bg: "#d4b896", text: "#3d2e1a" },
+  "7 - Pós-Vendas AP":          { bg: "#d4b896", text: "#3d2e1a" },
+  "8 - Agendamento de coleta":  { bg: "#3d7c47", text: "#fff" },
+  "9 - Assuntos Financeiro":    { bg: "#c0392b", text: "#fff" },
+  "11- Repasse de máquina":     { bg: "#5a7a96", text: "#fff" },
+};
 
-  const filtered = useMemo(() => {
-    let result = filterRegistros(records, filters);
-    if (nrFilter) {
-      const nr = nrFilter.trim();
-      result = result.filter((r) => (r.numero || "").includes(nr));
-    }
-    if (search) {
-      const s = search.toLowerCase();
-      result = result.filter((r) =>
-        r.cliente.toLowerCase().includes(s) || r.vendedor.toLowerCase().includes(s) ||
-        r.cidade.toLowerCase().includes(s) || (r.obs || "").toLowerCase().includes(s) ||
-        (r.numero || "").toLowerCase().includes(s) ||
-        (r.status || "").toLowerCase().includes(s)
-      );
-    }
-    return result;
-  }, [records, filters, search, nrFilter]);
+/** Mapa de cores para tipo de contato — fundo sólido forte */
+const CONTATO_COLORS: Record<string, { bg: string; text: string }> = {
+  "Visita":             { bg: "#4caf7a", text: "#fff" },
+  "Visita Presencial":  { bg: "#4caf7a", text: "#fff" },
+  "Telefonema":         { bg: "#d4a05a", text: "#fff" },
+  "WhatsApp":           { bg: "#7a9b6f", text: "#fff" },
+  "E-mail":             { bg: "#8ea3b8", text: "#1a1a1a" },
+  "Telefone/WhatsApp":  { bg: "#d4a05a", text: "#fff" },
+};
 
-  const startEdit = (idx: number) => { setEditingIdx(idx); setEditValues({ ...filtered[idx] }); };
-  const saveEdit = () => {
-    if (editingIdx === null) return;
-    const original = filtered[editingIdx];
-    const globalIdx = records.findIndex((r) => r === original);
-    if (globalIdx >= 0) { const updated = [...records]; updated[globalIdx] = { ...updated[globalIdx], ...editValues }; setRecords(updated); }
-    setEditingIdx(null); setEditValues({});
-  };
-  const cancelEdit = () => { setEditingIdx(null); setEditValues({}); };
+const DEFAULT_TAG = { bg: "#8a8273", text: "#fff" };
+
+function getAcaoColor(tipo: string) { return ACAO_COLORS[tipo] ?? DEFAULT_TAG; }
+function getContatoColor(tipo: string) { return CONTATO_COLORS[tipo] ?? DEFAULT_TAG; }
+
+/** Modal de detalhe do registro */
+function RegistroModal({ registro, onClose }: { registro: Registro; onClose: () => void }) {
+  const acaoColor = getAcaoColor(registro.tipoAcao || "");
+  const contatoColor = getContatoColor(registro.tipoContato || "");
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
+      {/* Backdrop com blur */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      {/* Content */}
+      <div
+        className="relative rounded-2xl border p-6 w-full max-w-2xl mx-4 space-y-4 shadow-xl animate-in zoom-in-95 duration-200"
+        style={{ borderColor: "var(--voux-card-border)", background: "var(--surface-raised)" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 rounded-md p-1.5 transition-colors hover:bg-[rgba(0,0,0,0.05)]"
+          style={{ color: "var(--voux-text-faint)" }}
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        {/* Header */}
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Registros</h2>
-          <p className="text-sm text-muted-foreground">Últimos 500 registros — editável ({filtered.length} filtrados)</p>
-          <p className="text-xs text-muted-foreground">Dados de ações comerciais do CRM (campo Atividade Executada)</p>
+          <p className="text-[10px] tracking-[0.08em] uppercase font-semibold" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}>
+            REGISTRO DE ATIVIDADE
+          </p>
+          <h3 className="text-lg font-semibold mt-1" style={{ fontFamily: "var(--voux-font-display)", color: "var(--voux-text-heading)" }}>
+            {registro.cliente}
+          </h3>
         </div>
+
+        {/* Info grid */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <p className="text-[10px] tracking-[0.08em] uppercase font-medium mb-1" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}>DATA</p>
+            <p className="text-[14px] tabular-nums" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-primary)" }}>{formatDateTimeBR(registro.dtConclusao)}</p>
+          </div>
+          <div>
+            <p className="text-[10px] tracking-[0.08em] uppercase font-medium mb-1" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}>CONSULTOR</p>
+            <p className="text-[14px]" style={{ color: "var(--voux-text-primary)" }}>{registro.vendedor}</p>
+          </div>
+          <div>
+            <p className="text-[10px] tracking-[0.08em] uppercase font-medium mb-1" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}>CIDADE</p>
+            <p className="text-[14px]" style={{ color: "var(--voux-text-primary)" }}>{registro.cidade || "—"}</p>
+          </div>
+          <div>
+            <p className="text-[10px] tracking-[0.08em] uppercase font-medium mb-1" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}>VALOR</p>
+            <p className="text-[16px] font-bold tabular-nums" style={{ fontFamily: "var(--voux-font-mono)", color: registro.negocioValor > 0 ? "#4caf7a" : "var(--voux-text-faint)" }}>
+              {registro.negocioValor > 0 ? `R$ ${registro.negocioValor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "—"}
+            </p>
+          </div>
+        </div>
+
+        {/* Tags */}
         <div className="flex items-center gap-2">
-          <div className="relative w-32">
-            <Input placeholder="Nr Ação" className="h-9 text-xs" value={nrFilter} onChange={(e) => setNrFilter(e.target.value)} />
+          <span className="rounded-md px-2.5 py-1 text-[12px] font-medium" style={{ background: contatoColor.bg, color: contatoColor.text }}>
+            {registro.tipoContato || "—"}
+          </span>
+          <span className="rounded-md px-2.5 py-1 text-[12px] font-medium" style={{ background: acaoColor.bg, color: acaoColor.text }}>
+            {registro.tipoAcao || "—"}
+          </span>
+          {registro.negocioEtapa && (
+            <span className="rounded-md px-2.5 py-1 text-[12px] font-medium" style={{ background: "rgba(214,207,193,0.2)", color: "var(--voux-text-primary)" }}>
+              {registro.negocioEtapa}
+            </span>
+          )}
+        </div>
+
+        {/* Observação */}
+        {registro.obs && (
+          <div className="pt-3 border-t" style={{ borderColor: "var(--voux-card-border)" }}>
+            <p className="text-[10px] tracking-[0.08em] uppercase font-medium mb-2" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}>
+              OBSERVAÇÃO
+            </p>
+            <p className="text-[14px] leading-relaxed whitespace-pre-line" style={{ color: "var(--voux-text-primary)" }}>
+              {registro.obs}
+            </p>
           </div>
-          <div className="relative w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Buscar cliente, vendedor..." className="pl-9 h-9" value={search} onChange={(e) => setSearch(e.target.value)} />
-          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export const DashboardRegistros = ({
+  registros,
+  filters,
+  clientSearch = "",
+  onClientSearchChange,
+  isSearchingYear = false,
+}: DashboardRegistrosProps) => {
+  const [localSearch, setLocalSearch] = useState("");
+  const [page, setPage] = useState(0);
+  const [selectedRegistro, setSelectedRegistro] = useState<Registro | null>(null);
+
+  const search = onClientSearchChange ? clientSearch : localSearch;
+  const setSearch = onClientSearchChange ?? setLocalSearch;
+
+  const filtered = useMemo(() => {
+    let result = isSearchingYear ? registros : filterRegistros(registros, filters);
+
+    if (search && search.length >= 3) {
+      const s = search.toLowerCase();
+      result = result.filter((r) =>
+        r.cliente.toLowerCase().includes(s) ||
+        r.vendedor.toLowerCase().includes(s) ||
+        r.cidade.toLowerCase().includes(s) ||
+        (r.obs || "").toLowerCase().includes(s) ||
+        (r.tipoAcao || "").toLowerCase().includes(s) ||
+        (r.tipoContato || "").toLowerCase().includes(s)
+      );
+    }
+
+    if (filters.tipoAcao && !isSearchingYear) {
+      result = result.filter((r) => r.tipoAcao === filters.tipoAcao);
+    }
+
+    return result;
+  }, [registros, filters, search, isSearchingYear]);
+
+  const filteredLen = filtered.length;
+  useMemo(() => setPage(0), [filteredLen]);
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const pageData = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
+  const TH = "text-[10px] tracking-[0.08em] uppercase font-semibold py-2.5 px-2";
+  const TD = "py-2.5 px-2";
+
+  return (
+    <div className="p-6 space-y-4">
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2
+            className="text-lg font-semibold tracking-tight"
+            style={{ fontFamily: "var(--voux-font-display)", color: "var(--voux-text-heading)" }}
+          >
+            Atividades
+          </h2>
+          <p className="text-[12px] mt-0.5" style={{ color: "var(--voux-text-faint)" }}>
+            {filtered.length} ações {isSearchingYear ? "no ano" : "no período"}
+            {isSearchingYear && (
+              <span
+                className="ml-2 inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium"
+                style={{ background: "rgba(76,175,122,0.12)", color: "#4caf7a" }}
+              >
+                Buscando no ano inteiro
+              </span>
+            )}
+          </p>
+        </div>
+        <div className="relative w-80">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5" style={{ color: "var(--voux-text-faint)" }} />
+          <input
+            type="text"
+            placeholder="Buscar cliente (3+ letras busca no ano inteiro)..."
+            className="w-full rounded-lg border pl-9 pr-3 py-2 text-[13px] outline-none transition-colors focus:border-[var(--voux-accent)]"
+            style={{ borderColor: "var(--voux-card-border)", background: "var(--surface-raised)", color: "var(--voux-text-primary)" }}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
       </div>
 
-      <Card className="border-0 shadow-sm">
-        <CardContent className="p-0">
-          <div className="overflow-auto max-h-[calc(100vh-200px)]">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead className="text-xs w-8"></TableHead>
-                  <TableHead className="text-xs">Nr Ação</TableHead>
-                  <TableHead className="text-xs">Data</TableHead>
-                  <TableHead className="text-xs">Cliente</TableHead>
-                  <TableHead className="text-xs">Cidade</TableHead>
-                  <TableHead className="text-xs">Consultor</TableHead>
-                  <TableHead className="text-xs">Tipo</TableHead>
-                  <TableHead className="text-xs">Ação</TableHead>
-                  <TableHead className="text-xs">Valor</TableHead>
-                  <TableHead className="text-xs">Etapa</TableHead>
-                  <TableHead className="text-xs">Status</TableHead>
-                  <TableHead className="text-xs max-w-[200px]">Observação</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.slice(0, 500).map((r, i) => (
-                  <TableRow key={i} className="hover:bg-muted/30">
-                    <TableCell className="p-1">
-                      {editingIdx === i ? (
-                        <div className="flex gap-1">
-                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={saveEdit}><Check className="h-3 w-3 text-success" /></Button>
-                          <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={cancelEdit}><X className="h-3 w-3 text-destructive" /></Button>
-                        </div>
-                      ) : (
-                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => startEdit(i)}><Edit2 className="h-3 w-3 text-muted-foreground" /></Button>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-xs whitespace-nowrap text-muted-foreground">{r.numero || "-"}</TableCell>
-                    <TableCell className="text-xs whitespace-nowrap">{r.dtConclusao}</TableCell>
-                    <TableCell className="text-xs">
-                      {editingIdx === i ? (
-                        <Input className="h-6 text-xs" value={editValues.cliente || ""} onChange={(e) => setEditValues({ ...editValues, cliente: e.target.value })} />
-                      ) : (
-                        <span className="truncate block max-w-[150px]">{r.cliente}</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-xs">{r.cidade}</TableCell>
-                    <TableCell className="text-xs">{r.vendedor.split(" ").slice(-1)[0]}</TableCell>
-                    <TableCell className="text-xs">{r.tipoContato}</TableCell>
-                    <TableCell className="text-xs">{r.tipoAcao}</TableCell>
-                    <TableCell className="text-xs">{formatCurrency(r.negocioValor)}</TableCell>
-                    <TableCell className="text-xs">{r.negocioEtapa || "-"}</TableCell>
-                    <TableCell className="text-xs">{r.status || "-"}</TableCell>
-                    <TableCell className="text-xs max-w-[200px]">
-                      {editingIdx === i ? (
-                        <Input className="h-6 text-xs" value={editValues.obs || ""} onChange={(e) => setEditValues({ ...editValues, obs: e.target.value })} />
-                      ) : (
-                        <span className="truncate block">{r.obs || "-"}</span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+      {/* Table */}
+      <div
+        className="rounded-xl border overflow-hidden"
+        style={{ borderColor: "var(--voux-card-border)", background: "var(--surface-raised)" }}
+      >
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[900px]" style={{ fontFamily: "var(--voux-font-sans)" }}>
+            <thead>
+              <tr style={{ borderBottom: "1px solid var(--voux-card-border)" }}>
+                <th className={cn(TH, "text-left w-[120px]")} style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}>DATA</th>
+                <th className={cn(TH, "text-left w-[150px]")} style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}>CLIENTE</th>
+                <th className={cn(TH, "text-left w-[80px]")} style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}>CIDADE</th>
+                <th className={cn(TH, "text-left w-[90px]")} style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}>CONSULTOR</th>
+                <th className={cn(TH, "text-left w-[100px]")} style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}>CONTATO</th>
+                <th className={cn(TH, "text-left w-[130px]")} style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}>AÇÃO</th>
+                <th className={cn(TH, "text-center w-[70px]")} style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}>VALOR</th>
+                <th className={cn(TH, "text-left")} style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}>OBSERVAÇÃO</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pageData.map((r, i) => {
+                const acaoColor = getAcaoColor(r.tipoAcao || "");
+                const contatoColor = getContatoColor(r.tipoContato || "");
+                return (
+                  <tr
+                    key={`${r.numero}-${i}`}
+                    className="transition-colors duration-150 cursor-pointer hover:bg-[rgba(0,0,0,0.035)]"
+                    style={{ borderBottom: "1px solid var(--voux-card-border)" }}
+                    onDoubleClick={() => setSelectedRegistro(r)}
+                  >
+                    <td className={cn(TD, "tabular-nums whitespace-nowrap text-[13px]")} style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-muted)" }}>
+                      {formatDateTimeBR(r.dtConclusao)}
+                    </td>
+                    <td className={cn(TD, "text-[14px] font-medium")} style={{ color: "var(--voux-text-heading)" }}>
+                      <span className="truncate block max-w-[150px]">{r.cliente}</span>
+                    </td>
+                    <td className={cn(TD, "text-[13px]")} style={{ color: "var(--voux-text-muted)" }}>{r.cidade || "—"}</td>
+                    <td className={cn(TD, "text-[13px]")} style={{ color: "var(--voux-text-primary)" }}>
+                      {r.vendedor.split(" ").slice(-1)[0]}
+                    </td>
+                    <td className={TD}>
+                      <span
+                        className="inline-block rounded-md px-2 py-0.5 text-[11px] font-medium whitespace-nowrap"
+                        style={{ background: contatoColor.bg, color: contatoColor.text }}
+                      >
+                        {r.tipoContato || "—"}
+                      </span>
+                    </td>
+                    <td className={TD}>
+                      <span
+                        className="inline-block rounded-md px-2 py-0.5 text-[11px] font-medium whitespace-nowrap"
+                        style={{ background: acaoColor.bg, color: acaoColor.text }}
+                      >
+                        {r.tipoAcao || "—"}
+                      </span>
+                    </td>
+                    <td className={cn(TD, "text-center tabular-nums font-bold text-[14px]")} style={{ fontFamily: "var(--voux-font-mono)", color: r.negocioValor > 0 ? "#4caf7a" : "var(--voux-text-faint)" }}>
+                      {fmtCurrency(r.negocioValor)}
+                    </td>
+                    <td className={TD}>
+                      <span className="block text-[13px] leading-relaxed line-clamp-2" style={{ color: "var(--voux-text-muted)" }}>
+                        {r.obs || "—"}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+              {pageData.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center text-[14px]" style={{ color: "var(--voux-text-faint)" }}>
+                    {search.length > 0 && search.length < 3
+                      ? "Digite pelo menos 3 letras para buscar..."
+                      : "Nenhuma ação encontrada."}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Paginação */}
+        {totalPages > 1 && (
+          <div
+            className="flex items-center justify-between px-4 py-3 border-t"
+            style={{ borderColor: "var(--voux-card-border)" }}
+          >
+            <span className="text-[11px] tabular-nums" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}>
+              {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, filtered.length)} de {filtered.length}
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                disabled={page === 0}
+                className="rounded-md p-1.5 transition-colors disabled:opacity-30 hover:bg-[rgba(0,0,0,0.04)]"
+                style={{ color: "var(--voux-text-muted)" }}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <span className="text-[11px] tabular-nums px-2" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-primary)" }}>
+                {page + 1} / {totalPages}
+              </span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+                disabled={page >= totalPages - 1}
+                className="rounded-md p-1.5 transition-colors disabled:opacity-30 hover:bg-[rgba(0,0,0,0.04)]"
+                style={{ color: "var(--voux-text-muted)" }}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
           </div>
-        </CardContent>
-      </Card>
-      <p className="text-xs text-muted-foreground text-center">
-        Mostrando {Math.min(500, filtered.length)} de {filtered.length} registros filtrados
-      </p>
+        )}
+      </div>
+
+      {/* Modal de detalhe */}
+      {selectedRegistro && (
+        <RegistroModal registro={selectedRegistro} onClose={() => setSelectedRegistro(null)} />
+      )}
     </div>
   );
 };

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, Sparkles, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { formatDateBR } from "@/lib/dateUtils";
+import { formatDateTimeBR } from "@/lib/dateUtils";
 import type { TopCliente, Registro } from "@/types/comercial";
 
 const fmtCurrency = (v: number) =>
@@ -84,9 +84,9 @@ export function ConsultorClienteCard({ cliente: c, rank, actions, vendedorNome }
                   <div key={idx} className="bg-card rounded-lg p-3 shadow-sm border border-border/50">
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-[10px]">{formatDateBR(a.dtConclusao)}</Badge>
-                        <Badge className="text-[10px] bg-primary/10 text-primary border-0">{a.tipoContato || "—"}</Badge>
-                        <Badge className="text-[10px] bg-accent/10 text-accent border-0">{a.tipoAcao || "—"}</Badge>
+                        <Badge variant="outline" className="text-[10px]">{formatDateTimeBR(a.dtConclusao)}</Badge>
+                        <Badge variant="secondary" className="text-[10px] font-medium">{a.tipoContato || "—"}</Badge>
+                        <Badge variant="secondary" className="text-[10px] font-medium">{a.tipoAcao || "—"}</Badge>
                       </div>
                       {a.negocioValor > 0 && <span className="text-xs font-bold text-warning">{fmtCurrency(a.negocioValor)}</span>}
                     </div>

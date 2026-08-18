@@ -1,5 +1,6 @@
 import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +19,7 @@ import {
 } from "@/lib/categoriaFunil";
 import { toISODate } from "@/lib/dateUtils";
 import { useListasFiltrosRpc } from "@/hooks/useListasFiltrosRpc";
+import { cn } from "@/lib/utils";
 
 /**
  * Renders BI filters inside the AppShell topbar via React Portal.
@@ -42,6 +44,10 @@ export function BiTopbarPortal() {
   } = useNegociosFilter();
 
   const [container, setContainer] = useState<HTMLElement | null>(null);
+  const location = useLocation();
+
+  // Na tela de Atividades (/crm/registros), esconder filtros de funil/categoria
+  const isRegistrosPage = location.pathname.includes("/crm/registros");
 
   useEffect(() => {
     const el = document.getElementById("topbar-actions");
@@ -69,7 +75,7 @@ export function BiTopbarPortal() {
         onValueChange={(v) => setCategoria(v as CategoriaFilter)}
         aria-label="Filtro de categoria"
       >
-        <SelectTrigger className="h-7 w-full sm:w-[160px] text-[11px] bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]">
+        <SelectTrigger className={cn("h-7 w-full sm:w-[160px] text-[11px] bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]", isRegistrosPage && "hidden")}>
           <SelectValue placeholder="Categoria" />
         </SelectTrigger>
         <SelectContent>
@@ -82,7 +88,7 @@ export function BiTopbarPortal() {
       </Select>
 
       <Select value={funil} onValueChange={setFunil} aria-label="Filtro de funil">
-        <SelectTrigger className="h-7 w-full sm:w-[160px] text-[11px] bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]">
+        <SelectTrigger className={cn("h-7 w-full sm:w-[160px] text-[11px] bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]", isRegistrosPage && "hidden")}>
           <SelectValue placeholder="Funil" />
         </SelectTrigger>
         <SelectContent>

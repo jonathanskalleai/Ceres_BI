@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Users, User, Sparkles, Loader2, Search, CheckSquare } from "lucide-react";
 import type { Vendedor } from "@/types/comercial";
-import { supabase } from "@/integrations/supabase/client";
+import { aiConsultoresReport } from "@/services/aiService";
 import { toast } from "@/hooks/use-toast";
 import { generateConsultoresReport } from "@/lib/generateConsultoresReport";
 
@@ -73,19 +73,15 @@ export const ConsultorReportSheet = ({ open, onOpenChange, vendedores }: Consult
       if (consultores && consultores.length > 1) {
         // Generate individual reports sequentially for multiple selected
         for (const consultor of consultores) {
-          const { data: reportData, error } = await supabase.functions.invoke("consultores-report", {
-            body: { consultor },
-          });
-          if (error) throw error;
-          if (reportData?.error) throw new Error(reportData.error);
-          await generateConsultoresReport(reportData);
+          const { data: reportData, error } = await aiConsultoresReport(consultor);
+          if (error) throw new Error(error);
+          await generateConsultoresReport(reportData!);
         }
       } else {
-        const body = consultores?.length === 1 ? { consultor: consultores[0] } : {};
-        const { data: reportData, error } = await supabase.functions.invoke("consultores-report", { body });
-        if (error) throw error;
-        if (reportData?.error) throw new Error(reportData.error);
-        await generateConsultoresReport(reportData);
+        const consultor = consultores?.length === 1 ? consultores[0] : undefined;
+        const { data: reportData, error } = await aiConsultoresReport(consultor);
+        if (error) throw new Error(error);
+        await generateConsultoresReport(reportData!);
       }
       toast({ title: "Relatório(s) gerado(s)!", description: "O download do PDF foi iniciado." });
       onOpenChange(false);

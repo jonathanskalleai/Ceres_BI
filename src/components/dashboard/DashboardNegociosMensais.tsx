@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertTriangle, Lightbulb, RefreshCw, Loader2 } from "lucide-react";
 import { parseISO } from "date-fns";
-import { supabase } from "@/integrations/supabase/client";
+import { aiNegociosInsights } from "@/services/aiService";
 import { toast } from "@/hooks/use-toast";
 import type { DadosComerciais, Filters } from "@/types/comercial";
 import { useNegociosCrm } from "@/hooks/useNegociosCrm";
@@ -56,8 +56,8 @@ export const DashboardNegociosMensais = ({ filters, crmData }: Props) => {
   const loadAIInsights = async () => {
     setAiLoading(true);
     try {
-      const { data, error: fnErr } = await supabase.functions.invoke("negocios-insights");
-      if (fnErr) throw fnErr;
+      const { data, error: fnErr } = await aiNegociosInsights();
+      if (fnErr) throw new Error(fnErr);
       setAiAnalysis(data as AIAnalysis);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Erro desconhecido";
