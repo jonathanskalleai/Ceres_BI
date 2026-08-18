@@ -817,28 +817,19 @@ Concentrar as telas BI não liberadas ligadas a resultado comercial, pedidos, ca
 
 ### Objetivo
 
-Unificar a análise de ordens de serviço, SLA e operação técnica/frota para a persona de Gerência de Serviços e Pós-Venda. A página absorve `bi.servicos`, `bi.operacional` e apenas os dois visuais de SLA de `bi.inteligencia`.
+Expor somente a operação técnica/frota efetivamente usada pelo CEM: técnicos, agenda e deslocamento de campo. Embora a rota preserve o nome **Pós-Venda & Serviços**, ela reutiliza apenas `bi.operacional` nesta fase.
+
+> **Decisão de produto posterior ao plano inicial:** o CEM não usa Ordens de Serviço nem SLA. Portanto, `ServicosSection` e os recortes de SLA de `InteligenciaSection` não entram na composição nova. Eles permanecem como código/rota legados reversíveis e não são apagados nesta fase.
 
 ### Estrutura
 
-| Aba | Componentes/origens a compor | Conteúdo da entrega |
+| Conteúdo | Componente/origem | Entrega |
 |---|---|---|
-| **Ordens de Serviço & SLA** | `ServicosSection` limpo + blocos SLA de `InteligenciaSection` | Total de OS, abertas, taxa de fechamento, tempo médio e mediano, OS por status, faixas de resolução, evolução de aberturas, tempo médio por filial e por tipo de OS. |
 | **Operação Técnica & Frota** | `OperacionalSection` | Técnicos ativos, KM, utilização, ociosidade, eventos/conclusão de agenda, utilização/KM por técnico e agenda por status/tipo. |
-
-### Limpeza obrigatória na aba OS
-
-Não migrar os quatro widgets cuja fonte é comprovadamente vazia ou zero:
-
-- KPI **Total Ocorrências**;
-- gráfico **Atividade de Campo — Ocorrências**;
-- gráfico **Motivos de Pausa**;
-- gráfico **Causas de Atendimento Mais Comuns**.
 
 ### Filtros e semântica de dados
 
-- **Ordens de Serviço & SLA** usa o intervalo de datas.
-- **Operação Técnica & Frota** hoje consulta `useOperacionalBIRpc(active)` sem enviar `dateRange`. Na Fase 1, a aba deve declarar **“posição operacional atual”** e não deve apresentar comparação por período inexistente.
+- **Operação Técnica & Frota** hoje consulta `useOperacionalBIRpc(active)` sem enviar `dateRange`. Na Fase 1, a página deve declarar **“posição operacional atual”** e não deve apresentar comparação por período inexistente.
 - Caso a experiência exija calendário também para frota, a RPC deve primeiro ser ampliada para aceitar `from`/`to`; não é aceitável aplicar um filtro visual que não corresponde aos dados.
 
 ## 11.5 Estratégia da sidebar e dos módulos antigos
