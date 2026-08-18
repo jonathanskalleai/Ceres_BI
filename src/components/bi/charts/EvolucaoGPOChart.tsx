@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import ComboChart from "@/components/bi/charts/ComboChart";
-import { formatMonthYear, formatBRLShort } from "@/lib/dateUtils";
+import { formatMonthYear } from "@/lib/dateUtils";
 import type { RpcEvolucaoGPO } from "@/hooks/useEvolucaoGPO";
 
 /** Short month label: "2026-07" → "jul/26" */
@@ -20,8 +20,8 @@ export default function EvolucaoGPOChart({ data, height = 300, loading = false }
     () =>
       data.map((d) => ({
         name: fmtShort(d.mes),
-        ganhos: Number(d.ganhos),
-        perdidos: Number(d.perdidos),
+        vendas: Number(d.ganhos),
+        perdas: Number(d.perdidos),
         oportunidades: Number(d.oportunidades),
       })),
     [data],
@@ -30,9 +30,9 @@ export default function EvolucaoGPOChart({ data, height = 300, loading = false }
   return (
     <ComboChart
       data={chartData}
-      barKeys={["ganhos", "perdidos"]}
+      barKeys={["vendas", "perdas"]}
       lineKey="oportunidades"
-      seriesLabels={{ ganhos: "Ganhos", perdidos: "Perdidos", oportunidades: "Oportunidades" }}
+      seriesLabels={{ vendas: "Vendas", perdas: "Perdas", oportunidades: "Oportunidades" }}
       barColors={BAR_COLORS}
       lineColor={LINE_COLOR}
       height={height}

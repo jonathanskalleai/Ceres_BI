@@ -188,15 +188,15 @@ export function ConsultorCharts({ evolucao, tiposAcao, regioes, consultorNome }:
         />
       </ChartCard>
 
-      {/* Evolução G/P/O — ganhos, perdidos, oportunidades 12m */}
+      {/* Desempenho comercial — vendas, perdas, oportunidades 12m */}
       <ChartCard
-        title="Evolução G/P/O"
-        description="Ganhos, Perdidos e Oportunidades — 12 meses"
-        label="G/P/O · 12 MESES"
-        height={300}
+        title="Desempenho Comercial"
+        description="Vendas, perdas e novas oportunidades — últimos 12 meses"
+        label="COMERCIAL · 12M"
+        height={260}
         loading={gpoLoading}
       >
-        <EvolucaoGPOChart data={gpoData ?? []} height={300} />
+        <EvolucaoGPOChart data={gpoData ?? []} height={260} />
       </ChartCard>
 
       {/* Tipos de ação (donut interativo) + Regiões (barras interativas) */}

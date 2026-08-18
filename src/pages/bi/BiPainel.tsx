@@ -52,9 +52,9 @@ export default function BiPainel() {
           <div className="space-y-4">
             <CrmEvolucaoCharts />
             <ChartCard
-              title="Evolução G/P/O"
-              description="Ganhos, Perdidos e Oportunidades — 12 meses"
-              label="G/P/O · EMPRESA"
+              title="Desempenho Comercial"
+              description="Vendas, perdas e novas oportunidades — últimos 12 meses"
+              label="COMERCIAL · 12M"
               height={220}
               loading={gpoLoading}
             >
