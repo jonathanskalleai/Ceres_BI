@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { LineChart } from "@/components/bi/charts";
+import EvolucaoGPOChart from "@/components/bi/charts/EvolucaoGPOChart";
+import { useEvolucaoGPO } from "@/hooks/useEvolucaoGPO";
 import { formatMonthYear } from "@/lib/dateUtils";
 import type { EvolucaoMensal, RegiaoVendedor } from "@/types/comercial";
 
@@ -8,6 +10,7 @@ interface Props {
   evolucao: EvolucaoMensal[];
   tiposAcao: Record<string, number>;
   regioes: RegiaoVendedor[];
+  consultorNome: string;
 }
 
 /** Paleta terrosa sóbria (referência: coral → âmbar → slate → sage → verde) */
@@ -155,8 +158,9 @@ function SimpleDonut({ data, size = 140, thickness = 16 }: { data: { label: stri
   );
 }
 
-export function ConsultorCharts({ evolucao, tiposAcao, regioes }: Props) {
+export function ConsultorCharts({ evolucao, tiposAcao, regioes, consultorNome }: Props) {
   const [hoveredBar, setHoveredBar] = useState<number | null>(null);
+  const { data: gpoData, isLoading: gpoLoading } = useEvolucaoGPO({ vendedor: consultorNome, enabled: !!consultorNome });
 
   const tiposAcaoData = Object.entries(tiposAcao)
     .map(([name, value]) => ({ name, value }))
@@ -182,6 +186,17 @@ export function ConsultorCharts({ evolucao, tiposAcao, regioes }: Props) {
           height={300}
           independentAxes
         />
+      </ChartCard>
+
+      {/* Evolução G/P/O — ganhos, perdidos, oportunidades 12m */}
+      <ChartCard
+        title="Evolução G/P/O"
+        description="Ganhos, Perdidos e Oportunidades — 12 meses"
+        label="G/P/O · 12 MESES"
+        height={300}
+        loading={gpoLoading}
+      >
+        <EvolucaoGPOChart data={gpoData ?? []} height={300} />
       </ChartCard>
 
       {/* Tipos de ação (donut interativo) + Regiões (barras interativas) */}

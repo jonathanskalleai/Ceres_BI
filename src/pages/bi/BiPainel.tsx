@@ -14,6 +14,9 @@ import { PainelServicosSection } from "@/components/bi/painel/PainelServicosSect
 import { PainelAcoesSection } from "@/components/bi/painel/PainelAcoesSection";
 import { StatusDesconhecidoAlert } from "@/components/bi/painel/StatusDesconhecidoAlert";
 import CrmEvolucaoCharts from "@/components/crm/CrmEvolucaoCharts";
+import { ChartCard } from "@/components/bi/ChartCard";
+import EvolucaoGPOChart from "@/components/bi/charts/EvolucaoGPOChart";
+import { useEvolucaoGPO } from "@/hooks/useEvolucaoGPO";
 
 export default function BiPainel() {
   const { dateRange, categoria, funil, vendedor, cidade } = useNegociosFilter();
@@ -22,6 +25,7 @@ export default function BiPainel() {
   const { kpis: cliKpis, isLoading: cliLoading } = useClientesKPIsRpc(dateRange, cidade || undefined);
   const { kpis: svcKpis, isLoading: svcLoading } = useServicosKPIsRpc(dateRange, cidade || undefined);
   const { kpis: crossKpis, isLoading: crossLoading } = useCrossKPIsRpc(dateRange, categoria, funil, vendedor || undefined, cidade || undefined);
+  const { data: gpoData, isLoading: gpoLoading } = useEvolucaoGPO({ enabled: true });
 
   const anyLoading = isLoading || pedLoading || cliLoading || svcLoading || crossLoading;
 
@@ -45,7 +49,18 @@ export default function BiPainel() {
           <PainelAcoesSection kpis={kpis} loading={anyLoading} />
         </TabsContent>
         <TabsContent value="graficos">
-          <CrmEvolucaoCharts />
+          <div className="space-y-4">
+            <CrmEvolucaoCharts />
+            <ChartCard
+              title="Evolução G/P/O"
+              description="Ganhos, Perdidos e Oportunidades — 12 meses"
+              label="G/P/O · EMPRESA"
+              height={300}
+              loading={gpoLoading}
+            >
+              <EvolucaoGPOChart data={gpoData ?? []} height={300} />
+            </ChartCard>
+          </div>
         </TabsContent>
       </Tabs>
     </section>

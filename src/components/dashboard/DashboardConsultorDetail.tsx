@@ -116,7 +116,7 @@ export const DashboardConsultorDetail = ({ vendedor: v, resumo, registros, from,
       <InsightConsultorCard consultor={v.nome} />
 
       {/* Gráficos */}
-      <ConsultorCharts evolucao={v.evolucao} tiposAcao={v.tiposAcao} regioes={v.regioes} />
+      <ConsultorCharts evolucao={v.evolucao} tiposAcao={v.tiposAcao} regioes={v.regioes} consultorNome={v.nome} />
 
       {/* Tabela de clientes */}
       <div
