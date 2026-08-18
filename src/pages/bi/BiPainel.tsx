@@ -47,19 +47,19 @@ export default function BiPainel() {
             <PainelServicosSection svcKpis={svcKpis} loading={anyLoading} />
           </div>
           <PainelAcoesSection kpis={kpis} loading={anyLoading} />
+          <ChartCard
+            title="Desempenho Comercial"
+            description="Vendas, perdas e novas oportunidades — últimos 12 meses"
+            label="COMERCIAL · 12M"
+            height={220}
+            loading={gpoLoading}
+          >
+            <EvolucaoGPOChart data={gpoData ?? []} height={220} />
+          </ChartCard>
         </TabsContent>
         <TabsContent value="graficos">
           <div className="space-y-4">
             <CrmEvolucaoCharts />
-            <ChartCard
-              title="Desempenho Comercial"
-              description="Vendas, perdas e novas oportunidades — últimos 12 meses"
-              label="COMERCIAL · 12M"
-              height={220}
-              loading={gpoLoading}
-            >
-              <EvolucaoGPOChart data={gpoData ?? []} height={220} />
-            </ChartCard>
           </div>
         </TabsContent>
       </Tabs>
