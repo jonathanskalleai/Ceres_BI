@@ -62,7 +62,8 @@ function buildOption(
     label: {
       show: showDataLabels,
       position: "top" as const,
-      fontSize: 10,
+      fontSize: 13,
+      fontWeight: 600,
       color: labelColor,
       formatter: (p: { value: number }) => (p.value === 0 ? "" : String(p.value)),
     },
@@ -81,7 +82,8 @@ function buildOption(
     label: {
       show: showDataLabels,
       position: "top" as const,
-      fontSize: 10,
+      fontSize: 13,
+      fontWeight: 600,
       color: lineColor,
       formatter: (p: { value: number }) => (p.value === 0 ? "" : String(p.value)),
     },
