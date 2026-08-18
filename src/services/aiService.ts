@@ -1,8 +1,10 @@
 /**
  * Helper para chamadas à API de IA (Python/FastAPI).
  * Em produção, o Traefik roteia /api/ai/* para o container Python.
- * Em dev local, fallback para a Edge Function via Supabase.
+ * Todas as chamadas incluem o JWT do Supabase para autenticação.
  */
+
+import { supabase } from "@/integrations/supabase/client";
 
 const AI_BASE_URL = "/api/ai";
 
@@ -17,9 +19,18 @@ async function callAiEndpoint<T = unknown>(
   method: "GET" | "POST" = body ? "POST" : "GET",
 ): Promise<AiResponse<T>> {
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const headers: Record<string, string> = {};
+    if (session?.access_token) {
+      headers["Authorization"] = `Bearer ${session.access_token}`;
+    }
+    if (body) {
+      headers["Content-Type"] = "application/json";
+    }
+
     const res = await fetch(`${AI_BASE_URL}${path}`, {
       method,
-      headers: body ? { "Content-Type": "application/json" } : undefined,
+      headers,
       body: body ? JSON.stringify(body) : undefined,
     });
 

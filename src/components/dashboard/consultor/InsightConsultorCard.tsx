@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Sparkles, ChevronDown, ChevronUp } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { fetchAI } from "@/lib/fetchAI";
 
 interface InsightData {
   nota?: string;
@@ -97,7 +98,7 @@ export function InsightConsultorCard({ consultor }: { consultor: string }) {
     setExpandedWeek(null);
     setLoading(true);
 
-    fetch(`/api/ai/insights?tipo=individual&consultor=${encodeURIComponent(consultor)}`)
+    fetchAI(`/api/ai/insights?tipo=individual&consultor=${encodeURIComponent(consultor)}`)
       .then(r => r.json())
       .then(data => {
         if (data && !data.message) setCurrent(data);
@@ -111,7 +112,7 @@ export function InsightConsultorCard({ consultor }: { consultor: string }) {
       setShowHistorico(!showHistorico);
       return;
     }
-    fetch(`/api/ai/insights?tipo=individual&consultor=${encodeURIComponent(consultor)}&all=true`)
+    fetchAI(`/api/ai/insights?tipo=individual&consultor=${encodeURIComponent(consultor)}&all=true`)
       .then(r => r.json())
       .then(data => {
         if (data?.semanas) setHistorico(data.semanas.slice(1));

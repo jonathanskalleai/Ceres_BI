@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Sparkles, ChevronDown, ChevronUp, User } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { callAiEndpoint } from "@/services/aiService";
+import { fetchAI } from "@/lib/fetchAI";
 import {
   Dialog,
   DialogContent,
@@ -85,7 +86,7 @@ export function InsightsEquipeCard({ consultores = [] }: { consultores?: string[
 
   useEffect(() => {
     // Buscar semana atual
-    fetch("/api/ai/insights?tipo=equipe").then(r => r.json()).then(data => {
+    fetchAI("/api/ai/insights?tipo=equipe").then(r => r.json()).then(data => {
       if (data && !data.message) setCurrent(data);
       setLoading(false);
     }).catch(() => setLoading(false));
@@ -96,7 +97,7 @@ export function InsightsEquipeCard({ consultores = [] }: { consultores?: string[
       setShowHistorico(!showHistorico);
       return;
     }
-    fetch("/api/ai/insights?all=true").then(r => r.json()).then(data => {
+    fetchAI("/api/ai/insights?all=true").then(r => r.json()).then(data => {
       if (data?.semanas) {
         // Remove a semana atual (primeira) pois já está exibida
         setHistorico(data.semanas.slice(1));
