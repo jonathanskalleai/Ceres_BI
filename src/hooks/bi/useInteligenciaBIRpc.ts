@@ -42,15 +42,21 @@ export interface InteligenciaBIResult {
 
 const STALE_TIME = 5 * 60_000;
 
+/** Permite carregar somente os agregados necessários em uma composição de BI. */
+export type InteligenciaScope = "funil" | "perdas" | "financeiro" | "mercado" | "sla";
+
 export function useInteligenciaBIRpc(
   active: boolean,
   dateRange: DateRange | undefined,
   categoria?: CategoriaFilter,
   funil?: string,
+  scopes?: readonly InteligenciaScope[],
 ): InteligenciaBIResult {
   const from = toISODate(dateRange?.from);
   const to = toISODate(dateRange?.to ?? dateRange?.from);
   const funis = resolveFunis(categoria, funil) ?? null;
+  const selectedScopes = scopes ? new Set(scopes) : null;
+  const includes = (scope: InteligenciaScope) => selectedScopes === null || selectedScopes.has(scope);
 
   const dateEnabled = active && !!from && !!to;
 
@@ -60,7 +66,7 @@ export function useInteligenciaBIRpc(
     queryFn: () => fetchInteligenciaEsforcoBI(from!, to!, funis),
     staleTime: STALE_TIME,
     placeholderData: keepPreviousData,
-    enabled: dateEnabled,
+    enabled: dateEnabled && includes("funil"),
   });
 
   // 2. Pedidos (sharePorBanco + mixFaturamento + porCidade)
@@ -69,7 +75,7 @@ export function useInteligenciaBIRpc(
     queryFn: () => fetchPedidosBI(from!, to!),
     staleTime: STALE_TIME,
     placeholderData: keepPreviousData,
-    enabled: dateEnabled,
+    enabled: dateEnabled && includes("financeiro"),
   });
 
   // 3. Parque renovacao (no date filter)
@@ -78,7 +84,7 @@ export function useInteligenciaBIRpc(
     queryFn: () => fetchParqueRenovacaoBI(),
     staleTime: STALE_TIME,
     placeholderData: keepPreviousData,
-    enabled: active,
+    enabled: active && includes("mercado"),
   });
 
   // 4. Servicos (slaPorFilial + slaPorTipoOS)
@@ -87,7 +93,7 @@ export function useInteligenciaBIRpc(
     queryFn: () => fetchServicosBI(from!, to!),
     staleTime: STALE_TIME,
     placeholderData: keepPreviousData,
-    enabled: dateEnabled,
+    enabled: dateEnabled && includes("sla"),
   });
 
   // 5. Negocios (motivosPerda) — same queryKey used by ComercialSection = dedup
@@ -96,7 +102,7 @@ export function useInteligenciaBIRpc(
     queryFn: () => fetchNegociosBI(from!, to!, funis ?? undefined),
     staleTime: STALE_TIME,
     placeholderData: keepPreviousData,
-    enabled: dateEnabled,
+    enabled: dateEnabled && includes("perdas"),
   });
 
   const isLoading = loadEsforco || loadPedidos || loadParque || loadServicos || loadNegocios;
