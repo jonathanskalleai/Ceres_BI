@@ -18,7 +18,7 @@ from pydantic import BaseModel
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 MODEL = "meta-llama/llama-3.3-70b-instruct"
-MODEL_VERSION = "field-signals-v1"
+MODEL_VERSION = "field-signals-v2"
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 AI_JOB_TOKEN = os.getenv("AI_JOB_TOKEN", "")
 
@@ -625,6 +625,8 @@ def normalize_text_list(value: Any, *, limit: int = 8) -> list[str]:
 
 def normalize_sentiment(value: Any) -> str:
     value = str(value or "").strip().lower()
+    aliases = {"positive": "positivo", "negative": "negativo", "neutral": "neutro"}
+    value = aliases.get(value, value)
     return value if value in {"positivo", "negativo", "neutro"} else "neutro"
 
 
@@ -633,6 +635,48 @@ def normalize_confidence(value: Any) -> float:
         return max(0.0, min(float(value), 1.0))
     except (TypeError, ValueError):
         return 0.5
+
+
+POSITIVE_SIGNAL_TERMS = (
+    "interesse", "interessado", "comprar", "compra", "fechar", "fechamento",
+    "pedido", "aprova", "proposta aceita", "confirmou", "aquisição", "adquirir",
+)
+NEGATIVE_SIGNAL_TERMS = (
+    "concorrente", "caro", "preço alto", "juros", "atraso", "atrasad", "problema",
+    "prejuízo", "financeiro", "sem recurso", "não tem interesse", "nao tem interesse",
+    "perdid", "reclam", "insatisfeit", "desist",
+)
+PRODUCT_PATTERNS = {
+    "plantadeira": "Plantadeira",
+    "pulverizador": "Pulverizador",
+    "colheitadeira": "Colheitadeira",
+    "trator": "Trator",
+    "semeadora": "Semeadora",
+    "rolo faca": "Rolo Faca",
+    "gps": "GPS",
+    "piloto automático": "Piloto Automático",
+    "piloto automatico": "Piloto Automático",
+}
+
+
+def lexical_fallback(candidate: dict[str, Any]) -> dict[str, Any]:
+    """Keep the aggregate informative if a provider truncates or malforms a batch response."""
+    normalized = str(candidate["source_text"]).casefold()
+    positives = [term for term in POSITIVE_SIGNAL_TERMS if term in normalized]
+    negatives = [term for term in NEGATIVE_SIGNAL_TERMS if term in normalized]
+    if len(positives) > len(negatives):
+        sentiment = "positivo"
+    elif len(negatives) > len(positives):
+        sentiment = "negativo"
+    else:
+        sentiment = "neutro"
+    products = [str(candidate["produto_crm"])] if candidate.get("produto_crm") else []
+    products.extend(label for pattern, label in PRODUCT_PATTERNS.items() if pattern in normalized)
+    return {
+        "sentiment": sentiment,
+        "keywords": positives + negatives,
+        "products": normalize_text_list(products),
+    }
 
 
 async def fetch_signal_candidates(start: date, end: date) -> list[dict[str, Any]]:
@@ -741,20 +785,26 @@ REGISTROS:
     response = await call_openrouter(prompt, system_prompt, temperature=0.0, max_tokens=2500)
     parsed = try_parse_json(response)
     entries = parsed.get("classificacoes", []) if isinstance(parsed, dict) else []
-    by_reference = {
-        str(entry.get("referencia")): entry
-        for entry in entries
-        if isinstance(entry, dict) and entry.get("referencia")
-    }
+    by_reference = {}
+    for entry in entries:
+        if not isinstance(entry, dict):
+            continue
+        reference = entry.get("referencia") or entry.get("referência") or entry.get("ref") or entry.get("id")
+        if reference:
+            by_reference[str(reference)] = entry
     classifications: list[dict[str, Any]] = []
     for candidate in candidates:
         entry = by_reference.get(f"{candidate['source_kind']}:{candidate['source_id']}", {})
+        fallback = lexical_fallback(candidate)
+        raw_sentiment = entry.get("sentimento") or entry.get("sentiment")
+        model_keywords = normalize_text_list(entry.get("palavras_chave") or entry.get("keywords"))
+        model_products = normalize_text_list(entry.get("produtos") or entry.get("products"))
         classifications.append({
             **candidate,
-            "sentiment": normalize_sentiment(entry.get("sentimento")),
+            "sentiment": normalize_sentiment(raw_sentiment) if raw_sentiment else fallback["sentiment"],
             "confidence": normalize_confidence(entry.get("confianca")),
-            "keywords": normalize_text_list(entry.get("palavras_chave")),
-            "products": normalize_text_list(entry.get("produtos")),
+            "keywords": model_keywords or fallback["keywords"],
+            "products": model_products or fallback["products"],
         })
     return classifications
 
