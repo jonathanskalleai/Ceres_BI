@@ -1,4 +1,4 @@
-import { ArrowUpRight, ChartNoAxesCombined, Lightbulb, ShieldAlert, Sparkles, Target } from "lucide-react";
+import { ArrowUpRight, Lightbulb, ShieldAlert, Sparkles } from "lucide-react";
 import { BiTableCard } from "@/components/bi/BiTableCard";
 import type { AiSinaisCampoSemanais } from "@/services/aiService";
 
@@ -38,42 +38,11 @@ function fallbackNarrative(data?: AiSinaisCampoSemanais): FieldNarrative | null 
   };
 }
 
-function AnalysisGroup({
-  icon: Icon,
-  title,
-  items,
-  emptyMessage,
-  danger = false,
-}: {
-  icon: typeof Target;
-  title: string;
-  items: { tema: string; leitura: string }[];
-  emptyMessage: string;
-  danger?: boolean;
-}) {
-  return (
-    <div className="rounded-lg border border-[var(--voux-card-border)] p-4">
-      <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.1em] text-[var(--voux-text-muted)]">
-        <Icon className={`h-4 w-4 ${danger ? "text-[var(--voux-danger)]" : "text-[var(--voux-accent)]"}`} aria-hidden="true" />
-        {title}
-      </p>
-      {items.length ? (
-        <div className="mt-3 space-y-3">
-          {items.map((item) => (
-            <div key={`${item.tema}-${item.leitura}`}>
-              <p className="text-sm font-medium text-[var(--voux-text-primary)]">{item.tema}</p>
-              <p className="mt-1 text-xs leading-5 text-[var(--voux-text-muted)]">{item.leitura}</p>
-            </div>
-          ))}
-        </div>
-      ) : <p className="mt-3 text-xs leading-5 text-[var(--voux-text-muted)]">{emptyMessage}</p>}
-    </div>
-  );
-}
-
 export function AcoesSinaisSemanaIA({ data, loading, error }: Props) {
   const analysis = data?.analiseIa ?? fallbackNarrative(data);
   const terms = data?.topTermos ?? [];
+  const focusTopics = analysis?.interessesDemanda?.map((item) => item.tema).filter(Boolean) ?? [];
+  const primaryAlert = analysis?.objecoesAlertas?.[0];
   const maxMentions = Math.max(...terms.map((term) => term.mencoes), 1);
   const confidenceLabel = analysis?.confianca === "alta" ? "Base consistente" : analysis?.confianca === "media" ? "Leitura em evolução" : "Sinal preliminar";
   const coverageLabel = analysis?.baseRegistros && analysis.baseRegistros > (data?.totalTextos ?? 0)
@@ -102,39 +71,42 @@ export function AcoesSinaisSemanaIA({ data, loading, error }: Props) {
           <span className="rounded-full border border-[var(--voux-card-border)] bg-[var(--voux-card-bg)] px-2.5 py-1 text-[11px] text-[var(--voux-text-muted)]" title={coverageLabel}>{confidenceLabel} · {Math.round(analysis?.coberturaPercentual ?? 0)}%</span>
         </div>
         <p className="mt-4 text-sm leading-6 text-[var(--voux-text-primary)]">{analysis?.resumoExecutivo}</p>
-        <div className="mt-4 border-t border-[var(--voux-card-border)] pt-3">
-          <p className="flex items-center gap-2 text-xs font-medium text-[var(--voux-text-primary)]"><ChartNoAxesCombined className="h-3.5 w-3.5 text-[var(--voux-accent)]" aria-hidden="true" /> Leitura de sentimento</p>
-          <p className="mt-1 text-xs leading-5 text-[var(--voux-text-muted)]">{analysis?.leituraSentimento}</p>
-        </div>
+        {focusTopics.length ? <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-[var(--voux-card-border)] pt-3">
+          <span className="mr-1 text-[11px] font-medium uppercase tracking-[0.1em] text-[var(--voux-text-muted)]">Focos comerciais</span>
+          {focusTopics.map((topic) => <span key={topic} className="rounded-full border border-[var(--voux-accent)]/25 bg-[var(--voux-accent)]/[0.07] px-2.5 py-1 text-xs font-medium text-[var(--voux-text-primary)]">{topic}</span>)}
+        </div> : null}
+        {primaryAlert ? <div className="mt-3 flex gap-2 rounded-md border border-[var(--voux-danger)]/20 bg-[var(--voux-danger)]/[0.04] px-3 py-2.5">
+          <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--voux-danger)]" aria-hidden="true" />
+          <p className="text-xs leading-5 text-[var(--voux-text-muted)]"><span className="font-medium text-[var(--voux-text-primary)]">Alerta: {primaryAlert.tema}. </span>{primaryAlert.leitura}</p>
+        </div> : null}
         <p className="mt-4 text-[11px] text-[var(--voux-text-muted)]">Período analisado: {formatWeek(data?.semanaInicio)} a {formatWeek(data?.semanaFim)} · base de {coverageLabel}</p>
       </div>
 
-      <div className="mt-4 grid gap-4 xl:grid-cols-2">
-        <AnalysisGroup icon={Target} title="Demandas e interesses" items={analysis?.interessesDemanda ?? []} emptyMessage="Ainda não há evidência suficiente para apontar uma demanda recorrente." />
-        <AnalysisGroup icon={ShieldAlert} title="Objeções e alertas" items={analysis?.objecoesAlertas ?? []} emptyMessage="A IA não encontrou uma objeção recorrente na base desta semana." danger />
+      <div className="mt-4 rounded-lg border border-[var(--voux-card-border)] bg-[var(--voux-card-bg)] p-4">
+        <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.1em] text-[var(--voux-text-muted)]"><ArrowUpRight className="h-4 w-4 text-[var(--voux-accent)]" aria-hidden="true" /> Próximos passos sugeridos</p>
+        <ol className="mt-3 grid gap-2 md:grid-cols-3">
+          {(analysis?.proximosPassos ?? []).map((item, index) => <li key={item} className="flex min-w-0 gap-3 rounded-md border border-[var(--voux-card-border)] bg-[var(--surface-raised)] p-3">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--voux-accent)]/10 text-[11px] font-semibold text-[var(--voux-accent)]">{String(index + 1).padStart(2, "0")}</span>
+            <span className="text-xs leading-5 text-[var(--voux-text-primary)]">{item}</span>
+          </li>)}
+        </ol>
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(300px,0.9fr)]">
-        <div className="rounded-lg border border-[var(--voux-card-border)] p-4">
-          <p className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-[0.1em] text-[var(--voux-text-muted)]"><ArrowUpRight className="h-4 w-4 text-[var(--voux-accent)]" aria-hidden="true" /> Próximos passos sugeridos</p>
-          <ol className="mt-3 space-y-2 text-sm leading-5 text-[var(--voux-text-primary)]">
-            {(analysis?.proximosPassos ?? []).map((item, index) => <li key={item} className="flex gap-2"><span className="font-medium text-[var(--voux-accent)]">{index + 1}.</span><span>{item}</span></li>)}
-          </ol>
+      <details className="group mt-4 rounded-lg border border-[var(--voux-card-border)] p-4">
+        <summary className="cursor-pointer list-none text-[11px] font-medium uppercase tracking-[0.1em] text-[var(--voux-text-muted)]">
+          <span className="flex items-center justify-between gap-3">Temas e produtos identificados <span className="text-[10px] normal-case tracking-normal text-[var(--voux-text-faint)]">{terms.length} temas · {data?.produtos?.length ?? 0} produtos</span></span>
+        </summary>
+        <p className="mt-2 text-xs text-[var(--voux-text-muted)]">Expressões e produtos recorrentes nas descrições analisadas.</p>
+        <div className="mt-4 flex flex-wrap items-center gap-2" aria-label="Temas recorrentes identificados pela IA">
+          {terms.map((term) => {
+            const prominence = term.mencoes / maxMentions;
+            const size = prominence >= 0.8 ? "text-sm font-semibold" : prominence >= 0.45 ? "text-[13px] font-medium" : "text-xs";
+            return <span key={term.termo} className={`rounded-full border border-[var(--voux-accent)]/20 bg-[var(--voux-accent)]/[0.06] px-2.5 py-1.5 text-[var(--voux-text-primary)] ${size}`} title={`${term.mencoes} ${term.mencoes === 1 ? "menção" : "menções"}`}>{term.termo}</span>;
+          })}
         </div>
+        {data?.produtos?.length ? <p className="mt-4 border-t border-[var(--voux-card-border)] pt-3 text-xs leading-5 text-[var(--voux-text-muted)]"><span className="font-medium text-[var(--voux-text-primary)]">Produtos em evidência: </span>{data.produtos.map((item) => `${item.produto} (${item.mencoes})`).join(" · ")}</p> : null}
+      </details>
 
-        <div className="rounded-lg border border-[var(--voux-card-border)] p-4">
-          <p className="text-[11px] font-medium uppercase tracking-[0.1em] text-[var(--voux-text-muted)]">Temas identificados</p>
-          <p className="mt-1 text-xs text-[var(--voux-text-muted)]">Expressões recorrentes nas descrições analisadas</p>
-          <div className="mt-4 flex flex-wrap items-center gap-2" aria-label="Temas recorrentes identificados pela IA">
-            {terms.map((term) => {
-              const prominence = term.mencoes / maxMentions;
-              const size = prominence >= 0.8 ? "text-sm font-semibold" : prominence >= 0.45 ? "text-[13px] font-medium" : "text-xs";
-              return <span key={term.termo} className={`rounded-full border border-[var(--voux-accent)]/20 bg-[var(--voux-accent)]/[0.06] px-2.5 py-1.5 text-[var(--voux-text-primary)] ${size}`} title={`${term.mencoes} ${term.mencoes === 1 ? "menção" : "menções"}`}>{term.termo}</span>;
-            })}
-          </div>
-          {data?.produtos?.length ? <p className="mt-4 border-t border-[var(--voux-card-border)] pt-3 text-xs leading-5 text-[var(--voux-text-muted)]"><span className="font-medium text-[var(--voux-text-primary)]">Produtos em evidência: </span>{data.produtos.map((item) => `${item.produto} (${item.mencoes})`).join(" · ")}</p> : null}
-        </div>
-      </div>
     </BiTableCard>
   );
 }
