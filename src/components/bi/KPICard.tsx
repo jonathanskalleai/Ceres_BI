@@ -1,5 +1,5 @@
 import { type ElementType, useState } from "react";
-import { CircleHelp } from "lucide-react";
+import { CircleHelp, TrendingDown, TrendingUp, Minus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -25,26 +25,54 @@ interface KPICardProps {
   onDoubleClick?: () => void;
 }
 
+/**
+ * Resolve o "tone" automaticamente a partir de accentColor.
+ * Assim os componentes que já passam accentColor ganham o gradiente certo.
+ */
+function resolveTone(accentColor?: string): "default" | "success" | "warning" | "danger" {
+  if (!accentColor) return "default";
+  if (accentColor.includes("success") || accentColor.includes("#4caf") || accentColor.includes("#3d6b") || accentColor.includes("#2d7a")) return "success";
+  if (accentColor.includes("danger") || accentColor.includes("#b83a") || accentColor.includes("#9e3a") || accentColor.includes("#e060")) return "danger";
+  if (accentColor.includes("warning") || accentColor.includes("#d4a0") || accentColor.includes("#8c5e")) return "warning";
+  return "default";
+}
+
+const TONE_STYLES = {
+  default: {
+    border: "var(--voux-border-alpha)",
+    bg: "bg-[var(--voux-surface)]",
+    accent: "var(--voux-accent)",
+  },
+  success: {
+    border: "color-mix(in srgb, var(--voux-border-alpha) 70%, var(--voux-success))",
+    bg: "bg-gradient-to-br from-[rgba(122,155,111,0.06)] to-[var(--voux-surface)]",
+    accent: "var(--voux-success)",
+  },
+  warning: {
+    border: "color-mix(in srgb, var(--voux-border-alpha) 70%, var(--voux-warning))",
+    bg: "bg-gradient-to-br from-[rgba(212,160,90,0.06)] to-[var(--voux-surface)]",
+    accent: "var(--voux-warning)",
+  },
+  danger: {
+    border: "color-mix(in srgb, var(--voux-border-alpha) 70%, var(--voux-danger))",
+    bg: "bg-gradient-to-br from-[rgba(201,117,101,0.08)] to-[var(--voux-surface)]",
+    accent: "var(--voux-danger)",
+  },
+} as const;
+
 function DeltaBadge({ previousValue, trend, invertTrend }: { previousValue: string | number; trend: "up" | "down" | "neutral"; invertTrend?: boolean }) {
-  const arrow = trend === "up" ? "↑" : trend === "down" ? "↓" : "→";
   const isPositive = invertTrend ? trend === "down" : trend === "up";
   const isNegative = invertTrend ? trend === "up" : trend === "down";
 
-  const color = isPositive
-    ? "var(--voux-success)"
-    : isNegative
-      ? "var(--voux-danger)"
-      : "var(--voux-text-muted)";
+  // Design system: delta colors ALWAYS hardcoded
+  const color = isPositive ? "#22c55e" : isNegative ? "#e74c3c" : "var(--voux-text-muted)";
+  const TrendIcon = trend === "down" ? TrendingDown : trend === "neutral" ? Minus : TrendingUp;
 
   return (
-    <span
-      className="inline-flex items-center gap-1 text-[11px] font-medium mt-1.5"
-      style={{ fontFamily: "var(--voux-font-mono)", color }}
-    >
-      <span aria-hidden="true">{arrow}</span>
-      <span>{previousValue} per. anterior</span>
-      <span className="sr-only">Periodo anterior: {previousValue}</span>
-    </span>
+    <div className="mt-2.5 flex items-center gap-1.5 text-xs font-semibold" style={{ color }}>
+      <TrendIcon className="h-3.5 w-3.5 flex-shrink-0" />
+      <span className="font-mono">{previousValue} per. anterior</span>
+    </div>
   );
 }
 
@@ -53,18 +81,20 @@ export function KPICard({
   previousValue, trend, invertTrend, rawValue, onDoubleClick,
 }: KPICardProps) {
   const [showTooltip, setShowTooltip] = useState(false);
+  const tone = resolveTone(accentColor);
+  const config = TONE_STYLES[tone];
 
   return (
-    <div
+    <article
       className={cn(
-        "relative overflow-hidden rounded-xl px-4 py-3 md:px-5 md:py-3.5 transition-colors",
-        "border bg-[var(--surface-raised)]",
-        onDoubleClick && "cursor-pointer hover:border-[var(--voux-champagne-400)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--voux-champagne-400)]",
+        "group relative overflow-hidden rounded-2xl border p-5 transition-all duration-200",
+        "hover:-translate-y-0.5 hover:shadow-[0_4px_16px_-4px_rgba(212,184,150,0.20)]",
+        config.bg,
+        onDoubleClick && "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--voux-accent)]",
       )}
       style={{
-        borderColor: "var(--voux-card-border)",
+        borderColor: config.border,
         boxShadow: "var(--voux-card-shadow)",
-        ...(accentColor ? { borderLeftColor: accentColor, borderLeftWidth: 3 } : {}),
       }}
       onMouseLeave={() => setShowTooltip(false)}
       onDoubleClick={onDoubleClick}
@@ -78,7 +108,13 @@ export function KPICard({
       tabIndex={onDoubleClick ? 0 : undefined}
       aria-label={onDoubleClick ? `${title}. Dê duplo clique para abrir os alertas.` : undefined}
     >
-      {/* A explicacao aparece apenas sob demanda; a origem tecnica nao e exibida. */}
+      {/* Decorative accent circle */}
+      <div
+        className="pointer-events-none absolute -right-3 -top-3 h-16 w-16 rounded-full opacity-[0.07]"
+        style={{ background: config.accent }}
+      />
+
+      {/* Formula tooltip */}
       {showTooltip && formula && (
         <div
           className="absolute top-2 left-2 right-2 z-10 rounded-lg px-3 py-2 text-[11px] leading-tight"
@@ -94,18 +130,18 @@ export function KPICard({
         </div>
       )}
 
-      {/* Eyebrow */}
-      <div className="flex items-start justify-between mb-2 gap-2">
-        <span
-          className="text-[11px] tracking-[0.12em] uppercase leading-snug font-medium"
-          style={{ fontFamily: "var(--voux-font-label)", color: "var(--voux-label)" }}
+      {/* Label */}
+      <div className="flex items-start justify-between gap-2">
+        <div
+          className="text-xs font-mono tracking-[0.08em] uppercase font-semibold"
+          style={{ color: config.accent }}
         >
           {title}
-        </span>
+        </div>
         {formula ? (
           <button
             type="button"
-            className="inline-flex h-6 w-6 items-center justify-center rounded-full shrink-0 transition-colors hover:bg-[var(--voux-accent)]/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--voux-accent)]"
+            className="inline-flex h-5 w-5 items-center justify-center rounded-full shrink-0 transition-colors hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--voux-accent)]"
             aria-label={`Explicacao: ${title}`}
             aria-expanded={showTooltip}
             onClick={() => setShowTooltip((visible) => !visible)}
@@ -113,17 +149,17 @@ export function KPICard({
             onBlur={() => setShowTooltip(false)}
             style={{
               background: "color-mix(in srgb, var(--voux-accent) 12%, transparent)",
-              color: "var(--voux-accent)",
+              color: config.accent,
             }}
           >
-            <CircleHelp className="h-3.5 w-3.5" aria-hidden="true" />
+            <CircleHelp className="h-3 w-3" aria-hidden="true" />
           </button>
         ) : Icon && (
           <span
-            className="inline-flex h-6 w-6 items-center justify-center rounded-full shrink-0"
+            className="inline-flex h-5 w-5 items-center justify-center rounded-full shrink-0"
             style={{
               background: "color-mix(in srgb, var(--voux-accent) 12%, transparent)",
-              color: "var(--voux-accent)",
+              color: config.accent,
             }}
           >
             <Icon className="h-3 w-3" />
@@ -134,21 +170,21 @@ export function KPICard({
       {/* Value */}
       {loading ? (
         <>
-          <Skeleton className="h-8 w-24 mb-1 bg-[var(--voux-skeleton)]" />
+          <Skeleton className="h-8 w-24 mt-1.5 mb-1 bg-[var(--voux-skeleton)]" />
           {hint && <Skeleton className="h-3 w-32 bg-[var(--voux-skeleton)]" />}
         </>
       ) : (
         <>
           <div
             className={cn(
-              "font-semibold leading-none tracking-[-0.02em] tabular-nums",
+              "mt-1.5 font-mono font-bold leading-tight",
               String(value).length > 14
                 ? "text-lg sm:text-xl md:text-2xl"
                 : String(value).length > 10
-                  ? "text-xl sm:text-2xl md:text-[28px]"
-                  : "text-2xl sm:text-[28px] md:text-[32px]",
+                  ? "text-xl sm:text-2xl"
+                  : "text-2xl sm:text-[28px]",
             )}
-            style={{ color: accentColor || "var(--voux-text-heading)" }}
+            style={{ color: "var(--voux-text-primary)" }}
             title={rawValue != null
               ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rawValue)
               : String(value)}
@@ -156,16 +192,19 @@ export function KPICard({
             {value}
           </div>
 
+          {/* Hint / scope */}
+          {hint && (
+            <div className="mt-1 text-xs" style={{ color: "var(--voux-text-muted)" }}>
+              {hint}
+            </div>
+          )}
+
+          {/* Delta */}
           {previousValue !== undefined && trend && (
             <DeltaBadge previousValue={previousValue} trend={trend} invertTrend={invertTrend} />
           )}
-          {hint && (
-            <p className="text-[11px] mt-1" style={{ fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-muted)" }}>
-              {hint}
-            </p>
-          )}
         </>
       )}
-    </div>
+    </article>
   );
 }
