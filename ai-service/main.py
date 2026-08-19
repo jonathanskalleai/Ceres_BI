@@ -963,9 +963,9 @@ def normalize_field_analysis(value: Any, fallback: dict[str, Any]) -> dict[str, 
 
     raw_actions = parsed.get("proximos_passos")
     actions = [compact_text(item, 280) for item in raw_actions[:3]] if isinstance(raw_actions, list) else []
-    confidence = parsed.get("confianca")
-    if confidence not in {"alta", "media", "baixa"}:
-        confidence = fallback["confianca"]
+    # Confidence shown in the BI is objective: it reflects the proportion of
+    # eligible descriptions processed, not an ungrounded model self-rating.
+    confidence = fallback["confianca"]
 
     title = text_field("titulo", 130)
     generic_titles = {
