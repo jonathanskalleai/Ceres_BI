@@ -21,6 +21,27 @@ set -euo pipefail
 
 STACK_NAME="ceresbi"
 
+smoke_check() {
+  local url="$1"
+  local label="$2"
+  local attempt
+
+  # Traefik can briefly return 404 while it replaces the backend task. Retry
+  # the public route so a healthy rolling deploy is not reported as failed.
+  for attempt in 1 2 3 4 5 6; do
+    if curl --fail --silent --show-error --max-time 20 "${url}" >/dev/null; then
+      return 0
+    fi
+    if [ "${attempt}" -lt 6 ]; then
+      echo "==> ${label} not ready yet (attempt ${attempt}/6); retrying..."
+      sleep 3
+    fi
+  done
+
+  echo "ERROR: ${label} did not become available after 6 attempts." >&2
+  return 1
+}
+
 if [ ! -f .env ]; then
   echo "ERROR: .env not found in $(pwd). Create it before deploying." >&2
   exit 1
@@ -91,7 +112,7 @@ for service in web ai; do
 done
 
 echo "==> Smoke checks..."
-curl --fail --silent --show-error --max-time 20 https://ceresbi.vouxconsultoria.com.br/ >/dev/null
-curl --fail --silent --show-error --max-time 20 https://ceresbi.vouxconsultoria.com.br/api/ai/health >/dev/null
+smoke_check https://ceresbi.vouxconsultoria.com.br/ "Web"
+smoke_check https://ceresbi.vouxconsultoria.com.br/api/ai/health "AI"
 
 echo "==> Done: ${GIT_SHA} is running in web and AI."
