@@ -1032,6 +1032,20 @@ def normalize_field_analysis(value: Any, fallback: dict[str, Any]) -> dict[str, 
     }
 
 
+def field_analysis_needs_expansion(value: Any) -> bool:
+    """Reject a syntactically valid but shallow narrative before it reaches the BI."""
+    if not isinstance(value, dict):
+        return True
+    resumo = compact_text(value.get("resumo_executivo"))
+    sentimento = compact_text(value.get("leitura_sentimento"))
+    interesses = value.get("interesses_demanda")
+    return (
+        len(resumo.split()) < 90
+        or len(sentimento.split()) < 60
+        or not isinstance(interesses, list)
+    )
+
+
 def field_analysis_fallback(
     week: date,
     sentiment: dict[str, Any],
@@ -1180,11 +1194,25 @@ async def generate_field_signal_narrative(week: date) -> dict[str, Any] | None:
         "}\n\n"
         "Regras de preenchimento: titulo específico; reconheça no início do resumo quando a base for menor que 20 ou "
         "preliminar; interesses_demanda tem 2 a 4 itens somente quando houver evidência, podendo ter menos; "
-        "objecoes_alertas deve ser [] se não houver evidência; confianca é sua recomendação."
+        "objecoes_alertas deve ser [] se não houver evidência; confianca é sua recomendação. Os mínimos de 90 palavras "
+        "no resumo e 60 palavras na leitura de sentimento são obrigatórios: uma resposta mais curta é inválida. Cite "
+        "expressões literais do bloco registros em cada tema e pelo menos duas no resumo/leitura combinados."
     )
     try:
         response = await call_openrouter(prompt, system_prompt, temperature=0.2, max_tokens=5000)
-        analysis = normalize_field_analysis(try_parse_json(response), fallback)
+        parsed_response = try_parse_json(response)
+        if field_analysis_needs_expansion(parsed_response):
+            retry_prompt = (
+                f"{prompt}\n\n"
+                "A resposta anterior foi rejeitada por estar superficial. Reescreva do zero no mesmo JSON, sem explicar a "
+                "rejeição. Cumpra obrigatoriamente: resumo_executivo entre 90 e 140 palavras; leitura_sentimento entre "
+                "60 e 100 palavras; 2 a 4 interesses somente sustentados pelos registros; citações literais entre aspas "
+                "em cada interesse/alerta e pelo menos duas citações no resumo/leitura combinados. Não use conclusões "
+                "genéricas e mantenha proximos_passos em ações observáveis no CRM."
+            )
+            response = await call_openrouter(retry_prompt, system_prompt, temperature=0.4, max_tokens=5000)
+            parsed_response = try_parse_json(response)
+        analysis = normalize_field_analysis(parsed_response, fallback)
     except Exception as exc:
         print(f"[ERROR] Field signal narrative failed: {exc}")
         analysis = normalize_field_analysis({}, fallback)
