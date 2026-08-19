@@ -1088,11 +1088,15 @@ def field_analysis_fallback(
                 continue
             if needle_key and needle_key not in text.casefold() and needle_key not in record_products:
                 continue
-            return text[:260].rstrip(" ,;:-")
+            snippet = text[:260].rstrip(" ,;:-")
+            boundary = max(snippet.rfind(". "), snippet.rfind("! "), snippet.rfind("? "))
+            return snippet[:boundary + 1] if boundary >= 80 else snippet
         for record in records:
             text = compact_text(record.get("texto"))
             if text and (not expected_sentiment or record.get("sentimento_classificado") == expected_sentiment):
-                return text[:260].rstrip(" ,;:-")
+                snippet = text[:260].rstrip(" ,;:-")
+                boundary = max(snippet.rfind(". "), snippet.rfind("! "), snippet.rfind("? "))
+                return snippet[:boundary + 1] if boundary >= 80 else snippet
         return "sem trecho textual elegível"
 
     period = f"{week.strftime('%d/%m')} a {(week + timedelta(days=6)).strftime('%d/%m')}"
@@ -1146,7 +1150,7 @@ def field_analysis_fallback(
             f"O saldo comercial é favorável porque os {positive} sinais positivos superam os {negative} negativos. "
             f"A evidência \"{positive_quote}\" aponta intenção ou abertura para avanço; ela deve virar uma ação "
             "registrada, não apenas um histórico de conversa. Os sinais neutros representam contatos cujo próximo "
-            "estágio ainda não foi confirmado. Já \"{negative_quote}\" mostra que objeções e atrasos precisam de "
+            f"estágio ainda não foi confirmado. Já \"{negative_quote}\" mostra que objeções e atrasos precisam de "
             "resposta com prazo, pois podem esfriar uma oportunidade ou afetar a confiança do cliente."
         ),
         "interesses_demanda": interests,
