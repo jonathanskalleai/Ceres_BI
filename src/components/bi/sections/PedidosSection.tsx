@@ -12,17 +12,21 @@ import { PEDIDOS_BI_DEFAULTS } from "@/services/bi/biRpcService";
 interface Props {
   active: boolean;
   dateRange?: DateRange;
+  vendedor?: string;
+  cidade?: string;
 }
 
 const EMPTY_AGG = PEDIDOS_BI_DEFAULTS;
 
-export default function PedidosSection({ active, dateRange }: Props) {
+export default function PedidosSection({ active, dateRange, vendedor, cidade }: Props) {
   const from = toISODate(dateRange?.from);
   const to = toISODate(dateRange?.to ?? dateRange?.from);
 
   const { data: agg = EMPTY_AGG, isLoading } = usePedidosBIRpc({
     from,
     to,
+    vendedor,
+    cidade,
     enabled: active && !!from && !!to,
   });
   const { kpis } = agg;
@@ -34,6 +38,8 @@ export default function PedidosSection({ active, dateRange }: Props) {
   const { data: aggPrev } = usePedidosBIRpc({
     from: fromPrev,
     to: toPrev,
+    vendedor,
+    cidade,
     enabled: active && !!fromPrev && !!toPrev,
   });
   const kpisPrev = aggPrev?.kpis ?? EMPTY_AGG.kpis;

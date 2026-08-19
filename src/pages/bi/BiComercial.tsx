@@ -1,16 +1,15 @@
 import { lazy, Suspense, useState } from "react";
-import { BarChart3, PackageSearch, ShoppingCart } from "lucide-react";
+import { BriefcaseBusiness, PackageSearch, ShoppingCart } from "lucide-react";
 import { useNegociosFilter } from "@/contexts/NegociosFilterContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const ResultadosComerciaisSection = lazy(() => import("@/components/bi/sections/ResultadosComerciaisSection"));
-const PedidosGanhosSection = lazy(() => import("@/components/bi/sections/PedidosGanhosSection"));
+const ComercialSection = lazy(() => import("@/components/bi/sections/ComercialSection"));
+const PedidosSection = lazy(() => import("@/components/bi/sections/PedidosSection"));
 const AdminSection = lazy(() => import("@/components/bi/sections/AdminSection"));
-const ProdutosSection = lazy(() => import("@/components/bi/sections/ProdutosSection"));
-const InteligenciaMercadoSection = lazy(async () => {
+const InteligenciaFinanceiraSection = lazy(async () => {
   const module = await import("@/components/bi/sections/InteligenciaHighlightsSections");
-  return { default: module.InteligenciaMercadoSection };
+  return { default: module.InteligenciaFinanceiraSection };
 });
 
 function SectionFallback() {
@@ -35,7 +34,7 @@ function PositionCurrentNotice({ children }: { children: React.ReactNode }) {
 }
 
 export default function BiComercial() {
-  const { dateRange, vendedor, cidade } = useNegociosFilter();
+  const { dateRange, categoria, funil, vendedor, cidade } = useNegociosFilter();
   const [tab, setTab] = useState("vendas");
 
   return (
@@ -46,16 +45,18 @@ export default function BiComercial() {
       </header>
       <Tabs value={tab} onValueChange={setTab} className="space-y-4">
         <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto sm:w-auto">
-          <TabsTrigger value="vendas" className="gap-2"><BarChart3 className="h-4 w-4" />Vendas</TabsTrigger>
-          <TabsTrigger value="pedidos" className="gap-2"><ShoppingCart className="h-4 w-4" />Pedidos</TabsTrigger>
+          <TabsTrigger value="vendas" className="gap-2"><BriefcaseBusiness className="h-4 w-4" />Negócios &amp; Funil</TabsTrigger>
+          <TabsTrigger value="pedidos" className="gap-2"><ShoppingCart className="h-4 w-4" />Pedidos &amp; Itens</TabsTrigger>
           <TabsTrigger value="mercado" className="gap-2"><PackageSearch className="h-4 w-4" />Carteira &amp; Mercado</TabsTrigger>
         </TabsList>
 
         <TabsContent value="vendas">
           <Suspense fallback={<SectionFallback />}>
-            <ResultadosComerciaisSection
+            <ComercialSection
               active={tab === "vendas"}
               dateRange={dateRange}
+              categoria={categoria}
+              funil={funil}
               vendedor={vendedor || undefined}
               cidade={cidade || undefined}
             />
@@ -64,7 +65,7 @@ export default function BiComercial() {
 
         <TabsContent value="pedidos">
           <Suspense fallback={<SectionFallback />}>
-            <PedidosGanhosSection
+            <PedidosSection
               active={tab === "pedidos"}
               dateRange={dateRange}
               vendedor={vendedor || undefined}
@@ -74,11 +75,10 @@ export default function BiComercial() {
         </TabsContent>
 
         <TabsContent value="mercado" className="space-y-6">
-          <PositionCurrentNotice>Carteira, base instalada e frota com mais de cinco anos representam o retrato mais recente disponível.</PositionCurrentNotice>
+          <PositionCurrentNotice>Carteira de clientes representa o retrato mais recente disponível.</PositionCurrentNotice>
           <Suspense fallback={<SectionFallback />}>
             <AdminSection active={tab === "mercado"} dateRange={dateRange} />
-            <ProdutosSection active={tab === "mercado"} dateRange={dateRange} />
-            <InteligenciaMercadoSection active={tab === "mercado"} dateRange={dateRange} />
+            <InteligenciaFinanceiraSection active={tab === "mercado"} dateRange={dateRange} />
           </Suspense>
         </TabsContent>
       </Tabs>

@@ -4,6 +4,8 @@ import { useAcoesBIRpc } from "@/hooks/bi/useAcoesBIRpc";
 import { useAcoesEvolucaoMensalAnoCorrenteRpc } from "@/hooks/bi/useAcoesEvolucaoMensalAnoCorrenteRpc";
 import { useAcoesDetalheRpc, ACOES_PAGE_SIZE } from "@/hooks/bi/useAcoesDetalheRpc";
 import { useClientesRiscoRpc } from "@/hooks/bi/useClientesRiscoRpc";
+import { useClientesCriticosRpc } from "@/hooks/bi/useClientesCriticosRpc";
+import { useAcoesSinaisSemanaIA } from "@/hooks/bi/useAcoesSinaisSemanaIA";
 import { useAcoesFunilPeriodoRpc } from "@/hooks/bi/useAcoesFunilPeriodoRpc";
 import { useNegociosFilter } from "@/contexts/NegociosFilterContext";
 import { ChartCard } from "@/components/bi/ChartCard";
@@ -18,6 +20,8 @@ import { AcoesTermometroFechamento } from "@/components/bi/sections/AcoesTermome
 import { AcoesDiasSemAcaoModal } from "@/components/bi/sections/AcoesDiasSemAcaoModal";
 import { AcoesGestaoCarteira, type CarteiraDrill } from "@/components/bi/sections/AcoesGestaoCarteira";
 import { AcoesMapaOportunidades } from "@/components/bi/sections/AcoesMapaOportunidades";
+import { AcoesClientesCriticos } from "@/components/bi/sections/AcoesClientesCriticos";
+import { AcoesSinaisSemanaIA } from "@/components/bi/sections/AcoesSinaisSemanaIA";
 import { HorizontalBarChart, VerticalBarChart, LineChart, PieChartWithLabels, type BarChartData } from "@/components/bi/charts";
 import { CHART_COLORS } from "@/lib/chartTheme";
 import { faixaToDiasRange } from "@/lib/bi/acoesGestaoUtils";
@@ -153,6 +157,14 @@ export default function AcoesSection({ active, dateRange }: Props) {
     enabled: active,
   });
 
+  const { data: clientesCriticos, isLoading: clientesCriticosLoading, error: clientesCriticosError } = useClientesCriticosRpc({
+    vendedor: vendedor || undefined,
+    cidade: cidade || undefined,
+    enabled: active,
+  });
+
+  const { data: sinaisSemanaIA, isLoading: sinaisSemanaIALoading, error: sinaisSemanaIAError } = useAcoesSinaisSemanaIA(active);
+
   // Oportunidades pela primeira entrada no funil VENDAS da janela, nao por
   // cadastro e nem por negocios antigos apenas tocados por uma acao. Ranking e
   // dias parados permanecem os mesmos agregados da RPC-base.
@@ -214,6 +226,18 @@ export default function AcoesSection({ active, dateRange }: Props) {
         diasParados={gestao?.diasParados}
         gestaoLoading={gestaoLoading}
         onOpenDiasSemAcao={() => setDiasSemAcaoAberto(true)}
+      />
+
+      <AcoesClientesCriticos
+        data={clientesCriticos}
+        loading={clientesCriticosLoading}
+        error={clientesCriticosError}
+      />
+
+      <AcoesSinaisSemanaIA
+        data={sinaisSemanaIA}
+        loading={sinaisSemanaIALoading}
+        error={sinaisSemanaIAError}
       />
 
       <AcoesDiasSemAcaoModal

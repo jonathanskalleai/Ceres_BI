@@ -5,7 +5,9 @@ version: "3.8"
 
 services:
   web:
-    image: ceresbi:latest
+    # The deploy script injects the immutable Git SHA tag. Do not replace this
+    # with :latest: Swarm would then be able to restart an old dashboard image.
+    image: ${CERESBI_WEB_IMAGE:?CERESBI_WEB_IMAGE is required}
     networks:
       - redeinterna
     deploy:
@@ -15,10 +17,32 @@ services:
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.ceresbi.entrypoints=websecure"
-        - "traefik.http.routers.ceresbi.rule=Host(`ceresbi.vouxconsultoria.com.br`)"
+        - "traefik.http.routers.ceresbi.rule=Host(`ceresbi.vouxconsultoria.com.br`) && !PathPrefix(`/api/ai`)"
         - "traefik.http.routers.ceresbi.tls=true"
         - "traefik.http.routers.ceresbi.tls.certresolver=letsencryptresolver"
         - "traefik.http.services.ceresbi.loadbalancer.server.port=80"
+
+  ai:
+    image: ${CERESBI_AI_IMAGE:?CERESBI_AI_IMAGE is required}
+    networks:
+      - redeinterna
+    environment:
+      OPENROUTER_API_KEY: ${CERESBI_AI_OPENROUTER_API_KEY:?CERESBI_AI_OPENROUTER_API_KEY is required}
+      DATABASE_URL: ${CERESBI_AI_DATABASE_URL:?CERESBI_AI_DATABASE_URL is required}
+      AI_JOB_TOKEN: ${CERESBI_AI_JOB_TOKEN:?CERESBI_AI_JOB_TOKEN is required}
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.ceresbi-ai.entrypoints=websecure"
+        - "traefik.http.routers.ceresbi-ai.rule=Host(`ceresbi.vouxconsultoria.com.br`) && PathPrefix(`/api/ai`)"
+        - "traefik.http.routers.ceresbi-ai.tls=true"
+        - "traefik.http.routers.ceresbi-ai.tls.certresolver=letsencryptresolver"
+        - "traefik.http.services.ceresbi-ai.loadbalancer.server.port=8000"
+        - "traefik.http.middlewares.ai-strip.stripprefix.prefixes=/api"
+        - "traefik.http.routers.ceresbi-ai.middlewares=ai-strip"
 
 networks:
   redeinterna:

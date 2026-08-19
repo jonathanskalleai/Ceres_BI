@@ -89,3 +89,20 @@ export async function aiGetInsightsConsultor(consultor: string): Promise<AiRespo
 }>> {
   return callAiEndpoint(`/insights?tipo=individual&consultor=${encodeURIComponent(consultor)}`);
 }
+
+export interface AiSinaisCampoSemanais {
+  semanaInicio: string;
+  semanaFim: string;
+  totalTextos: number;
+  positivos: number;
+  negativos: number;
+  neutros: number;
+  score: number;
+  topTermos: { termo: string; mencoes: number }[];
+  produtos: { produto: string; mencoes: number }[];
+  message?: string;
+}
+
+export async function aiGetSinaisCampoSemanais(): Promise<AiResponse<AiSinaisCampoSemanais>> {
+  return callAiEndpoint("/field-signals");
+}

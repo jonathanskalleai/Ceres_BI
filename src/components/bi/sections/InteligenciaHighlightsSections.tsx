@@ -10,26 +10,21 @@ interface Props {
   dateRange?: DateRange;
 }
 
-/** Recorte de Inteligência que complementa Carteira & Mercado sem duplicar Vendas/Pedidos. */
-export function InteligenciaMercadoSection({ active, dateRange }: Props) {
-  const { sharePorBanco, frotaRenovacao, isLoading } = useInteligenciaBIRpc(
+/** Recorte financeiro que complementa Carteira & Mercado sem duplicar Pedidos. */
+export function InteligenciaFinanceiraSection({ active, dateRange }: Props) {
+  const { sharePorBanco, isLoading } = useInteligenciaBIRpc(
     active,
     dateRange,
     undefined,
     undefined,
-    ["financeiro", "mercado"],
+    ["financeiro"],
   );
 
   const bancos = sharePorBanco.map((banco) => ({ name: banco.name, valor: banco.valor }));
-  const frota = frotaRenovacao.map((item) => ({
-    name: item.isNossaMarca ? `${item.marca} ★` : item.marca,
-    totalMaquinas: item.totalMaquinas,
-  }));
-
-  if (bancos.length === 0 && frota.length === 0 && !isLoading) return null;
+  if (bancos.length === 0 && !isLoading) return null;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 gap-4">
       <ChartCard
         title="Share por Banco Financiador"
         description="Distribuição de valor por instituição no período selecionado"
@@ -43,6 +38,29 @@ export function InteligenciaMercadoSection({ active, dateRange }: Props) {
           tooltipFormatter={formatBRL}
         />
       </ChartCard>
+    </div>
+  );
+}
+
+/** Base instalada envelhecida é contexto de renovação e pós-venda, não de faturamento. */
+export function FrotaRenovacaoSection({ active, dateRange }: Props) {
+  const { frotaRenovacao, isLoading } = useInteligenciaBIRpc(
+    active,
+    dateRange,
+    undefined,
+    undefined,
+    ["mercado"],
+  );
+
+  const frota = frotaRenovacao.map((item) => ({
+    name: item.isNossaMarca ? `${item.marca} ★` : item.marca,
+    totalMaquinas: item.totalMaquinas,
+  }));
+
+  if (frota.length === 0 && !isLoading) return null;
+
+  return (
+    <div className="grid grid-cols-1 gap-4">
       <ChartCard
         title="Frota com +5 Anos por Marca"
         description="Posição atual: oportunidade de renovação da base instalada"
@@ -56,6 +74,16 @@ export function InteligenciaMercadoSection({ active, dateRange }: Props) {
           tooltipFormatter={(value: number) => value.toLocaleString("pt-BR")}
         />
       </ChartCard>
+    </div>
+  );
+}
+
+/** Compatibilidade temporária para consumidores ainda não consolidados. */
+export function InteligenciaMercadoSection({ active, dateRange }: Props) {
+  return (
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <InteligenciaFinanceiraSection active={active} dateRange={dateRange} />
+      <FrotaRenovacaoSection active={active} dateRange={dateRange} />
     </div>
   );
 }

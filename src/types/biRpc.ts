@@ -25,3 +25,4 @@ export * from "./bi/acoesPedidosGanhos";
 export * from "./bi/acoesNegociosPerdidos";
 export * from "./bi/acoesEmAndamento";
 export * from "./bi/acoesTermometro";
+export * from "./bi/clientesCriticos";

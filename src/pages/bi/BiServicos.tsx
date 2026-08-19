@@ -1,9 +1,15 @@
-import { lazy, Suspense } from "react";
-import { Gauge } from "lucide-react";
+import { lazy, Suspense, useState } from "react";
+import { Cpu, Gauge } from "lucide-react";
 import { useNegociosFilter } from "@/contexts/NegociosFilterContext";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const OperacionalSection = lazy(() => import("@/components/bi/sections/OperacionalSection"));
+const ProdutosSection = lazy(() => import("@/components/bi/sections/ProdutosSection"));
+const FrotaRenovacaoSection = lazy(async () => {
+  const module = await import("@/components/bi/sections/InteligenciaHighlightsSections");
+  return { default: module.FrotaRenovacaoSection };
+});
 
 function SectionFallback() {
   return (
@@ -21,6 +27,7 @@ function SectionFallback() {
 /** O CEM não utiliza OS/SLA; esta composição expõe somente a operação realmente consultada. */
 export default function BiServicos() {
   const { dateRange } = useNegociosFilter();
+  const [tab, setTab] = useState("operacao");
 
   return (
     <div className="space-y-5 p-8">
@@ -31,12 +38,31 @@ export default function BiServicos() {
           <p className="mt-1 text-sm text-muted-foreground">Operação técnica, frota e agenda de campo.</p>
         </div>
       </header>
-      <p className="rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs text-muted-foreground">
-        <strong className="text-foreground">Posição operacional atual:</strong> técnicos, frota e agenda usam o retrato mais recente disponível e ainda não respondem ao intervalo de datas do topo.
-      </p>
-      <Suspense fallback={<SectionFallback />}>
-        <OperacionalSection active dateRange={dateRange} />
-      </Suspense>
+      <Tabs value={tab} onValueChange={setTab} className="space-y-4">
+        <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto sm:w-auto">
+          <TabsTrigger value="operacao" className="gap-2"><Gauge className="h-4 w-4" />Operação Técnica</TabsTrigger>
+          <TabsTrigger value="parque" className="gap-2"><Cpu className="h-4 w-4" />Base Instalada &amp; Renovação</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="operacao" className="space-y-4">
+          <p className="rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs text-muted-foreground">
+            <strong className="text-foreground">Posição operacional atual:</strong> técnicos, frota e agenda usam o retrato mais recente disponível e ainda não respondem ao intervalo de datas do topo.
+          </p>
+          <Suspense fallback={<SectionFallback />}>
+            <OperacionalSection active={tab === "operacao"} dateRange={dateRange} />
+          </Suspense>
+        </TabsContent>
+
+        <TabsContent value="parque" className="space-y-4">
+          <p className="rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs text-muted-foreground">
+            <strong className="text-foreground">Posição atual:</strong> o parque instalado e a frota com mais de cinco anos não respondem ao intervalo de datas do topo.
+          </p>
+          <Suspense fallback={<SectionFallback />}>
+            <ProdutosSection active={tab === "parque"} dateRange={dateRange} />
+            <FrotaRenovacaoSection active={tab === "parque"} dateRange={dateRange} />
+          </Suspense>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

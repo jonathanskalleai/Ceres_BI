@@ -18,6 +18,8 @@ interface Props {
   dateRange?: DateRange;
   categoria?: CategoriaFilter;
   funil?: string;
+  vendedor?: string;
+  cidade?: string;
 }
 
 const pct = (v: number) => `${v.toFixed(1)}%`;
@@ -34,7 +36,7 @@ const EMPTY_AGG: RpcNegociosBI = {
   velocidadeFunil: [], duracaoMediaTotal: 0,
 };
 
-export default function ComercialSection({ active, dateRange, categoria, funil }: Props) {
+export default function ComercialSection({ active, dateRange, categoria, funil, vendedor, cidade }: Props) {
   const from = toISODate(dateRange?.from);
   const to = toISODate(dateRange?.to ?? dateRange?.from);
   const funis = resolveFunis(categoria, funil);
@@ -43,6 +45,8 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
     from,
     to,
     funis,
+    vendedor,
+    cidade,
     enabled: active && !!from && !!to,
   });
   const { kpis } = agg;
@@ -55,6 +59,8 @@ export default function ComercialSection({ active, dateRange, categoria, funil }
     from: fromPrev,
     to: toPrev,
     funis,
+    vendedor,
+    cidade,
     enabled: active && !!fromPrev && !!toPrev,
   });
   const kpisPrev = aggPrev?.kpis ?? EMPTY_AGG.kpis;

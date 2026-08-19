@@ -15,30 +15,83 @@
 # build inlines those VITE_* vars into the bundle at BUILD TIME. No .env =>
 # a broken bundle pointing at undefined Supabase config.
 #
-# Flow: pull latest main (as you) -> build local image -> roll the swarm service.
+# Flow: fetch the chosen release branch -> build both local images with the
+# exact Git SHA -> deploy those immutable tags -> verify the running services.
 set -euo pipefail
 
 STACK_NAME="ceresbi"
-IMAGE_TAG="ceresbi:latest"
 
 if [ ! -f .env ]; then
   echo "ERROR: .env not found in $(pwd). Create it before deploying." >&2
   exit 1
 fi
 
-echo "==> Skipping git pull (code deployed via rsync from Mac)..."
-# git pull origin main   # disabled — code synced via rsync, no .git present
+read_env_value() {
+  # Deliberately do not `source .env`: VITE values are build input, not shell
+  # code. The Docker build still receives the file in its build context.
+  sed -n "s/^$1=//p" .env | tail -n 1
+}
 
-echo "==> Building image ${IMAGE_TAG}..."
-sudo docker build -t "${IMAGE_TAG}" .
+DEPLOY_BRANCH="$(read_env_value DEPLOY_BRANCH)"
+DEPLOY_BRANCH="${DEPLOY_BRANCH:-release/bi-consolidacao-fase-1}"
+CERESBI_AI_OPENROUTER_API_KEY="$(read_env_value CERESBI_AI_OPENROUTER_API_KEY)"
+CERESBI_AI_DATABASE_URL="$(read_env_value CERESBI_AI_DATABASE_URL)"
+CERESBI_AI_JOB_TOKEN="$(read_env_value CERESBI_AI_JOB_TOKEN)"
+export CERESBI_AI_OPENROUTER_API_KEY CERESBI_AI_DATABASE_URL CERESBI_AI_JOB_TOKEN
+
+for required in CERESBI_AI_OPENROUTER_API_KEY CERESBI_AI_DATABASE_URL CERESBI_AI_JOB_TOKEN; do
+  if [ -z "${!required:-}" ]; then
+    echo "ERROR: ${required} is missing from .env" >&2
+    exit 1
+  fi
+done
+
+if [ ! -d .git ]; then
+  echo "ERROR: $(pwd) is not a Git checkout. Restore it with the documented VPS bootstrap first." >&2
+  exit 1
+fi
+
+if ! git diff --quiet || ! git diff --cached --quiet; then
+  echo "ERROR: deployment checkout has tracked changes. Commit/stash them before deploying." >&2
+  exit 1
+fi
+
+echo "==> Fetching origin/${DEPLOY_BRANCH}..."
+git fetch origin --prune
+git checkout -B "${DEPLOY_BRANCH}" "origin/${DEPLOY_BRANCH}"
+
+GIT_SHA="$(git rev-parse --short=12 HEAD)"
+CERESBI_WEB_IMAGE="ceresbi:${GIT_SHA}"
+CERESBI_AI_IMAGE="ceresbi-ai:${GIT_SHA}"
+export CERESBI_WEB_IMAGE CERESBI_AI_IMAGE
+
+echo "==> Building web image ${CERESBI_WEB_IMAGE}..."
+docker build -t "${CERESBI_WEB_IMAGE}" .
+
+echo "==> Building AI image ${CERESBI_AI_IMAGE}..."
+docker build -t "${CERESBI_AI_IMAGE}" ai-service
 
 echo "==> Deploying stack ${STACK_NAME}..."
-sudo docker stack deploy -c docker-stack.yml "${STACK_NAME}"
+docker stack deploy -c docker-stack.yml "${STACK_NAME}"
 
-# Single-node swarm uses a local :latest image with no registry digest, so
-# `docker stack deploy` will NOT roll a rebuilt image (same tag, no new digest).
-# Force the running task to pick up the freshly built image.
-echo "==> Forcing rollout of rebuilt image..."
-sudo docker service update --image "${IMAGE_TAG}" --force "${STACK_NAME}_web"
+# Force both task sets after changing to the immutable tag. This protects an
+# explicit re-deploy of the same SHA as well as ordinary Swarm restarts.
+echo "==> Rolling web and AI services..."
+docker service update --image "${CERESBI_WEB_IMAGE}" --force --detach=false "${STACK_NAME}_web"
+docker service update --image "${CERESBI_AI_IMAGE}" --force --detach=false "${STACK_NAME}_ai"
 
-echo "==> Done. Check rollout with: sudo docker stack services ${STACK_NAME}"
+for service in web ai; do
+  actual_image="$(docker service inspect --format '{{.Spec.TaskTemplate.ContainerSpec.Image}}' "${STACK_NAME}_${service}")"
+  expected_image="${CERESBI_WEB_IMAGE}"
+  [ "${service}" = "ai" ] && expected_image="${CERESBI_AI_IMAGE}"
+  if [ "${actual_image}" != "${expected_image}" ]; then
+    echo "ERROR: ${STACK_NAME}_${service} is using ${actual_image}, expected ${expected_image}" >&2
+    exit 1
+  fi
+done
+
+echo "==> Smoke checks..."
+curl --fail --silent --show-error --max-time 20 https://ceresbi.vouxconsultoria.com.br/ >/dev/null
+curl --fail --silent --show-error --max-time 20 https://ceresbi.vouxconsultoria.com.br/api/ai/health >/dev/null
+
+echo "==> Done: ${GIT_SHA} is running in web and AI."

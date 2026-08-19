@@ -9,6 +9,7 @@ import type {
   RpcAcoesBI,
   RpcAcoesDetalhe,
   RpcClientesRisco,
+  RpcClientesCriticosBI,
   RpcInteligenciaEsforcoBI,
   RpcParqueRenovacaoBI,
   RpcOperacionalBI,
@@ -376,5 +377,37 @@ export async function fetchClientesRisco(params: {
     };
   } catch (err) {
     throw new Error(`[biRpcService.fetchClientesRisco] ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
+}
+
+/**
+ * Clients with a completed action older than the chosen threshold. This is a
+ * lifetime contact signal and intentionally differs from current-year buckets.
+ */
+export async function fetchClientesCriticos(params: {
+  vendedor?: string;
+  cidade?: string;
+  diasMin?: number;
+  limit?: number;
+}): Promise<RpcClientesCriticosBI> {
+  try {
+    const rpcParams: Record<string, unknown> = {};
+    if (params.vendedor) rpcParams.p_vendedor = params.vendedor;
+    if (params.cidade) rpcParams.p_cidade = params.cidade;
+    if (params.diasMin != null) rpcParams.p_dias_min = params.diasMin;
+    if (params.limit != null) rpcParams.p_limit = params.limit;
+
+    const { data, error } = await supabase.rpc("rpc_clientes_criticos_bi", rpcParams);
+    if (error) throw new Error(error.message);
+
+    const raw = unwrapRpc<Partial<RpcClientesCriticosBI> | null>(data);
+    return {
+      totalCriticos: Number(raw?.totalCriticos ?? 0),
+      semAcaoRegistrada: Number(raw?.semAcaoRegistrada ?? 0),
+      valorEmRisco: Number(raw?.valorEmRisco ?? 0),
+      rows: raw?.rows ?? [],
+    };
+  } catch (err) {
+    throw new Error(`[biRpcService.fetchClientesCriticos] ${err instanceof Error ? err.message : "Unknown error"}`);
   }
 }
