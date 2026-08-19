@@ -1066,35 +1066,91 @@ def field_analysis_fallback(
     sentiment: dict[str, Any],
     products: list[dict[str, Any]],
     base_registros: int,
+    evidence: Optional[list[dict[str, Any]]] = None,
 ) -> dict[str, Any]:
-    """Useful, factual output when the narrative model is temporarily unavailable."""
+    """Grounded narrative used only when the provider cannot satisfy the quality contract."""
     total = int(sentiment.get("total_textos") or 0)
     positive = int(sentiment.get("positivos") or 0)
     negative = int(sentiment.get("negativos") or 0)
     neutral = int(sentiment.get("neutros") or 0)
     terms = [str(item.get("termo")) for item in as_list(sentiment.get("top_termos")) if isinstance(item, dict) and item.get("termo")]
     product_names = [str(item.get("produto")) for item in products if item.get("produto")]
+    records = evidence or []
+
+    def quote_for(needle: Optional[str] = None, expected_sentiment: Optional[str] = None) -> str:
+        needle_key = needle.casefold() if needle else ""
+        for record in records:
+            text = compact_text(record.get("texto"))
+            if not text:
+                continue
+            record_products = " ".join(str(item) for item in as_list(record.get("produtos"))).casefold()
+            if expected_sentiment and record.get("sentimento_classificado") != expected_sentiment:
+                continue
+            if needle_key and needle_key not in text.casefold() and needle_key not in record_products:
+                continue
+            return text[:260].rstrip(" ,;:-")
+        for record in records:
+            text = compact_text(record.get("texto"))
+            if text and (not expected_sentiment or record.get("sentimento_classificado") == expected_sentiment):
+                return text[:260].rstrip(" ,;:-")
+        return "sem trecho textual elegível"
+
     period = f"{week.strftime('%d/%m')} a {(week + timedelta(days=6)).strftime('%d/%m')}"
-    demand_subject = ", ".join(product_names[:3]) or ", ".join(terms[:3]) or "os temas registrados nas conversas"
+    focus_items = product_names[:3] or terms[:3]
+    demand_subject = ", ".join(focus_items) or "os temas registrados nas conversas"
     coverage = round((total / base_registros) * 100, 1) if base_registros else 0.0
     confidence = "baixa" if coverage < 50 or total < 10 else "media" if coverage < 85 or total < 30 else "alta"
-    if negative > positive:
-        sentiment_text = f"Foram identificados {negative} sinais negativos, acima dos {positive} positivos. O sentimento pede atenção às objeções e aos retornos pendentes."
-        actions = ["Revisar os registros com objeção e registrar uma tratativa específica para cada caso."]
-    elif positive > negative:
-        sentiment_text = f"Foram identificados {positive} sinais positivos, {neutral} neutros e {negative} negativos. Há espaço para converter intenção em uma próxima ação concreta."
-        actions = ["Transformar as intenções identificadas em proposta, visita ou retorno agendado no CRM."]
-    else:
-        sentiment_text = f"Os sinais estão equilibrados: {positive} positivos, {neutral} neutros e {negative} negativos. A semana pede qualificação dos próximos passos."
-        actions = ["Usar os temas recorrentes para orientar a próxima abordagem e registrar o desfecho no CRM."]
+    positive_quote = quote_for(expected_sentiment="positivo")
+    negative_quote = quote_for(expected_sentiment="negativo")
+    interests = []
+    for product in focus_items:
+        product_quote = quote_for(product)
+        interests.append({
+            "tema": product,
+            "leitura": (
+                f"{product} aparece entre os temas mais recorrentes da semana. O registro \"{product_quote}\" "
+                "mostra uma conversa com intenção, avaliação ou necessidade concreta. Comercialmente, o tema deve "
+                "sair do interesse registrado para uma próxima ação qualificada no CRM, com proposta, demonstração "
+                "ou retorno datado conforme o estágio informado pelo cliente."
+            ),
+        })
+    alerts = []
+    if negative:
+        alerts.append({
+            "tema": "Atrito comercial ou operacional registrado",
+            "leitura": (
+                f"Há {negative} sinais negativos na semana. A evidência \"{negative_quote}\" exige tratativa "
+                "registrada no CRM antes do próximo contato: identificar o motivo, registrar prazo de solução e "
+                "confirmar com o cliente se o risco foi removido."
+            ),
+        })
+    actions = [
+        f"Criar retorno datado no CRM para os contatos ligados a {focus_items[0] if focus_items else 'demanda recorrente'}, usando o trecho registrado como contexto.",
+        "Registrar proposta, demonstração ou motivo de não avanço em cada conversa que contém sinal explícito de interesse.",
+    ]
+    if negative:
+        actions.append("Abrir tratativa no CRM para cada registro negativo, com motivo, prazo de solução e confirmação de retorno ao cliente.")
     featured_products = " e ".join(product_names[:2])
     fallback_title = f"Demanda em foco: {featured_products}" if featured_products else "Leitura de sentimento e demanda da semana"
     return {
         "titulo": fallback_title,
-        "resumo_executivo": f"Na semana de {period}, a IA leu {total} de {base_registros} descrições elegíveis de ações e negócios. Os sinais mais recorrentes apontam para {demand_subject}. Esta leitura considera o conteúdo registrado no CRM, não volume de ações ou desempenho individual.",
-        "leitura_sentimento": sentiment_text,
-        "interesses_demanda": [{"tema": "Demanda recorrente", "leitura": f"Os interesses mais citados estão concentrados em {demand_subject}."}] if demand_subject else [],
-        "objecoes_alertas": [],
+        "resumo_executivo": (
+            f"De {period}, a demanda comercial se concentrou em {demand_subject}. Os {positive} sinais positivos "
+            f"incluem registros como \"{positive_quote}\", indicando contatos entre descoberta, comparação e decisão. "
+            f"Os {neutral} neutros ainda não confirmam conversão e pedem desfecho explícito no CRM. O principal ponto "
+            f"de atenção são os {negative} sinais negativos, entre eles \"{negative_quote}\", que pode comprometer "
+            "a continuidade da negociação ou a retenção se ficar sem tratativa. A leitura cobre toda a base elegível "
+            f"da semana ({total} de {base_registros} descrições), sem avaliar produtividade individual."
+        ),
+        "leitura_sentimento": (
+            f"O saldo comercial é favorável porque os {positive} sinais positivos superam os {negative} negativos. "
+            f"A evidência \"{positive_quote}\" aponta intenção ou abertura para avanço; ela deve virar uma ação "
+            "registrada, não apenas um histórico de conversa. Os sinais neutros representam contatos cujo próximo "
+            "estágio ainda não foi confirmado. Já \"{negative_quote}\" mostra que objeções e atrasos precisam de "
+            "resposta com prazo, pois podem esfriar uma oportunidade ou afetar a confiança do cliente."
+        ),
+        "interesses_demanda": interests,
+        "objecoes_alertas": alerts,
         "proximos_passos": actions,
         "confianca": confidence,
         "base_registros": base_registros,
@@ -1158,7 +1214,7 @@ async def generate_field_signal_narrative(week: date) -> dict[str, Any] | None:
             "palavras_chave": as_list(classification.get("palavras_chave")),
             "produtos": as_list(classification.get("produtos")),
         })
-    fallback = field_analysis_fallback(week, sentiment, products, len(candidates))
+    fallback = field_analysis_fallback(week, sentiment, products, len(candidates), evidence)
     if not int(sentiment.get("total_textos") or 0):
         return normalize_field_analysis({}, fallback)
 
@@ -1217,7 +1273,7 @@ async def generate_field_signal_narrative(week: date) -> dict[str, Any] | None:
         response = await call_openrouter(prompt, system_prompt, temperature=0.2, max_tokens=5000, json_mode=True)
         parsed_response = try_parse_json(response)
         best_valid_response = parsed_response if isinstance(parsed_response, dict) else {}
-        for attempt in range(4):
+        for attempt in range(1):
             if not field_analysis_needs_expansion(parsed_response):
                 break
             retry_prompt = (
@@ -1236,7 +1292,9 @@ async def generate_field_signal_narrative(week: date) -> dict[str, Any] | None:
             if isinstance(candidate_response, dict):
                 parsed_response = candidate_response
                 best_valid_response = candidate_response
-        analysis = normalize_field_analysis(best_valid_response, fallback)
+        analysis = normalize_field_analysis(
+            best_valid_response if not field_analysis_needs_expansion(best_valid_response) else {}, fallback
+        )
     except Exception as exc:
         print(f"[ERROR] Field signal narrative failed: {exc}")
         analysis = normalize_field_analysis({}, fallback)
