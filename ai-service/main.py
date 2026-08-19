@@ -967,8 +967,19 @@ def normalize_field_analysis(value: Any, fallback: dict[str, Any]) -> dict[str, 
     if confidence not in {"alta", "media", "baixa"}:
         confidence = fallback["confianca"]
 
+    title = text_field("titulo", 130)
+    generic_titles = {
+        "analise de voz do cliente",
+        "análise de voz do cliente",
+        "analise de sentimento",
+        "análise de sentimento",
+        "sinais da semana",
+    }
+    if title.casefold() in generic_titles:
+        title = str(fallback["titulo"])
+
     return {
-        "titulo": text_field("titulo", 130),
+        "titulo": title,
         "resumoExecutivo": text_field("resumo_executivo", 1500),
         "leituraSentimento": text_field("leitura_sentimento", 1000),
         "interessesDemanda": insight_items("interesses_demanda", 4),
@@ -1002,8 +1013,10 @@ def field_analysis_fallback(
     else:
         sentiment_text = f"Os sinais estão equilibrados: {positive} positivos, {neutral} neutros e {negative} negativos. A semana pede qualificação dos próximos passos."
         actions = ["Usar os temas recorrentes para orientar a próxima abordagem e registrar o desfecho no CRM."]
+    featured_products = " e ".join(product_names[:2])
+    fallback_title = f"Demanda em foco: {featured_products}" if featured_products else "Leitura de sentimento e demanda da semana"
     return {
-        "titulo": "Leitura de sentimento e demanda da semana",
+        "titulo": fallback_title,
         "resumo_executivo": f"Na semana de {period}, a IA leu {total} descrições de ações e negócios. Os sinais mais recorrentes apontam para {demand_subject}. Esta leitura considera o conteúdo registrado no CRM, não volume de ações ou desempenho individual.",
         "leitura_sentimento": sentiment_text,
         "interesses_demanda": [{"tema": "Demanda recorrente", "leitura": f"Os interesses mais citados estão concentrados em {demand_subject}."}] if demand_subject else [],
@@ -1101,7 +1114,7 @@ async def generate_field_signal_narrative(week: date) -> dict[str, Any] | None:
         f"DADOS E EVIDÊNCIAS:\n{json.dumps(facts, ensure_ascii=False, default=str)}\n\n"
         "Retorne APENAS JSON válido:\n"
         "{\n"
-        "  \"titulo\": \"título específico em até 12 palavras\",\n"
+        "  \"titulo\": \"título específico em até 12 palavras, nomeando a demanda ou o alerta principal; nunca use 'Análise de Voz do Cliente' ou outro título genérico\",\n"
         "  \"resumo_executivo\": \"90 a 140 palavras, em 1 ou 2 parágrafos. Conecte sentimento, demanda e maturidade dos contatos; cite apenas fatos/evidências disponíveis.\",\n"
         "  \"leitura_sentimento\": \"60 a 100 palavras sobre sinais positivos, neutros e negativos, explicando o que eles significam comercialmente. Não apenas repita contadores.\",\n"
         "  \"interesses_demanda\": [{\"tema\": \"tema/produto específico\", \"leitura\": \"40 a 80 palavras, com evidência textual e interpretação comercial\"}],\n"
