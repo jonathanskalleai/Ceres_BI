@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .voux-card {
+    border-radius: 1rem;
+    border: 1px solid var(--voux-card-border);
+    background-color: var(--voux-surface);
+    box-shadow: var(--voux-card-shadow);
+  }
+}
+
 /* ── Sidebar custom scrollbar ── */
 .sidebar-scroll::-webkit-scrollbar {
   width: 4px;

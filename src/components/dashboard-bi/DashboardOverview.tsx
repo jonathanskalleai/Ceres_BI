@@ -1,21 +1,21 @@
-// DashboardOverview - Vista geral com cards de dashboards e insights
+// DashboardOverview - Vista geral com VouxBI Design System
 
 import {
   AlertTriangle,
   Lightbulb,
-  BarChart3,
   TrendingUp,
   Target,
-  Database
+  Database,
+  Loader2
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { VouxKpiCard } from '@/components/ui/voux-kpi-card';
+import { ChartCard } from '@/components/ui/voux-chart-card';
 import type { DashboardDefinition, Insight } from '@/types/insights';
 import type { HealthCheckData, AgentAnalysisStatusData } from './types';
 import { AnalysisStatusBadge } from './AnalysisStatusBadge';
-import { InsightSummaryCard } from './InsightSummaryCard';
 
 interface InsightsBySeverity {
   critical: Insight[];
@@ -39,15 +39,21 @@ export const DashboardOverview = ({
   onNavigateToDashboard
 }: DashboardOverviewProps) => {
   const isLoading = !dashboards || !insights;
+  const totalInsights = insights
+    ? insights.critical.length + insights.warning.length + insights.info.length
+    : 0;
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6" style={{ fontFamily: 'var(--voux-font-sans)' }}>
+      {/* Page Header — Design System pattern */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard BI</h1>
-          <p className="text-muted-foreground">
-            Análise inteligente de dados por agentes para insights de gestão
+          <p className="text-xs font-mono uppercase tracking-[0.1em]" style={{ color: 'var(--voux-text-faint)' }}>
+            Inteligência · Visão Geral
           </p>
+          <h1 className="mt-1 text-2xl font-semibold" style={{ color: 'var(--voux-text-heading)' }}>
+            Dashboard BI
+          </h1>
         </div>
 
         <div className="flex items-center gap-2">
@@ -55,128 +61,119 @@ export const DashboardOverview = ({
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Dashboards Ativos</CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{dashboards.length}</div>
-            <p className="text-xs text-muted-foreground">Categorias de negócio</p>
-          </CardContent>
-        </Card>
+      {/* KPI Cards — VouxKpiCard grid */}
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <VouxKpiCard
+          label="Dashboards Ativos"
+          value={dashboards.length}
+          scope="Categorias de negócio"
+          tone="default"
+        />
+        <VouxKpiCard
+          label="Insights Ativos"
+          value={totalInsights}
+          scope="Relevantes para análise"
+          tone="success"
+        />
+        <VouxKpiCard
+          label="Criticidade"
+          value={insights.critical.length}
+          scope="Insights críticos"
+          tone="danger"
+        />
+      </section>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Insights Ativos</CardTitle>
-            <Lightbulb className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {insights.critical.length + insights.warning.length + insights.info.length}
-            </div>
-            <p className="text-xs text-muted-foreground">Relevantes para análise</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Criticidade</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{insights.critical.length}</div>
-            <p className="text-xs text-muted-foreground">Insights críticos</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Dashboard Grid */}
+      {/* Dashboard Grid — ChartCard containers */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Target className="h-5 w-5" />
-          <h2 className="text-xl font-semibold">Dashboards Estratégicos</h2>
+        <div className="mb-4">
+          <div className="text-xs font-mono font-semibold tracking-[0.08em] uppercase" style={{ color: 'var(--voux-text-muted)' }}>
+            Navegação · Dashboards
+          </div>
+          <h3 className="text-2xl font-semibold leading-tight" style={{ color: 'var(--voux-text-heading)' }}>
+            Dashboards Estratégicos
+          </h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {isLoading ? (
             Array.from({ length: 6 }).map((_, i) => (
-              <Card key={i}>
-                <CardHeader>
-                  <Skeleton className="h-4 w-3/4" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-20 w-full" />
-                </CardContent>
-              </Card>
+              <ChartCard key={i}>
+                <Skeleton className="h-4 w-3/4 mb-3 bg-[var(--voux-skeleton)]" />
+                <Skeleton className="h-20 w-full bg-[var(--voux-skeleton)]" />
+              </ChartCard>
             ))
           ) : (
             dashboards.map((dashboard) => (
-              <Card key={dashboard.dashboard_id} className="cursor-pointer hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-lg">{dashboard.title}</CardTitle>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {dashboard.description}
-                      </p>
-                    </div>
-                    <Badge variant="secondary">{dashboard.category}</Badge>
+              <ChartCard key={dashboard.dashboard_id} className="cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_-4px_rgba(212,184,150,0.20)]">
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div>
+                    <h4 className="text-base font-semibold leading-tight" style={{ color: 'var(--voux-text-primary)' }}>
+                      {dashboard.title}
+                    </h4>
+                    <p className="text-xs mt-1" style={{ color: 'var(--voux-text-muted)' }}>
+                      {dashboard.description}
+                    </p>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Database className="h-4 w-4" />
-                      <span>{dashboard.kpis.length} KPIs definidos</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <TrendingUp className="h-4 w-4" />
-                      <span>{dashboard.charts_schema.length} gráficos configurados</span>
-                    </div>
+                  <Badge variant="secondary" className="shrink-0 text-[10px] font-mono uppercase tracking-wider">
+                    {dashboard.category}
+                  </Badge>
+                </div>
+
+                <div className="space-y-2 mt-auto">
+                  <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--voux-text-faint)' }}>
+                    <Database className="h-3.5 w-3.5" />
+                    <span className="font-mono">{dashboard.kpis.length} KPIs</span>
                   </div>
-                  <Button
-                    className="w-full mt-4"
-                    onClick={() => onNavigateToDashboard(dashboard.dashboard_id)}
-                  >
-                    Acessar Dashboard
-                  </Button>
-                </CardContent>
-              </Card>
+                  <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--voux-text-faint)' }}>
+                    <TrendingUp className="h-3.5 w-3.5" />
+                    <span className="font-mono">{dashboard.charts_schema.length} gráficos</span>
+                  </div>
+                </div>
+
+                <Button
+                  className="w-full mt-4"
+                  size="sm"
+                  onClick={() => onNavigateToDashboard(dashboard.dashboard_id)}
+                >
+                  Acessar Dashboard
+                </Button>
+              </ChartCard>
             ))
           )}
         </div>
       </div>
 
-      {/* Insights Overview */}
+      {/* Insights Overview — VouxKpiCard com tone por severidade */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Lightbulb className="h-5 w-5" />
-          <h2 className="text-xl font-semibold">Insights em Destaque</h2>
+        <div className="mb-4">
+          <div className="text-xs font-mono font-semibold tracking-[0.08em] uppercase" style={{ color: 'var(--voux-text-muted)' }}>
+            Monitoramento · Alertas
+          </div>
+          <h3 className="text-2xl font-semibold leading-tight" style={{ color: 'var(--voux-text-heading)' }}>
+            Insights em Destaque
+          </h3>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <InsightSummaryCard
-            severity="critical"
-            count={insights.critical.length}
-            title="Insights Críticos"
-            icon={AlertTriangle}
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <VouxKpiCard
+            label="Insights Críticos"
+            value={insights.critical.length}
+            scope="Atenção imediata"
+            tone="danger"
           />
-          <InsightSummaryCard
-            severity="warning"
-            count={insights.warning.length}
-            title="Insights de Alerta"
-            icon={AlertTriangle}
+          <VouxKpiCard
+            label="Insights de Alerta"
+            value={insights.warning.length}
+            scope="Acompanhamento"
+            tone="warning"
           />
-          <InsightSummaryCard
-            severity="info"
-            count={insights.info.length}
-            title="Informações Relevantes"
-            icon={Lightbulb}
+          <VouxKpiCard
+            label="Informações"
+            value={insights.info.length}
+            scope="Oportunidades"
+            tone="success"
           />
-        </div>
+        </section>
       </div>
     </div>
   );
