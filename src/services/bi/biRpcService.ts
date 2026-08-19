@@ -391,11 +391,15 @@ export async function fetchClientesCriticos(params: {
   limit?: number;
 }): Promise<RpcClientesCriticosBI> {
   try {
-    const rpcParams: Record<string, unknown> = {};
-    if (params.vendedor) rpcParams.p_vendedor = params.vendedor;
-    if (params.cidade) rpcParams.p_cidade = params.cidade;
-    if (params.diasMin != null) rpcParams.p_dias_min = params.diasMin;
-    if (params.limit != null) rpcParams.p_limit = params.limit;
+    // Send the complete function signature, including explicit null filters.
+    // Besides documenting the intended lifetime-contact query, this prevents a
+    // stale PostgREST function cache from trying to resolve a partial overload.
+    const rpcParams = {
+      p_vendedor: params.vendedor ?? null,
+      p_cidade: params.cidade ?? null,
+      p_dias_min: params.diasMin ?? 365,
+      p_limit: params.limit ?? 5,
+    };
 
     const { data, error } = await supabase.rpc("rpc_clientes_criticos_bi", rpcParams);
     if (error) throw new Error(error.message);
