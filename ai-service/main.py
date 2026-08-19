@@ -738,7 +738,7 @@ Retorne APENAS JSON válido neste formato:
 
 REGISTROS:
 {json.dumps(payload, ensure_ascii=False, default=str)}"""
-    response = await call_openrouter(prompt, system_prompt, temperature=0.0, max_tokens=7000)
+    response = await call_openrouter(prompt, system_prompt, temperature=0.0, max_tokens=2500)
     parsed = try_parse_json(response)
     entries = parsed.get("classificacoes", []) if isinstance(parsed, dict) else []
     by_reference = {
@@ -953,7 +953,9 @@ async def generate_weekly_signals(
     selected = pending[:safe_max_records]
 
     classified = 0
-    batch_size = 40
+    # Smaller batches make a scheduled run observable and recoverable even when
+    # the provider takes longer to emit structured JSON for verbose CRM notes.
+    batch_size = 12
     for offset in range(0, len(selected), batch_size):
         batch = selected[offset:offset + batch_size]
         try:
