@@ -176,14 +176,7 @@ export function KPICard({
       ) : (
         <>
           <div
-            className={cn(
-              "mt-1.5 font-mono font-bold leading-tight",
-              String(value).length > 14
-                ? "text-lg sm:text-xl md:text-2xl"
-                : String(value).length > 10
-                  ? "text-xl sm:text-2xl"
-                  : "text-2xl sm:text-[28px]",
-            )}
+            className="mt-1.5 font-mono text-2xl font-bold leading-tight"
             style={{ color: "var(--voux-text-primary)" }}
             title={rawValue != null
               ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rawValue)
@@ -194,7 +187,7 @@ export function KPICard({
 
           {/* Hint / scope */}
           {hint && (
-            <div className="mt-1 text-xs" style={{ color: "var(--voux-text-muted)" }}>
+            <div className="mt-1 text-xs" style={{ color: "var(--voux-text-secondary, #2a2620)" }}>
               {hint}
             </div>
           )}
