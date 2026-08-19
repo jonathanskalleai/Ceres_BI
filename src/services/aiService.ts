@@ -108,6 +108,8 @@ export interface AiSinaisCampoSemanais {
     objecoesAlertas: { tema: string; leitura: string }[];
     proximosPassos: string[];
     confianca: "alta" | "media" | "baixa";
+    baseRegistros: number;
+    coberturaPercentual: number;
   } | null;
   message?: string;
 }

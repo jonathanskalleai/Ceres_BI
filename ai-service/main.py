@@ -986,6 +986,8 @@ def normalize_field_analysis(value: Any, fallback: dict[str, Any]) -> dict[str, 
         "objecoesAlertas": insight_items("objecoes_alertas", 3),
         "proximosPassos": [item for item in actions if item] or fallback["proximos_passos"],
         "confianca": confidence,
+        "baseRegistros": int(fallback["base_registros"]),
+        "coberturaPercentual": float(fallback["cobertura_percentual"]),
     }
 
 
@@ -993,6 +995,7 @@ def field_analysis_fallback(
     week: date,
     sentiment: dict[str, Any],
     products: list[dict[str, Any]],
+    base_registros: int,
 ) -> dict[str, Any]:
     """Useful, factual output when the narrative model is temporarily unavailable."""
     total = int(sentiment.get("total_textos") or 0)
@@ -1003,7 +1006,8 @@ def field_analysis_fallback(
     product_names = [str(item.get("produto")) for item in products if item.get("produto")]
     period = f"{week.strftime('%d/%m')} a {(week + timedelta(days=6)).strftime('%d/%m')}"
     demand_subject = ", ".join(product_names[:3]) or ", ".join(terms[:3]) or "os temas registrados nas conversas"
-    confidence = "baixa" if total < 10 else "media" if total < 30 else "alta"
+    coverage = round((total / base_registros) * 100, 1) if base_registros else 0.0
+    confidence = "baixa" if coverage < 50 or total < 10 else "media" if coverage < 85 or total < 30 else "alta"
     if negative > positive:
         sentiment_text = f"Foram identificados {negative} sinais negativos, acima dos {positive} positivos. O sentimento pede atenção às objeções e aos retornos pendentes."
         actions = ["Revisar os registros com objeção e registrar uma tratativa específica para cada caso."]
@@ -1017,12 +1021,14 @@ def field_analysis_fallback(
     fallback_title = f"Demanda em foco: {featured_products}" if featured_products else "Leitura de sentimento e demanda da semana"
     return {
         "titulo": fallback_title,
-        "resumo_executivo": f"Na semana de {period}, a IA leu {total} descrições de ações e negócios. Os sinais mais recorrentes apontam para {demand_subject}. Esta leitura considera o conteúdo registrado no CRM, não volume de ações ou desempenho individual.",
+        "resumo_executivo": f"Na semana de {period}, a IA leu {total} de {base_registros} descrições elegíveis de ações e negócios. Os sinais mais recorrentes apontam para {demand_subject}. Esta leitura considera o conteúdo registrado no CRM, não volume de ações ou desempenho individual.",
         "leitura_sentimento": sentiment_text,
         "interesses_demanda": [{"tema": "Demanda recorrente", "leitura": f"Os interesses mais citados estão concentrados em {demand_subject}."}] if demand_subject else [],
         "objecoes_alertas": [],
         "proximos_passos": actions,
         "confianca": confidence,
+        "base_registros": base_registros,
+        "cobertura_percentual": coverage,
     }
 
 
@@ -1065,10 +1071,6 @@ async def generate_field_signal_narrative(week: date) -> dict[str, Any] | None:
         {"produto": str(row["produto"]), "mencoes": int(row["mencoes"] or 0)}
         for row in product_rows
     ]
-    fallback = field_analysis_fallback(week, sentiment, products)
-    if not int(sentiment.get("total_textos") or 0):
-        return normalize_field_analysis({}, fallback)
-
     classifications = {
         (str(row["source_kind"]), str(row["source_id"])): row
         for row in classification_rows
@@ -1086,10 +1088,18 @@ async def generate_field_signal_narrative(week: date) -> dict[str, Any] | None:
             "palavras_chave": as_list(classification.get("palavras_chave")),
             "produtos": as_list(classification.get("produtos")),
         })
+    fallback = field_analysis_fallback(week, sentiment, products, len(candidates))
+    if not int(sentiment.get("total_textos") or 0):
+        return normalize_field_analysis({}, fallback)
 
     facts = {
         "periodo": {"inicio": week.isoformat(), "fim": week_end.isoformat()},
         "base_analisada": int(sentiment.get("total_textos") or 0),
+        "cobertura": {
+            "descricoes_elegiveis": len(candidates),
+            "descricoes_classificadas": len(evidence),
+            "percentual": fallback["cobertura_percentual"],
+        },
         "sentimento": {
             "positivos": int(sentiment.get("positivos") or 0),
             "negativos": int(sentiment.get("negativos") or 0),

@@ -33,6 +33,8 @@ function fallbackNarrative(data?: AiSinaisCampoSemanais): FieldNarrative | null 
       ? "Revisar os registros com objeção e definir uma tratativa específica para cada contato."
       : "Converter as intenções identificadas em proposta, visita ou retorno agendado no CRM."],
     confianca: data.totalTextos < 10 ? "baixa" : data.totalTextos < 30 ? "media" : "alta",
+    baseRegistros: data.totalTextos,
+    coberturaPercentual: 100,
   };
 }
 
@@ -74,6 +76,9 @@ export function AcoesSinaisSemanaIA({ data, loading, error }: Props) {
   const terms = data?.topTermos?.slice(0, 7) ?? [];
   const maxMentions = Math.max(...terms.map((term) => term.mencoes), 1);
   const confidenceLabel = analysis?.confianca === "alta" ? "Base consistente" : analysis?.confianca === "media" ? "Leitura em evolução" : "Sinal preliminar";
+  const coverageLabel = analysis?.baseRegistros && analysis.baseRegistros > (data?.totalTextos ?? 0)
+    ? `${data?.totalTextos ?? 0} de ${analysis.baseRegistros} descrições`
+    : `${data?.totalTextos ?? 0} descrições analisadas`;
 
   return (
     <BiTableCard
@@ -94,14 +99,14 @@ export function AcoesSinaisSemanaIA({ data, loading, error }: Props) {
               <h3 className="mt-1 text-base font-semibold text-[var(--voux-text-heading)]">{analysis?.titulo}</h3>
             </div>
           </div>
-          <span className="rounded-full border border-[var(--voux-card-border)] bg-[var(--voux-card-bg)] px-2.5 py-1 text-[11px] text-[var(--voux-text-muted)]">{confidenceLabel}</span>
+          <span className="rounded-full border border-[var(--voux-card-border)] bg-[var(--voux-card-bg)] px-2.5 py-1 text-[11px] text-[var(--voux-text-muted)]" title={coverageLabel}>{confidenceLabel} · {Math.round(analysis?.coberturaPercentual ?? 0)}%</span>
         </div>
         <p className="mt-4 text-sm leading-6 text-[var(--voux-text-primary)]">{analysis?.resumoExecutivo}</p>
         <div className="mt-4 border-t border-[var(--voux-card-border)] pt-3">
           <p className="flex items-center gap-2 text-xs font-medium text-[var(--voux-text-primary)]"><ChartNoAxesCombined className="h-3.5 w-3.5 text-[var(--voux-accent)]" aria-hidden="true" /> Leitura de sentimento</p>
           <p className="mt-1 text-xs leading-5 text-[var(--voux-text-muted)]">{analysis?.leituraSentimento}</p>
         </div>
-        <p className="mt-4 text-[11px] text-[var(--voux-text-muted)]">Período analisado: {formatWeek(data?.semanaInicio)} a {formatWeek(data?.semanaFim)} · base de {data?.totalTextos ?? 0} descrições</p>
+        <p className="mt-4 text-[11px] text-[var(--voux-text-muted)]">Período analisado: {formatWeek(data?.semanaInicio)} a {formatWeek(data?.semanaFim)} · base de {coverageLabel}</p>
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-2">
