@@ -169,6 +169,88 @@ def try_parse_json(text: str):
     return text
 
 
+def is_valid_weekly_team_insight(payload: Any) -> bool:
+    """Reject incomplete/model-mangled team reports before they reach the BI."""
+    if not isinstance(payload, dict):
+        return False
+    if not isinstance(payload.get("destaque_semana"), str) or not payload["destaque_semana"].strip():
+        return False
+    insights = payload.get("insights")
+    actions = payload.get("acoes_gestor")
+    ranking = payload.get("ranking_semanal")
+    if not isinstance(insights, list) or not isinstance(actions, list) or not isinstance(ranking, list):
+        return False
+    for insight in insights:
+        if not isinstance(insight, dict):
+            return False
+        if insight.get("tipo") not in {"risco", "oportunidade", "alerta", "acao"}:
+            return False
+        if insight.get("prioridade") not in {"alta", "media", "baixa"}:
+            return False
+        if not all(isinstance(insight.get(key), str) and insight[key].strip() for key in ("titulo", "descricao")):
+            return False
+    return all(
+        isinstance(item, dict)
+        and isinstance(item.get("nome"), str)
+        and item["nome"].strip()
+        and item.get("nota") in {"A", "B", "C", "D"}
+        and isinstance(item.get("motivo"), str)
+        and item["motivo"].strip()
+        for item in ranking
+    )
+
+
+def is_valid_weekly_individual_insight(payload: Any) -> bool:
+    """Reject partial individual reports instead of persisting a raw LLM response."""
+    if not isinstance(payload, dict):
+        return False
+    if payload.get("nota") not in {"A", "B", "C", "D"}:
+        return False
+    if not isinstance(payload.get("frase_impacto"), str) or not payload["frase_impacto"].strip():
+        return False
+    return all(isinstance(payload.get(key), list) for key in (
+        "pontos_fortes", "pontos_atencao", "acoes_recomendadas", "clientes_prioritarios",
+    ))
+
+
+async def call_verified_json(
+    prompt: str,
+    system_prompt: str,
+    *,
+    temperature: float,
+    max_tokens: int,
+    validator,
+    label: str,
+    retries: int = 2,
+) -> dict[str, Any]:
+    """Call the model again when it returns malformed or schema-invalid JSON.
+
+    `response_format` improves compliance but is not a guarantee for the current
+    provider/model. Retrying here prevents an incomplete response from replacing
+    a usable weekly report in production.
+    """
+    retry_instruction = (
+        "\n\nA resposta anterior foi rejeitada porque estava incompleta, com JSON inválido ou fora do esquema. "
+        "Reescreva do zero. Use aspas e dois-pontos corretos em todas as chaves, complete todos os arrays e termine "
+        "com `}`. Responda somente com um objeto JSON válido que siga exatamente o esquema solicitado."
+    )
+    current_prompt = prompt
+    for attempt in range(retries + 1):
+        response = await call_openrouter(
+            current_prompt,
+            system_prompt,
+            temperature=temperature if attempt == 0 else 0.0,
+            max_tokens=max_tokens,
+            json_mode=True,
+        )
+        parsed = try_parse_json(response)
+        if validator(parsed):
+            return parsed
+        print(f"[WARN] {label} returned invalid structured JSON (attempt {attempt + 1}/{retries + 1})")
+        current_prompt = prompt + retry_instruction
+    raise ValueError(f"{label} não retornou JSON válido após {retries + 1} tentativas")
+
+
 def require_job_token(x_ceres_cron_token: Optional[str]) -> None:
     """Protect expensive, stateful AI jobs from public invocation."""
     if not AI_JOB_TOKEN:
@@ -1631,22 +1713,26 @@ CARTEIRA PARADA (>30 dias sem ação) — oportunidades que estão esfriando:
 
 Devolva exatamente este JSON:
 {{
-  "destaque_semana": "1 frase de impacto sobre o principal achado, sem começar com 'A semana mostrou'",
+  "destaque_semana": "texto específico sobre o principal achado, sem começar com A semana mostrou",
   "insights": [
-    {{"tipo":"risco|oportunidade|alerta|acao","titulo":"6 a 12 palavras, específico","descricao":"fato, evidência e recomendação acionável","consultor":"nome exato ou null","prioridade":"alta|media|baixa"}}
+    {{"tipo":"risco","titulo":"título específico","descricao":"fato, evidência e recomendação acionável","consultor":null,"prioridade":"alta"}}
   ],
   "acoes_gestor": ["2 a 5 ações concretas, observáveis e baseadas nos dados"],
-  "ranking_semanal": [{{"nome":"nome exato","nota":"A|B|C|D","motivo":"qualidade das ações e avanço real"}}]
+  "ranking_semanal": [{{"nome":"nome exato","nota":"B","motivo":"qualidade das ações e avanço real"}}]
 }}
 
-Regras: selecione 3 a 5 insights sólidos; cada descrição de insight cita pelo menos um cliente, produto ou consultor e uma evidência literal entre aspas quando existir; alta exige ação nesta semana, media em 1-2 semanas e baixa é monitoramento. Não use markdown ou texto fora do JSON."""
+Regras: selecione 3 a 5 insights sólidos; em cada insight, tipo é somente risco, oportunidade, alerta ou acao; prioridade é somente alta, media ou baixa. Cada descrição de insight cita pelo menos um cliente, produto ou consultor e uma evidência literal entre aspas quando existir; alta exige ação nesta semana, media em 1-2 semanas e baixa é monitoramento. No ranking, nota é somente A, B, C ou D. Não use markdown ou texto fora do JSON."""
 
     # Call OpenRouter for EQUIPE
     try:
-        equipe_response = await call_openrouter(
-            prompt_equipe, system_prompt_equipe, temperature=0.2, max_tokens=5000, json_mode=True
+        equipe_dados = await call_verified_json(
+            prompt_equipe,
+            system_prompt_equipe,
+            temperature=0.2,
+            max_tokens=5000,
+            validator=is_valid_weekly_team_insight,
+            label="Insight semanal de equipe",
         )
-        equipe_dados = try_parse_json(equipe_response)
     except Exception as e:
         print(f"[ERROR] OpenRouter equipe call failed: {e}")
         return {"error": f"Erro ao gerar insight de equipe: {str(e)}"}
@@ -1717,7 +1803,7 @@ CARTEIRA PARADA (>30 dias):
 
 Devolva exatamente este JSON:
 {{
-  "nota":"A|B|C|D",
+  "nota":"B",
   "frase_impacto":"uma frase com o achado e evidência da semana; não comece com 'A semana do consultor'",
   "pontos_fortes":["no máximo 2; cliente + produto + ação/evidência"],
   "pontos_atencao":["no máximo 2; cliente/produto + situação concreta/tempo"],
@@ -1725,13 +1811,17 @@ Devolva exatamente este JSON:
   "clientes_prioritarios":["nome do cliente — produto — motivo"]
 }}
 
-Regras: pontos_fortes e pontos_atencao podem ser []; clientes_prioritarios tem no máximo 5, só com clientes dos dados e em ordem de urgência; clientes_prioritarios respeita exatamente o formato pedido; não use markdown nem texto fora do JSON."""
+Regras: nota é somente A, B, C ou D. pontos_fortes e pontos_atencao podem ser []; clientes_prioritarios tem no máximo 5, só com clientes dos dados e em ordem de urgência; clientes_prioritarios respeita exatamente o formato pedido; não use markdown nem texto fora do JSON."""
 
         try:
-            individual_response = await call_openrouter(
-                prompt_individual, system_prompt_individual, temperature=0.2, max_tokens=3500, json_mode=True
+            individual_dados = await call_verified_json(
+                prompt_individual,
+                system_prompt_individual,
+                temperature=0.2,
+                max_tokens=3500,
+                validator=is_valid_weekly_individual_insight,
+                label=f"Insight semanal individual de {nome}",
             )
-            individual_dados = try_parse_json(individual_response)
         except Exception as e:
             print(f"[ERROR] OpenRouter individual call failed for {nome}: {e}")
             continue
