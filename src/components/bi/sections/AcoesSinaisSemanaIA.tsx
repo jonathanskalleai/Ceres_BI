@@ -73,7 +73,7 @@ function AnalysisGroup({
 
 export function AcoesSinaisSemanaIA({ data, loading, error }: Props) {
   const analysis = data?.analiseIa ?? fallbackNarrative(data);
-  const terms = data?.topTermos?.slice(0, 7) ?? [];
+  const terms = data?.topTermos ?? [];
   const maxMentions = Math.max(...terms.map((term) => term.mencoes), 1);
   const confidenceLabel = analysis?.confianca === "alta" ? "Base consistente" : analysis?.confianca === "media" ? "Leitura em evolução" : "Sinal preliminar";
   const coverageLabel = analysis?.baseRegistros && analysis.baseRegistros > (data?.totalTextos ?? 0)
@@ -132,7 +132,7 @@ export function AcoesSinaisSemanaIA({ data, loading, error }: Props) {
               return <span key={term.termo} className={`rounded-full border border-[var(--voux-accent)]/20 bg-[var(--voux-accent)]/[0.06] px-2.5 py-1.5 text-[var(--voux-text-primary)] ${size}`} title={`${term.mencoes} ${term.mencoes === 1 ? "menção" : "menções"}`}>{term.termo}</span>;
             })}
           </div>
-          {data?.produtos?.length ? <p className="mt-4 border-t border-[var(--voux-card-border)] pt-3 text-xs leading-5 text-[var(--voux-text-muted)]"><span className="font-medium text-[var(--voux-text-primary)]">Produtos em evidência: </span>{data.produtos.slice(0, 3).map((item) => `${item.produto} (${item.mencoes})`).join(" · ")}</p> : null}
+          {data?.produtos?.length ? <p className="mt-4 border-t border-[var(--voux-card-border)] pt-3 text-xs leading-5 text-[var(--voux-text-muted)]"><span className="font-medium text-[var(--voux-text-primary)]">Produtos em evidência: </span>{data.produtos.map((item) => `${item.produto} (${item.mencoes})`).join(" · ")}</p> : null}
         </div>
       </div>
     </BiTableCard>
