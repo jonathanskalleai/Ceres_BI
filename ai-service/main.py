@@ -1049,10 +1049,12 @@ def field_analysis_needs_expansion(value: Any) -> bool:
     resumo = compact_text(value.get("resumo_executivo"))
     sentimento = compact_text(value.get("leitura_sentimento"))
     interesses = value.get("interesses_demanda")
+    resumo_generico = resumo.casefold().startswith(("a análise", "a analise", "a base analisada revela"))
     return (
         len(resumo.split()) < 90
         or len(sentimento.split()) < 60
         or not isinstance(interesses, list)
+        or resumo_generico
     )
 
 
@@ -1212,7 +1214,7 @@ async def generate_field_signal_narrative(week: date) -> dict[str, Any] | None:
         response = await call_openrouter(prompt, system_prompt, temperature=0.2, max_tokens=5000)
         parsed_response = try_parse_json(response)
         best_valid_response = parsed_response if isinstance(parsed_response, dict) else {}
-        for attempt in range(2):
+        for attempt in range(4):
             if not field_analysis_needs_expansion(parsed_response):
                 break
             retry_prompt = (
@@ -1222,7 +1224,9 @@ async def generate_field_signal_narrative(week: date) -> dict[str, Any] | None:
                 "leitura_sentimento entre 60 e 100 palavras; 2 a 4 interesses somente sustentados pelos registros; "
                 "citações literais entre aspas em cada interesse/alerta e pelo menos duas citações no resumo/leitura "
                 "combinados. Não use conclusões genéricas e mantenha proximos_passos em ações observáveis no CRM. "
-                "Antes de responder, confira internamente a contagem de palavras."
+                "O resumo não pode começar por 'A análise', 'A analise' ou 'A base analisada revela': abra pelo achado "
+                "comercial mais importante. Escreva leitura_sentimento com 80 a 90 palavras. Antes de responder, "
+                "confira internamente a contagem de palavras."
             )
             response = await call_openrouter(retry_prompt, system_prompt, temperature=0.4, max_tokens=5000)
             candidate_response = try_parse_json(response)
