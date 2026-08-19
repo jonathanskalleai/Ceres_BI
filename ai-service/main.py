@@ -78,6 +78,7 @@ async def call_openrouter(
     *,
     temperature: float = 0.7,
     max_tokens: int = 4000,
+    json_mode: bool = False,
 ) -> str:
     """Call OpenRouter API with the given prompt. Returns the response text."""
     if not OPENROUTER_API_KEY:
@@ -93,6 +94,8 @@ async def call_openrouter(
         "temperature": temperature,
         "max_tokens": max_tokens,
     }
+    if json_mode:
+        payload["response_format"] = {"type": "json_object"}
 
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
@@ -828,7 +831,7 @@ async def classify_signal_batch(candidates: list[dict[str, Any]]) -> list[dict[s
         '"confianca":0.0,"palavras_chave":["..."],"produtos":["..."]}]}\n\n'
         f"REGISTROS PARA CLASSIFICAR:\n{json.dumps(payload, ensure_ascii=False, default=str)}"
     )
-    response = await call_openrouter(prompt, system_prompt, temperature=0.0, max_tokens=3600)
+    response = await call_openrouter(prompt, system_prompt, temperature=0.0, max_tokens=3600, json_mode=True)
     parsed = try_parse_json(response)
     entries = parsed.get("classificacoes", []) if isinstance(parsed, dict) else []
     by_reference = {}
@@ -1211,7 +1214,7 @@ async def generate_field_signal_narrative(week: date) -> dict[str, Any] | None:
         "expressões literais do bloco registros em cada tema e pelo menos duas no resumo/leitura combinados."
     )
     try:
-        response = await call_openrouter(prompt, system_prompt, temperature=0.2, max_tokens=5000)
+        response = await call_openrouter(prompt, system_prompt, temperature=0.2, max_tokens=5000, json_mode=True)
         parsed_response = try_parse_json(response)
         best_valid_response = parsed_response if isinstance(parsed_response, dict) else {}
         for attempt in range(4):
@@ -1228,7 +1231,7 @@ async def generate_field_signal_narrative(week: date) -> dict[str, Any] | None:
                 "comercial mais importante. Escreva leitura_sentimento com 80 a 90 palavras. Antes de responder, "
                 "confira internamente a contagem de palavras."
             )
-            response = await call_openrouter(retry_prompt, system_prompt, temperature=0.4, max_tokens=5000)
+            response = await call_openrouter(retry_prompt, system_prompt, temperature=0.4, max_tokens=5000, json_mode=True)
             candidate_response = try_parse_json(response)
             if isinstance(candidate_response, dict):
                 parsed_response = candidate_response
@@ -1578,7 +1581,9 @@ Regras: selecione 3 a 5 insights sólidos; cada descrição de insight cita pelo
 
     # Call OpenRouter for EQUIPE
     try:
-        equipe_response = await call_openrouter(prompt_equipe, system_prompt_equipe, temperature=0.2, max_tokens=5000)
+        equipe_response = await call_openrouter(
+            prompt_equipe, system_prompt_equipe, temperature=0.2, max_tokens=5000, json_mode=True
+        )
         equipe_dados = try_parse_json(equipe_response)
     except Exception as e:
         print(f"[ERROR] OpenRouter equipe call failed: {e}")
@@ -1661,7 +1666,9 @@ Devolva exatamente este JSON:
 Regras: pontos_fortes e pontos_atencao podem ser []; clientes_prioritarios tem no máximo 5, só com clientes dos dados e em ordem de urgência; clientes_prioritarios respeita exatamente o formato pedido; não use markdown nem texto fora do JSON."""
 
         try:
-            individual_response = await call_openrouter(prompt_individual, system_prompt_individual, temperature=0.2, max_tokens=3500)
+            individual_response = await call_openrouter(
+                prompt_individual, system_prompt_individual, temperature=0.2, max_tokens=3500, json_mode=True
+            )
             individual_dados = try_parse_json(individual_response)
         except Exception as e:
             print(f"[ERROR] OpenRouter individual call failed for {nome}: {e}")
