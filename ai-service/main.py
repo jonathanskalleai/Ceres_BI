@@ -688,6 +688,9 @@ async def fetch_signal_candidates(start: date, end: date) -> list[dict[str, Any]
                 "source_hash": hashlib.sha256(source_text.encode("utf-8")).hexdigest(),
                 "produto_crm": str(row.get("produto_crm") or "").strip() or None,
             })
+    # A partial initial backfill must make the most recent closed week visible
+    # first; older history is picked up on subsequent idempotent executions.
+    candidates.sort(key=lambda item: item["event_date"], reverse=True)
     return candidates
 
 
