@@ -100,6 +100,15 @@ export interface AiSinaisCampoSemanais {
   score: number;
   topTermos: { termo: string; mencoes: number }[];
   produtos: { produto: string; mencoes: number }[];
+  analiseIa?: {
+    titulo: string;
+    resumoExecutivo: string;
+    leituraSentimento: string;
+    interessesDemanda: { tema: string; leitura: string }[];
+    objecoesAlertas: { tema: string; leitura: string }[];
+    proximosPassos: string[];
+    confianca: "alta" | "media" | "baixa";
+  } | null;
   message?: string;
 }
 
