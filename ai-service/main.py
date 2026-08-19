@@ -153,6 +153,16 @@ def try_parse_json(text: str):
             return json.loads(json_str)
     except (json.JSONDecodeError, IndexError):
         pass
+    # Some providers prepend a short note despite the contract. Recover the
+    # outer JSON object without accepting arbitrary prose as a valid result.
+    if isinstance(text, str):
+        start = text.find("{")
+        end = text.rfind("}")
+        if start >= 0 and end > start:
+            try:
+                return json.loads(text[start:end + 1])
+            except json.JSONDecodeError:
+                pass
     return text
 
 
@@ -1201,18 +1211,25 @@ async def generate_field_signal_narrative(week: date) -> dict[str, Any] | None:
     try:
         response = await call_openrouter(prompt, system_prompt, temperature=0.2, max_tokens=5000)
         parsed_response = try_parse_json(response)
-        if field_analysis_needs_expansion(parsed_response):
+        best_valid_response = parsed_response if isinstance(parsed_response, dict) else {}
+        for attempt in range(2):
+            if not field_analysis_needs_expansion(parsed_response):
+                break
             retry_prompt = (
                 f"{prompt}\n\n"
-                "A resposta anterior foi rejeitada por estar superficial. Reescreva do zero no mesmo JSON, sem explicar a "
-                "rejeição. Cumpra obrigatoriamente: resumo_executivo entre 90 e 140 palavras; leitura_sentimento entre "
-                "60 e 100 palavras; 2 a 4 interesses somente sustentados pelos registros; citações literais entre aspas "
-                "em cada interesse/alerta e pelo menos duas citações no resumo/leitura combinados. Não use conclusões "
-                "genéricas e mantenha proximos_passos em ações observáveis no CRM."
+                f"A tentativa {attempt + 1} foi rejeitada por estar superficial ou inválida. Reescreva do zero no mesmo JSON, "
+                "sem explicar a rejeição. Cumpra obrigatoriamente: resumo_executivo entre 90 e 140 palavras; "
+                "leitura_sentimento entre 60 e 100 palavras; 2 a 4 interesses somente sustentados pelos registros; "
+                "citações literais entre aspas em cada interesse/alerta e pelo menos duas citações no resumo/leitura "
+                "combinados. Não use conclusões genéricas e mantenha proximos_passos em ações observáveis no CRM. "
+                "Antes de responder, confira internamente a contagem de palavras."
             )
             response = await call_openrouter(retry_prompt, system_prompt, temperature=0.4, max_tokens=5000)
-            parsed_response = try_parse_json(response)
-        analysis = normalize_field_analysis(parsed_response, fallback)
+            candidate_response = try_parse_json(response)
+            if isinstance(candidate_response, dict):
+                parsed_response = candidate_response
+                best_valid_response = candidate_response
+        analysis = normalize_field_analysis(best_valid_response, fallback)
     except Exception as exc:
         print(f"[ERROR] Field signal narrative failed: {exc}")
         analysis = normalize_field_analysis({}, fallback)
