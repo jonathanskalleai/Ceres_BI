@@ -32,7 +32,7 @@ export function WaterfallMensalGanhoPerdido({ data, loading }: Props) {
     >
       <VouxDualLine
         data={data.map(d => ({ label: formatMonthYear(d.name), serieA: d.ganho, serieB: d.perda }))}
-        height={260}
+        height={320}
         labelA="Ganho"
         labelB="Perda"
         colorA="#1a8c3a"
