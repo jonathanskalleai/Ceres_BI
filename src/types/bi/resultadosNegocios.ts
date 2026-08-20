@@ -20,35 +20,45 @@ export interface ResultadosNegociosValorItem {
   valor: number;
 }
 
-export interface ResultadosNegociosPrevisaoItem {
-  /** Mês no formato YYYY-MM. */
+/** Um mês da trajetória anual: realizado acumulado e três cenários futuros. */
+export interface ResultadosNegociosProjecaoAnualItem {
   name: string;
-  negocios: number;
-  valorBruto: number;
+  realizadoAcumulado: number | null;
+  cenarioConservador: number | null;
+  cenarioProvavel: number | null;
+  cenarioOtimista: number | null;
+}
+
+/** Sinais acionáveis provenientes da junção negócio + ação. */
+export interface ResultadosNegociosSaudeCarteira {
+  abertos: number;
+  semAcao15Dias: number;
+  valorSemAcao15Dias: number;
+  semPrevisao: number;
+  valorSemPrevisao: number;
+  quentes: number;
+  valorQuentes: number;
+}
+
+/** Uma oportunidade para a fila de decisão comercial. */
+export interface ResultadosNegociosPrioridade {
+  negocio: string;
+  cliente: string;
+  produto: string;
+  etapa: string;
+  previsao: string | null;
+  diasSemAcao: number | null;
+  estrelas: number;
+  valor: number;
   valorPonderado: number;
-}
-
-/** Itens estão no grão produto; não representam soma de receita. */
-export interface ResultadosNegociosEquipamentoItem {
-  name: string;
-  itens: number;
-  negocios: number;
-}
-
-export interface ResultadosNegociosCobertura {
-  carteiraAtiva: number;
-  comOrigem: number;
-  comDataPrevisao: number;
-  previstos90Dias: number;
 }
 
 /** Retorno de rpc_resultados_negocios_bi. */
 export interface RpcResultadosNegociosBI {
   kpis: ResultadosNegociosKpis;
   funilPorEtapa: ResultadosNegociosValorItem[];
-  previsao90Dias: ResultadosNegociosPrevisaoItem[];
-  origemLead: ResultadosNegociosValorItem[];
-  equipamentosPipeline: ResultadosNegociosEquipamentoItem[];
+  projecaoAnual: ResultadosNegociosProjecaoAnualItem[];
+  saudeCarteira: ResultadosNegociosSaudeCarteira;
+  prioridadesFechamento: ResultadosNegociosPrioridade[];
   motivosPerda: ResultadosNegociosValorItem[];
-  cobertura: ResultadosNegociosCobertura;
 }

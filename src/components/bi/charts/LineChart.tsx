@@ -7,13 +7,14 @@ import { useTheme } from "@/hooks/useTheme";
 
 export interface LineChartData {
   x: string | number;
-  y: number;
+  y: number | null;
 }
 
 export interface LineChartSeriesItem {
   name: string;
   data: LineChartData[];
   color?: string;
+  dashed?: boolean;
 }
 
 export interface LineChartProps {
@@ -27,6 +28,8 @@ export interface LineChartProps {
   color?: string;
   strokeWidth?: number;
   area?: boolean;
+  /** Mostrar rótulos numéricos nos pontos. Em séries longas, o tooltip basta. */
+  showValues?: boolean;
   /** Each series gets its own Y scale (spreads lines apart). Hides Y axis. */
   independentAxes?: boolean;
   tooltipFormatter?: (value: number) => string;
@@ -47,6 +50,8 @@ export default function LineChart({
   color = VOUX_PALETTE[0],
   seriesName,
   independentAxes,
+  area = true,
+  showValues = true,
   tooltipFormatter,
 }: LineChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -77,6 +82,7 @@ export default function LineChart({
       return {
         name: s.name,
         color: s.color ?? palette[i % palette.length],
+        dashed: s.dashed,
         values: labels.map((lbl) => dataMap.get(lbl) ?? null),
       };
     });
@@ -152,6 +158,8 @@ export default function LineChart({
               labels={labels}
               series={svgSeries}
               points
+              area={area}
+              showValues={showValues}
               independentAxes={independentAxes}
               yFmt={tooltipFormatter}
               hoveredIdx={hoveredIdx}

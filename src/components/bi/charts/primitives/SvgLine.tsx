@@ -14,6 +14,8 @@ export interface SvgLineProps {
   labels: string[];
   series: SvgLineSeries[];
   points?: boolean;
+  /** Preenchimento abaixo das linhas. */
+  area?: boolean;
   /** Show values directly on chart points (default true) */
   showValues?: boolean;
   /** Each series uses its own Y scale (spreads lines apart). Hides Y axis. */
@@ -34,6 +36,7 @@ export function SvgLine({
   labels,
   series,
   points = true,
+  area = true,
   showValues = true,
   independentAxes = false,
   yFmt = fmtCompact,
@@ -220,7 +223,7 @@ export function SvgLine({
 
         return (
           <g key={sIdx}>
-            {areaD && (
+            {area && areaD && (
               <path d={areaD} fill={`url(#${areaGradId}-${sIdx})`} stroke="none" />
             )}
             <path
