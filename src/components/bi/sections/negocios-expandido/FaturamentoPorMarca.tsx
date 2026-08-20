@@ -8,7 +8,7 @@ interface Props {
   loading?: boolean;
 }
 
-const PALETTE = ['#1a8c3a', '#c49000', '#2970b3', '#c0392b', '#8c6d3f', '#7a9b6f', '#8ea3b8', '#d4b896'];
+const PALETTE = ['#e06060', '#c97565', '#d4a05a', '#5ba3d9', '#1a8c3a', '#4caf7a', '#7a9b6f', '#8ea3b8'];
 
 export function FaturamentoPorMarca({ data, loading }: Props) {
   const total = data.reduce((s, d) => s + d.valor, 0);

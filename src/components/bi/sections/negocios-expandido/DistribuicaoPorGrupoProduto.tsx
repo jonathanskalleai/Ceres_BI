@@ -8,7 +8,7 @@ interface Props {
   loading?: boolean;
 }
 
-const PALETTE = ['#4caf7a', '#d4a05a', '#c97565', '#8ea3b8', '#7a9b6f', '#6e542f', '#d4b896', '#5ba3d9', '#e06060', '#1a8c3a'];
+const PALETTE = ['#e06060', '#c97565', '#d4a05a', '#5ba3d9', '#1a8c3a', '#4caf7a', '#7a9b6f', '#8ea3b8'];
 
 export function DistribuicaoPorGrupoProduto({ data, loading }: Props) {
   const total = data.reduce((s, d) => s + d.valor_ganho, 0);

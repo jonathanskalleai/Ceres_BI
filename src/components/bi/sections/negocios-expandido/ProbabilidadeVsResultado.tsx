@@ -27,7 +27,7 @@ export function ProbabilidadeVsResultado({ data, loading }: Props) {
           value: d.taxa_conversao_real,
           color: d.taxa_conversao_real > d.estrelas * 20 ? '#1a8c3a' : '#c0392b',
         }))}
-        color="#2970b3"
+        color="#4caf7a"
         valueFormatter={(v) => fmtPct(v)}
       />
     </ChartCard>
