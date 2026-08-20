@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const NegociosResultadosSection = lazy(() => import("@/components/bi/sections/NegociosResultadosSection"));
+const NegociosExpandidoSection = lazy(() => import("@/components/bi/sections/NegociosExpandidoSection"));
 const PedidosSection = lazy(() => import("@/components/bi/sections/PedidosSection"));
 const AdminSection = lazy(() => import("@/components/bi/sections/AdminSection"));
 const InteligenciaFinanceiraSection = lazy(async () => {
@@ -53,6 +54,14 @@ export default function BiComercial() {
         <TabsContent value="vendas">
           <Suspense fallback={<SectionFallback />}>
             <NegociosResultadosSection
+              active={tab === "vendas"}
+              dateRange={dateRange}
+              vendedor={vendedor || undefined}
+              cidade={cidade || undefined}
+            />
+          </Suspense>
+          <Suspense fallback={<SectionFallback />}>
+            <NegociosExpandidoSection
               active={tab === "vendas"}
               dateRange={dateRange}
               vendedor={vendedor || undefined}
