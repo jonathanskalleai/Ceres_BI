@@ -61,7 +61,7 @@ interface Props {
 }
 
 function ChartSkeleton() {
-  return <Skeleton className="h-64 w-full rounded-2xl" />;
+  return <Skeleton className="h-56 w-full rounded-2xl" />;
 }
 
 export default function NegociosExpandidoSection({ active, dateRange, vendedor, cidade }: Props) {
@@ -87,127 +87,130 @@ export default function NegociosExpandidoSection({ active, dateRange, vendedor, 
 
   if (isLoading) {
     return (
-      <section className="space-y-4 pt-6" aria-label="Análises expandidas de Negócios">
+      <section className="space-y-4 pt-6">
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          {Array.from({ length: 6 }).map((_, i) => <ChartSkeleton key={i} />)}
+          {Array.from({ length: 4 }).map((_, i) => <ChartSkeleton key={i} />)}
         </div>
       </section>
     );
   }
 
+  // Helper: only render if has data
+  const has = (arr: unknown[] | null | undefined) => arr && arr.length > 0;
+
   return (
-    <section className="space-y-6 pt-6" aria-label="Análises expandidas de Negócios">
-      {/* Section header */}
+    <section className="space-y-5 pt-6" aria-label="Análises expandidas de Negócios">
       <div className="flex items-center gap-2">
         <BarChart2 className="h-4 w-4 text-[var(--voux-accent)]" />
-        <h2 className="text-[15px] font-medium text-[var(--voux-text-heading)]">
+        <h2 className="text-base font-semibold" style={{ color: "var(--voux-text-primary)" }}>
           Análises Detalhadas
         </h2>
       </div>
 
-      {/* ─── Receita & Produto ─── */}
-      <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--voux-text-muted)]">Receita &amp; Produto</p>
+      {/* Row 1: Evolução temporal (full width) — VouxLine */}
+      {has(data?.usadoRecebidoPorMes) && (
+        <Suspense fallback={<ChartSkeleton />}>
+          <UsadoRecebidoPorMes data={data!.usadoRecebidoPorMes!} loading={isLoading} />
+        </Suspense>
+      )}
+
+      {/* Row 2: Waterfall ganho/perda (full width) */}
+      {has(data?.waterfallMensalGanhoPerdido) && (
+        <Suspense fallback={<ChartSkeleton />}>
+          <WaterfallMensalGanhoPerdido data={data!.waterfallMensalGanhoPerdido!} loading={isLoading} />
+        </Suspense>
+      )}
+
+      {/* Row 3: Donut + Tipo Cliente — composição lado a lado */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Suspense fallback={<ChartSkeleton />}>
-          {data?.faturamentoPorMarca && data.faturamentoPorMarca.length > 0 && (
-            <FaturamentoPorMarca data={data.faturamentoPorMarca} loading={isLoading} />
-          )}
-        </Suspense>
-        <Suspense fallback={<ChartSkeleton />}>
-          {data?.rankingProdutosReceitaGanha && data.rankingProdutosReceitaGanha.length > 0 && (
-            <RankingProdutosReceitaGanha data={data.rankingProdutosReceitaGanha} loading={isLoading} />
-          )}
-        </Suspense>
-        <Suspense fallback={<ChartSkeleton />}>
-          {data?.distribuicaoPorGrupoProduto && data.distribuicaoPorGrupoProduto.length > 0 && (
-            <DistribuicaoPorGrupoProduto data={data.distribuicaoPorGrupoProduto} loading={isLoading} />
-          )}
-        </Suspense>
-        <Suspense fallback={<ChartSkeleton />}>
-          {data?.volumePorTipoCliente && data.volumePorTipoCliente.length > 0 && (
-            <VolumePorTipoCliente data={data.volumePorTipoCliente} loading={isLoading} />
-          )}
-        </Suspense>
+        {has(data?.distribuicaoPorGrupoProduto) && (
+          <Suspense fallback={<ChartSkeleton />}>
+            <DistribuicaoPorGrupoProduto data={data!.distribuicaoPorGrupoProduto!} loading={isLoading} />
+          </Suspense>
+        )}
+        {has(data?.volumePorTipoCliente) && (
+          <Suspense fallback={<ChartSkeleton />}>
+            <VolumePorTipoCliente data={data!.volumePorTipoCliente!} loading={isLoading} />
+          </Suspense>
+        )}
       </div>
 
-      {/* Waterfall — full width */}
-      <Suspense fallback={<ChartSkeleton />}>
-        {data?.waterfallMensalGanhoPerdido && data.waterfallMensalGanhoPerdido.length > 0 && (
-          <WaterfallMensalGanhoPerdido data={data.waterfallMensalGanhoPerdido} loading={isLoading} />
+      {/* Row 4: Rankings de receita — tabela + barras */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        {has(data?.faturamentoPorMarca) && (
+          <Suspense fallback={<ChartSkeleton />}>
+            <FaturamentoPorMarca data={data!.faturamentoPorMarca!} loading={isLoading} />
+          </Suspense>
         )}
-      </Suspense>
-
-      {/* ─── Geografia & Canais ─── */}
-      <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--voux-text-muted)]">Geografia &amp; Canais</p>
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Suspense fallback={<ChartSkeleton />}>
-          {data?.valorPorCondicaoPagamento && data.valorPorCondicaoPagamento.length > 0 && (
-            <ValorPorCondicaoPagamento data={data.valorPorCondicaoPagamento} loading={isLoading} />
-          )}
-        </Suspense>
-        <Suspense fallback={<ChartSkeleton />}>
-          {data?.valorPorCidade && data.valorPorCidade.length > 0 && (
-            <ValorPorCidade data={data.valorPorCidade} loading={isLoading} />
-          )}
-        </Suspense>
-        <Suspense fallback={<ChartSkeleton />}>
-          {data?.ticketMedioPorFormaEntrada && data.ticketMedioPorFormaEntrada.length > 0 && (
-            <TicketMedioPorFormaEntrada data={data.ticketMedioPorFormaEntrada} loading={isLoading} />
-          )}
-        </Suspense>
+        {has(data?.rankingProdutosReceitaGanha) && (
+          <div className="lg:col-span-2">
+            <Suspense fallback={<ChartSkeleton />}>
+              <RankingProdutosReceitaGanha data={data!.rankingProdutosReceitaGanha!} loading={isLoading} />
+            </Suspense>
+          </div>
+        )}
       </div>
 
-      {/* ─── Conversão & Funil ─── */}
-      <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--voux-text-muted)]">Conversão &amp; Funil</p>
-
-      {/* Heatmap — full width */}
-      <Suspense fallback={<ChartSkeleton />}>
-        {data?.heatmapEtapaIdade && data.heatmapEtapaIdade.length > 0 && (
-          <HeatmapEtapaIdade data={data.heatmapEtapaIdade} loading={isLoading} />
-        )}
-      </Suspense>
-
+      {/* Row 5: Geografia — 2 col */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Suspense fallback={<ChartSkeleton />}>
-          {data?.taxaFechamentoPorMotivoGanho && data.taxaFechamentoPorMotivoGanho.length > 0 && (
-            <TaxaFechamentoPorMotivoGanho data={data.taxaFechamentoPorMotivoGanho} loading={isLoading} />
-          )}
-        </Suspense>
-        <Suspense fallback={<ChartSkeleton />}>
-          {data?.taxaPerdaPorBanco && data.taxaPerdaPorBanco.length > 0 && (
-            <TaxaPerdaPorBanco data={data.taxaPerdaPorBanco} loading={isLoading} />
-          )}
-        </Suspense>
+        {has(data?.valorPorCidade) && (
+          <Suspense fallback={<ChartSkeleton />}>
+            <ValorPorCidade data={data!.valorPorCidade!} loading={isLoading} />
+          </Suspense>
+        )}
+        {has(data?.valorPorCondicaoPagamento) && (
+          <Suspense fallback={<ChartSkeleton />}>
+            <ValorPorCondicaoPagamento data={data!.valorPorCondicaoPagamento!} loading={isLoading} />
+          </Suspense>
+        )}
       </div>
 
-      {/* Ciclo de Vendas — full width */}
-      <Suspense fallback={<ChartSkeleton />}>
-        {data?.cicloVendasPorEtapa && data.cicloVendasPorEtapa.length > 0 && (
-          <CicloVendasPorEtapa data={data.cicloVendasPorEtapa} loading={isLoading} />
-        )}
-      </Suspense>
+      {/* Row 6: Conversão — heatmap full width */}
+      {has(data?.heatmapEtapaIdade) && (
+        <Suspense fallback={<ChartSkeleton />}>
+          <HeatmapEtapaIdade data={data!.heatmapEtapaIdade!} loading={isLoading} />
+        </Suspense>
+      )}
 
-      {/* ─── Inteligência ─── */}
-      <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--voux-text-muted)]">Inteligência</p>
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Suspense fallback={<ChartSkeleton />}>
-          {data?.palavrasChaveObservacao && data.palavrasChaveObservacao.length > 0 && (
-            <PalavrasChaveObservacao data={data.palavrasChaveObservacao} loading={isLoading} />
-          )}
-        </Suspense>
-        <Suspense fallback={<ChartSkeleton />}>
-          {data?.probabilidadeVsResultado && data.probabilidadeVsResultado.length > 0 && (
-            <ProbabilidadeVsResultado data={data.probabilidadeVsResultado} loading={isLoading} />
-          )}
-        </Suspense>
+      {/* Row 7: Funil — 3 col (taxa ganho, ciclo, perda banco) */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        {has(data?.taxaFechamentoPorMotivoGanho) && (
+          <Suspense fallback={<ChartSkeleton />}>
+            <TaxaFechamentoPorMotivoGanho data={data!.taxaFechamentoPorMotivoGanho!} loading={isLoading} />
+          </Suspense>
+        )}
+        {has(data?.cicloVendasPorEtapa) && (
+          <Suspense fallback={<ChartSkeleton />}>
+            <CicloVendasPorEtapa data={data!.cicloVendasPorEtapa!} loading={isLoading} />
+          </Suspense>
+        )}
+        {has(data?.taxaPerdaPorBanco) && (
+          <Suspense fallback={<ChartSkeleton />}>
+            <TaxaPerdaPorBanco data={data!.taxaPerdaPorBanco!} loading={isLoading} />
+          </Suspense>
+        )}
       </div>
 
-      {/* Usado Recebido — full width */}
-      <Suspense fallback={<ChartSkeleton />}>
-        {data?.usadoRecebidoPorMes && data.usadoRecebidoPorMes.length > 0 && (
-          <UsadoRecebidoPorMes data={data.usadoRecebidoPorMes} loading={isLoading} />
+      {/* Row 8: Canais — 2 col */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {has(data?.ticketMedioPorFormaEntrada) && (
+          <Suspense fallback={<ChartSkeleton />}>
+            <TicketMedioPorFormaEntrada data={data!.ticketMedioPorFormaEntrada!} loading={isLoading} />
+          </Suspense>
         )}
-      </Suspense>
+        {has(data?.palavrasChaveObservacao) && (
+          <Suspense fallback={<ChartSkeleton />}>
+            <PalavrasChaveObservacao data={data!.palavrasChaveObservacao!} loading={isLoading} />
+          </Suspense>
+        )}
+      </div>
+
+      {/* Row 9: Scatter — full width */}
+      {has(data?.probabilidadeVsResultado) && (
+        <Suspense fallback={<ChartSkeleton />}>
+          <ProbabilidadeVsResultado data={data!.probabilidadeVsResultado!} loading={isLoading} />
+        </Suspense>
+      )}
     </section>
   );
 }

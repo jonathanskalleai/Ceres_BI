@@ -9,14 +9,16 @@ interface Props {
 }
 
 export function ValorPorCidade({ data, loading }: Props) {
+  // Only show cities with actual value, limit to top 10
+  const filtered = data.filter(d => d.valor_ganho > 0).slice(0, 10);
   return (
     <ChartCard
       title="Valor Ganho por Cidade"
-      description="TOP 30 cidades por valor de negócio ganho no período."
+      description="TOP 10 cidades por valor ganho."
       loading={loading}
     >
       <VouxBarH
-        data={data.map((d) => ({ label: `${d.cidade} (${d.uf})`, value: d.valor_ganho }))}
+        data={filtered.map((d) => ({ label: `${d.cidade} (${d.uf})`, value: d.valor_ganho }))}
         color="#5ba3d9"
         valueFormatter={fmtBRLKpi}
       />
