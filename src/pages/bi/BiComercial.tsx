@@ -4,7 +4,7 @@ import { useNegociosFilter } from "@/contexts/NegociosFilterContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const ComercialSection = lazy(() => import("@/components/bi/sections/ComercialSection"));
+const NegociosResultadosSection = lazy(() => import("@/components/bi/sections/NegociosResultadosSection"));
 const PedidosSection = lazy(() => import("@/components/bi/sections/PedidosSection"));
 const AdminSection = lazy(() => import("@/components/bi/sections/AdminSection"));
 const InteligenciaFinanceiraSection = lazy(async () => {
@@ -34,7 +34,7 @@ function PositionCurrentNotice({ children }: { children: React.ReactNode }) {
 }
 
 export default function BiComercial() {
-  const { dateRange, categoria, funil, vendedor, cidade } = useNegociosFilter();
+  const { dateRange, vendedor, cidade } = useNegociosFilter();
   const [tab, setTab] = useState("vendas");
 
   return (
@@ -52,11 +52,9 @@ export default function BiComercial() {
 
         <TabsContent value="vendas">
           <Suspense fallback={<SectionFallback />}>
-            <ComercialSection
+            <NegociosResultadosSection
               active={tab === "vendas"}
               dateRange={dateRange}
-              categoria={categoria}
-              funil={funil}
               vendedor={vendedor || undefined}
               cidade={cidade || undefined}
             />

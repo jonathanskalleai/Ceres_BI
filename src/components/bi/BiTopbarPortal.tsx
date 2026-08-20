@@ -46,8 +46,12 @@ export function BiTopbarPortal() {
   const [container, setContainer] = useState<HTMLElement | null>(null);
   const location = useLocation();
 
-  // Na tela de Atividades (/crm/registros), esconder filtros de funil/categoria
+  // Categoria/funil não participam do contrato reconciliado de Negócios & Funil;
+  // tipo de ação também não é filtro dessa visão. Escondê-los evita a falsa
+  // impressão de que alteram KPIs calculados nas mesmas regras de /bi/acoes.
   const isRegistrosPage = location.pathname.includes("/crm/registros");
+  const isResultadosNegociosPage = location.pathname === "/bi/comercial";
+  const hideFunilFilters = isRegistrosPage || isResultadosNegociosPage;
 
   useEffect(() => {
     const el = document.getElementById("topbar-actions");
@@ -75,7 +79,7 @@ export function BiTopbarPortal() {
         onValueChange={(v) => setCategoria(v as CategoriaFilter)}
         aria-label="Filtro de categoria"
       >
-        <SelectTrigger className={cn("h-7 w-full sm:w-[160px] text-[11px] bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]", isRegistrosPage && "hidden")}>
+        <SelectTrigger className={cn("h-7 w-full sm:w-[160px] text-[11px] bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]", hideFunilFilters && "hidden")}>
           <SelectValue placeholder="Categoria" />
         </SelectTrigger>
         <SelectContent>
@@ -88,7 +92,7 @@ export function BiTopbarPortal() {
       </Select>
 
       <Select value={funil} onValueChange={setFunil} aria-label="Filtro de funil">
-        <SelectTrigger className={cn("h-7 w-full sm:w-[160px] text-[11px] bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]", isRegistrosPage && "hidden")}>
+        <SelectTrigger className={cn("h-7 w-full sm:w-[160px] text-[11px] bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]", hideFunilFilters && "hidden")}>
           <SelectValue placeholder="Funil" />
         </SelectTrigger>
         <SelectContent>
@@ -125,7 +129,7 @@ export function BiTopbarPortal() {
       </Select>
 
       <Select value={tipoAcao || "__all__"} onValueChange={(v) => setTipoAcao(v === "__all__" ? "" : v)} aria-label="Filtro de tipo de acao">
-        <SelectTrigger className="h-7 w-full sm:w-[160px] text-[11px] bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]">
+        <SelectTrigger className={cn("h-7 w-full sm:w-[160px] text-[11px] bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]", isResultadosNegociosPage && "hidden")}>
           <SelectValue placeholder="Tipo de Acao" />
         </SelectTrigger>
         <SelectContent>

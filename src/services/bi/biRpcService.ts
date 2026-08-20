@@ -15,6 +15,7 @@ import type {
   RpcOperacionalBI,
   RpcProdutosBI,
   AcoesBIEvolucaoMensalAnoCorrente,
+  RpcResultadosNegociosBI,
 } from "@/types/biRpc";
 
 /** Unwrap Supabase RPC response — single-JSON RPCs may return wrapped in array. */
@@ -73,6 +74,29 @@ export async function fetchNegociosBI(
     };
   } catch (err) {
     throw new Error(`[biRpcService.fetchNegociosBI] ${err instanceof Error ? err.message : "Unknown error"}`);
+  }
+}
+
+/**
+ * Primeira aba de Vendas & Resultados. O banco retorna KPIs conciliados com
+ * Ações e os visuais derivados da junção canônica de negócio, pedido e ação.
+ */
+export async function fetchResultadosNegociosBI(
+  from: string,
+  to: string,
+  vendedor?: string,
+  cidade?: string,
+): Promise<RpcResultadosNegociosBI> {
+  try {
+    const params: Record<string, unknown> = { p_from: from, p_to: to };
+    if (vendedor) params.p_vendedor = vendedor;
+    if (cidade) params.p_cidade = cidade;
+
+    const { data, error } = await supabase.rpc("rpc_resultados_negocios_bi", params);
+    if (error) throw new Error(error.message);
+    return unwrapRpc<RpcResultadosNegociosBI>(data);
+  } catch (err) {
+    throw new Error(`[biRpcService.fetchResultadosNegociosBI] ${err instanceof Error ? err.message : "Unknown error"}`);
   }
 }
 
