@@ -187,7 +187,7 @@ export default function NegociosResultadosSection({ active, dateRange, vendedor,
           ]}
           height={340}
           area={false}
-          showValues={false}
+          showValues={true}
           tooltipFormatter={formatBRL}
         />
       </ChartCard>
