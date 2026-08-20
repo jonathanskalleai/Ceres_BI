@@ -69,7 +69,7 @@ export function ChartFrame({
       role="img"
       aria-label={ariaLabel}
       className="w-full"
-      style={{ ...style, overflowX: "auto", overflowY: scrollY ? "auto" : "hidden", minWidth: 0 }}
+      style={{ ...style, overflowX: "hidden", overflowY: scrollY ? "auto" : "hidden", minWidth: 0 }}
     >
       {children}
     </div>

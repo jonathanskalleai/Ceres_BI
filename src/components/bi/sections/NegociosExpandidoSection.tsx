@@ -3,10 +3,8 @@ import { type DateRange } from "react-day-picker";
 import { BarChart2 } from "lucide-react";
 import { useNegociosExpandidoRpc } from "@/hooks/bi/useNegociosExpandidoRpc";
 import { toISODate } from "@/lib/dateUtils";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BiErrorState } from "@/components/bi/BiErrorState";
-import { cn } from "@/lib/utils";
 
 // Lazy sub-components
 const FaturamentoPorMarca = lazy(() =>
@@ -62,81 +60,8 @@ interface Props {
   cidade?: string;
 }
 
-function SectionSkeleton() {
-  return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-      {Array.from({ length: 8 }).map((_, i) => (
-        <Card key={i} className={cn("overflow-hidden", i % 3 === 0 && "md:col-span-2")}>
-          <CardHeader className="pb-2">
-            <Skeleton className="h-4 w-40" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-52 w-full rounded-lg" />
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-}
-
-interface BlockProps<T extends Record<string, unknown>> {
-  title: string;
-  data: T[] | null | undefined;
-  loading?: boolean;
-  renderer: (data: T[] | null | undefined, loading?: boolean) => React.ReactNode;
-  countLabel?: string;
-  className?: string;
-}
-
-function Block<T extends Record<string, unknown>>({
-  title,
-  data,
-  loading,
-  renderer,
-  countLabel,
-  className,
-}: BlockProps<T>) {
-  const isEmpty = !data || data.length === 0;
-
-  return (
-    <Card className={cn("overflow-hidden", className)}>
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between gap-2">
-          <span className="font-mono text-[11px] text-[var(--voux-text-muted)] truncate" title={title}>
-            {title}
-          </span>
-          {countLabel && (
-            <span className="shrink-0 rounded-full border border-[var(--voux-card-border)] px-1.5 py-0.5 text-[10px] font-mono text-[var(--voux-text-muted)]">
-              {countLabel}
-            </span>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent>
-        {isEmpty ? (
-          <div className="flex h-40 items-center justify-center">
-            <p className="text-sm text-[var(--voux-text-muted)]">
-              Sem dados para este bloco no período selecionado.
-            </p>
-          </div>
-        ) : (
-          <Suspense fallback={<Skeleton className="h-52 w-full rounded-lg" />}>
-            {renderer(data, loading)}
-          </Suspense>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function SectionEyebrow({ label }: { label: string }) {
-  return (
-    <div className="col-span-full">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[var(--voux-text-muted)] mt-4 mb-1">
-        {label}
-      </p>
-    </div>
-  );
+function ChartSkeleton() {
+  return <Skeleton className="h-64 w-full rounded-2xl" />;
 }
 
 export default function NegociosExpandidoSection({ active, dateRange, vendedor, cidade }: Props) {
@@ -160,8 +85,19 @@ export default function NegociosExpandidoSection({ active, dateRange, vendedor, 
     );
   }
 
+  if (isLoading) {
+    return (
+      <section className="space-y-4 pt-6" aria-label="Análises expandidas de Negócios">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          {Array.from({ length: 6 }).map((_, i) => <ChartSkeleton key={i} />)}
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section className="space-y-4" aria-label="Análises expandidas de Negócios">
+    <section className="space-y-6 pt-6" aria-label="Análises expandidas de Negócios">
+      {/* Section header */}
       <div className="flex items-center gap-2">
         <BarChart2 className="h-4 w-4 text-[var(--voux-accent)]" />
         <h2 className="text-[15px] font-medium text-[var(--voux-text-heading)]">
@@ -169,143 +105,109 @@ export default function NegociosExpandidoSection({ active, dateRange, vendedor, 
         </h2>
       </div>
 
-      <p className="rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs text-muted-foreground">
-        <strong className="text-foreground">Período:</strong>{" "}
-        {dateRange?.from ? new Intl.DateTimeFormat("pt-BR").format(dateRange.from) : "—"} →{" "}
-        {dateRange?.to ? new Intl.DateTimeFormat("pt-BR").format(dateRange.to) : "—"}
-        {data?._meta && ` — gerado em ${new Date(data._meta.generated_at).toLocaleTimeString("pt-BR")}`}
-      </p>
+      {/* ─── Receita & Produto ─── */}
+      <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--voux-text-muted)]">Receita &amp; Produto</p>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Suspense fallback={<ChartSkeleton />}>
+          {data?.faturamentoPorMarca && data.faturamentoPorMarca.length > 0 && (
+            <FaturamentoPorMarca data={data.faturamentoPorMarca} loading={isLoading} />
+          )}
+        </Suspense>
+        <Suspense fallback={<ChartSkeleton />}>
+          {data?.rankingProdutosReceitaGanha && data.rankingProdutosReceitaGanha.length > 0 && (
+            <RankingProdutosReceitaGanha data={data.rankingProdutosReceitaGanha} loading={isLoading} />
+          )}
+        </Suspense>
+        <Suspense fallback={<ChartSkeleton />}>
+          {data?.distribuicaoPorGrupoProduto && data.distribuicaoPorGrupoProduto.length > 0 && (
+            <DistribuicaoPorGrupoProduto data={data.distribuicaoPorGrupoProduto} loading={isLoading} />
+          )}
+        </Suspense>
+        <Suspense fallback={<ChartSkeleton />}>
+          {data?.volumePorTipoCliente && data.volumePorTipoCliente.length > 0 && (
+            <VolumePorTipoCliente data={data.volumePorTipoCliente} loading={isLoading} />
+          )}
+        </Suspense>
+      </div>
 
-      {isLoading ? (
-        <SectionSkeleton />
-      ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {/* ─── Group 1: Receita & Produto ─── */}
-          <SectionEyebrow label="Receita & Produto" />
+      {/* Waterfall — full width */}
+      <Suspense fallback={<ChartSkeleton />}>
+        {data?.waterfallMensalGanhoPerdido && data.waterfallMensalGanhoPerdido.length > 0 && (
+          <WaterfallMensalGanhoPerdido data={data.waterfallMensalGanhoPerdido} loading={isLoading} />
+        )}
+      </Suspense>
 
-          <Block
-            title="1. Faturamento por Marca"
-            data={data?.faturamentoPorMarca}
-            loading={isLoading}
-            renderer={(d, l) => <FaturamentoPorMarca data={d as import("@/types/bi/negociosExpandido").FaturamentoPorMarcaItem[] | null | undefined} loading={l} />}
-            countLabel={data?.faturamentoPorMarca ? `${data.faturamentoPorMarca.length}` : undefined}
-          />
-          <Block
-            title="5. Ranking de Produtos por Receita Ganha"
-            data={data?.rankingProdutosReceitaGanha}
-            loading={isLoading}
-            renderer={(d, l) => <RankingProdutosReceitaGanha data={d as import("@/types/bi/negociosExpandido").RankingProdutosReceitaGanhaItem[] | null | undefined} loading={l} />}
-            countLabel={data?.rankingProdutosReceitaGanha ? `${data.rankingProdutosReceitaGanha.length}` : undefined}
-          />
-          <Block
-            title="6. Distribuição por Grupo de Produto"
-            data={data?.distribuicaoPorGrupoProduto}
-            loading={isLoading}
-            renderer={(d, l) => <DistribuicaoPorGrupoProduto data={d as import("@/types/bi/negociosExpandido").DistribuicaoPorGrupoProdutoItem[] | null | undefined} loading={l} />}
-            countLabel={data?.distribuicaoPorGrupoProduto ? `${data.distribuicaoPorGrupoProduto.length}` : undefined}
-          />
-          <Block
-            title="7. Evolução Mensal: Ganho vs. Perda (Waterfall)"
-            data={data?.waterfallMensalGanhoPerdido}
-            loading={isLoading}
-            renderer={(d, l) => <WaterfallMensalGanhoPerdido data={d as import("@/types/bi/negociosExpandido").WaterfallMensalGanhoPerdidoItem[] | null | undefined} loading={l} />}
-            countLabel={data?.waterfallMensalGanhoPerdido ? `${data.waterfallMensalGanhoPerdido.length}` : undefined}
-            className="md:col-span-2"
-          />
+      {/* ─── Geografia & Canais ─── */}
+      <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--voux-text-muted)]">Geografia &amp; Canais</p>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Suspense fallback={<ChartSkeleton />}>
+          {data?.valorPorCondicaoPagamento && data.valorPorCondicaoPagamento.length > 0 && (
+            <ValorPorCondicaoPagamento data={data.valorPorCondicaoPagamento} loading={isLoading} />
+          )}
+        </Suspense>
+        <Suspense fallback={<ChartSkeleton />}>
+          {data?.valorPorCidade && data.valorPorCidade.length > 0 && (
+            <ValorPorCidade data={data.valorPorCidade} loading={isLoading} />
+          )}
+        </Suspense>
+        <Suspense fallback={<ChartSkeleton />}>
+          {data?.ticketMedioPorFormaEntrada && data.ticketMedioPorFormaEntrada.length > 0 && (
+            <TicketMedioPorFormaEntrada data={data.ticketMedioPorFormaEntrada} loading={isLoading} />
+          )}
+        </Suspense>
+      </div>
 
-          {/* ─── Group 2: Geografia & Canais ─── */}
-          <SectionEyebrow label="Geografia & Canais" />
+      {/* ─── Conversão & Funil ─── */}
+      <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--voux-text-muted)]">Conversão &amp; Funil</p>
 
-          <Block
-            title="2. Valor por Condição de Pagamento"
-            data={data?.valorPorCondicaoPagamento}
-            loading={isLoading}
-            renderer={(d, l) => <ValorPorCondicaoPagamento data={d as import("@/types/bi/negociosExpandido").ValorPorCondicaoPagamentoItem[] | null | undefined} loading={l} />}
-            countLabel={data?.valorPorCondicaoPagamento ? `${data.valorPorCondicaoPagamento.length}` : undefined}
-          />
-          <Block
-            title="8. Valor Ganho por Cidade"
-            data={data?.valorPorCidade}
-            loading={isLoading}
-            renderer={(d, l) => <ValorPorCidade data={d as import("@/types/bi/negociosExpandido").ValorPorCidadeItem[] | null | undefined} loading={l} />}
-            countLabel={data?.valorPorCidade ? `${data.valorPorCidade.length}` : undefined}
-          />
-          <Block
-            title="11. Ticket Médio por Forma de Entrada"
-            data={data?.ticketMedioPorFormaEntrada}
-            loading={isLoading}
-            renderer={(d, l) => <TicketMedioPorFormaEntrada data={d as import("@/types/bi/negociosExpandido").TicketMedioPorFormaEntradaItem[] | null | undefined} loading={l} />}
-            countLabel={data?.ticketMedioPorFormaEntrada ? `${data.ticketMedioPorFormaEntrada.length}` : undefined}
-          />
-          <Block
-            title="14. Volume por Tipo de Cliente (PF vs. PJ)"
-            data={data?.volumePorTipoCliente}
-            loading={isLoading}
-            renderer={(d, l) => <VolumePorTipoCliente data={d as import("@/types/bi/negociosExpandido").VolumePorTipoClienteItem[] | null | undefined} loading={l} />}
-            countLabel={data?.volumePorTipoCliente ? `${data.volumePorTipoCliente.length}` : undefined}
-          />
+      {/* Heatmap — full width */}
+      <Suspense fallback={<ChartSkeleton />}>
+        {data?.heatmapEtapaIdade && data.heatmapEtapaIdade.length > 0 && (
+          <HeatmapEtapaIdade data={data.heatmapEtapaIdade} loading={isLoading} />
+        )}
+      </Suspense>
 
-          {/* ─── Group 3: Conversão & Funil ─── */}
-          <SectionEyebrow label="Conversão & Funil" />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Suspense fallback={<ChartSkeleton />}>
+          {data?.taxaFechamentoPorMotivoGanho && data.taxaFechamentoPorMotivoGanho.length > 0 && (
+            <TaxaFechamentoPorMotivoGanho data={data.taxaFechamentoPorMotivoGanho} loading={isLoading} />
+          )}
+        </Suspense>
+        <Suspense fallback={<ChartSkeleton />}>
+          {data?.taxaPerdaPorBanco && data.taxaPerdaPorBanco.length > 0 && (
+            <TaxaPerdaPorBanco data={data.taxaPerdaPorBanco} loading={isLoading} />
+          )}
+        </Suspense>
+      </div>
 
-          <Block
-            title="3. Matriz Etapa x Idade do Negócio"
-            data={data?.heatmapEtapaIdade}
-            loading={isLoading}
-            renderer={(d, l) => <HeatmapEtapaIdade data={d as import("@/types/bi/negociosExpandido").HeatmapEtapaIdadeItem[] | null | undefined} loading={l} />}
-            className="md:col-span-2"
-          />
-          <Block
-            title="4. Taxa de Fechamento por Motivo de Ganho"
-            data={data?.taxaFechamentoPorMotivoGanho}
-            loading={isLoading}
-            renderer={(d, l) => <TaxaFechamentoPorMotivoGanho data={d as import("@/types/bi/negociosExpandido").TaxaFechamentoPorMotivoGanhoItem[] | null | undefined} loading={l} />}
-            countLabel={data?.taxaFechamentoPorMotivoGanho ? `${data.taxaFechamentoPorMotivoGanho.length}` : undefined}
-          />
-          <Block
-            title="9. Taxa de Perda por Banco Financiador"
-            data={data?.taxaPerdaPorBanco}
-            loading={isLoading}
-            renderer={(d, l) => <TaxaPerdaPorBanco data={d as import("@/types/bi/negociosExpandido").TaxaPerdaPorBancoItem[] | null | undefined} loading={l} />}
-            countLabel={data?.taxaPerdaPorBanco ? `${data.taxaPerdaPorBanco.length}` : undefined}
-          />
-          <Block
-            title="12. Ciclo de Vendas por Etapa"
-            data={data?.cicloVendasPorEtapa}
-            loading={isLoading}
-            renderer={(d, l) => <CicloVendasPorEtapa data={d as import("@/types/bi/negociosExpandido").CicloVendasPorEtapaItem[] | null | undefined} loading={l} />}
-            countLabel={data?.cicloVendasPorEtapa ? `${data.cicloVendasPorEtapa.length}` : undefined}
-            className="md:col-span-2"
-          />
+      {/* Ciclo de Vendas — full width */}
+      <Suspense fallback={<ChartSkeleton />}>
+        {data?.cicloVendasPorEtapa && data.cicloVendasPorEtapa.length > 0 && (
+          <CicloVendasPorEtapa data={data.cicloVendasPorEtapa} loading={isLoading} />
+        )}
+      </Suspense>
 
-          {/* ─── Group 4: Inteligência ─── */}
-          <SectionEyebrow label="Inteligência" />
+      {/* ─── Inteligência ─── */}
+      <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--voux-text-muted)]">Inteligência</p>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Suspense fallback={<ChartSkeleton />}>
+          {data?.palavrasChaveObservacao && data.palavrasChaveObservacao.length > 0 && (
+            <PalavrasChaveObservacao data={data.palavrasChaveObservacao} loading={isLoading} />
+          )}
+        </Suspense>
+        <Suspense fallback={<ChartSkeleton />}>
+          {data?.probabilidadeVsResultado && data.probabilidadeVsResultado.length > 0 && (
+            <ProbabilidadeVsResultado data={data.probabilidadeVsResultado} loading={isLoading} />
+          )}
+        </Suspense>
+      </div>
 
-          <Block
-            title="10. Termos Mais Frequentes nas Observações"
-            data={data?.palavrasChaveObservacao}
-            loading={isLoading}
-            renderer={(d, l) => <PalavrasChaveObservacao data={d as import("@/types/bi/negociosExpandido").PalavrasChaveObservacaoItem[] | null | undefined} loading={l} />}
-            countLabel={data?.palavrasChaveObservacao ? `${data.palavrasChaveObservacao.length}` : undefined}
-          />
-          <Block
-            title="13. Valor de Usado/Troca Recebido por Mês"
-            data={data?.usadoRecebidoPorMes}
-            loading={isLoading}
-            renderer={(d, l) => <UsadoRecebidoPorMes data={d as import("@/types/bi/negociosExpandido").UsadoRecebidoPorMesItem[] | null | undefined} loading={l} />}
-            countLabel={data?.usadoRecebidoPorMes ? `${data.usadoRecebidoPorMes.length}` : undefined}
-            className="md:col-span-2"
-          />
-          <Block
-            title="15. Probabilidade CRM vs. Resultado Real"
-            data={data?.probabilidadeVsResultado}
-            loading={isLoading}
-            renderer={(d, l) => <ProbabilidadeVsResultado data={d as import("@/types/bi/negociosExpandido").ProbabilidadeVsResultadoItem[] | null | undefined} loading={l} />}
-            countLabel={data?.probabilidadeVsResultado ? `${data.probabilidadeVsResultado.length}` : undefined}
-            className="md:col-span-2"
-          />
-        </div>
-      )}
+      {/* Usado Recebido — full width */}
+      <Suspense fallback={<ChartSkeleton />}>
+        {data?.usadoRecebidoPorMes && data.usadoRecebidoPorMes.length > 0 && (
+          <UsadoRecebidoPorMes data={data.usadoRecebidoPorMes} loading={isLoading} />
+        )}
+      </Suspense>
     </section>
   );
 }

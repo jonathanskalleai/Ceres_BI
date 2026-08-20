@@ -101,10 +101,8 @@ export default function BarChart({
 
   // ── Horizontal layout ─────────────────────────────────────────────────────
   if (layout === "horizontal") {
-    // Em cards estreitos, encolher os tres elementos (rotulo, barra e valor)
-    // torna o ranking ilegivel. Mantemos uma largura minima e deixamos a
-    // moldura oferecer rolagem horizontal quando necessario.
-    const chartWidth = Math.max(width, 500);
+    // Use container width directly — no minimum forces horizontal scroll.
+    const chartWidth = Math.max(width, 200);
 
     return (
       <div ref={containerRef} style={{ position: "relative", width: "100%" }}>
