@@ -28,7 +28,7 @@ export function UsadoRecebidoPorMes({ data, loading }: Props) {
     >
       <VouxDualLine
         data={data.map(d => ({ label: formatMonthYear(d.name), serieA: d.valor_usado_total, serieB: d.valor_usado_ganho }))}
-        height={320}
+        height={380}
         labelA="Usado total"
         labelB="Usado em ganhos"
         colorA="#c49000"
