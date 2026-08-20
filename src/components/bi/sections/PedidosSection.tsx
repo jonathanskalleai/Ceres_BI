@@ -3,8 +3,7 @@ import { type DateRange } from "react-day-picker";
 import { usePedidosBIRpc } from "@/hooks/bi/usePedidosBIRpc";
 import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
-import { HorizontalBarChart, PieChartWithLabels, LineChart } from "@/components/bi/charts";
-import { CHART_COLORS, POSITIVE_COLOR } from "@/lib/chartTheme";
+import { VouxBarH, VouxLine, VouxDonut } from '@/components/charts/voux';
 import { formatBRL, formatMonthYear, toISODate, getPreviousPeriod, calcTrend } from "@/lib/dateUtils";
 import { fmtBRLKpi } from "@/lib/formatters";
 import { PEDIDOS_BI_DEFAULTS } from "@/services/bi/biRpcService";
@@ -76,25 +75,11 @@ export default function PedidosSection({ active, dateRange, vendedor, cidade }: 
         >
           <div className="h-full">
             <div className="grid grid-cols-1 gap-4 h-full">
-              <div className="h-1/2">
-                <HorizontalBarChart
-                  data={agg.evolucaoMensal.map(item => ({ name: formatMonthYear(item.name), faturamento: item.faturamento }))}
-                  keys={['faturamento']}
-                  seriesLabels={{ faturamento: "Faturamento" }}
-                  title="Faturamento"
-                  tooltipFormatter={formatBRL}
-                  colors={[CHART_COLORS[0]]}
-                  height={130}
-                />
+              <div>
+                <VouxBarH data={agg.evolucaoMensal.map(item => ({label: formatMonthYear(item.name), value: item.faturamento}))} color="#4caf7a" valueFormatter={formatBRL} />
               </div>
-              <div className="h-1/2">
-                <LineChart
-                  data={agg.evolucaoMensal.map(item => ({ x: formatMonthYear(item.name), y: item.qtd }))}
-                  seriesName="Pedidos"
-                  color={CHART_COLORS[1]}
-                  height={130}
-                  tooltipFormatter={(v: number) => v.toLocaleString("pt-BR")}
-                />
+              <div>
+                <VouxLine data={agg.evolucaoMensal.map(item => ({label: formatMonthYear(item.name), value: item.qtd}))} color="#d4a05a" fmt={(v) => v.toLocaleString('pt-BR')} height={160} dataLabels={true} />
               </div>
             </div>
           </div>
@@ -108,14 +93,10 @@ export default function PedidosSection({ active, dateRange, vendedor, cidade }: 
             dataSource="mirror.crm_pedidos · SUM(pdo_vlrrecursoproprio) vs SUM(pdo_vlrfinanciado)"
             loading={isLoading}
           >
-            <PieChartWithLabels
-              data={[
-                { id: 'proprio', value: agg.mixPagamento[0]?.value || 0, name: 'Recurso próprio' },
-                { id: 'financiado', value: agg.mixPagamento[1]?.value || 0, name: 'Financiado' }
-              ]}
-              title=""
-              colors={[POSITIVE_COLOR, CHART_COLORS[1]]}
-            />
+            <VouxDonut data={[
+              { label: 'Recurso próprio', value: agg.mixPagamento[0]?.value || 0, color: '#4caf7a' },
+              { label: 'Financiado', value: agg.mixPagamento[1]?.value || 0, color: '#d4a05a' },
+            ]} height={220} centerLabel="Mix" />
           </ChartCard>
 
           <ChartCard
@@ -124,18 +105,7 @@ export default function PedidosSection({ active, dateRange, vendedor, cidade }: 
             dataSource="mirror.crm_pedidos · pdo_situacaopedido, SUM(pdo_vlrpedido)"
             loading={isLoading}
           >
-            <HorizontalBarChart
-              data={agg.porSituacao.map(item => ({
-                name: item.name,
-                valor: item.valor,
-                qtd: item.qtd
-              }))}
-              keys={['valor']}
-              seriesLabels={{ valor: "Valor (R$)" }}
-              title=""
-              tooltipFormatter={(value, d) => `${formatBRL(value)} (${d?.qtd ?? 0} pedidos)`}
-              colors={[CHART_COLORS[2]]}
-            />
+            <VouxBarH data={agg.porSituacao.map(item => ({label: item.name, value: item.valor}))} color="#c97565" valueFormatter={formatBRL} />
           </ChartCard>
         </div>
       </div>
@@ -150,17 +120,7 @@ export default function PedidosSection({ active, dateRange, vendedor, cidade }: 
             dataSource="mirror.crm_pedidos · pdo_vendedor, SUM(pdo_vlrpedido) WHERE aprovado"
             loading={isLoading}
           >
-            <HorizontalBarChart
-              data={agg.porVendedor.map(item => ({
-                name: item.name,
-                value: item.value
-              }))}
-              keys={['value']}
-              seriesLabels={{ value: "Faturamento" }}
-              title=""
-              tooltipFormatter={formatBRL}
-              colors={[CHART_COLORS[0]]}
-            />
+            <VouxBarH data={agg.porVendedor.map(item => ({label: item.name, value: item.value}))} color="#4caf7a" valueFormatter={formatBRL} />
           </ChartCard>
 
           <ChartCard
@@ -169,17 +129,7 @@ export default function PedidosSection({ active, dateRange, vendedor, cidade }: 
             dataSource="mirror.crm_pedidos · pdo_cidadeufentrega, SUM(pdo_vlrpedido) WHERE aprovado"
             loading={isLoading}
           >
-            <HorizontalBarChart
-              data={agg.porCidade.map(item => ({
-                name: item.name,
-                value: item.value
-              }))}
-              keys={['value']}
-              seriesLabels={{ value: "Faturamento" }}
-              title=""
-              tooltipFormatter={formatBRL}
-              colors={[CHART_COLORS[3]]}
-            />
+            <VouxBarH data={agg.porCidade.map(item => ({label: item.name, value: item.value}))} color="#4a6b8a" valueFormatter={formatBRL} />
           </ChartCard>
 
           <ChartCard
@@ -188,18 +138,7 @@ export default function PedidosSection({ active, dateRange, vendedor, cidade }: 
             dataSource="mirror.crm_pedidos · pdo_grupoproduto, SUM(pdo_vlrpedido)"
             loading={isLoading}
           >
-            <HorizontalBarChart
-              data={agg.porGrupoProduto.map(item => ({
-                name: item.name,
-                valor: item.valor,
-                qtd: item.qtd
-              }))}
-              keys={['valor']}
-              seriesLabels={{ valor: "Valor Vendido" }}
-              title=""
-              tooltipFormatter={(value, d) => `${formatBRL(value)} (${d?.qtd ?? 0} un)`}
-              colors={[CHART_COLORS[4]]}
-            />
+            <VouxBarH data={agg.porGrupoProduto.map(item => ({label: item.name, value: item.valor}))} color="#7a9b6f" valueFormatter={formatBRL} />
           </ChartCard>
 
           <ChartCard
@@ -208,18 +147,7 @@ export default function PedidosSection({ active, dateRange, vendedor, cidade }: 
             dataSource="mirror.crm_pedidos · pdo_marcaproduto, SUM(pdo_vlrpedido)"
             loading={isLoading}
           >
-            <HorizontalBarChart
-              data={agg.porMarcaProduto.map(item => ({
-                name: item.name,
-                valor: item.valor,
-                qtd: item.qtd
-              }))}
-              keys={['valor']}
-              seriesLabels={{ valor: "Valor Vendido" }}
-              title=""
-              tooltipFormatter={(value, d) => `${formatBRL(value)} (${d?.qtd ?? 0} un)`}
-              colors={[CHART_COLORS[6]]}
-            />
+            <VouxBarH data={agg.porMarcaProduto.map(item => ({label: item.name, value: item.valor}))} color="#d4b896" valueFormatter={formatBRL} />
           </ChartCard>
         </div>
       </div>

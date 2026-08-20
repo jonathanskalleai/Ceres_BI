@@ -1,6 +1,6 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ChartCard } from "@/components/bi/ChartCard";
-import { HorizontalBarChart, type BarChartData } from "@/components/bi/charts";
+import { VouxBarH } from "@/components/charts/voux";
 import { fmtBRLKpi, fmtPct } from "@/lib/formatters";
 import { fmtNum } from "@/lib/formatters";
 import type { ValorPorCondicaoPagamentoItem } from "@/types/bi/negociosExpandido";
@@ -10,26 +10,13 @@ interface Props {
   loading?: boolean;
 }
 
-const SEQUENTIAL_AMBER = [
-  "#8c5e1a", "#a67322", "#bf8a2e", "#d4a05a",
-  "#e0b574", "#ebc98e", "#f2dba8", "#f8edc3",
-];
-
 export function ValorPorCondicaoPagamento({ data, loading }: Props) {
-  const chartData: BarChartData[] = data.map((item) => ({
-    name: item.condicao,
-    valor_total: item.valor_total,
-    ticket_medio: item.ticket_medio,
-  }));
-
-  const chartH = Math.min(400, Math.max(200, data.length * 40 + 40));
-
   return (
     <ChartCard
       title="Valor por Condição de Pagamento"
       description="Valor total, ticket médio e taxa de conversão por condição (Recurso Próprio, Financiado, etc.)."
       loading={loading}
-      height={chartH + 120}
+      height={Math.max(200, data.length * 34) + 120}
       footer={
         <Table>
           <TableHeader>
@@ -53,22 +40,10 @@ export function ValorPorCondicaoPagamento({ data, loading }: Props) {
         </Table>
       }
     >
-      <HorizontalBarChart
-        data={chartData}
-        keys={["valor_total"]}
-        height={chartH}
-        itemColors={SEQUENTIAL_AMBER}
-        tooltipFormatter={(v) => fmtBRLKpi(v)}
-        tooltipContentFormatter={(datum, _value, _keyLabel) => {
-          const item = data.find((d) => d.condicao === datum.name);
-          if (!item) return "";
-          return `<div>
-            <div style="font-weight:600;margin-bottom:4px">${datum.name}</div>
-            <div style="color:var(--voux-tooltip-muted)">Valor total: <strong style="color:var(--voux-tooltip-text)">${fmtBRLKpi(item.valor_total)}</strong></div>
-            <div style="color:var(--voux-tooltip-muted)">Ticket médio: <strong style="color:var(--voux-tooltip-text)">${fmtBRLKpi(item.ticket_medio)}</strong></div>
-            <div style="color:var(--voux-tooltip-muted)">Taxa conv.: <strong style="color:var(--voux-tooltip-text)">${fmtPct(item.taxa_conversao)}</strong></div>
-          </div>`;
-        }}
+      <VouxBarH
+        data={data.map((d) => ({ label: d.condicao, value: d.valor_total }))}
+        color="#d4a05a"
+        valueFormatter={fmtBRLKpi}
       />
     </ChartCard>
   );

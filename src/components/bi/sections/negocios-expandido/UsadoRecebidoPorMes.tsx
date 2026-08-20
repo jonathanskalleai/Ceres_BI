@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { ChartCard } from "@/components/bi/ChartCard";
-import { LineChart, type LineChartSeriesItem } from "@/components/bi/charts";
+import { VouxLine } from "@/components/charts/voux";
 import { fmtBRLKpi } from "@/lib/formatters";
 import { formatMonthYear } from "@/lib/dateUtils";
 import type { UsadoRecebidoPorMesItem } from "@/types/bi/negociosExpandido";
@@ -11,23 +11,6 @@ interface Props {
 }
 
 export function UsadoRecebidoPorMes({ data, loading }: Props) {
-  const series: LineChartSeriesItem[] = useMemo(() => {
-    const months = data.map((d) => formatMonthYear(d.name));
-
-    return [
-      {
-        name: "Valor Usado Total",
-        color: "#d4a05a",
-        data: data.map((d) => ({ x: formatMonthYear(d.name), y: d.valor_usado_total })),
-      },
-      {
-        name: "Valor Usado em Ganhos",
-        color: "#4caf7a",
-        data: data.map((d) => ({ x: formatMonthYear(d.name), y: d.valor_usado_ganho })),
-      },
-    ];
-  }, [data]);
-
   const total = useMemo(
     () => data.reduce((s, d) => s + d.valor_usado_total, 0),
     [data],
@@ -60,13 +43,22 @@ export function UsadoRecebidoPorMes({ data, loading }: Props) {
         </div>
       }
     >
-      <LineChart
-        series={series}
-        height={240}
-        area
-        showValues={false}
-        tooltipFormatter={(v) => fmtBRLKpi(v)}
-      />
+      <div className="space-y-4">
+        <VouxLine
+          data={data.map((d) => ({ label: formatMonthYear(d.name), value: d.valor_usado_total }))}
+          color="#d4a05a"
+          fmt={fmtBRLKpi}
+          height={240}
+          area
+        />
+        <VouxLine
+          data={data.map((d) => ({ label: formatMonthYear(d.name), value: d.valor_usado_ganho }))}
+          color="#4caf7a"
+          fmt={fmtBRLKpi}
+          height={200}
+          area
+        />
+      </div>
     </ChartCard>
   );
 }

@@ -153,6 +153,14 @@
     --voux-tooltip-muted:    #b3ab9c;
     --voux-border-alpha:     rgba(82,74,62,0.10);
     --voux-border-hover:     rgba(82,74,62,0.20);
+    --voux-border:           hsl(36 18% 86%);
+    --voux-text:             #1a1714;
+    --voux-chart-axis:       #524a3e;
+    --voux-chart-grid:       rgba(82, 74, 62, 0.08);
+    --voux-chart-tooltip-bg: rgba(10, 9, 7, 0.92);
+    --voux-chart-tooltip-border: rgba(212, 184, 150, 0.2);
+    --voux-chart-tooltip-text: #ece5d4;
+    --voux-chart-accent:     #d4a05a;
     --voux-label:            #0a0907;
     /* Hierarquia de superfícies (3 níveis) */
     --surface-base:          hsl(36 24% 91%);
@@ -220,6 +228,14 @@
     --voux-tooltip-muted:    #b3a89a;
     --voux-border-alpha:     rgba(214, 207, 193, 0.08);
     --voux-border-hover:     rgba(214, 207, 193, 0.16);
+    --voux-border:           rgba(214, 207, 193, 0.10);
+    --voux-text:             #ece5d4;
+    --voux-chart-axis:       #b3ab9c;
+    --voux-chart-grid:       rgba(214, 207, 193, 0.06);
+    --voux-chart-tooltip-bg: rgba(17, 16, 13, 0.96);
+    --voux-chart-tooltip-border: rgba(212, 184, 150, 0.15);
+    --voux-chart-tooltip-text: #ece5d4;
+    --voux-chart-accent:     #d4b896;
     --voux-label:            #ece5d4;
     /* Hierarquia de superficies (dark) — sobrescreve as do :root */
     --surface-base:          #0a0907;
