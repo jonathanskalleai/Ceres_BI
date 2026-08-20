@@ -10,7 +10,6 @@ interface Props {
   loading?: boolean;
 }
 
-const PALETTE = ['#e06060', '#c97565', '#d4a05a', '#5ba3d9', '#1a8c3a', '#4caf7a', '#7a9b6f', '#8ea3b8'];
 
 export function ValorPorCondicaoPagamento({ data, loading }: Props) {
   return (
@@ -42,7 +41,7 @@ export function ValorPorCondicaoPagamento({ data, loading }: Props) {
       }
     >
       <VouxBarH
-        data={data.map((d, i) => ({ label: d.condicao, value: d.valor_total, color: PALETTE[i % PALETTE.length] }))}
+        data={data.map((d) => ({ label: d.condicao, value: d.valor_total }))}
         color="#d4a05a"
         valueFormatter={fmtBRLKpi}
       />

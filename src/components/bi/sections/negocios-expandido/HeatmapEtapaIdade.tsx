@@ -27,9 +27,9 @@ export function HeatmapEtapaIdade({ data, loading }: Props) {
       loading={loading}
     >
       <VouxBarH
-        data={top.map((d, i) => ({
+        data={top.map((d) => ({
           label: `${d.etapa} · ${FAIXA_LABELS[d.ordem_faixa] ?? d.ordem_faixa}`,
-          value: d.valor, color: ['#e06060','#c97565','#d4a05a','#5ba3d9','#1a8c3a','#4caf7a','#7a9b6f','#8ea3b8'][i % 8],
+          value: d.valor,
         }))}
         color="#7a9b6f"
         valueFormatter={fmtBRLKpi}

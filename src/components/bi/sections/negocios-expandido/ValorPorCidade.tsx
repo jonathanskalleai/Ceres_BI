@@ -8,7 +8,6 @@ interface Props {
   loading?: boolean;
 }
 
-const PALETTE = ['#e06060', '#c97565', '#d4a05a', '#5ba3d9', '#1a8c3a', '#4caf7a', '#7a9b6f', '#8ea3b8'];
 
 export function ValorPorCidade({ data, loading }: Props) {
   const filtered = data.filter(d => d.valor_ganho > 0).slice(0, 10);
@@ -19,7 +18,7 @@ export function ValorPorCidade({ data, loading }: Props) {
       loading={loading}
     >
       <VouxBarH
-        data={filtered.map((d, i) => ({ label: `${d.cidade} (${d.uf})`, value: d.valor_ganho, color: PALETTE[i % PALETTE.length] }))}
+        data={filtered.map((d) => ({ label: `${d.cidade} (${d.uf})`, value: d.valor_ganho }))}
         color="#4caf7a"
         valueFormatter={fmtBRLKpi}
       />
