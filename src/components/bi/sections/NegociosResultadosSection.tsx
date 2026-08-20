@@ -1,6 +1,7 @@
 import { BriefcaseBusiness, CalendarDays, CircleX, Trophy, Wallet } from "lucide-react";
 import { type DateRange } from "react-day-picker";
 import { ChartCard } from "@/components/bi/ChartCard";
+import { BiErrorState } from "@/components/bi/BiErrorState";
 import { KPICard } from "@/components/bi/KPICard";
 import { HorizontalBarChart, VerticalBarChart } from "@/components/bi/charts";
 import { useResultadosNegociosBIRpc } from "@/hooks/bi/useResultadosNegociosBIRpc";
@@ -40,17 +41,28 @@ const EMPTY_AGG: RpcResultadosNegociosBI = {
  * gráficos exploram apenas atributos cujo grão não duplica o valor do negócio.
  */
 export default function NegociosResultadosSection({ active, dateRange, vendedor, cidade }: Props) {
-  const from = toISODate(dateRange?.from);
-  const to = toISODate(dateRange?.to ?? dateRange?.from);
-  const enabled = active && !!from && !!to;
-  const { data: agg = EMPTY_AGG, isLoading } = useResultadosNegociosBIRpc({
+  // "Tudo" remove o DateRange do contexto. A RPC exige datas; neste caso
+  // enviamos uma janela histórica explícita em vez de desabilitar a consulta e
+  // deixar a tela parecer um resultado legítimo de zero.
+  const from = toISODate(dateRange?.from) ?? "2000-01-01";
+  const to = toISODate(dateRange?.to ?? dateRange?.from) ?? toISODate(new Date())!;
+  const { data: agg = EMPTY_AGG, isLoading, error, refetch } = useResultadosNegociosBIRpc({
     from,
     to,
     vendedor,
     cidade,
-    enabled,
+    enabled: active,
   });
   const { kpis, cobertura } = agg;
+
+  if (error) {
+    return (
+      <BiErrorState
+        message="Não foi possível carregar a visão de Negócios & Funil. Tente novamente; se persistir, informe o erro ao suporte."
+        onRetry={() => void refetch()}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6 pt-4">
