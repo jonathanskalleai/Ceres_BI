@@ -2,7 +2,6 @@
  * VouxBarH — Barra horizontal pill com gradiente.
  * Adaptado para funcionar bem em light E dark mode.
  */
-import { useId } from 'react'
 import { useElementWidth } from './useElementWidth'
 import { fmtBRLCompact } from './format'
 
@@ -32,7 +31,6 @@ export function VouxBarH({
   valueFormatter = fmtBRLCompact,
   maxItems,
 }: VouxBarHProps) {
-  const uid = useId().replace(/:/g, '')
   const [containerRef, w] = useElementWidth<HTMLDivElement>()
 
   const data = maxItems ? rawData.slice(0, maxItems) : rawData
@@ -62,28 +60,10 @@ export function VouxBarH({
           shapeRendering="geometricPrecision"
           textRendering="geometricPrecision"
         >
-          <defs>
-            {data.map((d, i) => {
-              const itemColor = d.color ?? color
-              return (
-                <linearGradient
-                  key={i}
-                  id={`${uid}-bar-${i}`}
-                  x1="0"
-                  y1="0"
-                  x2="1"
-                  y2="0"
-                >
-                  <stop offset="0%" stopColor={itemColor} stopOpacity={0.75} />
-                  <stop offset="100%" stopColor={itemColor} stopOpacity={1} />
-                </linearGradient>
-              )
-            })}
-          </defs>
-
           {data.map((d, i) => {
             const y = PAD_TOP + i * (ROW_H + GAP)
             const bw = Math.max((d.value / max) * barMaxW, d.value > 0 ? 4 : 0)
+            const itemColor = d.color ?? color
 
             return (
               <g key={i}>
@@ -109,14 +89,14 @@ export function VouxBarH({
                   fill="var(--voux-chart-grid)"
                 />
 
-                {/* bar */}
+                {/* bar — COR SÓLIDA, sem degradê */}
                 <rect
                   x={barX}
                   y={y + ROW_H / 2 - 3}
                   width={bw}
                   height={6}
                   rx={3}
-                  fill={`url(#${uid}-bar-${i})`}
+                  fill={itemColor}
                 />
 
                 {/* value */}
