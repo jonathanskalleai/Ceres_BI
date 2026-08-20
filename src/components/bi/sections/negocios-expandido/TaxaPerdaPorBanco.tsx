@@ -17,7 +17,7 @@ export function TaxaPerdaPorBanco({ data, loading }: Props) {
     >
       <VouxBarH
         data={data.map((d) => ({ label: d.banco, value: d.taxa_perda }))}
-        color="#c97565"
+        color="#c0392b"
         valueFormatter={(v) => fmtPct(v)}
       />
     </ChartCard>

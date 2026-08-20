@@ -66,7 +66,7 @@ function ListaDeValores({
         <div key={item.name} className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1">
           <div className="min-w-0">
             <p className="truncate text-[12px] font-medium text-[var(--voux-text-primary)]" title={item.name}>{item.name}</p>
-            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[var(--voux-card-border)]">
+            <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-[var(--voux-card-border)]">
               <div className="h-full rounded-full" style={{ width: `${(item.valor / max) * 100}%`, background: color }} />
             </div>
           </div>
@@ -266,7 +266,6 @@ export default function NegociosResultadosSection({ active, dateRange, vendedor,
         title="Diagnóstico das Perdas"
         description="Motivos dos negócios fechados como perdidos no período selecionado, ordenados pelo valor potencial perdido."
         loading={isLoading}
-        height={Math.max(210, Math.min(330, agg.motivosPerda.length * 53 + 20))}
       >
         <ListaDeValores dados={agg.motivosPerda} color={NEGATIVE_COLOR} />
       </ChartCard>

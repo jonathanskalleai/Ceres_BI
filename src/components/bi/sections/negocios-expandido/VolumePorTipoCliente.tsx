@@ -36,7 +36,7 @@ export function VolumePorTipoCliente({ data, loading }: Props) {
     >
       <VouxBarH
         data={data.map((d) => ({ label: d.tipo, value: d.valor_total }))}
-        color="#d4a05a"
+        color="#8c6d3f"
         valueFormatter={fmtBRLKpi}
       />
     </ChartCard>

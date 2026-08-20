@@ -1,5 +1,6 @@
 export { VouxBarH, type BarHItem } from './VouxBarH'
 export { VouxLine, type LineItem } from './VouxLine'
+export { VouxDualLine, type DualLineItem } from './VouxDualLine'
 export { VouxDonut, type DonutItem } from './VouxDonut'
 export { VouxBarHDual, type BarHDualItem } from './VouxBarHDual'
 export { VouxLineGrowth, type LineGrowthItem } from './VouxLineGrowth'

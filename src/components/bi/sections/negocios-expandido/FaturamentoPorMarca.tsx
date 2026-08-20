@@ -1,5 +1,5 @@
 import { ChartCard } from "@/components/bi/ChartCard";
-import { VouxBarH } from "@/components/charts/voux";
+import { VouxDonut } from "@/components/charts/voux";
 import { fmtBRLKpi } from "@/lib/formatters";
 import type { FaturamentoPorMarcaItem } from "@/types/bi/negociosExpandido";
 
@@ -8,17 +8,22 @@ interface Props {
   loading?: boolean;
 }
 
+const PALETTE = ['#1a8c3a', '#c49000', '#2970b3', '#c0392b', '#8c6d3f', '#7a9b6f', '#8ea3b8', '#d4b896'];
+
 export function FaturamentoPorMarca({ data, loading }: Props) {
+  const total = data.reduce((s, d) => s + d.valor, 0);
   return (
     <ChartCard
-      title="Faturamento Ganho por Marca de Produto"
-      description="TOP 12 marcas por valor de negócio ganho no período."
+      title="Faturamento por Marca"
+      description="Participação por marca no valor ganho."
       loading={loading}
     >
-      <VouxBarH
-        data={data.map((d) => ({ label: d.marca, value: d.valor }))}
-        color="#7a9b6f"
-        valueFormatter={fmtBRLKpi}
+      <VouxDonut
+        data={data.map((d, i) => ({ label: d.marca, value: d.valor, color: PALETTE[i % PALETTE.length] }))}
+        height={220}
+        thickness={22}
+        centerLabel="Total"
+        centerValue={fmtBRLKpi(total)}
       />
     </ChartCard>
   );

@@ -41,7 +41,7 @@ export function ValorPorCondicaoPagamento({ data, loading }: Props) {
     >
       <VouxBarH
         data={data.map((d) => ({ label: d.condicao, value: d.valor_total }))}
-        color="#d4a05a"
+        color="#c49000"
         valueFormatter={fmtBRLKpi}
       />
     </ChartCard>
