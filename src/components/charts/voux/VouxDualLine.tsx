@@ -124,7 +124,7 @@ export function VouxDualLine({
               <g key={`a-${i}`}>
                 <circle cx={cx} cy={cy} r={3.5} fill="var(--voux-surface)" stroke={colorA} strokeWidth={2} />
                 {showLabel && (
-                  <text x={cx} y={cy - 10} textAnchor="middle" fontSize={10} fontWeight={700} fill={colorA} fontFamily="var(--voux-font-mono)">
+                  <text x={cx} y={cy - 10} textAnchor="middle" fontSize={10} fontWeight={700} fill="var(--voux-text-primary, #1a1714)" fontFamily="var(--voux-font-mono)">
                     {fmtA(d.serieA)}
                   </text>
                 )}
@@ -141,7 +141,7 @@ export function VouxDualLine({
               <g key={`b-${i}`}>
                 <circle cx={cx} cy={cy} r={3.5} fill="var(--voux-surface)" stroke={colorB} strokeWidth={2} />
                 {showLabel && (
-                  <text x={cx} y={cy - 10} textAnchor="middle" fontSize={10} fontWeight={700} fill={colorB} fontFamily="var(--voux-font-mono)">
+                  <text x={cx} y={cy - 10} textAnchor="middle" fontSize={10} fontWeight={700} fill="var(--voux-text-primary, #1a1714)" fontFamily="var(--voux-font-mono)">
                     {fmtB(d.serieB)}
                   </text>
                 )}
