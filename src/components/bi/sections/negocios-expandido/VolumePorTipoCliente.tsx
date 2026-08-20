@@ -15,7 +15,6 @@ export function VolumePorTipoCliente({ data, loading }: Props) {
       title="Volume por Tipo de Cliente (PF vs. PJ)"
       description="Pessoa Física vs. Jurídica: volume total, valor ganho e ticket médio."
       loading={loading}
-      height={Math.max(200, data.length * 34)}
       footer={
         <div className="space-y-1">
           {data.map((item) => (

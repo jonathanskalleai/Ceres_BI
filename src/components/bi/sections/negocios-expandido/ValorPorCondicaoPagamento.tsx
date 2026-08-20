@@ -16,7 +16,6 @@ export function ValorPorCondicaoPagamento({ data, loading }: Props) {
       title="Valor por Condição de Pagamento"
       description="Valor total, ticket médio e taxa de conversão por condição (Recurso Próprio, Financiado, etc.)."
       loading={loading}
-      height={Math.max(200, data.length * 34) + 120}
       footer={
         <Table>
           <TableHeader>

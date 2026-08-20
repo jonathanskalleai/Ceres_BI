@@ -14,7 +14,6 @@ export function TaxaPerdaPorBanco({ data, loading }: Props) {
       title="Taxa de Perda por Banco Financiador"
       description="Bancos com maior taxa de perda (ordenados do maior para o menor)."
       loading={loading}
-      height={Math.max(200, data.length * 34)}
     >
       <VouxBarH
         data={data.map((d) => ({ label: d.banco, value: d.taxa_perda }))}

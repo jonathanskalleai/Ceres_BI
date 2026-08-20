@@ -73,9 +73,9 @@
   --voux-info:    #8ea3b8;
 
   /* Tipografia */
-  --voux-font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
-  --voux-font-sans:    "DM Sans", "Inter", system-ui, sans-serif;
-  --voux-font-label:   "Space Grotesk", "Inter", system-ui, sans-serif;
+  --voux-font-display: "Inter", "Space Grotesk", system-ui, sans-serif;
+  --voux-font-sans:    "Inter", "DM Sans", system-ui, sans-serif;
+  --voux-font-label:   "Inter", "Space Grotesk", system-ui, sans-serif;
   --voux-font-mono:    "JetBrains Mono", "IBM Plex Mono", monospace;
 
   /* Timing */

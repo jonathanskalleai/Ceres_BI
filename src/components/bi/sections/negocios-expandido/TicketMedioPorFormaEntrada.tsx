@@ -14,7 +14,6 @@ export function TicketMedioPorFormaEntrada({ data, loading }: Props) {
       title="Ticket Médio por Forma de Entrada"
       description="Origem dos negócios ordenados por ticket médio. Ordenado por ticket_medio DESC."
       loading={loading}
-      height={Math.max(200, data.length * 34)}
       footer={
         <div className="text-[10px] text-[var(--voux-text-muted)] font-mono">
           Forma de entrada = como o negócio chegou (visita, campanha, telefone, etc.)

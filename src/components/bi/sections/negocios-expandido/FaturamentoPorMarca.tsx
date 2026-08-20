@@ -14,7 +14,6 @@ export function FaturamentoPorMarca({ data, loading }: Props) {
       title="Faturamento Ganho por Marca de Produto"
       description="TOP 12 marcas por valor de negócio ganho no período."
       loading={loading}
-      height={Math.max(200, data.length * 34)}
     >
       <VouxBarH
         data={data.map((d) => ({ label: d.marca, value: d.valor }))}

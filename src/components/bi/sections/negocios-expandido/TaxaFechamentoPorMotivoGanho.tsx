@@ -14,7 +14,6 @@ export function TaxaFechamentoPorMotivoGanho({ data, loading }: Props) {
       title="Taxa de Fechamento por Motivo de Ganho"
       description="Motivos mais frequentes com maior valor ganho. Barra = valor; tooltip = taxa de conversão."
       loading={loading}
-      height={Math.max(200, data.length * 34)}
     >
       <VouxBarH
         data={data.map((d) => ({ label: d.motivo, value: d.valor_ganho }))}

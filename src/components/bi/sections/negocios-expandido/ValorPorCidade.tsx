@@ -14,7 +14,6 @@ export function ValorPorCidade({ data, loading }: Props) {
       title="Valor Ganho por Cidade"
       description="TOP 30 cidades por valor de negócio ganho no período."
       loading={loading}
-      height={Math.max(200, data.length * 34)}
     >
       <VouxBarH
         data={data.map((d) => ({ label: `${d.cidade} (${d.uf})`, value: d.valor_ganho }))}
