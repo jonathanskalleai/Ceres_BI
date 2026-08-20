@@ -17,7 +17,7 @@ export function ValorPorCidade({ data, loading }: Props) {
     >
       <VouxBarH
         data={data.map((d) => ({ label: `${d.cidade} (${d.uf})`, value: d.valor_ganho }))}
-        color="#4a6b8a"
+        color="#5ba3d9"
         valueFormatter={fmtBRLKpi}
       />
     </ChartCard>

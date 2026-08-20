@@ -17,7 +17,7 @@ export function TaxaFechamentoPorMotivoGanho({ data, loading }: Props) {
     >
       <VouxBarH
         data={data.map((d) => ({ label: d.motivo, value: d.valor_ganho }))}
-        color="#bf8a2e"
+        color="#4caf7a"
         valueFormatter={fmtBRLKpi}
       />
     </ChartCard>

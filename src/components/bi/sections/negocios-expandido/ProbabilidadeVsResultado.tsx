@@ -30,7 +30,7 @@ function ScatterChart({ data }: { data: ProbabilidadeVsResultadoItem[] }) {
   const svgW = Math.max(containerWidth - 16, 280);
   const svgH = 200;
   const padX = 48;
-  const padY = 24;
+  const padY = 32;
   const plotW = svgW - padX;
   const plotH = svgH - padY;
 
@@ -76,7 +76,7 @@ function ScatterChart({ data }: { data: ProbabilidadeVsResultadoItem[] }) {
             const x = padX + ((star - 1) / 4) * plotW;
             return (
               <text key={star} x={x} y={svgH - 4} textAnchor="middle" fontSize={9} fill="var(--voux-text-muted)">
-                {star}★ CRM
+                {star}★
               </text>
             );
           })}
@@ -102,15 +102,6 @@ function ScatterChart({ data }: { data: ProbabilidadeVsResultadoItem[] }) {
           </text>
 
           {/* Axis labels */}
-          <text
-            x={padX + plotW / 2}
-            y={svgH - 4}
-            textAnchor="middle"
-            fontSize={9}
-            fill="var(--voux-text-muted)"
-          >
-            Probabilidade CRM
-          </text>
           <text
             x={10}
             y={svgH / 2}

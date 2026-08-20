@@ -57,11 +57,11 @@ export function HeatmapEtapaIdade({ data, loading }: Props) {
 
   if (!etapas.length) return null;
 
-  // Dynamic sizing: use label width of 64px (compact labels), rest divided among etapas
-  const labelW = 64;
+  // Dynamic sizing: use label width of 52px (compact labels), rest divided among etapas
+  const labelW = 52;
   const availableW = containerWidth > 0 ? containerWidth - labelW : 400;
   const gap = 3;
-  const cellW = Math.max(Math.floor((availableW - (etapas.length - 1) * gap) / Math.max(etapas.length, 1)), 36);
+  const cellW = Math.max(Math.min(60, Math.floor((availableW - (etapas.length - 1) * gap) / Math.max(etapas.length, 1))), 32);
   const cellH = 44;
 
   return (
@@ -71,7 +71,7 @@ export function HeatmapEtapaIdade({ data, loading }: Props) {
       loading={loading}
       height={FAIXAS_ORDEM.length * (cellH + gap) + 40}
     >
-      <div ref={containerRef} style={{ width: "100%", overflow: "hidden" }}>
+      <div ref={containerRef} style={{ width: '100%', overflow: 'hidden' }}>
         {containerWidth > 0 && (
           <div style={{ width: "100%" }}>
             {/* Header: etapa labels */}

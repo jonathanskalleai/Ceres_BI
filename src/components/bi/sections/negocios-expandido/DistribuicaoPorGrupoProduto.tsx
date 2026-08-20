@@ -1,6 +1,5 @@
-import { useMemo } from "react";
 import { ChartCard } from "@/components/bi/ChartCard";
-import { PieChart, type PieChartData } from "@/components/bi/charts";
+import { VouxDonut } from "@/components/charts/voux";
 import { fmtBRLKpi } from "@/lib/formatters";
 import type { DistribuicaoPorGrupoProdutoItem } from "@/types/bi/negociosExpandido";
 
@@ -9,28 +8,22 @@ interface Props {
   loading?: boolean;
 }
 
-export function DistribuicaoPorGrupoProduto({ data, loading }: Props) {
-  const chartData: PieChartData[] = useMemo(
-    () =>
-      data.map((item) => ({
-        id: item.grupo,
-        name: item.grupo,
-        value: item.valor_ganho,
-      })),
-    [data],
-  );
+const PALETTE = ['#4caf7a', '#d4a05a', '#c97565', '#8ea3b8', '#7a9b6f', '#6e542f', '#d4b896', '#5ba3d9', '#e06060', '#1a8c3a'];
 
+export function DistribuicaoPorGrupoProduto({ data, loading }: Props) {
+  const total = data.reduce((s, d) => s + d.valor_ganho, 0);
   return (
     <ChartCard
       title="Distribuição por Grupo de Produto"
-      description="Participação de cada grupo de produto no valor total ganho."
+      description="Participação de cada grupo no valor total ganho."
       loading={loading}
-      height={Math.min(400, Math.max(280, data.length * 48 + 100))}
     >
-      <PieChart
-        data={chartData}
-        height={Math.min(380, Math.max(240, data.length * 40 + 60))}
-        tooltipFormatter={(v) => fmtBRLKpi(v)}
+      <VouxDonut
+        data={data.map((d, i) => ({ label: d.grupo, value: d.valor_ganho, color: PALETTE[i % PALETTE.length] }))}
+        height={240}
+        thickness={24}
+        centerLabel="Total"
+        centerValue={fmtBRLKpi(total)}
       />
     </ChartCard>
   );

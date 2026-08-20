@@ -17,7 +17,7 @@ export function FaturamentoPorMarca({ data, loading }: Props) {
     >
       <VouxBarH
         data={data.map((d) => ({ label: d.marca, value: d.valor }))}
-        color="#2d7a4f"
+        color="#7a9b6f"
         valueFormatter={fmtBRLKpi}
       />
     </ChartCard>

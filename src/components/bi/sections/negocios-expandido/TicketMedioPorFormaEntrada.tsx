@@ -22,7 +22,7 @@ export function TicketMedioPorFormaEntrada({ data, loading }: Props) {
     >
       <VouxBarH
         data={data.map((d) => ({ label: d.forma, value: d.ticket_medio }))}
-        color="#708fae"
+        color="#8ea3b8"
         valueFormatter={fmtBRLKpi}
       />
     </ChartCard>
