@@ -180,14 +180,14 @@ export default function NegociosResultadosSection({ active, dateRange, vendedor,
       >
         <LineChart
           series={[
-            { name: "Realizado acumulado", color: POSITIVE_COLOR, data: agg.projecaoAnual.map((item) => ({ x: formatMonthYear(item.name), y: item.realizadoAcumulado })) },
-            { name: "Conservador", color: NEGATIVE_COLOR, dashed: true, data: agg.projecaoAnual.map((item) => ({ x: formatMonthYear(item.name), y: item.cenarioConservador })) },
-            { name: "Provável", color: CHART_COLORS[0], data: agg.projecaoAnual.map((item) => ({ x: formatMonthYear(item.name), y: item.cenarioProvavel })) },
-            { name: "Otimista", color: CHART_COLORS[4], dashed: true, data: agg.projecaoAnual.map((item) => ({ x: formatMonthYear(item.name), y: item.cenarioOtimista })) },
+            { name: "Realizado acumulado", color: POSITIVE_COLOR, showValues: true, data: agg.projecaoAnual.map((item) => ({ x: formatMonthYear(item.name), y: item.realizadoAcumulado })) },
+            { name: "Conservador", color: NEGATIVE_COLOR, dashed: true, showValues: false, data: agg.projecaoAnual.map((item) => ({ x: formatMonthYear(item.name), y: item.cenarioConservador })) },
+            { name: "Provável", color: CHART_COLORS[0], showValues: false, data: agg.projecaoAnual.map((item) => ({ x: formatMonthYear(item.name), y: item.cenarioProvavel })) },
+            { name: "Otimista", color: CHART_COLORS[4], dashed: true, showValues: false, data: agg.projecaoAnual.map((item) => ({ x: formatMonthYear(item.name), y: item.cenarioOtimista })) },
           ]}
           height={340}
           area={false}
-          showValues={true}
+          showValues={false}
           tooltipFormatter={formatBRL}
         />
       </ChartCard>

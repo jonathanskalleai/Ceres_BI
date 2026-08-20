@@ -15,6 +15,8 @@ export interface LineChartSeriesItem {
   data: LineChartData[];
   color?: string;
   dashed?: boolean;
+  /** Show value labels for this specific series (overrides global showValues) */
+  showValues?: boolean;
 }
 
 export interface LineChartProps {
@@ -83,6 +85,7 @@ export default function LineChart({
         name: s.name,
         color: s.color ?? palette[i % palette.length],
         dashed: s.dashed,
+        showValues: s.showValues,
         values: labels.map((lbl) => dataMap.get(lbl) ?? null),
       };
     });

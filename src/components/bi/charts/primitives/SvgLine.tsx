@@ -6,6 +6,8 @@ export interface SvgLineSeries {
   color?: string;
   values: (number | null)[];
   dashed?: boolean;
+  /** Override global showValues for this specific series */
+  showValues?: boolean;
 }
 
 export interface SvgLineProps {
@@ -248,7 +250,7 @@ export function SvgLine({
                 />
               ))}
             {/* Value labels on points */}
-            {showValues && (() => {
+            {(s.showValues ?? showValues) && (() => {
               // Show values on ALL points — offset alternates by series to reduce overlap
               const indicesToShow = new Set(validPairs.map(p => p.i));
               const offsetY = sIdx === 0 ? -12 : 16;
