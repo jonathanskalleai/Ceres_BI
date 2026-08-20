@@ -1,11 +1,12 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense } from "react";
 import { type DateRange } from "react-day-picker";
 import { BarChart2 } from "lucide-react";
 import { useNegociosExpandidoRpc } from "@/hooks/bi/useNegociosExpandidoRpc";
 import { toISODate } from "@/lib/dateUtils";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BiErrorState } from "@/components/bi/BiErrorState";
+import { cn } from "@/lib/utils";
 
 // Lazy sub-components
 const FaturamentoPorMarca = lazy(() =>
@@ -63,46 +64,78 @@ interface Props {
 
 function SectionSkeleton() {
   return (
-    <div className="space-y-4">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="space-y-2">
-          <Skeleton className="h-5 w-64" />
-          <Skeleton className="h-52 w-full rounded-xl" />
-        </div>
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <Card key={i} className={cn("overflow-hidden", i % 3 === 0 && "md:col-span-2")}>
+          <CardHeader className="pb-2">
+            <Skeleton className="h-4 w-40" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-52 w-full rounded-lg" />
+          </CardContent>
+        </Card>
       ))}
     </div>
   );
 }
 
-interface BlockItemProps<T extends Record<string, unknown>> {
+interface BlockProps<T extends Record<string, unknown>> {
+  title: string;
   data: T[] | null | undefined;
   loading?: boolean;
-  renderer: (props: { data: T[]; loading?: boolean }) => React.ReactNode;
-  title: string;
+  renderer: (data: T[] | null | undefined, loading?: boolean) => React.ReactNode;
+  countLabel?: string;
+  className?: string;
 }
 
-function BlockItem<T extends Record<string, unknown>>({ data, loading, renderer: RenderProps, title }: BlockItemProps<T>) {
-  if (!data || data.length === 0) {
-    return (
-      <AccordionItem value={title}>
-        <AccordionTrigger className="text-[13px] font-medium">{title}</AccordionTrigger>
-        <AccordionContent>
-          <p className="py-6 text-center text-sm text-[var(--voux-text-muted)]">
-            Sem dados para este bloco no período selecionado.
-          </p>
-        </AccordionContent>
-      </AccordionItem>
-    );
-  }
+function Block<T extends Record<string, unknown>>({
+  title,
+  data,
+  loading,
+  renderer,
+  countLabel,
+  className,
+}: BlockProps<T>) {
+  const isEmpty = !data || data.length === 0;
+
   return (
-    <AccordionItem value={title}>
-      <AccordionTrigger className="text-[13px] font-medium">{title}</AccordionTrigger>
-      <AccordionContent>
-        <Suspense fallback={<Skeleton className="h-52 w-full rounded-xl" />}>
-          {RenderProps({ data, loading })}
-        </Suspense>
-      </AccordionContent>
-    </AccordionItem>
+    <Card className={cn("overflow-hidden", className)}>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-mono text-[11px] text-[var(--voux-text-muted)] truncate" title={title}>
+            {title}
+          </span>
+          {countLabel && (
+            <span className="shrink-0 rounded-full border border-[var(--voux-card-border)] px-1.5 py-0.5 text-[10px] font-mono text-[var(--voux-text-muted)]">
+              {countLabel}
+            </span>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent>
+        {isEmpty ? (
+          <div className="flex h-40 items-center justify-center">
+            <p className="text-sm text-[var(--voux-text-muted)]">
+              Sem dados para este bloco no período selecionado.
+            </p>
+          </div>
+        ) : (
+          <Suspense fallback={<Skeleton className="h-52 w-full rounded-lg" />}>
+            {renderer(data, loading)}
+          </Suspense>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function SectionEyebrow({ label }: { label: string }) {
+  return (
+    <div className="col-span-full">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[var(--voux-text-muted)] mt-4 mb-1">
+        {label}
+      </p>
+    </div>
   );
 }
 
@@ -134,9 +167,6 @@ export default function NegociosExpandidoSection({ active, dateRange, vendedor, 
         <h2 className="text-[15px] font-medium text-[var(--voux-text-heading)]">
           Análises Detalhadas
         </h2>
-        <span className="rounded-full border border-[var(--voux-card-border)] px-2 py-0.5 text-[10px] font-mono text-[var(--voux-text-muted)]">
-          15 blocos
-        </span>
       </div>
 
       <p className="rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs text-muted-foreground">
@@ -149,98 +179,132 @@ export default function NegociosExpandidoSection({ active, dateRange, vendedor, 
       {isLoading ? (
         <SectionSkeleton />
       ) : (
-        <Accordion type="single" defaultValue="FaturamentoPorMarca" collapsible className="space-y-1">
-          <BlockItem
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {/* ─── Group 1: Receita & Produto ─── */}
+          <SectionEyebrow label="Receita & Produto" />
+
+          <Block
             title="1. Faturamento por Marca"
             data={data?.faturamentoPorMarca}
             loading={isLoading}
-            renderer={({ data: d, loading: l }) => <FaturamentoPorMarca data={d} loading={l} />}
+            renderer={(d, l) => <FaturamentoPorMarca data={d as import("@/types/bi/negociosExpandido").FaturamentoPorMarcaItem[] | null | undefined} loading={l} />}
+            countLabel={data?.faturamentoPorMarca ? `${data.faturamentoPorMarca.length}` : undefined}
           />
-          <BlockItem
-            title="2. Valor por Condição de Pagamento"
-            data={data?.valorPorCondicaoPagamento}
-            loading={isLoading}
-            renderer={({ data: d, loading: l }) => <ValorPorCondicaoPagamento data={d} loading={l} />}
-          />
-          <BlockItem
-            title="3. Matriz Etapa x Idade do Negócio"
-            data={data?.heatmapEtapaIdade}
-            loading={isLoading}
-            renderer={({ data: d, loading: l }) => <HeatmapEtapaIdade data={d} loading={l} />}
-          />
-          <BlockItem
-            title="4. Taxa de Fechamento por Motivo de Ganho"
-            data={data?.taxaFechamentoPorMotivoGanho}
-            loading={isLoading}
-            renderer={({ data: d, loading: l }) => <TaxaFechamentoPorMotivoGanho data={d} loading={l} />}
-          />
-          <BlockItem
+          <Block
             title="5. Ranking de Produtos por Receita Ganha"
             data={data?.rankingProdutosReceitaGanha}
             loading={isLoading}
-            renderer={({ data: d, loading: l }) => <RankingProdutosReceitaGanha data={d} loading={l} />}
+            renderer={(d, l) => <RankingProdutosReceitaGanha data={d as import("@/types/bi/negociosExpandido").RankingProdutosReceitaGanhaItem[] | null | undefined} loading={l} />}
+            countLabel={data?.rankingProdutosReceitaGanha ? `${data.rankingProdutosReceitaGanha.length}` : undefined}
           />
-          <BlockItem
+          <Block
             title="6. Distribuição por Grupo de Produto"
             data={data?.distribuicaoPorGrupoProduto}
             loading={isLoading}
-            renderer={({ data: d, loading: l }) => <DistribuicaoPorGrupoProduto data={d} loading={l} />}
+            renderer={(d, l) => <DistribuicaoPorGrupoProduto data={d as import("@/types/bi/negociosExpandido").DistribuicaoPorGrupoProdutoItem[] | null | undefined} loading={l} />}
+            countLabel={data?.distribuicaoPorGrupoProduto ? `${data.distribuicaoPorGrupoProduto.length}` : undefined}
           />
-          <BlockItem
+          <Block
             title="7. Evolução Mensal: Ganho vs. Perda (Waterfall)"
             data={data?.waterfallMensalGanhoPerdido}
             loading={isLoading}
-            renderer={({ data: d, loading: l }) => <WaterfallMensalGanhoPerdido data={d} loading={l} />}
+            renderer={(d, l) => <WaterfallMensalGanhoPerdido data={d as import("@/types/bi/negociosExpandido").WaterfallMensalGanhoPerdidoItem[] | null | undefined} loading={l} />}
+            countLabel={data?.waterfallMensalGanhoPerdido ? `${data.waterfallMensalGanhoPerdido.length}` : undefined}
+            className="md:col-span-2"
           />
-          <BlockItem
+
+          {/* ─── Group 2: Geografia & Canais ─── */}
+          <SectionEyebrow label="Geografia & Canais" />
+
+          <Block
+            title="2. Valor por Condição de Pagamento"
+            data={data?.valorPorCondicaoPagamento}
+            loading={isLoading}
+            renderer={(d, l) => <ValorPorCondicaoPagamento data={d as import("@/types/bi/negociosExpandido").ValorPorCondicaoPagamentoItem[] | null | undefined} loading={l} />}
+            countLabel={data?.valorPorCondicaoPagamento ? `${data.valorPorCondicaoPagamento.length}` : undefined}
+          />
+          <Block
             title="8. Valor Ganho por Cidade"
             data={data?.valorPorCidade}
             loading={isLoading}
-            renderer={({ data: d, loading: l }) => <ValorPorCidade data={d} loading={l} />}
+            renderer={(d, l) => <ValorPorCidade data={d as import("@/types/bi/negociosExpandido").ValorPorCidadeItem[] | null | undefined} loading={l} />}
+            countLabel={data?.valorPorCidade ? `${data.valorPorCidade.length}` : undefined}
           />
-          <BlockItem
-            title="9. Taxa de Perda por Banco Financiador"
-            data={data?.taxaPerdaPorBanco}
-            loading={isLoading}
-            renderer={({ data: d, loading: l }) => <TaxaPerdaPorBanco data={d} loading={l} />}
-          />
-          <BlockItem
-            title="10. Termos Mais Frequentes nas Observações"
-            data={data?.palavrasChaveObservacao}
-            loading={isLoading}
-            renderer={({ data: d, loading: l }) => <PalavrasChaveObservacao data={d} loading={l} />}
-          />
-          <BlockItem
+          <Block
             title="11. Ticket Médio por Forma de Entrada"
             data={data?.ticketMedioPorFormaEntrada}
             loading={isLoading}
-            renderer={({ data: d, loading: l }) => <TicketMedioPorFormaEntrada data={d} loading={l} />}
+            renderer={(d, l) => <TicketMedioPorFormaEntrada data={d as import("@/types/bi/negociosExpandido").TicketMedioPorFormaEntradaItem[] | null | undefined} loading={l} />}
+            countLabel={data?.ticketMedioPorFormaEntrada ? `${data.ticketMedioPorFormaEntrada.length}` : undefined}
           />
-          <BlockItem
-            title="12. Ciclo de Vendas por Etapa"
-            data={data?.cicloVendasPorEtapa}
-            loading={isLoading}
-            renderer={({ data: d, loading: l }) => <CicloVendasPorEtapa data={d} loading={l} />}
-          />
-          <BlockItem
-            title="13. Valor de Usado/Troca Recebido por Mês"
-            data={data?.usadoRecebidoPorMes}
-            loading={isLoading}
-            renderer={({ data: d, loading: l }) => <UsadoRecebidoPorMes data={d} loading={l} />}
-          />
-          <BlockItem
+          <Block
             title="14. Volume por Tipo de Cliente (PF vs. PJ)"
             data={data?.volumePorTipoCliente}
             loading={isLoading}
-            renderer={({ data: d, loading: l }) => <VolumePorTipoCliente data={d} loading={l} />}
+            renderer={(d, l) => <VolumePorTipoCliente data={d as import("@/types/bi/negociosExpandido").VolumePorTipoClienteItem[] | null | undefined} loading={l} />}
+            countLabel={data?.volumePorTipoCliente ? `${data.volumePorTipoCliente.length}` : undefined}
           />
-          <BlockItem
+
+          {/* ─── Group 3: Conversão & Funil ─── */}
+          <SectionEyebrow label="Conversão & Funil" />
+
+          <Block
+            title="3. Matriz Etapa x Idade do Negócio"
+            data={data?.heatmapEtapaIdade}
+            loading={isLoading}
+            renderer={(d, l) => <HeatmapEtapaIdade data={d as import("@/types/bi/negociosExpandido").HeatmapEtapaIdadeItem[] | null | undefined} loading={l} />}
+            className="md:col-span-2"
+          />
+          <Block
+            title="4. Taxa de Fechamento por Motivo de Ganho"
+            data={data?.taxaFechamentoPorMotivoGanho}
+            loading={isLoading}
+            renderer={(d, l) => <TaxaFechamentoPorMotivoGanho data={d as import("@/types/bi/negociosExpandido").TaxaFechamentoPorMotivoGanhoItem[] | null | undefined} loading={l} />}
+            countLabel={data?.taxaFechamentoPorMotivoGanho ? `${data.taxaFechamentoPorMotivoGanho.length}` : undefined}
+          />
+          <Block
+            title="9. Taxa de Perda por Banco Financiador"
+            data={data?.taxaPerdaPorBanco}
+            loading={isLoading}
+            renderer={(d, l) => <TaxaPerdaPorBanco data={d as import("@/types/bi/negociosExpandido").TaxaPerdaPorBancoItem[] | null | undefined} loading={l} />}
+            countLabel={data?.taxaPerdaPorBanco ? `${data.taxaPerdaPorBanco.length}` : undefined}
+          />
+          <Block
+            title="12. Ciclo de Vendas por Etapa"
+            data={data?.cicloVendasPorEtapa}
+            loading={isLoading}
+            renderer={(d, l) => <CicloVendasPorEtapa data={d as import("@/types/bi/negociosExpandido").CicloVendasPorEtapaItem[] | null | undefined} loading={l} />}
+            countLabel={data?.cicloVendasPorEtapa ? `${data.cicloVendasPorEtapa.length}` : undefined}
+            className="md:col-span-2"
+          />
+
+          {/* ─── Group 4: Inteligência ─── */}
+          <SectionEyebrow label="Inteligência" />
+
+          <Block
+            title="10. Termos Mais Frequentes nas Observações"
+            data={data?.palavrasChaveObservacao}
+            loading={isLoading}
+            renderer={(d, l) => <PalavrasChaveObservacao data={d as import("@/types/bi/negociosExpandido").PalavrasChaveObservacaoItem[] | null | undefined} loading={l} />}
+            countLabel={data?.palavrasChaveObservacao ? `${data.palavrasChaveObservacao.length}` : undefined}
+          />
+          <Block
+            title="13. Valor de Usado/Troca Recebido por Mês"
+            data={data?.usadoRecebidoPorMes}
+            loading={isLoading}
+            renderer={(d, l) => <UsadoRecebidoPorMes data={d as import("@/types/bi/negociosExpandido").UsadoRecebidoPorMesItem[] | null | undefined} loading={l} />}
+            countLabel={data?.usadoRecebidoPorMes ? `${data.usadoRecebidoPorMes.length}` : undefined}
+            className="md:col-span-2"
+          />
+          <Block
             title="15. Probabilidade CRM vs. Resultado Real"
             data={data?.probabilidadeVsResultado}
             loading={isLoading}
-            renderer={({ data: d, loading: l }) => <ProbabilidadeVsResultado data={d} loading={l} />}
+            renderer={(d, l) => <ProbabilidadeVsResultado data={d as import("@/types/bi/negociosExpandido").ProbabilidadeVsResultadoItem[] | null | undefined} loading={l} />}
+            countLabel={data?.probabilidadeVsResultado ? `${data.probabilidadeVsResultado.length}` : undefined}
+            className="md:col-span-2"
           />
-        </Accordion>
+        </div>
       )}
     </section>
   );

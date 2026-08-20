@@ -9,7 +9,7 @@ interface Props {
   loading?: boolean;
 }
 
-const SEQUENTIAL_BLUE = ["#2a78d6", "#3987e5", "#5598e7", "#86b6ef"];
+const TYPE_COLORS = ["#4caf7a", "#d4a05a", "#8ea3b8", "#c97565"];
 
 export function VolumePorTipoCliente({ data, loading }: Props) {
   const chartData: BarChartData[] = data.map((item) => ({
@@ -50,7 +50,7 @@ export function VolumePorTipoCliente({ data, loading }: Props) {
         data={chartData}
         keys={["valor_total"]}
         height={chartH}
-        itemColors={SEQUENTIAL_BLUE}
+        itemColors={TYPE_COLORS}
         tooltipFormatter={(v) => fmtBRLKpi(v)}
         tooltipContentFormatter={(datum, _value, _keyLabel) => {
           const item = data.find((d) => d.tipo === datum.name);

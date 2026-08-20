@@ -1,8 +1,9 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { fmtPct } from "@/lib/formatters";
 import { fmtBRLKpi } from "@/lib/formatters";
 import { fmtNum } from "@/lib/formatters";
+import { useContainerWidth } from "@/components/bi/charts/primitives/useContainerWidth";
 import type { ProbabilidadeVsResultadoItem } from "@/types/bi/negociosExpandido";
 
 interface Props {
@@ -11,6 +12,9 @@ interface Props {
 }
 
 function ScatterChart({ data }: { data: ProbabilidadeVsResultadoItem[] }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const containerWidth = useContainerWidth(containerRef as React.RefObject<HTMLElement>);
+
   const { dots, maxValue } = useMemo(() => {
     const max = Math.max(...data.map((d) => d.valor_total), 1);
     const dots = data.map((item) => {
@@ -23,7 +27,7 @@ function ScatterChart({ data }: { data: ProbabilidadeVsResultadoItem[] }) {
     return { dots, maxValue: max };
   }, [data]);
 
-  const svgW = 400;
+  const svgW = Math.max(containerWidth - 16, 280);
   const svgH = 200;
   const padX = 48;
   const padY = 24;
@@ -37,119 +41,123 @@ function ScatterChart({ data }: { data: ProbabilidadeVsResultadoItem[] }) {
   ];
 
   return (
-    <div className="overflow-x-auto">
-      <svg
-        width={svgW}
-        height={svgH}
-        style={{ display: "block", fontFamily: "var(--voux-font-mono, monospace)" }}
-      >
-        {/* Grid lines */}
-        {[0, 25, 50, 75, 100].map((pct) => {
-          const y = padY + plotH * (1 - pct / 100);
-          return (
-            <g key={pct}>
-              <line
-                x1={padX}
-                y1={y}
-                x2={padX + plotW}
-                y2={y}
-                stroke="var(--voux-gridline, #e1e0d9)"
-                strokeWidth={1}
-                strokeDasharray={pct === 0 || pct === 100 ? "none" : "3,3"}
-              />
-              <text x={padX - 4} y={y + 4} textAnchor="end" fontSize={9} fill="var(--voux-text-muted)">
-                {pct}%
+    <div ref={containerRef} style={{ width: "100%", minWidth: 0 }}>
+      {containerWidth > 0 && (
+        <svg
+          width="100%"
+          height={svgH}
+          viewBox={`0 0 ${svgW} ${svgH}`}
+          preserveAspectRatio="xMidYMid meet"
+          style={{ display: "block", fontFamily: "var(--voux-font-mono, monospace)" }}
+        >
+          {/* Grid lines */}
+          {[0, 25, 50, 75, 100].map((pct) => {
+            const y = padY + plotH * (1 - pct / 100);
+            return (
+              <g key={pct}>
+                <line
+                  x1={padX}
+                  y1={y}
+                  x2={padX + plotW}
+                  y2={y}
+                  stroke="var(--voux-gridline, #e1e0d9)"
+                  strokeWidth={1}
+                  strokeDasharray={pct === 0 || pct === 100 ? "none" : "3,3"}
+                />
+                <text x={padX - 4} y={y + 4} textAnchor="end" fontSize={9} fill="var(--voux-text-muted)">
+                  {pct}%
+                </text>
+              </g>
+            );
+          })}
+
+          {/* X-axis labels */}
+          {[1, 2, 3, 4, 5].map((star) => {
+            const x = padX + ((star - 1) / 4) * plotW;
+            return (
+              <text key={star} x={x} y={svgH - 4} textAnchor="middle" fontSize={9} fill="var(--voux-text-muted)">
+                {star}★ CRM
               </text>
-            </g>
-          );
-        })}
+            );
+          })}
 
-        {/* X-axis labels */}
-        {[1, 2, 3, 4, 5].map((star) => {
-          const x = padX + ((star - 1) / 4) * plotW;
-          return (
-            <text key={star} x={x} y={svgH - 4} textAnchor="middle" fontSize={9} fill="var(--voux-text-muted)">
-              {star}★ CRM
-            </text>
-          );
-        })}
+          {/* Reference diagonal line */}
+          <line
+            x1={refLine[0].x}
+            y1={refLine[0].y}
+            x2={refLine[1].x}
+            y2={refLine[1].y}
+            stroke="var(--voux-text-muted)"
+            strokeWidth={1.5}
+            strokeDasharray="4,3"
+          />
+          <text
+            x={refLine[1].x - 8}
+            y={refLine[1].y - 4}
+            textAnchor="end"
+            fontSize={8}
+            fill="var(--voux-text-muted)"
+          >
+            y = x
+          </text>
 
-        {/* Reference diagonal line */}
-        <line
-          x1={refLine[0].x}
-          y1={refLine[0].y}
-          x2={refLine[1].x}
-          y2={refLine[1].y}
-          stroke="var(--voux-text-muted)"
-          strokeWidth={1.5}
-          strokeDasharray="4,3"
-        />
-        <text
-          x={refLine[1].x - 8}
-          y={refLine[1].y - 4}
-          textAnchor="end"
-          fontSize={8}
-          fill="var(--voux-text-muted)"
-        >
-          y = x
-        </text>
+          {/* Axis labels */}
+          <text
+            x={padX + plotW / 2}
+            y={svgH - 4}
+            textAnchor="middle"
+            fontSize={9}
+            fill="var(--voux-text-muted)"
+          >
+            Probabilidade CRM
+          </text>
+          <text
+            x={10}
+            y={svgH / 2}
+            textAnchor="middle"
+            fontSize={9}
+            fill="var(--voux-text-muted)"
+            transform={`rotate(-90, 10, ${svgH / 2})`}
+          >
+            Taxa real
+          </text>
 
-        {/* Axis labels */}
-        <text
-          x={padX + plotW / 2}
-          y={svgH - 4}
-          textAnchor="middle"
-          fontSize={9}
-          fill="var(--voux-text-muted)"
-        >
-          Probabilidade CRM
-        </text>
-        <text
-          x={10}
-          y={svgH / 2}
-          textAnchor="middle"
-          fontSize={9}
-          fill="var(--voux-text-muted)"
-          transform={`rotate(-90, 10, ${svgH / 2})`}
-        >
-          Taxa real
-        </text>
-
-        {/* Dots */}
-        {dots.map(({ item, cx, cy, r }) => {
-          const x = padX + cx * plotW;
-          const y = padY + cy * plotH;
-          const above = item.taxa_conversao_real > item.estrelas * 20;
-          const color = above ? "#4caf7a" : "#c97565";
-          return (
-            <g
-              key={item.estrelas}
-              style={{ cursor: "default" }}
-            >
-              <circle
-                cx={x}
-                cy={y}
-                r={r}
-                fill={color}
-                opacity={0.75}
-                stroke={color}
-                strokeWidth={1.5}
-              />
-              <text
-                x={x}
-                y={y + 4}
-                textAnchor="middle"
-                fontSize={Math.min(r - 2, 11)}
-                fontWeight="600"
-                fill="#fff"
+          {/* Dots */}
+          {dots.map(({ item, cx, cy, r }) => {
+            const x = padX + cx * plotW;
+            const y = padY + cy * plotH;
+            const above = item.taxa_conversao_real > item.estrelas * 20;
+            const color = above ? "#4caf7a" : "#c97565";
+            return (
+              <g
+                key={item.estrelas}
+                style={{ cursor: "default" }}
               >
-                {item.estrelas}
-              </text>
-              <title>{`${item.estrelas}★ CRM | Taxa real: ${fmtPct(item.taxa_conversao_real)}\nTotal: ${fmtBRLKpi(item.valor_total)} | Ganhos: ${fmtNum(item.ganhos)} | Perdas: ${fmtNum(item.perdas)}\n${above ? "Acima da linha (subestimado)" : "Abaixo da linha (superestimado)"}`}</title>
-            </g>
-          );
-        })}
-      </svg>
+                <circle
+                  cx={x}
+                  cy={y}
+                  r={r}
+                  fill={color}
+                  opacity={0.75}
+                  stroke={color}
+                  strokeWidth={1.5}
+                />
+                <text
+                  x={x}
+                  y={y + 4}
+                  textAnchor="middle"
+                  fontSize={Math.min(r - 2, 11)}
+                  fontWeight="600"
+                  fill="#fff"
+                >
+                  {item.estrelas}
+                </text>
+                <title>{`${item.estrelas}★ CRM | Taxa real: ${fmtPct(item.taxa_conversao_real)}\nTotal: ${fmtBRLKpi(item.valor_total)} | Ganhos: ${fmtNum(item.ganhos)} | Perdas: ${fmtNum(item.perdas)}\n${above ? "Acima da linha (subestimado)" : "Abaixo da linha (superestimado)"}`}</title>
+              </g>
+            );
+          })}
+        </svg>
+      )}
     </div>
   );
 }

@@ -31,7 +31,7 @@ export function RankingProdutosReceitaGanha({ data, loading }: Props) {
         <TableBody>
           {data.map((item, idx) => (
             <TableRow key={item.produto} className="border-[var(--voux-card-border)] hover:bg-[var(--voux-card-border)]/40 transition-colors">
-              <TableCell className="text-[11px] font-mono text-[var(--voux-text-muted)]">{idx + 1}</TableCell>
+              <TableCell className="text-[11px] font-mono" style={{ color: 'var(--voux-success)' }}>{idx + 1}</TableCell>
               <TableCell className="text-[12px] font-medium text-[var(--voux-text-primary)]">
                 <div title={item.produto} className="truncate max-w-[200px]">{item.produto}</div>
                 <div className="text-[10px] text-[var(--voux-text-muted)]">{item.marca}</div>

@@ -9,9 +9,9 @@ interface Props {
   loading?: boolean;
 }
 
-const SEQUENTIAL_BLUE = [
-  "#2a78d6", "#3987e5", "#5598e7", "#6da7ec",
-  "#86b6ef", "#9ec5f4", "#b7d3f6", "#cde2fb",
+const SEQUENTIAL_GREEN = [
+  "#2d7a4f", "#3d8b5f", "#4caf7a", "#6bc294",
+  "#8ad4ae", "#a8e3c4", "#c5f0d9", "#dff8eb",
 ];
 
 export function FaturamentoPorMarca({ data, loading }: Props) {
@@ -32,7 +32,7 @@ export function FaturamentoPorMarca({ data, loading }: Props) {
         data={chartData}
         keys={["valor"]}
         height={Math.min(400, Math.max(220, data.length * 40 + 40))}
-        itemColors={SEQUENTIAL_BLUE}
+        itemColors={SEQUENTIAL_GREEN}
         tooltipFormatter={(v) => fmtBRLKpi(v)}
         tooltipContentFormatter={(datum, _value, _keyLabel) => {
           const item = data.find((d) => d.marca === datum.name);

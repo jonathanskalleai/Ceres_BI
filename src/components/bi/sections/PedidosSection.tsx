@@ -46,6 +46,7 @@ export default function PedidosSection({ active, dateRange, vendedor, cidade }: 
 
   return (
     <div className="space-y-6 pt-4">
+      {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <KPICard title="Total Pedidos" value={kpis.total.toLocaleString("pt-BR")} icon={ShoppingCart} loading={isLoading}
           previousValue={kpisPrev.total.toLocaleString("pt-BR")} trend={calcTrend(kpis.total, kpisPrev.total)} dataSource="mirror.crm_pedidos · COUNT(*) por pdo_dthpedido" />
@@ -61,7 +62,11 @@ export default function PedidosSection({ active, dateRange, vendedor, cidade }: 
           previousValue={fmtBRLKpi(kpisPrev.valorCancelado)} trend={calcTrend(kpis.valorCancelado, kpisPrev.valorCancelado)} invertTrend dataSource="mirror.crm_pedidos · SUM(pdo_vlrpedido) WHERE cancelado" />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Desempenho section */}
+      <div>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[var(--voux-text-muted)] mb-3">Desempenho</p>
+
+        {/* Hero chart - full width */}
         <ChartCard
           title="Evolucao Mensal do Faturamento"
           description="Receita aprovada e numero de pedidos por mes"
@@ -95,119 +100,128 @@ export default function PedidosSection({ active, dateRange, vendedor, cidade }: 
           </div>
         </ChartCard>
 
-        <ChartCard
-          title="Mix de Pagamento"
-          description="Recurso proprio vs financiado (R$ aprovado)"
-          dataSource="mirror.crm_pedidos · SUM(pdo_vlrrecursoproprio) vs SUM(pdo_vlrfinanciado)"
-          loading={isLoading}
-        >
-          <PieChartWithLabels
-            data={[
-              { id: 'proprio', value: agg.mixPagamento[0]?.value || 0, name: 'Recurso próprio' },
-              { id: 'financiado', value: agg.mixPagamento[1]?.value || 0, name: 'Financiado' }
-            ]}
-            title=""
-            colors={[POSITIVE_COLOR, CHART_COLORS[1]]}
-          />
-        </ChartCard>
+        {/* Status/composition charts - side by side */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <ChartCard
+            title="Mix de Pagamento"
+            description="Recurso proprio vs financiado (R$ aprovado)"
+            dataSource="mirror.crm_pedidos · SUM(pdo_vlrrecursoproprio) vs SUM(pdo_vlrfinanciado)"
+            loading={isLoading}
+          >
+            <PieChartWithLabels
+              data={[
+                { id: 'proprio', value: agg.mixPagamento[0]?.value || 0, name: 'Recurso próprio' },
+                { id: 'financiado', value: agg.mixPagamento[1]?.value || 0, name: 'Financiado' }
+              ]}
+              title=""
+              colors={[POSITIVE_COLOR, CHART_COLORS[1]]}
+            />
+          </ChartCard>
 
-        <ChartCard
-          title="Valor por Situacao do Pedido"
-          description="R$ em cada status (aprovado, cancelado, etc.)"
-          dataSource="mirror.crm_pedidos · pdo_situacaopedido, SUM(pdo_vlrpedido)"
-          loading={isLoading}
-        >
-          <HorizontalBarChart
-            data={agg.porSituacao.map(item => ({
-              name: item.name,
-              valor: item.valor,
-              qtd: item.qtd
-            }))}
-            keys={['valor']}
-            seriesLabels={{ valor: "Valor (R$)" }}
-            title=""
-            tooltipFormatter={(value, d) => `${formatBRL(value)} (${d?.qtd ?? 0} pedidos)`}
-            colors={[CHART_COLORS[2]]}
-          />
-        </ChartCard>
+          <ChartCard
+            title="Valor por Situacao do Pedido"
+            description="R$ em cada status (aprovado, cancelado, etc.)"
+            dataSource="mirror.crm_pedidos · pdo_situacaopedido, SUM(pdo_vlrpedido)"
+            loading={isLoading}
+          >
+            <HorizontalBarChart
+              data={agg.porSituacao.map(item => ({
+                name: item.name,
+                valor: item.valor,
+                qtd: item.qtd
+              }))}
+              keys={['valor']}
+              seriesLabels={{ valor: "Valor (R$)" }}
+              title=""
+              tooltipFormatter={(value, d) => `${formatBRL(value)} (${d?.qtd ?? 0} pedidos)`}
+              colors={[CHART_COLORS[2]]}
+            />
+          </ChartCard>
+        </div>
+      </div>
 
-        <ChartCard
-          title="Ranking Vendedores — Faturamento"
-          description="Top 10 por receita aprovada"
-          dataSource="mirror.crm_pedidos · pdo_vendedor, SUM(pdo_vlrpedido) WHERE aprovado"
-          loading={isLoading}
-        >
-          <HorizontalBarChart
-            data={agg.porVendedor.map(item => ({
-              name: item.name,
-              value: item.value
-            }))}
-            keys={['value']}
-            seriesLabels={{ value: "Faturamento" }}
-            title=""
-            tooltipFormatter={formatBRL}
-            colors={[CHART_COLORS[1]]}
-          />
-        </ChartCard>
+      {/* Rankings section */}
+      <div>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[var(--voux-text-muted)] mb-3">Rankings</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <ChartCard
+            title="Ranking Vendedores — Faturamento"
+            description="Top 10 por receita aprovada"
+            dataSource="mirror.crm_pedidos · pdo_vendedor, SUM(pdo_vlrpedido) WHERE aprovado"
+            loading={isLoading}
+          >
+            <HorizontalBarChart
+              data={agg.porVendedor.map(item => ({
+                name: item.name,
+                value: item.value
+              }))}
+              keys={['value']}
+              seriesLabels={{ value: "Faturamento" }}
+              title=""
+              tooltipFormatter={formatBRL}
+              colors={[CHART_COLORS[0]]}
+            />
+          </ChartCard>
 
-        <ChartCard
-          title="Top Cidades de Entrega"
-          description="Faturamento aprovado por cidade/UF"
-          dataSource="mirror.crm_pedidos · pdo_cidadeufentrega, SUM(pdo_vlrpedido) WHERE aprovado"
-          loading={isLoading}
-        >
-          <HorizontalBarChart
-            data={agg.porCidade.map(item => ({
-              name: item.name,
-              value: item.value
-            }))}
-            keys={['value']}
-            seriesLabels={{ value: "Faturamento" }}
-            title=""
-            tooltipFormatter={formatBRL}
-            colors={[CHART_COLORS[3]]}
-          />
-        </ChartCard>
+          <ChartCard
+            title="Top Cidades de Entrega"
+            description="Faturamento aprovado por cidade/UF"
+            dataSource="mirror.crm_pedidos · pdo_cidadeufentrega, SUM(pdo_vlrpedido) WHERE aprovado"
+            loading={isLoading}
+          >
+            <HorizontalBarChart
+              data={agg.porCidade.map(item => ({
+                name: item.name,
+                value: item.value
+              }))}
+              keys={['value']}
+              seriesLabels={{ value: "Faturamento" }}
+              title=""
+              tooltipFormatter={formatBRL}
+              colors={[CHART_COLORS[3]]}
+            />
+          </ChartCard>
 
-        <ChartCard
-          title="Itens Mais Vendidos — Grupo"
-          description="Valor vendido por grupo de produto (itens dos pedidos)"
-          dataSource="mirror.crm_pedidos · pdo_grupoproduto, SUM(pdo_vlrpedido)"
-          loading={isLoading}
-        >
-          <HorizontalBarChart
-            data={agg.porGrupoProduto.map(item => ({
-              name: item.name,
-              valor: item.valor,
-              qtd: item.qtd
-            }))}
-            keys={['valor']}
-            seriesLabels={{ valor: "Valor Vendido" }}
-            title=""
-            tooltipFormatter={(value, d) => `${formatBRL(value)} (${d?.qtd ?? 0} un)`}
-            colors={[CHART_COLORS[4]]}
-          />
-        </ChartCard>
+          <ChartCard
+            title="Itens Mais Vendidos — Grupo"
+            description="Valor vendido por grupo de produto (itens dos pedidos)"
+            dataSource="mirror.crm_pedidos · pdo_grupoproduto, SUM(pdo_vlrpedido)"
+            loading={isLoading}
+          >
+            <HorizontalBarChart
+              data={agg.porGrupoProduto.map(item => ({
+                name: item.name,
+                valor: item.valor,
+                qtd: item.qtd
+              }))}
+              keys={['valor']}
+              seriesLabels={{ valor: "Valor Vendido" }}
+              title=""
+              tooltipFormatter={(value, d) => `${formatBRL(value)} (${d?.qtd ?? 0} un)`}
+              colors={[CHART_COLORS[4]]}
+            />
+          </ChartCard>
 
-        <ChartCard
-          title="Itens Mais Vendidos — Marca"
-          description="Valor vendido por marca de produto (itens dos pedidos)"
-          dataSource="mirror.crm_pedidos · pdo_marcaproduto, SUM(pdo_vlrpedido)"
-          loading={isLoading}
-        >
-          <HorizontalBarChart
-            data={agg.porMarcaProduto.map(item => ({
-              name: item.name,
-              valor: item.valor,
-              qtd: item.qtd
-            }))}
-            keys={['valor']}
-            seriesLabels={{ valor: "Valor Vendido" }}
-            title=""
-            tooltipFormatter={(value, d) => `${formatBRL(value)} (${d?.qtd ?? 0} un)`}
-            colors={[CHART_COLORS[5]]}
-          />
-        </ChartCard>
+          <ChartCard
+            title="Itens Mais Vendidos — Marca"
+            description="Valor vendido por marca de produto (itens dos pedidos)"
+            dataSource="mirror.crm_pedidos · pdo_marcaproduto, SUM(pdo_vlrpedido)"
+            loading={isLoading}
+          >
+            <HorizontalBarChart
+              data={agg.porMarcaProduto.map(item => ({
+                name: item.name,
+                valor: item.valor,
+                qtd: item.qtd
+              }))}
+              keys={['valor']}
+              seriesLabels={{ valor: "Valor Vendido" }}
+              title=""
+              tooltipFormatter={(value, d) => `${formatBRL(value)} (${d?.qtd ?? 0} un)`}
+              colors={[CHART_COLORS[6]]}
+            />
+          </ChartCard>
+        </div>
       </div>
     </div>
   );

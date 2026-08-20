@@ -1,7 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { fmtBRLKpi } from "@/lib/formatters";
 import { formatMonthYear } from "@/lib/dateUtils";
+import { useContainerWidth } from "@/components/bi/charts/primitives/useContainerWidth";
 import type { WaterfallMensalGanhoPerdidoItem } from "@/types/bi/negociosExpandido";
 
 interface Props {
@@ -14,6 +15,9 @@ const LOSS_COLOR = "#c97565";
 const NET_COLOR = "#8ea3b8";
 
 function WaterfallChart({ data }: { data: WaterfallMensalGanhoPerdidoItem[] }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const containerWidth = useContainerWidth(containerRef as React.RefObject<HTMLElement>);
+
   const { bars, maxAbs } = useMemo(() => {
     const bars: { label: string; value: number; start: number; end: number; type: "ganho" | "perda" | "liquido" }[] = [];
     let acc = 0;
@@ -46,35 +50,39 @@ function WaterfallChart({ data }: { data: WaterfallMensalGanhoPerdidoItem[] }) {
   const padX = 52;
   const padY = 10;
   const plotH = svgH - padY - 20;
-  const svgW = Math.max(bars.length * 64, 300);
+  const svgW = Math.max(containerWidth - padX - 8, 300);
   const getY = (v: number) => padY + plotH / 2 - (v / maxAbs) * (plotH / 2 - 8);
 
   return (
-    <div className="overflow-x-auto">
-      <svg
-        width={svgW + padX}
-        height={svgH}
-        style={{ display: "block", fontFamily: "var(--voux-font-mono, monospace)" }}
-      >
-        <line x1={padX} y1={getY(0)} x2={svgW + padX} y2={getY(0)} stroke="var(--voux-gridline,#e1e0d9)" strokeWidth={1} />
-        <text x={padX - 4} y={getY(0) + 4} textAnchor="end" fontSize={9} fill="var(--voux-text-muted)">0</text>
+    <div ref={containerRef} style={{ width: "100%", minWidth: 0 }}>
+      {containerWidth > 0 && (
+        <svg
+          width="100%"
+          height={svgH}
+          viewBox={`0 0 ${svgW + padX} ${svgH}`}
+          preserveAspectRatio="xMidYMid meet"
+          style={{ display: "block", fontFamily: "var(--voux-font-mono, monospace)" }}
+        >
+          <line x1={padX} y1={getY(0)} x2={svgW + padX} y2={getY(0)} stroke="var(--voux-gridline,#e1e0d9)" strokeWidth={1} />
+          <text x={padX - 4} y={getY(0) + 4} textAnchor="end" fontSize={9} fill="var(--voux-text-muted)">0</text>
 
-        {bars.map((bar, i) => {
-          const barX = padX + (svgW / bars.length) * i + 8;
-          const barW = Math.max((svgW / bars.length) - 16, 12);
-          const yTop = getY(Math.max(bar.start, bar.end));
-          const barH = Math.max(Math.abs(bar.end - bar.start), 4);
-          const actualY = bar.end >= bar.start ? yTop : getY(bar.start);
-          const color = bar.type === "ganho" ? GAIN_COLOR : bar.type === "perda" ? LOSS_COLOR : NET_COLOR;
+          {bars.map((bar, i) => {
+            const barW = Math.max((svgW / bars.length) - 12, 8);
+            const barX = padX + (svgW / bars.length) * i + (svgW / bars.length - barW) / 2;
+            const yTop = getY(Math.max(bar.start, bar.end));
+            const barH = Math.max(Math.abs(bar.end - bar.start), 4);
+            const actualY = bar.end >= bar.start ? yTop : getY(bar.start);
+            const color = bar.type === "ganho" ? GAIN_COLOR : bar.type === "perda" ? LOSS_COLOR : NET_COLOR;
 
-          return (
-            <g key={i}>
-              <rect x={barX} y={actualY} width={barW} height={barH} fill={color} opacity={0.85} rx={3} />
-              <text x={barX + barW / 2} y={svgH - 2} textAnchor="middle" fontSize={9} fill="var(--voux-text-muted)">{bar.label}</text>
-            </g>
-          );
-        })}
-      </svg>
+            return (
+              <g key={i}>
+                <rect x={barX} y={actualY} width={barW} height={barH} fill={color} opacity={0.85} rx={3} />
+                <text x={barX + barW / 2} y={svgH - 2} textAnchor="middle" fontSize={9} fill="var(--voux-text-muted)">{bar.label}</text>
+              </g>
+            );
+          })}
+        </svg>
+      )}
     </div>
   );
 }

@@ -9,9 +9,9 @@ interface Props {
   loading?: boolean;
 }
 
-const SEQUENTIAL_BLUE = [
-  "#2a78d6", "#3987e5", "#5598e7", "#6da7ec",
-  "#86b6ef", "#9ec5f4", "#b7d3f6", "#cde2fb",
+const SEQUENTIAL_SLATE = [
+  "#4a6b8a", "#5d7d9c", "#708fae", "#8ea3b8",
+  "#a4b7c8", "#bacbd8", "#d0dfe8", "#e5eff5",
 ];
 
 export function TicketMedioPorFormaEntrada({ data, loading }: Props) {
@@ -39,7 +39,7 @@ export function TicketMedioPorFormaEntrada({ data, loading }: Props) {
         data={chartData}
         keys={["ticket_medio"]}
         height={chartH}
-        itemColors={SEQUENTIAL_BLUE}
+        itemColors={SEQUENTIAL_SLATE}
         tooltipFormatter={(v) => fmtBRLKpi(v)}
         tooltipContentFormatter={(datum, _value, _keyLabel) => {
           const item = data.find((d) => d.forma === datum.name);

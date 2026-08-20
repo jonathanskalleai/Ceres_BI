@@ -10,9 +10,9 @@ interface Props {
   loading?: boolean;
 }
 
-const SEQUENTIAL_BLUE = [
-  "#2a78d6", "#3987e5", "#5598e7", "#6da7ec",
-  "#86b6ef", "#9ec5f4", "#b7d3f6", "#cde2fb",
+const SEQUENTIAL_AMBER = [
+  "#8c5e1a", "#a67322", "#bf8a2e", "#d4a05a",
+  "#e0b574", "#ebc98e", "#f2dba8", "#f8edc3",
 ];
 
 export function ValorPorCondicaoPagamento({ data, loading }: Props) {
@@ -57,7 +57,7 @@ export function ValorPorCondicaoPagamento({ data, loading }: Props) {
         data={chartData}
         keys={["valor_total"]}
         height={chartH}
-        itemColors={SEQUENTIAL_BLUE}
+        itemColors={SEQUENTIAL_AMBER}
         tooltipFormatter={(v) => fmtBRLKpi(v)}
         tooltipContentFormatter={(datum, _value, _keyLabel) => {
           const item = data.find((d) => d.condicao === datum.name);

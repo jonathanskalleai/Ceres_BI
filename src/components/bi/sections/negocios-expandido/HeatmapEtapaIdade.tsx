@@ -1,6 +1,7 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { fmtBRLKpi } from "@/lib/formatters";
+import { useContainerWidth } from "@/components/bi/charts/primitives/useContainerWidth";
 import type { HeatmapEtapaIdadeItem } from "@/types/bi/negociosExpandido";
 
 interface Props {
@@ -8,10 +9,10 @@ interface Props {
   loading?: boolean;
 }
 
-const SEQUENTIAL_BLUE = [
-  "#cde2fb", "#b7d3f6", "#9ec5f4", "#86b6ef",
-  "#6da7ec", "#5598e7", "#3987e5", "#2a78d6",
-  "#256abf", "#1c5cab",
+const HEATMAP_SCALE = [
+  "#f8edc3", "#f2dba8", "#ebc98e", "#e0b574",
+  "#d4a05a", "#bf8a2e", "#a67322", "#8c5e1a",
+  "#734b14", "#5a3a0e",
 ];
 
 const FAIXAS_ORDEM = [1, 2, 3, 4, 5];
@@ -24,13 +25,16 @@ const FAIXA_LABELS: Record<number, string> = {
 };
 
 function getColor(value: number, max: number): string {
-  if (max === 0 || value === 0) return "#f0efed";
+  if (max === 0 || value === 0) return "var(--voux-card-border)";
   const ratio = Math.log1p(value) / Math.log1p(max);
-  const idx = Math.min(Math.floor(ratio * SEQUENTIAL_BLUE.length), SEQUENTIAL_BLUE.length - 1);
-  return SEQUENTIAL_BLUE[idx];
+  const idx = Math.min(Math.floor(ratio * HEATMAP_SCALE.length), HEATMAP_SCALE.length - 1);
+  return HEATMAP_SCALE[idx];
 }
 
 export function HeatmapEtapaIdade({ data, loading }: Props) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const containerWidth = useContainerWidth(containerRef as React.RefObject<HTMLElement>);
+
   const { etapas, rows, maxValor } = useMemo(() => {
     const etapaSet = new Set<string>();
     const map = new Map<string, Map<number, HeatmapEtapaIdadeItem>>();
@@ -53,10 +57,9 @@ export function HeatmapEtapaIdade({ data, loading }: Props) {
 
   if (!etapas.length) return null;
 
-  const cellSize = 72;
   const labelW = 140;
+  const cellSize = Math.max(Math.min(72, (containerWidth - labelW) / Math.max(etapas.length, 1) - 4), 40);
   const colW = cellSize + 4;
-  const chartW = labelW + etapas.length * colW;
 
   return (
     <ChartCard
@@ -65,71 +68,73 @@ export function HeatmapEtapaIdade({ data, loading }: Props) {
       loading={loading}
       height={Math.min(400, Math.max(220, FAIXAS_ORDEM.length * cellSize + 80))}
     >
-      <div className="overflow-x-auto">
-        <div style={{ width: chartW, position: "relative" }}>
-          {/* Header row: etapa labels */}
-          <div className="flex">
-            <div style={{ width: labelW, flexShrink: 0 }} />
-            {etapas.map((etapa) => (
-              <div
-                key={etapa}
-                style={{ width: colW }}
-                className="px-1 pb-1 text-center"
-              >
-                <span
-                  className="block truncate text-[10px] font-medium"
-                  style={{ color: "var(--voux-text-muted)", maxWidth: cellSize }}
-                  title={etapa}
+      <div ref={containerRef} style={{ width: "100%", minWidth: 0 }}>
+        {containerWidth > 0 && (
+          <div style={{ width: "100%", position: "relative", minWidth: 0 }}>
+            {/* Header row: etapa labels */}
+            <div className="flex">
+              <div style={{ width: labelW, flexShrink: 0 }} />
+              {etapas.map((etapa) => (
+                <div
+                  key={etapa}
+                  style={{ width: colW }}
+                  className="px-1 pb-1 text-center"
                 >
-                  {etapa}
-                </span>
+                  <span
+                    className="block truncate text-[10px] font-medium"
+                    style={{ color: "var(--voux-text-muted)", maxWidth: cellSize }}
+                    title={etapa}
+                  >
+                    {etapa}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Data rows */}
+            {FAIXAS_ORDEM.map((ordem) => (
+              <div key={ordem} className="flex items-center">
+                <div style={{ width: labelW, flexShrink: 0 }} className="pr-2">
+                  <span className="text-[10px]" style={{ color: "var(--voux-text-muted)" }}>
+                    {FAIXA_LABELS[ordem]}
+                  </span>
+                </div>
+                {etapas.map((etapa) => {
+                  const item = rows.get(etapa)?.get(ordem);
+                  const color = item ? getColor(item.valor, maxValor) : "var(--voux-card-border)";
+                  const label = item ? fmtBRLKpi(item.valor) : "—";
+
+                  return (
+                    <div
+                      key={`${etapa}-${ordem}`}
+                      style={{
+                        width: cellSize,
+                        height: cellSize - 4,
+                        background: color,
+                        borderRadius: 6,
+                        marginRight: 4,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        cursor: item ? "default" : "default",
+                      }}
+                      title={item ? `${etapa} | ${FAIXA_LABELS[ordem]}\n${fmtBRLKpi(item.valor)} | ${item.negocios} negócios` : ""}
+                    >
+                      {item && item.valor > 0 && (
+                        <span
+                          className="text-[9px] font-semibold tabular-nums"
+                          style={{ color: item.valor > maxValor * 0.5 ? "#fff" : "var(--voux-text-primary)" }}
+                        >
+                          {label}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             ))}
           </div>
-
-          {/* Data rows */}
-          {FAIXAS_ORDEM.map((ordem) => (
-            <div key={ordem} className="flex items-center">
-              <div style={{ width: labelW, flexShrink: 0 }} className="pr-2">
-                <span className="text-[10px]" style={{ color: "var(--voux-text-muted)" }}>
-                  {FAIXA_LABELS[ordem]}
-                </span>
-              </div>
-              {etapas.map((etapa) => {
-                const item = rows.get(etapa)?.get(ordem);
-                const color = item ? getColor(item.valor, maxValor) : "#f0efed";
-                const label = item ? fmtBRLKpi(item.valor) : "—";
-
-                return (
-                  <div
-                    key={`${etapa}-${ordem}`}
-                    style={{
-                      width: cellSize,
-                      height: cellSize - 4,
-                      background: color,
-                      borderRadius: 6,
-                      marginRight: 4,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      cursor: item ? "default" : "default",
-                    }}
-                    title={item ? `${etapa} | ${FAIXA_LABELS[ordem]}\n${fmtBRLKpi(item.valor)} | ${item.negocios} negócios` : ""}
-                  >
-                    {item && item.valor > 0 && (
-                      <span
-                        className="text-[9px] font-semibold tabular-nums"
-                        style={{ color: item.valor > maxValor * 0.5 ? "#fff" : "var(--voux-text-primary)" }}
-                      >
-                        {label}
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ))}
-        </div>
+        )}
       </div>
     </ChartCard>
   );

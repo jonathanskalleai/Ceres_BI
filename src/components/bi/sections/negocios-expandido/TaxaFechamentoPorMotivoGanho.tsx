@@ -9,11 +9,9 @@ interface Props {
   loading?: boolean;
 }
 
-// sequential blue, ordered by position (no ranking shift)
-const SEQUENTIAL_BLUE = [
-  "#2a78d6", "#3987e5", "#5598e7", "#6da7ec",
-  "#86b6ef", "#9ec5f4", "#b7d3f6", "#cde2fb",
-  "#d4e6fc", "#e0f0ff",
+const SEQUENTIAL_AMBER = [
+  "#8c5e1a", "#a67322", "#bf8a2e", "#d4a05a",
+  "#e0b574", "#ebc98e", "#f2dba8", "#f8edc3",
 ];
 
 export function TaxaFechamentoPorMotivoGanho({ data, loading }: Props) {
@@ -36,7 +34,7 @@ export function TaxaFechamentoPorMotivoGanho({ data, loading }: Props) {
         data={chartData}
         keys={["valor_ganho"]}
         height={chartH}
-        itemColors={SEQUENTIAL_BLUE}
+        itemColors={SEQUENTIAL_AMBER}
         tooltipFormatter={(v) => fmtBRLKpi(v)}
         tooltipContentFormatter={(datum, _value, _keyLabel) => {
           const item = data.find((d) => d.motivo === datum.name);
