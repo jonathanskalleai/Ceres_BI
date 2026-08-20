@@ -16,6 +16,9 @@ LANGUAGE sql
 STABLE
 SECURITY DEFINER
 SET search_path = public, mirror
+-- O recorte "Tudo" agrega todo o histórico de negócios, pedidos e ações.
+-- O gateway REST usa um timeout menor que essa consulta analítica precisa.
+SET statement_timeout = '60s'
 AS $$
   WITH dados_acoes AS (
     SELECT public.rpc_acoes_bi_periodo(
