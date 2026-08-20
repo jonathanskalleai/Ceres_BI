@@ -1,6 +1,6 @@
 /**
- * VouxBarH — Barra horizontal pill com gradiente.
- * Adaptado para funcionar bem em light E dark mode.
+ * VouxBarH — Barra horizontal pill, cor sólida.
+ * Labels nunca cortam. labelW se ajusta ao texto mais longo.
  */
 import { useElementWidth } from './useElementWidth'
 import { fmtBRLCompact } from './format'
@@ -16,18 +16,18 @@ interface VouxBarHProps {
   color: string
   labelW?: number
   valueFormatter?: (v: number) => string
-  /** Limitar a N itens exibidos (para cards pequenos) */
   maxItems?: number
 }
 
-const ROW_H = 28
+const ROW_H = 30
 const GAP = 6
 const PAD_TOP = 4
+const BAR_H = 8
 
 export function VouxBarH({
   data: rawData,
   color,
-  labelW: labelWProp = 130,
+  labelW: labelWProp,
   valueFormatter = fmtBRLCompact,
   maxItems,
 }: VouxBarHProps) {
@@ -37,12 +37,14 @@ export function VouxBarH({
   const h = data.length * (ROW_H + GAP) + PAD_TOP
   const max = Math.max(...data.map((d) => d.value), 1)
 
-  // Responsive label width: shrink on narrow containers
-  const labelW = Math.min(labelWProp, Math.max(80, w * 0.3))
+  // Dynamic labelW: calculate based on longest label text (~6.5px per char at 12px font)
+  const longestLabel = Math.max(...data.map(d => d.label.length), 4)
+  const calculatedLabelW = Math.min(longestLabel * 6.8 + 12, w * 0.45)
+  const labelW = labelWProp ?? Math.max(90, calculatedLabelW)
+
   const barX = labelW + 10
-  // Reserve space for the longest value text
   const longestValue = Math.max(...data.map(d => valueFormatter(d.value).length), 4)
-  const valueW = Math.max(52, longestValue * 7 + 12)
+  const valueW = Math.max(56, longestValue * 7.2 + 12)
   const barMaxW = Math.max(30, w - barX - valueW - 8)
 
   return (
@@ -67,7 +69,7 @@ export function VouxBarH({
 
             return (
               <g key={i}>
-                {/* label */}
+                {/* label — nunca trunca */}
                 <text
                   x={labelW}
                   y={y + ROW_H / 2 + 4}
@@ -76,26 +78,26 @@ export function VouxBarH({
                   fontSize={12}
                   fill="var(--voux-chart-axis)"
                 >
-                  {d.label.length > 18 ? d.label.slice(0, 17) + '…' : d.label}
+                  {d.label}
                 </text>
 
                 {/* track */}
                 <rect
                   x={barX}
-                  y={y + ROW_H / 2 - 3}
+                  y={y + ROW_H / 2 - BAR_H / 2}
                   width={barMaxW}
-                  height={6}
-                  rx={3}
+                  height={BAR_H}
+                  rx={BAR_H / 2}
                   fill="var(--voux-chart-grid)"
                 />
 
-                {/* bar — COR SÓLIDA, sem degradê */}
+                {/* bar */}
                 <rect
                   x={barX}
-                  y={y + ROW_H / 2 - 3}
+                  y={y + ROW_H / 2 - BAR_H / 2}
                   width={bw}
-                  height={6}
-                  rx={3}
+                  height={BAR_H}
+                  rx={BAR_H / 2}
                   fill={itemColor}
                 />
 
@@ -105,7 +107,7 @@ export function VouxBarH({
                   y={y + ROW_H / 2 + 4}
                   fontFamily="var(--voux-font-mono)"
                   fontSize={11}
-                  fontWeight={500}
+                  fontWeight={600}
                   fill="var(--voux-text-primary, var(--voux-text))"
                   letterSpacing="0.02em"
                 >

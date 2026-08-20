@@ -34,9 +34,6 @@ const ValorPorCidade = lazy(() =>
 const TaxaPerdaPorBanco = lazy(() =>
   import("./negocios-expandido/TaxaPerdaPorBanco").then((m) => ({ default: m.TaxaPerdaPorBanco })),
 );
-const PalavrasChaveObservacao = lazy(() =>
-  import("./negocios-expandido/PalavrasChaveObservacao").then((m) => ({ default: m.PalavrasChaveObservacao })),
-);
 const TicketMedioPorFormaEntrada = lazy(() =>
   import("./negocios-expandido/TicketMedioPorFormaEntrada").then((m) => ({ default: m.TicketMedioPorFormaEntrada })),
 );
@@ -191,16 +188,11 @@ export default function NegociosExpandidoSection({ active, dateRange, vendedor, 
         )}
       </div>
 
-      {/* Row 8: Canais — 2 col */}
+      {/* Row 8: Canais */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {has(data?.ticketMedioPorFormaEntrada) && (
           <Suspense fallback={<ChartSkeleton />}>
             <TicketMedioPorFormaEntrada data={data!.ticketMedioPorFormaEntrada!} loading={isLoading} />
-          </Suspense>
-        )}
-        {has(data?.palavrasChaveObservacao) && (
-          <Suspense fallback={<ChartSkeleton />}>
-            <PalavrasChaveObservacao data={data!.palavrasChaveObservacao!} loading={isLoading} />
           </Suspense>
         )}
       </div>
