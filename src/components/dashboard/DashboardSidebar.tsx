@@ -50,6 +50,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "BI ANALYTICS",
     items: [
       { id: "dashboard-bi", label: "Dashboard BI", icon: BarChart3, num: "09" },
+      { id: "desempenho",   label: "Desempenho Vendas", icon: BarChart3, num: "09b", isRoute: true, routePath: "/bi/desempenho" },
     ],
   },
   {
