@@ -6,7 +6,17 @@ export interface DesempenhoKPIs {
   valorRecursoProprio: number;
   percentFinanciado: number;
   valorPerdido: number;
+  qtdPerdido?: number;
   pipelineAberto: number;
+}
+
+export interface DesempenhoMensalItem {
+  mes: number;
+  mesNome: string;
+  qtdGanho: number;
+  valorGanho: number;
+  qtdPerda: number;
+  valorPerda: number;
 }
 
 export interface DesempenhoVendedorItem {
@@ -78,6 +88,7 @@ export interface DesempenhoResumoAnualItem {
 
 export interface DesempenhoVendasData {
   kpis: DesempenhoKPIs;
+  serieMensal: DesempenhoMensalItem[];
   rankingVendedores: DesempenhoVendedorItem[];
   rankingProdutos: DesempenhoProdutoItem[];
   rankingCidades: DesempenhoCidadeItem[];

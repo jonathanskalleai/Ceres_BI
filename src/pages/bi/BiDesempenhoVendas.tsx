@@ -13,7 +13,7 @@ import {
 import { toISODate, formatBRL } from "@/lib/dateUtils";
 import { useDesempenhoVendas } from "@/hooks/bi/useDesempenhoVendas";
 import { DesempenhoTableCard } from "@/components/bi/desempenho/DesempenhoTableCard";
-import { DesempenhoDonutCard } from "@/components/bi/desempenho/DesempenhoDonutCard";
+import { DesempenhoDualLineChart } from "@/components/bi/desempenho/DesempenhoDualLineChart";
 import { DesempenhoFilterBar } from "@/components/bi/desempenho/DesempenhoFilterBar";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -79,7 +79,7 @@ export default function BiDesempenhoVendas() {
               className="text-[10px] font-bold tracking-[0.2em] uppercase px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
               style={{ fontFamily: "var(--voux-font-mono)" }}
             >
-              NOVO DASHBOARD · VISÃO INTEGRADA
+              DASHBOARD DE DESEMPENHO · VISÃO CONSOLIDADA
             </span>
           </div>
           <h1
@@ -89,7 +89,7 @@ export default function BiDesempenhoVendas() {
             Desempenho de Vendas &amp; Resultados
           </h1>
           <p className="text-xs md:text-sm text-[var(--voux-text-muted)] mt-0.5">
-            Métricas consolidadas por Vendedor, Produto, Região, Origem e Financiamento com cruzamento de dados.
+            Ganhos por pedidos aprovados, perdas de negócios, produtos, canais e instituições financeiras.
           </p>
         </div>
       </div>
@@ -114,11 +114,11 @@ export default function BiDesempenhoVendas() {
 
       {/* Ribbon de KPIs Principais */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
-        {/* KPI 1: Faturamento Total */}
+        {/* KPI 1: Faturamento Ganhos */}
         <div className="rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4 shadow-sm">
           <div className="flex items-center justify-between text-[var(--voux-text-muted)] mb-1">
             <span className="text-[10px] font-bold tracking-wider uppercase" style={{ fontFamily: "var(--voux-font-mono)" }}>
-              Faturamento
+              Faturamento Ganho
             </span>
             <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
           </div>
@@ -134,11 +134,11 @@ export default function BiDesempenhoVendas() {
           )}
         </div>
 
-        {/* KPI 2: Quantidade de Pedidos */}
+        {/* KPI 2: Quantidade de Pedidos Ganhos */}
         <div className="rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4 shadow-sm">
           <div className="flex items-center justify-between text-[var(--voux-text-muted)] mb-1">
             <span className="text-[10px] font-bold tracking-wider uppercase" style={{ fontFamily: "var(--voux-font-mono)" }}>
-              Vendas Concluídas
+              Pedidos Ganhos
             </span>
             <ShoppingCart className="h-4 w-4 text-primary" />
           </div>
@@ -149,7 +149,7 @@ export default function BiDesempenhoVendas() {
               <p className="text-[18px] md:text-[20px] font-bold font-mono text-[var(--voux-text-primary)]">
                 {data.kpis.totalPedidos.toLocaleString("pt-BR")} <span className="text-xs font-normal">pedidos</span>
               </p>
-              <p className="text-[10px] text-[var(--voux-text-muted)] mt-0.5">Volume de ativações</p>
+              <p className="text-[10px] text-[var(--voux-text-muted)] mt-0.5">Ativações no período</p>
             </div>
           )}
         </div>
@@ -169,28 +169,28 @@ export default function BiDesempenhoVendas() {
               <p className="text-[18px] md:text-[20px] font-bold font-mono text-[var(--voux-text-primary)]">
                 {formatBRL(data.kpis.ticketMedio)}
               </p>
-              <p className="text-[10px] text-[var(--voux-text-muted)] mt-0.5">Valor médio por pedido</p>
+              <p className="text-[10px] text-[var(--voux-text-muted)] mt-0.5">Por pedido concluído</p>
             </div>
           )}
         </div>
 
-        {/* KPI 4: % Financiado */}
+        {/* KPI 4: Perdas no Período */}
         <div className="rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4 shadow-sm">
           <div className="flex items-center justify-between text-[var(--voux-text-muted)] mb-1">
             <span className="text-[10px] font-bold tracking-wider uppercase" style={{ fontFamily: "var(--voux-font-mono)" }}>
-              % Financiado
+              Negócios Perdidos
             </span>
-            <CreditCard className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            <XCircle className="h-4 w-4 text-rose-500" />
           </div>
           {isLoading ? (
             <Skeleton className="h-7 w-20 bg-[var(--voux-skeleton)]" />
           ) : (
             <div>
-              <p className="text-[18px] md:text-[20px] font-bold font-mono text-[var(--voux-text-primary)]">
-                {data.kpis.percentFinanciado.toFixed(1)}%
+              <p className="text-[18px] md:text-[20px] font-bold font-mono text-rose-600 dark:text-rose-400">
+                {formatBRL(data.kpis.valorPerdido)}
               </p>
               <p className="text-[10px] text-[var(--voux-text-muted)] mt-0.5">
-                {formatBRL(data.kpis.valorFinanciado)} via banco
+                {data.kpis.qtdPerdido ?? 0} negócios perdidos
               </p>
             </div>
           )}
@@ -208,7 +208,7 @@ export default function BiDesempenhoVendas() {
             <Skeleton className="h-7 w-24 bg-[var(--voux-skeleton)]" />
           ) : topVendedor ? (
             <div>
-              <p className="text-[14px] font-bold text-[var(--voux-text-primary)] truncate uppercase" title={topVendedor.name}>
+              <p className="text-[13px] font-bold text-[var(--voux-text-primary)] truncate uppercase" title={topVendedor.name}>
                 {topVendedor.name}
               </p>
               <p className="text-[11px] font-mono font-semibold text-emerald-700 dark:text-emerald-400 mt-0.5">
@@ -232,7 +232,7 @@ export default function BiDesempenhoVendas() {
             <Skeleton className="h-7 w-24 bg-[var(--voux-skeleton)]" />
           ) : topProduto ? (
             <div>
-              <p className="text-[13px] font-bold text-[var(--voux-text-primary)] truncate" title={topProduto.name}>
+              <p className="text-[12px] font-bold text-[var(--voux-text-primary)] truncate" title={topProduto.name}>
                 {topProduto.name}
               </p>
               <p className="text-[11px] font-mono font-semibold text-emerald-700 dark:text-emerald-400 mt-0.5">
@@ -245,7 +245,16 @@ export default function BiDesempenhoVendas() {
         </div>
       </div>
 
-      {/* Grid Principal 2x2 — Estrutura Idêntica ao Mock de Referência */}
+      {/* Gráfico de Linhas Ganhos vs Perdas (Eixos Independentes) — Posicionado Logo Após os Cards */}
+      {data.serieMensal.length > 0 && (
+        <DesempenhoDualLineChart
+          data={data.serieMensal}
+          ano={selectedAno || currentYear}
+          loading={isLoading}
+        />
+      )}
+
+      {/* Grid Principal 2x2 — Tabelas no Padrão do Mock (Qtd, %, Ticket Médio com barra, Valor) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Card 1: POR VENDEDOR -> Quem vende mais */}
         <DesempenhoTableCard
@@ -254,10 +263,10 @@ export default function BiDesempenhoVendas() {
           firstColumnHeader="VENDEDOR"
           rows={data.rankingVendedores}
           loading={isLoading}
-          maxDisplayRows={8}
+          maxDisplayRows={10}
         />
 
-        {/* Card 2: POR PLANO / PRODUTO -> Planos e Produtos mais vendidos */}
+        {/* Card 2: POR PRODUTO & GRUPO -> Produtos mais vendidos */}
         <DesempenhoTableCard
           eyebrow="POR PRODUTO &amp; GRUPO"
           title="Produtos mais vendidos"
@@ -271,46 +280,52 @@ export default function BiDesempenhoVendas() {
             valor: p.valor,
           }))}
           loading={isLoading}
-          maxDisplayRows={8}
+          maxDisplayRows={10}
         />
 
-        {/* Card 3: POR BAIRRO / CIDADE -> Bairros e Cidades com mais ativações */}
+        {/* Card 3: POR CIDADE & FILIAL -> Cidades com mais ativações */}
         <DesempenhoTableCard
           eyebrow="POR CIDADE &amp; FILIAL"
           title="Cidades com mais ativações"
           firstColumnHeader="CIDADE / FILIAL"
           rows={data.rankingCidades}
           loading={isLoading}
-          maxDisplayRows={8}
+          maxDisplayRows={10}
         />
 
-        {/* Card 4: TIPO DE PESSOA / ORIGEM -> Ativações por tipo de pessoa / Origem */}
-        <DesempenhoDonutCard
+        {/* Card 4: ORIGEM DO LEAD -> Ativações por origem de entrada em Tabela Analítica */}
+        <DesempenhoTableCard
           eyebrow="ORIGEM DO LEAD &amp; CANAL"
           title="Ativações por origem de entrada"
-          items={data.origensLead.map((o) => ({
+          firstColumnHeader="ORIGEM / CANAL"
+          rows={data.origensLead.map((o) => ({
             name: o.name,
-            qtd: o.qtdGanhos || o.qtd,
-            valor: o.valor,
+            qtd: o.qtd,
             percent: o.percent,
+            ticketMedio: o.ticketMedio,
+            valor: o.valor,
           }))}
           loading={isLoading}
+          maxDisplayRows={10}
         />
       </div>
 
-      {/* Segunda Linha: Financiamento/Bancos & Perdas/Concorrência */}
+      {/* Terceira Linha: Financiamento/Bancos & Inteligência Competitiva (Perdas) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Card 5: MODALIDADE DE PAGAMENTO -> Bancos Financiadores */}
-        <DesempenhoDonutCard
+        {/* Card 5: MODALIDADE DE PAGAMENTO -> Bancos Financiadores em Tabela Analítica */}
+        <DesempenhoTableCard
           eyebrow="MODALIDADE &amp; BANCOS"
           title="Vendas por instituição financeira"
-          items={data.financiamentoBancos.map((b) => ({
+          firstColumnHeader="INSTITUIÇÃO / BANCO"
+          rows={data.financiamentoBancos.map((b) => ({
             name: b.name,
             qtd: b.qtd,
-            valor: b.valor,
             percent: b.percent,
+            ticketMedio: b.ticketMedio,
+            valor: b.valor,
           }))}
           loading={isLoading}
+          maxDisplayRows={8}
         />
 
         {/* Card 6: MOTIVOS DE PERDA & CONCORRENTES */}
@@ -327,7 +342,7 @@ export default function BiDesempenhoVendas() {
             valor: m.valor,
           }))}
           loading={isLoading}
-          maxDisplayRows={6}
+          maxDisplayRows={8}
         />
       </div>
 

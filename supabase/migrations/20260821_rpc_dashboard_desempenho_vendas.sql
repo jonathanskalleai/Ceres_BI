@@ -1,8 +1,8 @@
--- Migration: RPC para o Novo Dashboard de Desempenho de Vendas
+-- Migration: RPC para o Novo Dashboard de Desempenho de Vendas (v2 - Canon Ações & Pedidos)
 -- Autor: Ceres BI Team
 -- Data: 2026-08-21
--- Descrição: Agrega dados enriquecidos com cruzamentos entre Pedidos, Negócios, Itens, Usuários e Clientes.
---            Retorna métricas no padrão analítico: QTD, %, TICKET MÉDIO e VALOR TOTAL com visão Anual e filtros.
+-- Descrição: Alinha regras de Ganhos (pedidos aprovados em negócios ganhos sem repasse) e Perdas (negócios perdidos sem repasse).
+--            Adiciona série mensal comparativa Ganho vs Perda com eixos independentes e produtos limpos.
 
 CREATE OR REPLACE FUNCTION public.rpc_desempenho_vendas_bi(
   p_from date DEFAULT NULL,
@@ -21,37 +21,20 @@ DECLARE
   result json;
   v_from date;
   v_to date;
+  v_target_year integer;
 BEGIN
-  -- Definir intervalo de data considerando filtro de ano ou dateRange
+  -- Definir ano alvo e intervalo de datas
   IF p_ano IS NOT NULL THEN
+    v_target_year := p_ano;
     v_from := make_date(p_ano, 1, 1);
     v_to := make_date(p_ano, 12, 31);
   ELSE
+    v_target_year := EXTRACT(YEAR FROM COALESCE(p_from, CURRENT_DATE))::integer;
     v_from := COALESCE(p_from, make_date(EXTRACT(YEAR FROM CURRENT_DATE)::integer, 1, 1));
     v_to := COALESCE(p_to, CURRENT_DATE);
   END IF;
 
-  WITH base_pedidos AS (
-    SELECT
-      p.pdo_codigointerno,
-      p.ngo_numero,
-      p.pdo_situacaopedido,
-      COALESCE(p.pdo_vlrpedido, 0) AS pdo_vlrpedido,
-      COALESCE(p.pdo_vlrfinanciado, 0) AS pdo_vlrfinanciado,
-      COALESCE(p.pdo_vlrrecursoproprio, 0) AS pdo_vlrrecursoproprio,
-      p.pdo_dthpedido,
-      EXTRACT(YEAR FROM p.pdo_dthpedido)::integer AS ano_pedido,
-      COALESCE(NULLIF(TRIM(p.pdo_vendedor), ''), 'Não Informado') AS pdo_vendedor,
-      COALESCE(NULLIF(TRIM(p.pdo_cidadeufentrega), ''), NULLIF(TRIM(p.emp_cidade), ''), 'Não Informada') AS cidade_entrega,
-      COALESCE(NULLIF(TRIM(p.pdo_financiamentobanco), ''), 'Não Informado') AS pdo_banco,
-      LOWER(COALESCE(p.pdo_situacaopedido, '')) LIKE '%aprovado%' AS is_aprovado,
-      LOWER(COALESCE(p.pdo_situacaopedido, '')) LIKE '%cancel%' AS is_cancelado
-    FROM mirror.crm_pedidos p
-    WHERE p.pdo_dthpedido::date BETWEEN v_from AND v_to
-      AND (p_vendedor IS NULL OR p.pdo_vendedor ILIKE '%' || p_vendedor || '%')
-      AND (p_cidade IS NULL OR p.pdo_cidadeufentrega ILIKE '%' || p_cidade || '%' OR p.emp_cidade ILIKE '%' || p_cidade || '%')
-  ),
-  dedup_negocios AS (
+  WITH negocios_canonicos AS (
     SELECT DISTINCT ON (n.ngo_numero)
       n.ngo_numero,
       n.ngo_conclusao,
@@ -60,66 +43,161 @@ BEGIN
       COALESCE(NULLIF(TRIM(n.ngo_campanha), ''), 'Sem Campanha') AS ngo_campanha,
       COALESCE(NULLIF(TRIM(n.ngo_motivoperda), ''), 'Não Informado') AS ngo_motivoperda,
       COALESCE(NULLIF(TRIM(n.mpp_produtoperdamarca), ''), 'Não Informada') AS mpp_produtoperdamarca,
-      COALESCE(NULLIF(TRIM(n.cli_tipocliente), ''), 'Não Informado') AS cli_tipocliente,
+      COALESCE(NULLIF(TRIM(n.cli_tipocliente), ''), 'Produtor Rural') AS cli_tipocliente,
       COALESCE(NULLIF(TRIM(n.prd_condicaoproduto), ''), 'Novo') AS prd_condicaoproduto,
-      n.ngo_datafechamento,
-      n.ngo_datacadastro,
+      COALESCE(NULLIF(TRIM(n.prd_dscproduto), ''), 'Produto Sem Descrição') AS prd_dscproduto,
+      COALESCE(NULLIF(TRIM(n.prd_marcaproduto), ''), 'Outras') AS prd_marcaproduto,
+      COALESCE(NULLIF(TRIM(n.prd_grupoproduto), ''), 'Geral') AS prd_grupoproduto,
+      n.ngo_vendedores,
+      n.cli_cidade,
+      n.emp_cidade,
+      n.ngo_funil,
+      COALESCE(n.ngo_datafechamento, n.ngo_datacadastro) AS dth_evento_negocio,
       CASE
         WHEN LOWER(COALESCE(n.ngo_conclusao, '')) LIKE '%ganh%' THEN 'ganho'
         WHEN LOWER(COALESCE(n.ngo_conclusao, '')) LIKE '%perd%' THEN 'perdido'
         ELSE 'andamento'
       END AS status_class
     FROM mirror.crm_negocios n
-    WHERE (n.ngo_datafechamento::date BETWEEN v_from AND v_to OR (n.ngo_datafechamento IS NULL AND n.ngo_datacadastro::date BETWEEN v_from AND v_to))
+    WHERE COALESCE(n.ngo_funil, '') NOT ILIKE '%repasse%'
+    ORDER BY n.ngo_numero, n.ngo_dataatualizacao DESC NULLS LAST, n.dthregistro DESC NULLS LAST
+  ),
+  pedidos_dedup AS (
+    SELECT DISTINCT ON (p.pdo_codigointerno)
+      p.pdo_codigointerno,
+      p.ngo_numero,
+      p.pdo_situacaopedido,
+      COALESCE(p.pdo_vlrpedido, 0) AS pdo_vlrpedido,
+      COALESCE(p.pdo_vlrfinanciado, 0) AS pdo_vlrfinanciado,
+      COALESCE(p.pdo_vlrrecursoproprio, 0) AS pdo_vlrrecursoproprio,
+      COALESCE(p.pdo_dthaprovacao, p.pdo_dthpedido) AS dth_evento_pedido,
+      COALESCE(NULLIF(TRIM(p.pdo_vendedor), ''), 'Não Informado') AS pdo_vendedor,
+      COALESCE(NULLIF(TRIM(p.pdo_cidadeufentrega), ''), NULLIF(TRIM(p.emp_cidade), ''), 'Não Informada') AS cidade_entrega,
+      COALESCE(NULLIF(TRIM(p.pdo_financiamentobanco), ''), 'Não Informado') AS pdo_banco,
+      LOWER(COALESCE(p.pdo_situacaopedido, '')) LIKE '%aprovado%' AS is_aprovado
+    FROM mirror.crm_pedidos p
+    ORDER BY p.pdo_codigointerno, p.pdo_dthaprovacao DESC NULLS LAST
+  ),
+  -- Pedidos ganhos filtrados pela janela e critérios
+  pedidos_ganhos_periodo AS (
+    SELECT
+      p.*,
+      n.ngo_formaentrada,
+      n.cli_tipocliente,
+      n.prd_condicaoproduto
+    FROM pedidos_dedup p
+    INNER JOIN negocios_canonicos n ON n.ngo_numero = p.ngo_numero
+    WHERE p.is_aprovado
+      AND n.status_class = 'ganho'
+      AND p.dth_evento_pedido::date BETWEEN v_from AND v_to
+      AND (p_vendedor IS NULL OR p.pdo_vendedor ILIKE '%' || p_vendedor || '%' OR n.ngo_vendedores ILIKE '%' || p_vendedor || '%')
+      AND (p_cidade IS NULL OR p.cidade_entrega ILIKE '%' || p_cidade || '%' OR n.cli_cidade ILIKE '%' || p_cidade || '%')
+      AND (p_condicao IS NULL OR n.prd_condicaoproduto ILIKE '%' || p_condicao || '%')
+  ),
+  -- Negócios perdidos filtrados pela janela
+  negocios_perdidos_periodo AS (
+    SELECT n.*
+    FROM negocios_canonicos n
+    WHERE n.status_class = 'perdido'
+      AND n.dth_evento_negocio::date BETWEEN v_from AND v_to
       AND (p_vendedor IS NULL OR n.ngo_vendedores ILIKE '%' || p_vendedor || '%')
       AND (p_cidade IS NULL OR n.cli_cidade ILIKE '%' || p_cidade || '%' OR n.emp_cidade ILIKE '%' || p_cidade || '%')
       AND (p_condicao IS NULL OR n.prd_condicaoproduto ILIKE '%' || p_condicao || '%')
-    ORDER BY n.ngo_numero, n.ngo_datacadastro DESC NULLS LAST
   ),
-  -- Totais Gerais para cálculo de %
-  total_aprovados AS (
+  -- Pipeline aberto
+  negocios_andamento_periodo AS (
+    SELECT n.*
+    FROM negocios_canonicos n
+    WHERE n.status_class = 'andamento'
+      AND (p_vendedor IS NULL OR n.ngo_vendedores ILIKE '%' || p_vendedor || '%')
+      AND (p_cidade IS NULL OR n.cli_cidade ILIKE '%' || p_cidade || '%' OR n.emp_cidade ILIKE '%' || p_cidade || '%')
+      AND (p_condicao IS NULL OR n.prd_condicaoproduto ILIKE '%' || p_condicao || '%')
+  ),
+  -- Totais Gerais de Ganhos
+  totais_ganhos AS (
     SELECT
       COUNT(DISTINCT pdo_codigointerno) AS qtd_total,
-      COALESCE(SUM(pdo_vlrpedido) FILTER (WHERE is_aprovado), 0) AS faturamento_total,
-      COALESCE(SUM(pdo_vlrfinanciado) FILTER (WHERE is_aprovado), 0) AS faturamento_financiado,
-      COALESCE(SUM(pdo_vlrrecursoproprio) FILTER (WHERE is_aprovado), 0) AS faturamento_proprio
-    FROM base_pedidos
-    WHERE is_aprovado
+      COALESCE(SUM(pdo_vlrpedido), 0) AS faturamento_total,
+      COALESCE(SUM(pdo_vlrfinanciado), 0) AS faturamento_financiado,
+      COALESCE(SUM(pdo_vlrrecursoproprio), 0) AS faturamento_proprio
+    FROM pedidos_ganhos_periodo
   ),
   -- 1. KPIs
-  kpi_agg AS (
-    SELECT
-      (SELECT faturamento_total FROM total_aprovados) AS faturamento,
-      (SELECT qtd_total FROM total_aprovados) AS total_pedidos,
-      CASE
-        WHEN (SELECT qtd_total FROM total_aprovados) > 0
-        THEN ROUND((SELECT faturamento_total FROM total_aprovados) / (SELECT qtd_total FROM total_aprovados), 2)
-        ELSE 0
-      END AS ticket_medio,
-      (SELECT faturamento_financiado FROM total_aprovados) AS valor_financiado,
-      (SELECT faturamento_proprio FROM total_aprovados) AS valor_recurso_proprio,
-      CASE
-        WHEN (SELECT faturamento_total FROM total_aprovados) > 0
-        THEN ROUND(((SELECT faturamento_financiado FROM total_aprovados) / (SELECT faturamento_total FROM total_aprovados)) * 100, 1)
-        ELSE 0
-      END AS percent_financiado,
-      COALESCE(SUM(ngo_vlrtotalnegociado) FILTER (WHERE status_class = 'perdido'), 0) AS valor_perdido,
-      COALESCE(SUM(ngo_vlrtotalnegociado) FILTER (WHERE status_class = 'andamento'), 0) AS pipeline_aberto
-    FROM dedup_negocios
-  ),
   kpis AS (
     SELECT json_build_object(
-      'faturamento', faturamento,
-      'totalPedidos', total_pedidos,
-      'ticketMedio', ticket_medio,
-      'valorFinanciado', valor_financiado,
-      'valorRecursoProprio', valor_recurso_proprio,
-      'percentFinanciado', percent_financiado,
-      'valorPerdido', valor_perdido,
-      'pipelineAberto', pipeline_aberto
-    ) AS val FROM kpi_agg
+      'faturamento', (SELECT faturamento_total FROM totais_ganhos),
+      'totalPedidos', (SELECT qtd_total FROM totais_ganhos),
+      'ticketMedio', CASE
+        WHEN (SELECT qtd_total FROM totais_ganhos) > 0
+        THEN ROUND((SELECT faturamento_total FROM totais_ganhos) / (SELECT qtd_total FROM totais_ganhos), 2)
+        ELSE 0
+      END,
+      'valorFinanciado', (SELECT faturamento_financiado FROM totais_ganhos),
+      'valorRecursoProprio', (SELECT faturamento_proprio FROM totais_ganhos),
+      'percentFinanciado', CASE
+        WHEN (SELECT faturamento_total FROM totais_ganhos) > 0
+        THEN ROUND(((SELECT faturamento_financiado FROM totais_ganhos) / (SELECT faturamento_total FROM totais_ganhos)) * 100, 1)
+        ELSE 0
+      END,
+      'valorPerdido', COALESCE((SELECT SUM(ngo_vlrtotalnegociado) FROM negocios_perdidos_periodo), 0),
+      'qtdPerdido', COALESCE((SELECT COUNT(*) FROM negocios_perdidos_periodo), 0),
+      'pipelineAberto', COALESCE((SELECT SUM(ngo_vlrtotalnegociado) FROM negocios_andamento_periodo), 0)
+    ) AS val
   ),
-  -- 2. Ranking de Vendedores (Quem vende mais)
+  -- 2. Série Mensal Ganho vs Perda (12 meses para o ano alvo)
+  serie_mensal AS (
+    SELECT COALESCE(json_agg(row_to_json(m_sub) ORDER BY m_sub.mes), '[]'::json) AS val
+    FROM (
+      WITH meses_ano AS (
+        SELECT generate_series(1, 12) AS mes
+      ),
+      ganhos_m AS (
+        SELECT
+          EXTRACT(MONTH FROM p.dth_evento_pedido)::int AS mes,
+          COUNT(DISTINCT p.pdo_codigointerno)::int AS qtd_ganho,
+          COALESCE(SUM(p.pdo_vlrpedido), 0)::numeric AS valor_ganho
+        FROM pedidos_dedup p
+        INNER JOIN negocios_canonicos n ON n.ngo_numero = p.ngo_numero
+        WHERE p.is_aprovado
+          AND n.status_class = 'ganho'
+          AND EXTRACT(YEAR FROM p.dth_evento_pedido) = v_target_year
+          AND (p_vendedor IS NULL OR p.pdo_vendedor ILIKE '%' || p_vendedor || '%' OR n.ngo_vendedores ILIKE '%' || p_vendedor || '%')
+          AND (p_cidade IS NULL OR p.cidade_entrega ILIKE '%' || p_cidade || '%' OR n.cli_cidade ILIKE '%' || p_cidade || '%')
+          AND (p_condicao IS NULL OR n.prd_condicaoproduto ILIKE '%' || p_condicao || '%')
+        GROUP BY 1
+      ),
+      perdas_m AS (
+        SELECT
+          EXTRACT(MONTH FROM n.dth_evento_negocio)::int AS mes,
+          COUNT(DISTINCT n.ngo_numero)::int AS qtd_perda,
+          COALESCE(SUM(n.ngo_vlrtotalnegociado), 0)::numeric AS valor_perda
+        FROM negocios_canonicos n
+        WHERE n.status_class = 'perdido'
+          AND EXTRACT(YEAR FROM n.dth_evento_negocio) = v_target_year
+          AND (p_vendedor IS NULL OR n.ngo_vendedores ILIKE '%' || p_vendedor || '%')
+          AND (p_cidade IS NULL OR n.cli_cidade ILIKE '%' || p_cidade || '%' OR n.emp_cidade ILIKE '%' || p_cidade || '%')
+          AND (p_condicao IS NULL OR n.prd_condicaoproduto ILIKE '%' || p_condicao || '%')
+        GROUP BY 1
+      )
+      SELECT
+        ma.mes,
+        CASE ma.mes
+          WHEN 1 THEN 'Jan' WHEN 2 THEN 'Fev' WHEN 3 THEN 'Mar'
+          WHEN 4 THEN 'Abr' WHEN 5 THEN 'Mai' WHEN 6 THEN 'Jun'
+          WHEN 7 THEN 'Jul' WHEN 8 THEN 'Ago' WHEN 9 THEN 'Set'
+          WHEN 10 THEN 'Out' WHEN 11 THEN 'Nov' WHEN 12 THEN 'Dez'
+        END AS "mesNome",
+        COALESCE(gm.qtd_ganho, 0)::int AS "qtdGanho",
+        COALESCE(gm.valor_ganho, 0)::numeric AS "valorGanho",
+        COALESCE(pm.qtd_perda, 0)::int AS "qtdPerda",
+        COALESCE(pm.valor_perda, 0)::numeric AS "valorPerda"
+      FROM meses_ano ma
+      LEFT JOIN ganhos_m gm ON gm.mes = ma.mes
+      LEFT JOIN perdas_m pm ON pm.mes = ma.mes
+      ORDER BY ma.mes
+    ) m_sub
+  ),
+  -- 3. Ranking de Vendedores
   ranking_vendedores AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
@@ -128,8 +206,8 @@ BEGIN
         COUNT(DISTINCT p.pdo_codigointerno)::int AS qtd,
         COALESCE(SUM(p.pdo_vlrpedido), 0)::numeric AS valor,
         CASE
-          WHEN (SELECT faturamento_total FROM total_aprovados) > 0
-          THEN ROUND((SUM(p.pdo_vlrpedido) / (SELECT faturamento_total FROM total_aprovados)) * 100, 1)
+          WHEN (SELECT faturamento_total FROM totais_ganhos) > 0
+          THEN ROUND((SUM(p.pdo_vlrpedido) / (SELECT faturamento_total FROM totais_ganhos)) * 100, 1)
           ELSE 0
         END AS percent,
         CASE
@@ -137,26 +215,25 @@ BEGIN
           THEN ROUND(SUM(p.pdo_vlrpedido) / COUNT(DISTINCT p.pdo_codigointerno), 2)
           ELSE 0
         END AS "ticketMedio"
-      FROM base_pedidos p
-      WHERE p.is_aprovado
+      FROM pedidos_ganhos_periodo p
       GROUP BY p.pdo_vendedor
       ORDER BY SUM(p.pdo_vlrpedido) DESC
       LIMIT 20
     ) sub
   ),
-  -- 3. Produtos / Grupos / Modelos Mais Vendidos
+  -- 4. Produtos Mais Vendidos (Itens de pedidos com nome limpo)
   ranking_produtos AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
       SELECT
-        COALESCE(NULLIF(TRIM(pi.pdo_itemdescricao), ''), NULLIF(TRIM(pi.pdo_itemmodelo), ''), NULLIF(TRIM(pi.pdo_itemgrupo), ''), 'Produto Sem Descrição') AS name,
+        TRIM(SPLIT_PART(SPLIT_PART(COALESCE(NULLIF(TRIM(pi.pdo_itemdescricao), ''), NULLIF(TRIM(pi.pdo_itemmodelo), ''), NULLIF(TRIM(pi.pdo_itemgrupo), ''), 'Produto Sem Descrição'), E'\n', 1), ' - Descricao', 1)) AS name,
         COALESCE(NULLIF(TRIM(pi.pdo_itemmarca), ''), 'Outras') AS marca,
         COALESCE(NULLIF(TRIM(pi.pdo_itemgrupo), ''), 'Geral') AS grupo,
         COALESCE(SUM(GREATEST(pi.pdo_itemqtde::numeric, 1)), 0)::int AS qtd,
         COALESCE(SUM(pi.pdo_itemvlrunitario::numeric * GREATEST(pi.pdo_itemqtde::numeric, 1)), 0)::numeric AS valor,
         CASE
-          WHEN (SELECT faturamento_total FROM total_aprovados) > 0
-          THEN ROUND((SUM(pi.pdo_itemvlrunitario::numeric * GREATEST(pi.pdo_itemqtde::numeric, 1)) / (SELECT faturamento_total FROM total_aprovados)) * 100, 1)
+          WHEN (SELECT faturamento_total FROM totais_ganhos) > 0
+          THEN ROUND((SUM(pi.pdo_itemvlrunitario::numeric * GREATEST(pi.pdo_itemqtde::numeric, 1)) / (SELECT faturamento_total FROM totais_ganhos)) * 100, 1)
           ELSE 0
         END AS percent,
         CASE
@@ -165,16 +242,16 @@ BEGIN
           ELSE 0
         END AS "ticketMedio"
       FROM mirror.crm_pedidos_item pi
-      INNER JOIN base_pedidos bp ON bp.pdo_codigointerno = pi.pdo_codigointerno AND bp.is_aprovado
+      INNER JOIN pedidos_ganhos_periodo pgp ON pgp.pdo_codigointerno = pi.pdo_codigointerno
       GROUP BY
-        COALESCE(NULLIF(TRIM(pi.pdo_itemdescricao), ''), NULLIF(TRIM(pi.pdo_itemmodelo), ''), NULLIF(TRIM(pi.pdo_itemgrupo), ''), 'Produto Sem Descrição'),
+        1,
         COALESCE(NULLIF(TRIM(pi.pdo_itemmarca), ''), 'Outras'),
         COALESCE(NULLIF(TRIM(pi.pdo_itemgrupo), ''), 'Geral')
       ORDER BY SUM(pi.pdo_itemvlrunitario::numeric * GREATEST(pi.pdo_itemqtde::numeric, 1)) DESC
       LIMIT 20
     ) sub
   ),
-  -- 4. Cidades / Filiais com mais vendas
+  -- 5. Cidades / Filiais com mais vendas
   ranking_cidades AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
@@ -183,8 +260,8 @@ BEGIN
         COUNT(DISTINCT p.pdo_codigointerno)::int AS qtd,
         COALESCE(SUM(p.pdo_vlrpedido), 0)::numeric AS valor,
         CASE
-          WHEN (SELECT faturamento_total FROM total_aprovados) > 0
-          THEN ROUND((SUM(p.pdo_vlrpedido) / (SELECT faturamento_total FROM total_aprovados)) * 100, 1)
+          WHEN (SELECT faturamento_total FROM totais_ganhos) > 0
+          THEN ROUND((SUM(p.pdo_vlrpedido) / (SELECT faturamento_total FROM totais_ganhos)) * 100, 1)
           ELSE 0
         END AS percent,
         CASE
@@ -192,44 +269,37 @@ BEGIN
           THEN ROUND(SUM(p.pdo_vlrpedido) / COUNT(DISTINCT p.pdo_codigointerno), 2)
           ELSE 0
         END AS "ticketMedio"
-      FROM base_pedidos p
-      WHERE p.is_aprovado
+      FROM pedidos_ganhos_periodo p
       GROUP BY p.cidade_entrega
       ORDER BY SUM(p.pdo_vlrpedido) DESC
       LIMIT 20
     ) sub
   ),
-  -- 5. Origem do Lead / Formas de Entrada (Donut + Tabela)
+  -- 6. Origem do Lead / Formas de Entrada
   origens_lead AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
       SELECT
-        dn.ngo_formaentrada AS name,
-        COUNT(*)::int AS qtd,
-        COALESCE(SUM(dn.ngo_vlrtotalnegociado) FILTER (WHERE dn.status_class = 'ganho'), 0)::numeric AS valor,
-        COUNT(*) FILTER (WHERE dn.status_class = 'ganho')::int AS "qtdGanhos",
+        p.ngo_formaentrada AS name,
+        COUNT(DISTINCT p.pdo_codigointerno)::int AS qtd,
+        COALESCE(SUM(p.pdo_vlrpedido), 0)::numeric AS valor,
         CASE
-          WHEN COUNT(*) > 0
-          THEN ROUND((COUNT(*) FILTER (WHERE dn.status_class = 'ganho')::numeric / COUNT(*)) * 100, 1)
+          WHEN (SELECT faturamento_total FROM totais_ganhos) > 0
+          THEN ROUND((SUM(p.pdo_vlrpedido) / (SELECT faturamento_total FROM totais_ganhos)) * 100, 1)
           ELSE 0
-        END AS "taxaConversao",
+        END AS percent,
         CASE
-          WHEN COUNT(*) FILTER (WHERE dn.status_class = 'ganho') > 0
-          THEN ROUND(SUM(dn.ngo_vlrtotalnegociado) FILTER (WHERE dn.status_class = 'ganho') / COUNT(*) FILTER (WHERE dn.status_class = 'ganho'), 2)
+          WHEN COUNT(DISTINCT p.pdo_codigointerno) > 0
+          THEN ROUND(SUM(p.pdo_vlrpedido) / COUNT(DISTINCT p.pdo_codigointerno), 2)
           ELSE 0
-        END AS "ticketMedio",
-        CASE
-          WHEN (SELECT SUM(ngo_vlrtotalnegociado) FROM dedup_negocios WHERE status_class = 'ganho') > 0
-          THEN ROUND((SUM(dn.ngo_vlrtotalnegociado) FILTER (WHERE dn.status_class = 'ganho') / (SELECT SUM(ngo_vlrtotalnegociado) FROM dedup_negocios WHERE status_class = 'ganho')) * 100, 1)
-          ELSE 0
-        END AS percent
-      FROM dedup_negocios dn
-      GROUP BY dn.ngo_formaentrada
-      ORDER BY COALESCE(SUM(dn.ngo_vlrtotalnegociado) FILTER (WHERE dn.status_class = 'ganho'), 0) DESC
+        END AS "ticketMedio"
+      FROM pedidos_ganhos_periodo p
+      GROUP BY p.ngo_formaentrada
+      ORDER BY SUM(p.pdo_vlrpedido) DESC
       LIMIT 10
     ) sub
   ),
-  -- 6. Financiamento & Bancos
+  -- 7. Financiamento & Bancos
   financiamento_bancos AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
@@ -238,8 +308,8 @@ BEGIN
         COUNT(DISTINCT p.pdo_codigointerno)::int AS qtd,
         COALESCE(SUM(p.pdo_vlrfinanciado), 0)::numeric AS valor,
         CASE
-          WHEN (SELECT faturamento_financiado FROM total_aprovados) > 0
-          THEN ROUND((SUM(p.pdo_vlrfinanciado) / (SELECT faturamento_financiado FROM total_aprovados)) * 100, 1)
+          WHEN (SELECT faturamento_financiado FROM totais_ganhos) > 0
+          THEN ROUND((SUM(p.pdo_vlrfinanciado) / (SELECT faturamento_financiado FROM totais_ganhos)) * 100, 1)
           ELSE 0
         END AS percent,
         CASE
@@ -247,78 +317,80 @@ BEGIN
           THEN ROUND(SUM(p.pdo_vlrfinanciado) / COUNT(DISTINCT p.pdo_codigointerno), 2)
           ELSE 0
         END AS "ticketMedio"
-      FROM base_pedidos p
-      WHERE p.is_aprovado AND p.pdo_vlrfinanciado > 0
+      FROM pedidos_ganhos_periodo p
+      WHERE p.pdo_vlrfinanciado > 0
       GROUP BY p.pdo_banco
       ORDER BY SUM(p.pdo_vlrfinanciado) DESC
       LIMIT 10
     ) sub
   ),
-  -- 7. Tipo de Cliente (PF, PJ, Cooperativa)
+  -- 8. Tipos de Cliente (PF, PJ, Cooperativa)
   tipos_cliente AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
       SELECT
-        dn.cli_tipocliente AS name,
-        COUNT(*)::int AS qtd,
-        COALESCE(SUM(dn.ngo_vlrtotalnegociado) FILTER (WHERE dn.status_class = 'ganho'), 0)::numeric AS valor,
+        p.cli_tipocliente AS name,
+        COUNT(DISTINCT p.pdo_codigointerno)::int AS qtd,
+        COALESCE(SUM(p.pdo_vlrpedido), 0)::numeric AS valor,
         CASE
-          WHEN (SELECT SUM(ngo_vlrtotalnegociado) FROM dedup_negocios WHERE status_class = 'ganho') > 0
-          THEN ROUND((SUM(dn.ngo_vlrtotalnegociado) FILTER (WHERE dn.status_class = 'ganho') / (SELECT SUM(ngo_vlrtotalnegociado) FROM dedup_negocios WHERE status_class = 'ganho')) * 100, 1)
+          WHEN (SELECT faturamento_total FROM totais_ganhos) > 0
+          THEN ROUND((SUM(p.pdo_vlrpedido) / (SELECT faturamento_total FROM totais_ganhos)) * 100, 1)
           ELSE 0
         END AS percent,
         CASE
-          WHEN COUNT(*) FILTER (WHERE dn.status_class = 'ganho') > 0
-          THEN ROUND(SUM(dn.ngo_vlrtotalnegociado) FILTER (WHERE dn.status_class = 'ganho') / COUNT(*) FILTER (WHERE dn.status_class = 'ganho'), 2)
+          WHEN COUNT(DISTINCT p.pdo_codigointerno) > 0
+          THEN ROUND(SUM(p.pdo_vlrpedido) / COUNT(DISTINCT p.pdo_codigointerno), 2)
           ELSE 0
         END AS "ticketMedio"
-      FROM dedup_negocios dn
-      GROUP BY dn.cli_tipocliente
-      ORDER BY COALESCE(SUM(dn.ngo_vlrtotalnegociado) FILTER (WHERE dn.status_class = 'ganho'), 0) DESC
+      FROM pedidos_ganhos_periodo p
+      GROUP BY p.cli_tipocliente
+      ORDER BY SUM(p.pdo_vlrpedido) DESC
     ) sub
   ),
-  -- 8. Motivos de Perda
+  -- 9. Motivos de Perda
   motivos_perda AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
       SELECT
-        dn.ngo_motivoperda AS name,
-        dn.mpp_produtoperdamarca AS "concorrenteTop",
+        n.ngo_motivoperda AS name,
+        n.mpp_produtoperdamarca AS "concorrenteTop",
         COUNT(*)::int AS qtd,
-        COALESCE(SUM(dn.ngo_vlrtotalnegociado), 0)::numeric AS valor,
+        COALESCE(SUM(n.ngo_vlrtotalnegociado), 0)::numeric AS valor,
         CASE
-          WHEN (SELECT SUM(ngo_vlrtotalnegociado) FROM dedup_negocios WHERE status_class = 'perdido') > 0
-          THEN ROUND((SUM(dn.ngo_vlrtotalnegociado) / (SELECT SUM(ngo_vlrtotalnegociado) FROM dedup_negocios WHERE status_class = 'perdido')) * 100, 1)
+          WHEN (SELECT SUM(ngo_vlrtotalnegociado) FROM negocios_perdidos_periodo) > 0
+          THEN ROUND((SUM(n.ngo_vlrtotalnegociado) / (SELECT SUM(ngo_vlrtotalnegociado) FROM negocios_perdidos_periodo)) * 100, 1)
           ELSE 0
         END AS percent
-      FROM dedup_negocios dn
-      WHERE dn.status_class = 'perdido'
-      GROUP BY dn.ngo_motivoperda, dn.mpp_produtoperdamarca
-      ORDER BY SUM(dn.ngo_vlrtotalnegociado) DESC
+      FROM negocios_perdidos_periodo n
+      GROUP BY n.ngo_motivoperda, n.mpp_produtoperdamarca
+      ORDER BY SUM(n.ngo_vlrtotalnegociado) DESC
       LIMIT 10
     ) sub
   ),
-  -- 9. Resumo Anual (Histórico dos últimos 3 anos)
+  -- 10. Resumo Anual
   resumo_anual AS (
     SELECT COALESCE(json_agg(row_to_json(sub) ORDER BY sub.ano DESC), '[]'::json) AS val
     FROM (
       SELECT
-        EXTRACT(YEAR FROM p.pdo_dthpedido)::integer AS ano,
+        EXTRACT(YEAR FROM p.dth_evento_pedido)::integer AS ano,
         COUNT(DISTINCT p.pdo_codigointerno)::int AS qtd,
-        COALESCE(SUM(p.pdo_vlrpedido) FILTER (WHERE LOWER(COALESCE(p.pdo_situacaopedido, '')) LIKE '%aprovado%'), 0)::numeric AS faturamento,
+        COALESCE(SUM(p.pdo_vlrpedido), 0)::numeric AS faturamento,
         CASE
-          WHEN COUNT(DISTINCT p.pdo_codigointerno) FILTER (WHERE LOWER(COALESCE(p.pdo_situacaopedido, '')) LIKE '%aprovado%') > 0
-          THEN ROUND(SUM(p.pdo_vlrpedido) FILTER (WHERE LOWER(COALESCE(p.pdo_situacaopedido, '')) LIKE '%aprovado%') / COUNT(DISTINCT p.pdo_codigointerno) FILTER (WHERE LOWER(COALESCE(p.pdo_situacaopedido, '')) LIKE '%aprovado%'), 2)
+          WHEN COUNT(DISTINCT p.pdo_codigointerno) > 0
+          THEN ROUND(SUM(p.pdo_vlrpedido) / COUNT(DISTINCT p.pdo_codigointerno), 2)
           ELSE 0
         END AS "ticketMedio"
-      FROM mirror.crm_pedidos p
-      WHERE p.pdo_dthpedido IS NOT NULL
-        AND EXTRACT(YEAR FROM p.pdo_dthpedido) >= EXTRACT(YEAR FROM CURRENT_DATE) - 3
-      GROUP BY EXTRACT(YEAR FROM p.pdo_dthpedido)
+      FROM pedidos_dedup p
+      INNER JOIN negocios_canonicos n ON n.ngo_numero = p.ngo_numero
+      WHERE p.is_aprovado
+        AND n.status_class = 'ganho'
+        AND EXTRACT(YEAR FROM p.dth_evento_pedido) >= EXTRACT(YEAR FROM CURRENT_DATE) - 3
+      GROUP BY EXTRACT(YEAR FROM p.dth_evento_pedido)
     ) sub
   )
   SELECT json_build_object(
     'kpis', (SELECT val FROM kpis),
+    'serieMensal', (SELECT val FROM serie_mensal),
     'rankingVendedores', (SELECT val FROM ranking_vendedores),
     'rankingProdutos', (SELECT val FROM ranking_produtos),
     'rankingCidades', (SELECT val FROM ranking_cidades),
