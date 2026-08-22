@@ -1,7 +1,7 @@
--- Migration: RPC para o Dashboard de Desempenho de Vendas (v5 - Suporte Dual Tab: Ganhos & Perdas)
+-- Migration: RPC para o Dashboard de Desempenho de Vendas (v6 - Nomes de Vendedores Resolvidos em Perdas)
 -- Autor: Ceres BI Team
 -- Data: 2026-08-21
--- Descrição: Alinha conciliação total de 124 vendas e adiciona diagnósticos completos para a nova aba de Perdas.
+-- Descrição: Resolve nomes completos de vendedores via mirror.usuarios e alinha diagnósticos de perdas.
 
 CREATE OR REPLACE FUNCTION public.rpc_desempenho_vendas_bi(
   p_from date DEFAULT NULL,
@@ -96,17 +96,19 @@ BEGIN
       AND (p_cidade IS NULL OR p.cidade_entrega ILIKE '%' || p_cidade || '%' OR n.cli_cidade ILIKE '%' || p_cidade || '%')
       AND (p_condicao IS NULL OR n.prd_condicaoproduto ILIKE '%' || p_condicao || '%')
   ),
-  -- Negócios perdidos filtrados pela janela
+  -- Negócios perdidos filtrados pela janela com resolução de vendedor
   negocios_perdidos_periodo AS (
     SELECT
       n.*,
       TRIM(SPLIT_PART(SPLIT_PART(n.prd_dscproduto, E'\n', 1), ' - Descricao', 1)) AS prd_nome_limpo,
       COALESCE(NULLIF(TRIM(n.cli_cidade), ''), NULLIF(TRIM(n.emp_cidade), ''), 'Não Informada') AS cidade_perda,
-      COALESCE(NULLIF(TRIM(n.ngo_vendedores), ''), 'Não Informado') AS vendedor_perda
+      COALESCE(u_cod.usr_nomeusuario, u_id.usr_nomeusuario, NULLIF(TRIM(n.ngo_vendedores), ''), 'Não Informado') AS vendedor_perda
     FROM negocios_canonicos n
+    LEFT JOIN mirror.usuarios u_cod ON u_cod.usr_codusuario = n.ngo_vendedores AND u_cod.usr_codusuario IS NOT NULL AND u_cod.usr_codusuario != ''
+    LEFT JOIN mirror.usuarios u_id ON u_id.usr_idusuario = n.ngo_vendedores
     WHERE n.status_class = 'perdido'
       AND n.dth_evento_negocio::date BETWEEN v_from AND v_to
-      AND (p_vendedor IS NULL OR n.ngo_vendedores ILIKE '%' || p_vendedor || '%')
+      AND (p_vendedor IS NULL OR n.ngo_vendedores ILIKE '%' || p_vendedor || '%' OR u_cod.usr_nomeusuario ILIKE '%' || p_vendedor || '%' OR u_id.usr_nomeusuario ILIKE '%' || p_vendedor || '%')
       AND (p_cidade IS NULL OR n.cli_cidade ILIKE '%' || p_cidade || '%' OR n.emp_cidade ILIKE '%' || p_cidade || '%')
       AND (p_condicao IS NULL OR n.prd_condicaoproduto ILIKE '%' || p_condicao || '%')
   ),
@@ -401,7 +403,7 @@ BEGIN
       ORDER BY SUM(n.ngo_vlrtotalnegociado) DESC
     ) sub
   ),
-  -- 10. Ranking de Vendedores com Mais Perdas (Aba Perdas)
+  -- 10. Ranking de Vendedores com Mais Perdas (Nomes Completos)
   ranking_vendedores_perda AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
@@ -424,7 +426,7 @@ BEGIN
       ORDER BY SUM(n.ngo_vlrtotalnegociado) DESC
     ) sub
   ),
-  -- 11. Ranking de Produtos Mais Perdidos (Aba Perdas)
+  -- 11. Ranking de Produtos Mais Perdidos
   ranking_produtos_perda AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
@@ -449,7 +451,7 @@ BEGIN
       ORDER BY SUM(n.ngo_vlrtotalnegociado) DESC
     ) sub
   ),
-  -- 12. Ranking de Cidades com Mais Perdas (Aba Perdas)
+  -- 12. Ranking de Cidades com Mais Perdas
   ranking_cidades_perda AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
@@ -472,7 +474,7 @@ BEGIN
       ORDER BY SUM(n.ngo_vlrtotalnegociado) DESC
     ) sub
   ),
-  -- 13. Origens de Lead com Mais Perdas (Aba Perdas)
+  -- 13. Origens de Lead com Mais Perdas
   origens_lead_perda AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (

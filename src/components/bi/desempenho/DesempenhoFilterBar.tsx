@@ -58,35 +58,35 @@ export const DesempenhoFilterBar: React.FC<DesempenhoFilterBarProps> = ({
   isRefreshing = false,
 }) => {
   return (
-    <div className="flex flex-col gap-3 p-3.5 md:p-4 rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] shadow-sm">
-      {/* Linha Superior: Seletor de Abas Estratégicas + Anos Rápidos + Refresh */}
+    <div className="flex flex-col gap-3 p-3 md:p-3.5 rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] shadow-sm">
+      {/* Linha Superior: Seletor de Abas + Anos Rápidos + Refresh */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        {/* Toggle de Abas: Vendas (Ganhos) vs Diagnóstico de Perdas */}
+        {/* Toggle de Abas sem emojis, minimalista e refinado */}
         <div className="inline-flex items-center p-1 rounded-xl bg-[var(--voux-surface)] border border-[var(--voux-card-border)] self-start">
           <button
             onClick={() => onTabChange("ganhos")}
             className={cn(
-              "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all",
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-tight transition-all",
               activeTab === "ganhos"
                 ? "bg-emerald-600 text-white shadow-sm font-bold"
                 : "text-[var(--voux-text-muted)] hover:text-[var(--voux-text-primary)]"
             )}
           >
-            <TrendingUp className="h-3.5 w-3.5" />
-            <span>🟢 Vendas & Ganhos</span>
+            <TrendingUp className="h-3.5 w-3.5 text-emerald-300" />
+            <span>Vendas & Ganhos</span>
           </button>
 
           <button
             onClick={() => onTabChange("perdas")}
             className={cn(
-              "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all",
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-tight transition-all",
               activeTab === "perdas"
-                ? "bg-rose-600 text-white shadow-sm font-bold"
+                ? "bg-red-600 text-white shadow-sm font-bold"
                 : "text-[var(--voux-text-muted)] hover:text-[var(--voux-text-primary)]"
             )}
           >
-            <TrendingDown className="h-3.5 w-3.5" />
-            <span>🔴 Diagnóstico de Perdas</span>
+            <TrendingDown className="h-3.5 w-3.5 text-red-300" />
+            <span>Diagnóstico de Perdas</span>
           </button>
         </div>
 
@@ -106,7 +106,7 @@ export const DesempenhoFilterBar: React.FC<DesempenhoFilterBarProps> = ({
                   "px-2.5 py-1 rounded-lg text-xs font-mono font-medium transition-all",
                   isSelected
                     ? activeTab === "perdas"
-                      ? "bg-rose-600 text-white shadow-sm"
+                      ? "bg-red-600 text-white shadow-sm"
                       : "bg-emerald-700 text-white dark:bg-emerald-600 shadow-sm"
                     : "bg-[var(--voux-card-border)]/40 text-[var(--voux-text-primary)] hover:bg-[var(--voux-card-border)]"
                 )}
@@ -122,7 +122,7 @@ export const DesempenhoFilterBar: React.FC<DesempenhoFilterBarProps> = ({
               "px-2.5 py-1 rounded-lg text-xs font-mono font-medium transition-all",
               ano === null
                 ? activeTab === "perdas"
-                  ? "bg-rose-600 text-white shadow-sm"
+                  ? "bg-red-600 text-white shadow-sm"
                   : "bg-emerald-700 text-white dark:bg-emerald-600 shadow-sm"
                 : "bg-[var(--voux-card-border)]/40 text-[var(--voux-text-primary)] hover:bg-[var(--voux-card-border)]"
             )}

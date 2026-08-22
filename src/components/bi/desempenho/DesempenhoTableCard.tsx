@@ -20,7 +20,7 @@ interface DesempenhoTableCardProps {
   rows: DesempenhoTableRow[];
   loading?: boolean;
   emptyMessage?: string;
-  variant?: "emerald" | "rose";
+  variant?: "emerald" | "red";
   unitLabel?: string;
   className?: string;
 }
@@ -37,7 +37,7 @@ export const DesempenhoTableCard: React.FC<DesempenhoTableCardProps> = ({
   unitLabel,
   className,
 }) => {
-  const isRose = variant === "rose";
+  const isRed = variant === "red";
 
   // Calcula o valor máximo de ticket médio para a barra proporcional de background
   const maxTicket = Math.max(...rows.map((r) => r.ticketMedio), 1);
@@ -45,7 +45,7 @@ export const DesempenhoTableCard: React.FC<DesempenhoTableCardProps> = ({
   const totalValor = rows.reduce((acc, r) => acc + r.valor, 0);
   const totalTicketMedio = totalQtd > 0 ? totalValor / totalQtd : 0;
 
-  const defaultUnit = isRose ? "negócios perdidos" : "pedidos";
+  const defaultUnit = isRed ? "negócios perdidos" : "pedidos";
   const finalUnitLabel = unitLabel || defaultUnit;
 
   return (
@@ -56,12 +56,12 @@ export const DesempenhoTableCard: React.FC<DesempenhoTableCardProps> = ({
       )}
     >
       <div>
-        {/* Header no estilo editorial */}
+        {/* Header no estilo editorial limpo */}
         <div className="mb-4">
           <p
             className={cn(
               "text-[10px] font-bold tracking-[0.2em] uppercase font-mono",
-              isRose ? "text-rose-600 dark:text-rose-400" : "text-[var(--voux-text-muted)]"
+              isRed ? "text-red-600 dark:text-red-400" : "text-[var(--voux-text-muted)]"
             )}
           >
             {eyebrow}
@@ -88,7 +88,7 @@ export const DesempenhoTableCard: React.FC<DesempenhoTableCardProps> = ({
             {emptyMessage}
           </div>
         ) : (
-          /* Table Container com Rolagem Suave Direta */
+          /* Table Container com Rolagem Suave Direta e Cabeçalho Fixo */
           <div className="overflow-x-auto -mx-2 px-2 max-h-[380px] overflow-y-auto sidebar-scroll pr-1">
             <table className="w-full text-left text-xs border-collapse">
               <thead className="sticky top-0 bg-[var(--voux-card-from)] z-10">
@@ -133,15 +133,14 @@ export const DesempenhoTableCard: React.FC<DesempenhoTableCardProps> = ({
                         </td>
                       )}
 
-                      {/* Ticket Médio com barra visual suave */}
+                      {/* Ticket Médio com barra visual proporcional */}
                       <td className="py-2 px-3 text-right relative">
                         <div className="relative inline-flex items-center justify-end w-full min-w-[110px] px-2 py-1 rounded">
-                          {/* Barra de magnitude visual proporcional */}
                           <div
                             className={cn(
                               "absolute right-0 top-0 bottom-0 rounded pointer-events-none transition-all duration-300",
-                              isRose
-                                ? "bg-rose-500/15 dark:bg-rose-500/20"
+                              isRed
+                                ? "bg-red-500/15 dark:bg-red-500/25"
                                 : "bg-emerald-500/15 dark:bg-emerald-500/20"
                             )}
                             style={{ width: `${ticketPercent}%` }}
@@ -156,8 +155,8 @@ export const DesempenhoTableCard: React.FC<DesempenhoTableCardProps> = ({
                       <td
                         className={cn(
                           "py-3 pl-3 text-right tabular-nums font-mono text-[13px] font-semibold",
-                          isRose
-                            ? "text-rose-600 dark:text-rose-400"
+                          isRed
+                            ? "text-red-600 dark:text-red-400"
                             : "text-emerald-700 dark:text-emerald-400"
                         )}
                       >
@@ -184,7 +183,7 @@ export const DesempenhoTableCard: React.FC<DesempenhoTableCardProps> = ({
             <span
               className={cn(
                 "font-semibold",
-                isRose ? "text-rose-600 dark:text-rose-400" : "text-emerald-700 dark:text-emerald-400"
+                isRed ? "text-red-600 dark:text-red-400" : "text-emerald-700 dark:text-emerald-400"
               )}
             >
               {formatBRL(totalValor)}

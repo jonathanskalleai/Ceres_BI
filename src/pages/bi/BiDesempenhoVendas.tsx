@@ -185,16 +185,16 @@ export default function BiDesempenhoVendas() {
             {/* KPI 4: Perdas no Período */}
             <div className="rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4 shadow-sm">
               <div className="flex items-center justify-between text-[var(--voux-text-muted)] mb-1">
-                <span className="text-[10px] font-bold tracking-wider uppercase font-mono">
+                <span className="text-[10px] font-bold tracking-wider uppercase font-mono text-red-600 dark:text-red-400">
                   Negócios Perdidos
                 </span>
-                <XCircle className="h-4 w-4 text-rose-500" />
+                <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
               </div>
               {isLoading ? (
                 <Skeleton className="h-7 w-20 bg-[var(--voux-skeleton)]" />
               ) : (
                 <div>
-                  <p className="text-[18px] md:text-[20px] font-bold font-mono text-rose-600 dark:text-rose-400">
+                  <p className="text-[18px] md:text-[20px] font-bold font-mono text-red-600 dark:text-red-400">
                     {formatBRL(data.kpis.valorPerdido)}
                   </p>
                   <p className="text-[10px] text-[var(--voux-text-muted)] mt-0.5">
@@ -335,7 +335,7 @@ export default function BiDesempenhoVendas() {
               eyebrow="OPORTUNIDADES PERDIDAS · CRM"
               title="Motivos de perda de negócios"
               firstColumnHeader="MOTIVO / CONCORRENTE"
-              variant="rose"
+              variant="red"
               unitLabel="negócios perdidos"
               rows={data.motivosPerda.map((m) => ({
                 name: m.name,
@@ -401,16 +401,16 @@ export default function BiDesempenhoVendas() {
             {/* KPI 1: Volume Total Perdido */}
             <div className="rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4 shadow-sm">
               <div className="flex items-center justify-between text-[var(--voux-text-muted)] mb-1">
-                <span className="text-[10px] font-bold tracking-wider uppercase font-mono text-rose-600 dark:text-rose-400">
+                <span className="text-[10px] font-bold tracking-wider uppercase font-mono text-red-600 dark:text-red-400">
                   Total Perdido
                 </span>
-                <XCircle className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+                <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
               </div>
               {isLoading ? (
                 <Skeleton className="h-7 w-28 bg-[var(--voux-skeleton)]" />
               ) : (
                 <div>
-                  <p className="text-[18px] md:text-[20px] font-bold font-mono text-rose-600 dark:text-rose-400">
+                  <p className="text-[18px] md:text-[20px] font-bold font-mono text-red-600 dark:text-red-400">
                     {formatBRL(data.kpis.valorPerdido)}
                   </p>
                   <p className="text-[10px] text-[var(--voux-text-muted)] mt-0.5">Volume de propostas perdidas</p>
@@ -424,7 +424,7 @@ export default function BiDesempenhoVendas() {
                 <span className="text-[10px] font-bold tracking-wider uppercase font-mono">
                   Negócios Perdidos
                 </span>
-                <AlertTriangle className="h-4 w-4 text-rose-500" />
+                <AlertTriangle className="h-4 w-4 text-red-500" />
               </div>
               {isLoading ? (
                 <Skeleton className="h-7 w-20 bg-[var(--voux-skeleton)]" />
@@ -532,14 +532,14 @@ export default function BiDesempenhoVendas() {
             />
           )}
 
-          {/* Grid de Tabelas de Diagnóstico de Perdas (Todos em Tema Rose/Vermelho) */}
+          {/* Grid de Tabelas de Diagnóstico de Perdas (Todos em Tema Vermelho Sólido) */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Card 1: Motivos de Perda & Concorrentes */}
             <DesempenhoTableCard
               eyebrow="DIAGNÓSTICO CRM"
               title="Motivos de perda de negócios"
               firstColumnHeader="MOTIVO / CONCORRENTE"
-              variant="rose"
+              variant="red"
               unitLabel="negócios perdidos"
               rows={(data.perdas?.motivosPerda ?? data.motivosPerda).map((m) => ({
                 name: m.name,
@@ -557,7 +557,7 @@ export default function BiDesempenhoVendas() {
               eyebrow="POR VENDEDOR"
               title="Quem mais perde negócios"
               firstColumnHeader="VENDEDOR"
-              variant="rose"
+              variant="red"
               unitLabel="negócios perdidos"
               rows={data.perdas?.rankingVendedores ?? []}
               loading={isLoading}
@@ -568,7 +568,7 @@ export default function BiDesempenhoVendas() {
               eyebrow="POR PRODUTO &amp; GRUPO"
               title="Produtos / modelos mais perdidos"
               firstColumnHeader="PRODUTO / MODELO"
-              variant="rose"
+              variant="red"
               unitLabel="negócios perdidos"
               rows={(data.perdas?.rankingProdutos ?? []).map((p) => ({
                 name: p.name,
@@ -586,7 +586,7 @@ export default function BiDesempenhoVendas() {
               eyebrow="POR CIDADE &amp; REGIÃO"
               title="Cidades com maior perda de negócios"
               firstColumnHeader="CIDADE"
-              variant="rose"
+              variant="red"
               unitLabel="negócios perdidos"
               rows={data.perdas?.rankingCidades ?? []}
               loading={isLoading}
@@ -597,7 +597,7 @@ export default function BiDesempenhoVendas() {
               eyebrow="ORIGEM DO LEAD &amp; MARKETING"
               title="Perdas por canal de entrada"
               firstColumnHeader="ORIGEM / CANAL"
-              variant="rose"
+              variant="red"
               unitLabel="negócios perdidos"
               rows={(data.perdas?.origensLead ?? []).map((o) => ({
                 name: o.name,
