@@ -24,17 +24,63 @@ function formatCompactValue(val: number): string {
   return `R$ ${Math.round(val)}`;
 }
 
-/** Cubic bezier smooth path */
-function smoothPath(points: { x: number; y: number }[]): string {
-  if (points.length < 2) return points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
-  let d = `M ${points[0].x} ${points[0].y}`;
-  for (let i = 1; i < points.length; i++) {
-    const prev = points[i - 1];
-    const curr = points[i];
-    const cpx = (prev.x + curr.x) / 2;
-    d += ` C ${cpx} ${prev.y}, ${cpx} ${curr.y}, ${curr.x} ${curr.y}`;
+/** 
+ * Gera caminho SVG com interpolação Monotone Cubic Spline (Fritsch-Carlson)
+ * Garante que a curva flua com naturalidade e nunca ultrapasse os picos reais dos dados.
+ */
+function getMonotoneCubicSpline(points: { x: number; y: number }[]): string {
+  const n = points.length;
+  if (n === 0) return "";
+  if (n === 1) return `M ${points[0].x} ${points[0].y}`;
+  if (n === 2) return `M ${points[0].x} ${points[0].y} L ${points[1].x} ${points[1].y}`;
+
+  const d: number[] = new Array(n - 1);
+  const m: number[] = new Array(n);
+
+  for (let i = 0; i < n - 1; i++) {
+    const dx = points[i + 1].x - points[i].x;
+    const dy = points[i + 1].y - points[i].y;
+    d[i] = dx !== 0 ? dy / dx : 0;
   }
-  return d;
+
+  m[0] = d[0];
+  m[n - 1] = d[n - 2];
+  for (let i = 1; i < n - 1; i++) {
+    if (d[i - 1] * d[i] <= 0) {
+      m[i] = 0;
+    } else {
+      m[i] = (d[i - 1] + d[i]) / 2;
+    }
+  }
+
+  for (let i = 0; i < n - 1; i++) {
+    if (Math.abs(d[i]) < 1e-6) {
+      m[i] = 0;
+      m[i + 1] = 0;
+    } else {
+      const alpha = m[i] / d[i];
+      const beta = m[i + 1] / d[i];
+      const s = alpha * alpha + beta * beta;
+      if (s > 9) {
+        const tau = 3 / Math.sqrt(s);
+        m[i] = tau * alpha * d[i];
+        m[i + 1] = tau * beta * d[i];
+      }
+    }
+  }
+
+  let path = `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}`;
+  for (let i = 0; i < n - 1; i++) {
+    const p0 = points[i];
+    const p1 = points[i + 1];
+    const dx = p1.x - p0.x;
+    const cp1x = p0.x + dx / 3;
+    const cp1y = p0.y + (m[i] * dx) / 3;
+    const cp2x = p1.x - dx / 3;
+    const cp2y = p1.y - (m[i + 1] * dx) / 3;
+    path += ` C ${cp1x.toFixed(2)} ${cp1y.toFixed(2)}, ${cp2x.toFixed(2)} ${cp2y.toFixed(2)}, ${p1.x.toFixed(2)} ${p1.y.toFixed(2)}`;
+  }
+  return path;
 }
 
 export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = ({
@@ -82,15 +128,19 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
     return { x: xCoord(i), y, ...d };
   });
 
-  const pathGanho = smoothPath(pointsGanho);
-  const pathPerda = smoothPath(pointsPerda);
+  const pathGanho = getMonotoneCubicSpline(pointsGanho);
+  const pathPerda = getMonotoneCubicSpline(pointsPerda);
 
-  // Área suave no fundo
-  const areaBottom = pointsPerda.length > 0
+  // Áreas gradientes preenchidas sob as curvas
+  const areaGanho = pointsGanho.length > 0
+    ? `${pathGanho} L ${pointsGanho[pointsGanho.length - 1].x} ${padT + plotH} L ${pointsGanho[0].x} ${padT + plotH} Z`
+    : "";
+
+  const areaPerda = pointsPerda.length > 0
     ? `${pathPerda} L ${pointsPerda[pointsPerda.length - 1].x} ${padT + plotH} L ${pointsPerda[0].x} ${padT + plotH} Z`
     : "";
 
-  const colorGanho = "#2d6a4f"; // Verde Floresta / Grafite escuro elegante
+  const colorGanho = "#1b4332"; // Verde Floresta Institucional
   const colorPerda = "#b83a28"; // Terracota VOUX
 
   const hoveredItem = hoveredIndex !== null ? data[hoveredIndex] : null;
@@ -98,7 +148,7 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
   return (
     <div
       className={cn(
-        "rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-5 md:p-6 shadow-sm",
+        "rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-5 md:p-6 shadow-sm transition-shadow hover:shadow-md",
         className
       )}
     >
@@ -115,23 +165,23 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
             className="text-[20px] md:text-[22px] font-bold tracking-tight text-[var(--voux-text-heading)] mt-0.5"
             style={{ fontFamily: "var(--voux-font-display)" }}
           >
-            Desfechos de Vendas em <span className="italic font-normal text-rose-700 dark:text-rose-400">{ano}</span>
+            Desfechos de Vendas em <span className="italic font-normal text-red-600 dark:text-red-400">{ano}</span>
           </h2>
           <p className="text-xs text-[var(--voux-text-muted)] mt-0.5 font-sans">
-            Curvas comparativas de pedidos aprovados e negócios perdidos com escalas independentes.
+            Curvas comparativas de pedidos aprovados e negócios perdidos com escalas dinâmicas.
           </p>
         </div>
 
         {/* Legenda com Marcadores Redondos */}
         <div className="flex items-center gap-5 text-xs font-sans">
           <div className="flex items-center gap-2">
-            <span className="h-3 w-3 rounded-full bg-[#2d6a4f] shrink-0" />
+            <span className="h-3 w-3 rounded-full bg-[#1b4332] dark:bg-emerald-500 shrink-0" />
             <span className="text-[var(--voux-text-primary)] font-medium">
               Ganhos: <strong className="font-mono font-bold">{formatBRL(totalValorGanho)}</strong> ({totalQtdGanho} ped)
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="h-3 w-3 rounded-full bg-[#b83a28] shrink-0" />
+            <span className="h-3 w-3 rounded-full bg-[#b83a28] dark:bg-red-500 shrink-0" />
             <span className="text-[var(--voux-text-primary)] font-medium">
               Perdas: <strong className="font-mono font-bold">{formatBRL(totalValorPerda)}</strong> ({totalQtdPerda} neg)
             </span>
@@ -143,7 +193,7 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
         <Skeleton className="h-[260px] w-full rounded-xl bg-[var(--voux-skeleton)]" />
       ) : (
         <div className="relative">
-          {/* Canvas SVG do Gráfico Único */}
+          {/* Canvas SVG do Gráfico com Gradientes e Monotone Splines */}
           <div className="w-full overflow-hidden">
             <svg
               viewBox={`0 0 ${width} ${height}`}
@@ -153,54 +203,107 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
               textRendering="geometricPrecision"
             >
               <defs>
-                <linearGradient id={`${uid}-ambient`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#b83a28" stopOpacity="0.08" />
-                  <stop offset="100%" stopColor="#b83a28" stopOpacity="0.01" />
+                {/* Gradiente de Luz para Área de Ganhos */}
+                <linearGradient id={`${uid}-gradient-ganho`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.16" />
+                  <stop offset="60%" stopColor="#10b981" stopOpacity="0.04" />
+                  <stop offset="100%" stopColor="#10b981" stopOpacity="0.00" />
+                </linearGradient>
+
+                {/* Gradiente de Luz para Área de Perdas */}
+                <linearGradient id={`${uid}-gradient-perda`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#ef4444" stopOpacity="0.12" />
+                  <stop offset="60%" stopColor="#ef4444" stopOpacity="0.03" />
+                  <stop offset="100%" stopColor="#ef4444" stopOpacity="0.00" />
+                </linearGradient>
+
+                {/* Gradiente Laser para Linha Vertical de Foco */}
+                <linearGradient id={`${uid}-laser`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="currentColor" stopOpacity="0.1" />
+                  <stop offset="50%" stopColor="currentColor" stopOpacity="0.8" />
+                  <stop offset="100%" stopColor="currentColor" stopOpacity="0.1" />
                 </linearGradient>
               </defs>
 
-              {/* Área suave no fundo */}
-              {areaBottom && <path d={areaBottom} fill={`url(#${uid}-ambient)`} />}
+              {/* Linhas de Grade Horizontais Ultra-Discretas */}
+              <line
+                x1={padL}
+                y1={padT + plotH * 0.25}
+                x2={padL + plotW}
+                y2={padT + plotH * 0.25}
+                stroke="currentColor"
+                className="text-[var(--voux-text-muted)]"
+                strokeOpacity="0.07"
+                strokeDasharray="3 4"
+              />
+              <line
+                x1={padL}
+                y1={padT + plotH * 0.55}
+                x2={padL + plotW}
+                y2={padT + plotH * 0.55}
+                stroke="currentColor"
+                className="text-[var(--voux-text-muted)]"
+                strokeOpacity="0.07"
+                strokeDasharray="3 4"
+              />
+              <line
+                x1={padL}
+                y1={padT + plotH * 0.85}
+                x2={padL + plotW}
+                y2={padT + plotH * 0.85}
+                stroke="currentColor"
+                className="text-[var(--voux-text-muted)]"
+                strokeOpacity="0.07"
+                strokeDasharray="3 4"
+              />
 
-              {/* Linha 1: Ganhos */}
+              {/* Área Gradiente de Ganhos */}
+              {areaGanho && <path d={areaGanho} fill={`url(#${uid}-gradient-ganho)`} />}
+
+              {/* Área Gradiente de Perdas */}
+              {areaPerda && <path d={areaPerda} fill={`url(#${uid}-gradient-perda)`} />}
+
+              {/* Linha 1: Ganhos (Monotone Spline) */}
               {pathGanho && (
                 <path
                   d={pathGanho}
                   fill="none"
                   stroke={colorGanho}
-                  strokeWidth="2.2"
+                  className="dark:stroke-emerald-400"
+                  strokeWidth="2.4"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
               )}
 
-              {/* Linha 2: Perdas */}
+              {/* Linha 2: Perdas (Monotone Spline) */}
               {pathPerda && (
                 <path
                   d={pathPerda}
                   fill="none"
                   stroke={colorPerda}
-                  strokeWidth="2.2"
+                  className="dark:stroke-red-400"
+                  strokeWidth="2.4"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
               )}
 
-              {/* Linha vertical de foco no hover */}
+              {/* Régua Laser Vertical de Foco no Hover */}
               {hoveredIndex !== null && (
                 <line
                   x1={pointsGanho[hoveredIndex]?.x}
-                  y1={padT - 15}
+                  y1={padT - 10}
                   x2={pointsGanho[hoveredIndex]?.x}
                   y2={padT + plotH + 5}
-                  stroke="currentColor"
-                  className="text-[var(--voux-text-muted)]"
+                  stroke={`url(#${uid}-laser)`}
+                  className="text-[var(--voux-text-primary)]"
                   strokeWidth="1.5"
-                  strokeDasharray="3 3"
+                  strokeDasharray="2 3"
                 />
               )}
 
-              {/* Pontos e Valores Compactos da Linha Ganhos */}
+              {/* Pontos e Rótulos da Linha Ganhos com Efeito Halo */}
               {pointsGanho.map((p, i) => {
                 const isHovered = hoveredIndex === i;
                 const hasValue = p.valorGanho > 0;
@@ -208,11 +311,23 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
 
                 return (
                   <g key={`pt-g-${i}`}>
+                    {/* Halo de Pulso no Hover */}
+                    {isHovered && (
+                      <circle
+                        cx={p.x}
+                        cy={p.y}
+                        r="9"
+                        fill="#10b981"
+                        fillOpacity="0.25"
+                      />
+                    )}
+
                     <circle
                       cx={p.x}
                       cy={p.y}
                       r={isHovered ? 5.5 : hasValue ? 3.5 : 2}
                       fill={hasValue ? colorGanho : "var(--voux-card-border)"}
+                      className={hasValue ? "dark:fill-emerald-400" : ""}
                       stroke="#ffffff"
                       strokeWidth={hasValue ? 1.5 : 1}
                     />
@@ -237,7 +352,7 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
                 );
               })}
 
-              {/* Pontos e Valores Compactos da Linha Perdas */}
+              {/* Pontos e Rótulos da Linha Perdas com Efeito Halo */}
               {pointsPerda.map((p, i) => {
                 const isHovered = hoveredIndex === i;
                 const hasValue = p.valorPerda > 0;
@@ -245,11 +360,23 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
 
                 return (
                   <g key={`pt-p-${i}`}>
+                    {/* Halo de Pulso no Hover */}
+                    {isHovered && (
+                      <circle
+                        cx={p.x}
+                        cy={p.y}
+                        r="9"
+                        fill="#ef4444"
+                        fillOpacity="0.25"
+                      />
+                    )}
+
                     <circle
                       cx={p.x}
                       cy={p.y}
                       r={isHovered ? 5.5 : hasValue ? 3.5 : 2}
                       fill={hasValue ? colorPerda : "var(--voux-card-border)"}
+                      className={hasValue ? "dark:fill-red-400" : ""}
                       stroke="#ffffff"
                       strokeWidth={hasValue ? 1.5 : 1}
                     />
@@ -263,7 +390,7 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
                         fontSize="11"
                         fontWeight="600"
                         fill="#b83a28"
-                        className="dark:fill-rose-400"
+                        className="dark:fill-red-400"
                         fontFamily="var(--voux-font-sans)"
                         letterSpacing="-0.01em"
                       >
@@ -310,15 +437,17 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
                     className="cursor-pointer"
                     onMouseEnter={() => setHoveredIndex(i)}
                     onMouseLeave={() => setHoveredIndex(null)}
-                  />
+                  >
+                    <title>{`${data[i]?.mesNome}/${ano}`}</title>
+                  </rect>
                 );
               })}
             </svg>
           </div>
 
-          {/* Caixinha Tooltip Flutuante Detalhada ao Passar o Mouse (com os valores por extenso completos) */}
+          {/* Caixinha Tooltip Flutuante em Vidro Fosco Apple (Glassmorphism) */}
           {hoveredItem && (
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[var(--voux-card-border)] bg-[var(--surface-raised)]/95 backdrop-blur-md p-4 shadow-xl flex items-center gap-6 pointer-events-none z-30 text-xs">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-white/80 dark:border-white/20 bg-white/85 dark:bg-[#121c24]/90 backdrop-blur-xl backdrop-saturate-150 p-4 shadow-[0_16px_36px_-6px_rgba(0,0,0,0.18),0_0_0_1px_rgba(255,255,255,0.6)] dark:shadow-[0_20px_40px_-6px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.1)] flex items-center gap-6 pointer-events-none z-30 text-xs animate-in fade-in zoom-in-95 duration-150">
               <div className="border-r border-[var(--voux-card-border)] pr-4">
                 <p className="text-[10px] uppercase font-bold text-[var(--voux-text-muted)]">MÊS</p>
                 <p className="text-[16px] font-bold text-[var(--voux-text-primary)] font-mono">
@@ -329,7 +458,7 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
               {/* Ganhos */}
               <div className="space-y-0.5">
                 <div className="flex items-center gap-1.5 font-semibold text-emerald-700 dark:text-emerald-400">
-                  <span className="h-2 w-2 rounded-full bg-[#2d6a4f]" />
+                  <span className="h-2 w-2 rounded-full bg-[#1b4332] dark:bg-emerald-400" />
                   <span>Ganhos:</span>
                 </div>
                 <p className="font-mono font-bold text-[14px] text-[var(--voux-text-primary)]">
@@ -342,8 +471,8 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
 
               {/* Perdas */}
               <div className="space-y-0.5">
-                <div className="flex items-center gap-1.5 font-semibold text-rose-700 dark:text-rose-400">
-                  <span className="h-2 w-2 rounded-full bg-[#b83a28]" />
+                <div className="flex items-center gap-1.5 font-semibold text-red-600 dark:text-red-400">
+                  <span className="h-2 w-2 rounded-full bg-[#b83a28] dark:bg-red-400" />
                   <span>Perdas:</span>
                 </div>
                 <p className="font-mono font-bold text-[14px] text-[var(--voux-text-primary)]">

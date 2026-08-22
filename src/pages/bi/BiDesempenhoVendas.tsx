@@ -10,8 +10,6 @@ import {
   Award,
   AlertTriangle,
   Flame,
-  Building2,
-  Users,
   PieChart,
 } from "lucide-react";
 import { toISODate, formatBRL } from "@/lib/dateUtils";
@@ -24,6 +22,21 @@ import {
   type DesempenhoTab,
 } from "@/components/bi/desempenho/DesempenhoFilterBar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+
+/** Componente de Tipografia Refinada para Valores Financeiros com R$ Sutil */
+function FormattedCurrency({ value, className }: { value: number; className?: string }) {
+  const formatted = formatBRL(value);
+  const numberPart = formatted.replace(/^R\$\s*/, "");
+  return (
+    <span className={cn("inline-flex items-baseline font-mono tabular-nums", className)}>
+      <span className="text-[11px] font-normal text-[var(--voux-text-muted)] mr-1 tracking-normal select-none">
+        R$
+      </span>
+      <span>{numberPart}</span>
+    </span>
+  );
+}
 
 export default function BiDesempenhoVendas() {
   // Aba ativa: padrão "ganhos" (Vendas), com opção "perdas" (Diagnóstico de Perdas)
@@ -58,7 +71,7 @@ export default function BiDesempenhoVendas() {
       : data.rankingVendedores;
     const set = new Set(list.map((v) => v.name));
     return Array.from(set).filter(Boolean);
-  }, [activeTab, data.rankingVendedores, data.perdas?.rankingVendedores]);
+  }, [activeTab, data.perdas?.rankingVendedores, data.rankingVendedores]);
 
   const cidadeOptions = useMemo(() => {
     const list = activeTab === "perdas"
@@ -66,7 +79,16 @@ export default function BiDesempenhoVendas() {
       : data.rankingCidades;
     const set = new Set(list.map((c) => c.name));
     return Array.from(set).filter(Boolean);
-  }, [activeTab, data.rankingCidades, data.perdas?.rankingCidades]);
+  }, [activeTab, data.perdas?.rankingCidades, data.rankingCidades]);
+
+  const hasActiveFilters = Boolean(
+    selectedAno !== currentYear ||
+      dateRange?.from ||
+      dateRange?.to ||
+      selectedVendedor ||
+      selectedCidade ||
+      selectedCondicao
+  );
 
   const handleResetFilters = () => {
     setSelectedAno(currentYear);
@@ -76,24 +98,20 @@ export default function BiDesempenhoVendas() {
     setSelectedCondicao("");
   };
 
-  const hasActiveFilters =
-    selectedAno !== currentYear ||
-    Boolean(dateRange?.from) ||
-    Boolean(selectedVendedor) ||
-    Boolean(selectedCidade) ||
-    Boolean(selectedCondicao);
+  // Top destaques para cards rápidos
+  const topVendedor = data.rankingVendedores[0] || null;
+  const topProduto = data.rankingProdutos[0] || null;
 
-  const topVendedor = data.rankingVendedores[0];
-  const topProduto = data.rankingProdutos[0];
-
-  const totalPerdidoCount = data.kpis.totalPerdido ?? data.kpis.qtdPerdido ?? 0;
-  const ticketMedioPerda = data.kpis.ticketMedioPerdido || (totalPerdidoCount > 0 ? data.kpis.valorPerdido / totalPerdidoCount : 0);
-  const totalGeralOportunidades = data.kpis.totalPedidos + totalPerdidoCount;
-  const taxaConversao = totalGeralOportunidades > 0 ? (data.kpis.totalPedidos / totalGeralOportunidades) * 100 : 0;
+  // KPIs calculados para Perdas
+  const totalPerdidoCount = data.perdas?.motivosPerda?.reduce((acc, m) => acc + m.qtd, 0) || data.kpis.qtdPerdido;
+  const valorPerdidoTotal = data.perdas?.motivosPerda?.reduce((acc, m) => acc + m.valor, 0) || data.kpis.valorPerdido;
+  const ticketMedioPerda = totalPerdidoCount > 0 ? valorPerdidoTotal / totalPerdidoCount : data.kpis.ticketMedioPerdido;
+  const totalDecididos = (data.kpis.totalPedidos || 0) + totalPerdidoCount;
+  const taxaConversao = totalDecididos > 0 ? ((data.kpis.totalPedidos || 0) / totalDecididos) * 100 : 0;
 
   return (
-    <div className="p-4 md:p-6 space-y-5 max-w-[1600px] mx-auto">
-      {/* Barra Unificada de Abas + Filtros (Espaço Otimizado sem repetição de títulos) */}
+    <div className="space-y-4 pb-12">
+      {/* Barra de Filtros e Abas Integrada com Frosted Glass Sticky */}
       <DesempenhoFilterBar
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -116,11 +134,11 @@ export default function BiDesempenhoVendas() {
       />
 
       {/* ========================================================================= */}
-      {/* ABA 1: 🟢 VENDAS & GANHOS (PADRÃO) */}
+      {/* ABA 1: 🟢 VENDAS & GANHOS (Padrão) */}
       {/* ========================================================================= */}
       {activeTab === "ganhos" && (
         <div className="space-y-5">
-          {/* Ribbon de KPIs Principais de Vendas */}
+          {/* Ribbon de KPIs Resumo de Vendas */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
             {/* KPI 1: Faturamento Ganhos */}
             <div className="rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4 shadow-sm">
@@ -134,8 +152,8 @@ export default function BiDesempenhoVendas() {
                 <Skeleton className="h-7 w-28 bg-[var(--voux-skeleton)]" />
               ) : (
                 <div>
-                  <p className="text-[18px] md:text-[20px] font-bold font-mono text-emerald-700 dark:text-emerald-400">
-                    {formatBRL(data.kpis.faturamento)}
+                  <p className="text-[18px] md:text-[20px] font-bold text-emerald-700 dark:text-emerald-400">
+                    <FormattedCurrency value={data.kpis.faturamento} />
                   </p>
                   <p className="text-[10px] text-[var(--voux-text-muted)] mt-0.5">100% pedidos aprovados</p>
                 </div>
@@ -174,8 +192,8 @@ export default function BiDesempenhoVendas() {
                 <Skeleton className="h-7 w-24 bg-[var(--voux-skeleton)]" />
               ) : (
                 <div>
-                  <p className="text-[18px] md:text-[20px] font-bold font-mono text-[var(--voux-text-primary)]">
-                    {formatBRL(data.kpis.ticketMedio)}
+                  <p className="text-[18px] md:text-[20px] font-bold text-[var(--voux-text-primary)]">
+                    <FormattedCurrency value={data.kpis.ticketMedio} />
                   </p>
                   <p className="text-[10px] text-[var(--voux-text-muted)] mt-0.5">Por pedido concluído</p>
                 </div>
@@ -194,8 +212,8 @@ export default function BiDesempenhoVendas() {
                 <Skeleton className="h-7 w-20 bg-[var(--voux-skeleton)]" />
               ) : (
                 <div>
-                  <p className="text-[18px] md:text-[20px] font-bold font-mono text-red-600 dark:text-red-400">
-                    {formatBRL(data.kpis.valorPerdido)}
+                  <p className="text-[18px] md:text-[20px] font-bold text-red-600 dark:text-red-400">
+                    <FormattedCurrency value={data.kpis.valorPerdido} />
                   </p>
                   <p className="text-[10px] text-[var(--voux-text-muted)] mt-0.5">
                     {totalPerdidoCount} desistências/perdas
@@ -253,7 +271,7 @@ export default function BiDesempenhoVendas() {
             </div>
           </div>
 
-          {/* Gráfico de Linhas Ganhos vs Perdas */}
+          {/* Gráfico Comparativo Dual Line */}
           {data.serieMensal.length > 0 && (
             <DesempenhoDualLineChart
               data={data.serieMensal}
@@ -262,22 +280,22 @@ export default function BiDesempenhoVendas() {
             />
           )}
 
-          {/* Grid Principal 2x2 — Tabelas de Vendas (100% Conciliadas) */}
+          {/* Grid de Tabelas Analíticas de Vendas (4 Tabelas Principais) */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Card 1: POR VENDEDOR -> Quem vende mais */}
+            {/* Card 1: VENDAS POR VENDEDOR */}
             <DesempenhoTableCard
-              eyebrow="POR VENDEDOR"
-              title="Quem vende mais"
+              eyebrow="COMERCIAL"
+              title="Vendas por vendedor"
               firstColumnHeader="VENDEDOR"
               rows={data.rankingVendedores}
               loading={isLoading}
             />
 
-            {/* Card 2: POR PRODUTO & GRUPO -> Produtos mais vendidos */}
+            {/* Card 2: PRODUTOS MAIS VENDIDOS */}
             <DesempenhoTableCard
-              eyebrow="POR PRODUTO &amp; GRUPO"
+              eyebrow="PRODUTOS"
               title="Produtos mais vendidos"
-              firstColumnHeader="PRODUTO / MODELO"
+              firstColumnHeader="PRODUTO"
               rows={data.rankingProdutos.map((p) => ({
                 name: p.name,
                 subtitle: p.marca ? `${p.marca} ${p.grupo ? `· ${p.grupo}` : ""}` : p.grupo,
@@ -289,34 +307,28 @@ export default function BiDesempenhoVendas() {
               loading={isLoading}
             />
 
-            {/* Card 3: POR CIDADE & FILIAL -> Cidades com mais ativações */}
+            {/* Card 3: VENDAS POR CIDADE / FILIAL */}
             <DesempenhoTableCard
-              eyebrow="POR CIDADE &amp; FILIAL"
-              title="Cidades com mais ativações"
-              firstColumnHeader="CIDADE / FILIAL"
+              eyebrow="REGIONAL"
+              title="Vendas por cidade de entrega"
+              firstColumnHeader="CIDADE"
               rows={data.rankingCidades}
               loading={isLoading}
             />
 
-            {/* Card 4: ORIGEM DO LEAD -> Ativações por origem de entrada */}
+            {/* Card 4: ORIGEM DO LEAD / MARKETING */}
             <DesempenhoTableCard
-              eyebrow="ORIGEM DO LEAD &amp; CANAL"
-              title="Ativações por origem de entrada"
-              firstColumnHeader="ORIGEM / CANAL"
-              rows={data.origensLead.map((o) => ({
-                name: o.name,
-                qtd: o.qtd,
-                percent: o.percent,
-                ticketMedio: o.ticketMedio,
-                valor: o.valor,
-              }))}
+              eyebrow="MARKETING"
+              title="Origem do lead (Forma de Entrada)"
+              firstColumnHeader="CANAL / ORIGEM"
+              rows={data.origensLead}
               loading={isLoading}
             />
           </div>
 
-          {/* Terceira Linha: Financiamento/Bancos & Síntese de Perdas */}
+          {/* Grid de Apoio: Financiamento & Motivos de Perda no Rodapé */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Card 5: MODALIDADE DE PAGAMENTO -> Donut de Financiamento */}
+            {/* Card 5: MODALIDADE DE PAGAMENTO / BANCOS */}
             <DesempenhoDonutCard
               eyebrow="MODALIDADE DE PAGAMENTO"
               title="Vendas por instituição financeira"
@@ -377,8 +389,8 @@ export default function BiDesempenhoVendas() {
                       <span className="font-mono text-[14px] text-[var(--voux-text-primary)] font-bold">{res.ano}</span>
                       <span>{res.qtd} pedidos</span>
                     </div>
-                    <p className="text-[18px] font-bold font-mono text-emerald-700 dark:text-emerald-400 mt-2">
-                      {formatBRL(res.faturamento)}
+                    <p className="text-[18px] font-bold text-emerald-700 dark:text-emerald-400 mt-2">
+                      <FormattedCurrency value={res.faturamento} />
                     </p>
                     <p className="text-[11px] text-[var(--voux-text-muted)] font-mono mt-0.5">
                       Ticket Médio: {formatBRL(res.ticketMedio)}
@@ -410,8 +422,8 @@ export default function BiDesempenhoVendas() {
                 <Skeleton className="h-7 w-28 bg-[var(--voux-skeleton)]" />
               ) : (
                 <div>
-                  <p className="text-[18px] md:text-[20px] font-bold font-mono text-red-600 dark:text-red-400">
-                    {formatBRL(data.kpis.valorPerdido)}
+                  <p className="text-[18px] md:text-[20px] font-bold text-red-600 dark:text-red-400">
+                    <FormattedCurrency value={data.kpis.valorPerdido} />
                   </p>
                   <p className="text-[10px] text-[var(--voux-text-muted)] mt-0.5">Volume de propostas perdidas</p>
                 </div>
@@ -450,8 +462,8 @@ export default function BiDesempenhoVendas() {
                 <Skeleton className="h-7 w-24 bg-[var(--voux-skeleton)]" />
               ) : (
                 <div>
-                  <p className="text-[18px] md:text-[20px] font-bold font-mono text-[var(--voux-text-primary)]">
-                    {formatBRL(ticketMedioPerda)}
+                  <p className="text-[18px] md:text-[20px] font-bold text-[var(--voux-text-primary)]">
+                    <FormattedCurrency value={ticketMedioPerda} />
                   </p>
                   <p className="text-[10px] text-[var(--voux-text-muted)] mt-0.5">Por negócio não concretizado</p>
                 </div>
@@ -470,8 +482,8 @@ export default function BiDesempenhoVendas() {
                 <Skeleton className="h-7 w-20 bg-[var(--voux-skeleton)]" />
               ) : (
                 <div>
-                  <p className="text-[18px] md:text-[20px] font-bold font-mono text-emerald-700 dark:text-emerald-400">
-                    {formatBRL(data.kpis.faturamento)}
+                  <p className="text-[18px] md:text-[20px] font-bold text-emerald-700 dark:text-emerald-400">
+                    <FormattedCurrency value={data.kpis.faturamento} />
                   </p>
                   <p className="text-[10px] text-[var(--voux-text-muted)] mt-0.5">
                     {data.kpis.totalPedidos} vendas aprovadas
@@ -512,8 +524,8 @@ export default function BiDesempenhoVendas() {
                 <Skeleton className="h-7 w-24 bg-[var(--voux-skeleton)]" />
               ) : (
                 <div>
-                  <p className="text-[18px] md:text-[20px] font-bold font-mono text-amber-600 dark:text-amber-400">
-                    {formatBRL(data.kpis.valorEmAndamento || data.kpis.pipelineAberto || 0)}
+                  <p className="text-[18px] md:text-[20px] font-bold text-amber-600 dark:text-amber-400">
+                    <FormattedCurrency value={data.kpis.valorEmAndamento || data.kpis.pipelineAberto || 0} />
                   </p>
                   <p className="text-[10px] text-[var(--voux-text-muted)] mt-0.5">
                     {data.kpis.totalEmAndamento ?? 0} propostas ativas

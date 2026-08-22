@@ -58,34 +58,34 @@ export const DesempenhoFilterBar: React.FC<DesempenhoFilterBarProps> = ({
   isRefreshing = false,
 }) => {
   return (
-    <div className="flex flex-col gap-3 p-3 md:p-3.5 rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] shadow-sm">
+    <div className="sticky top-2 z-20 flex flex-col gap-3 p-3 md:p-3.5 rounded-2xl border border-[var(--voux-card-border)]/80 bg-[var(--voux-card-from)]/90 backdrop-blur-xl backdrop-saturate-150 shadow-md transition-all">
       {/* Linha Superior: Seletor de Abas + Anos Rápidos + Refresh */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {/* Toggle de Abas sem emojis, minimalista e refinado */}
-        <div className="inline-flex items-center p-1 rounded-xl bg-[var(--voux-surface)] border border-[var(--voux-card-border)] self-start">
+        <div className="inline-flex items-center p-1 rounded-xl bg-[var(--voux-surface)]/80 border border-[var(--voux-card-border)] self-start">
           <button
             onClick={() => onTabChange("ganhos")}
             className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-tight transition-all",
+              "flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold tracking-tight transition-all",
               activeTab === "ganhos"
                 ? "bg-emerald-600 text-white shadow-sm font-bold"
                 : "text-[var(--voux-text-muted)] hover:text-[var(--voux-text-primary)]"
             )}
           >
-            <TrendingUp className="h-3.5 w-3.5 text-emerald-300" />
+            <TrendingUp className="h-3.5 w-3.5 text-emerald-200" />
             <span>Vendas & Ganhos</span>
           </button>
 
           <button
             onClick={() => onTabChange("perdas")}
             className={cn(
-              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-tight transition-all",
+              "flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold tracking-tight transition-all",
               activeTab === "perdas"
                 ? "bg-red-600 text-white shadow-sm font-bold"
                 : "text-[var(--voux-text-muted)] hover:text-[var(--voux-text-primary)]"
             )}
           >
-            <TrendingDown className="h-3.5 w-3.5 text-red-300" />
+            <TrendingDown className="h-3.5 w-3.5 text-red-200" />
             <span>Diagnóstico de Perdas</span>
           </button>
         </div>
@@ -157,7 +157,7 @@ export const DesempenhoFilterBar: React.FC<DesempenhoFilterBarProps> = ({
           <SelectTrigger className="h-8 w-[150px] text-xs bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]">
             <SelectValue placeholder="Vendedor" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-[var(--surface-raised)]/95 backdrop-blur-xl border-[var(--voux-card-border)]">
             <SelectItem value="__all__">Todos vendedores</SelectItem>
             {vendedorOptions.map((v) => (
               <SelectItem key={v} value={v}>
@@ -175,7 +175,7 @@ export const DesempenhoFilterBar: React.FC<DesempenhoFilterBarProps> = ({
           <SelectTrigger className="h-8 w-[150px] text-xs bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]">
             <SelectValue placeholder="Cidade" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-[var(--surface-raised)]/95 backdrop-blur-xl border-[var(--voux-card-border)]">
             <SelectItem value="__all__">Todas cidades</SelectItem>
             {cidadeOptions.map((c) => (
               <SelectItem key={c} value={c}>
@@ -193,7 +193,7 @@ export const DesempenhoFilterBar: React.FC<DesempenhoFilterBarProps> = ({
           <SelectTrigger className="h-8 w-[130px] text-xs bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]">
             <SelectValue placeholder="Condição" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-[var(--surface-raised)]/95 backdrop-blur-xl border-[var(--voux-card-border)]">
             <SelectItem value="__all__">Novos e Usados</SelectItem>
             <SelectItem value="Novo">Apenas Novos</SelectItem>
             <SelectItem value="Usado">Apenas Usados</SelectItem>
