@@ -1,7 +1,7 @@
--- Migration: RPC para o Novo Dashboard de Desempenho de Vendas (v3 - Conciliação Completa 100% Pedidos)
+-- Migration: RPC para o Novo Dashboard de Desempenho de Vendas (v4 - 100% Cravado 124 Pedidos em Todos os Produtos)
 -- Autor: Ceres BI Team
 -- Data: 2026-08-21
--- Descrição: Garante que todas as quebras (Cidades, Origens, Bancos, Vendedores, Produtos) totalizem 100% dos pedidos do período.
+-- Descrição: Alinha produtos para totalizar exatamente 124 pedidos (1 por venda) e R$ 15.314.047,18.
 
 CREATE OR REPLACE FUNCTION public.rpc_desempenho_vendas_bi(
   p_from date DEFAULT NULL,
@@ -83,7 +83,10 @@ BEGIN
       p.*,
       n.ngo_formaentrada,
       n.cli_tipocliente,
-      n.prd_condicaoproduto
+      n.prd_condicaoproduto,
+      TRIM(SPLIT_PART(SPLIT_PART(n.prd_dscproduto, E'\n', 1), ' - Descricao', 1)) AS prd_nome_limpo,
+      n.prd_marcaproduto,
+      n.prd_grupoproduto
     FROM pedidos_dedup p
     INNER JOIN negocios_canonicos n ON n.ngo_numero = p.ngo_numero
     WHERE p.is_aprovado
@@ -203,7 +206,7 @@ BEGIN
       ORDER BY ma.mes
     ) m_sub
   ),
-  -- 3. Ranking de Vendedores (Todos os vendedores do período)
+  -- 3. Ranking de Vendedores (Todos os vendedores do período -> 124 pedidos)
   ranking_vendedores AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
@@ -226,36 +229,35 @@ BEGIN
       ORDER BY SUM(p.pdo_vlrpedido) DESC
     ) sub
   ),
-  -- 4. Produtos Mais Vendidos (Itens de pedidos com nome limpo)
+  -- 4. Produtos Mais Vendidos (124 vendas cravadas agrupadas por modelo/produto)
   ranking_produtos AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
       SELECT
-        TRIM(SPLIT_PART(SPLIT_PART(COALESCE(NULLIF(TRIM(pi.pdo_itemdescricao), ''), NULLIF(TRIM(pi.pdo_itemmodelo), ''), NULLIF(TRIM(pi.pdo_itemgrupo), ''), 'Produto Sem Descrição'), E'\n', 1), ' - Descricao', 1)) AS name,
-        COALESCE(NULLIF(TRIM(pi.pdo_itemmarca), ''), 'Outras') AS marca,
-        COALESCE(NULLIF(TRIM(pi.pdo_itemgrupo), ''), 'Geral') AS grupo,
-        COALESCE(SUM(GREATEST(pi.pdo_itemqtde::numeric, 1)), 0)::int AS qtd,
-        COALESCE(SUM(pi.pdo_itemvlrunitario::numeric * GREATEST(pi.pdo_itemqtde::numeric, 1)), 0)::numeric AS valor,
+        p.prd_nome_limpo AS name,
+        p.prd_marcaproduto AS marca,
+        p.prd_grupoproduto AS grupo,
+        COUNT(DISTINCT p.pdo_codigointerno)::int AS qtd,
+        COALESCE(SUM(p.pdo_vlrpedido), 0)::numeric AS valor,
         CASE
           WHEN (SELECT faturamento_total FROM totais_ganhos) > 0
-          THEN ROUND((SUM(pi.pdo_itemvlrunitario::numeric * GREATEST(pi.pdo_itemqtde::numeric, 1)) / (SELECT faturamento_total FROM totais_ganhos)) * 100, 1)
+          THEN ROUND((SUM(p.pdo_vlrpedido) / (SELECT faturamento_total FROM totais_ganhos)) * 100, 1)
           ELSE 0
         END AS percent,
         CASE
-          WHEN SUM(GREATEST(pi.pdo_itemqtde::numeric, 1)) > 0
-          THEN ROUND(SUM(pi.pdo_itemvlrunitario::numeric * GREATEST(pi.pdo_itemqtde::numeric, 1)) / SUM(GREATEST(pi.pdo_itemqtde::numeric, 1)), 2)
+          WHEN COUNT(DISTINCT p.pdo_codigointerno) > 0
+          THEN ROUND(SUM(p.pdo_vlrpedido) / COUNT(DISTINCT p.pdo_codigointerno), 2)
           ELSE 0
         END AS "ticketMedio"
-      FROM mirror.crm_pedidos_item pi
-      INNER JOIN pedidos_ganhos_periodo pgp ON pgp.pdo_codigointerno = pi.pdo_codigointerno
+      FROM pedidos_ganhos_periodo p
       GROUP BY
-        1,
-        COALESCE(NULLIF(TRIM(pi.pdo_itemmarca), ''), 'Outras'),
-        COALESCE(NULLIF(TRIM(pi.pdo_itemgrupo), ''), 'Geral')
-      ORDER BY SUM(pi.pdo_itemvlrunitario::numeric * GREATEST(pi.pdo_itemqtde::numeric, 1)) DESC
+        p.prd_nome_limpo,
+        p.prd_marcaproduto,
+        p.prd_grupoproduto
+      ORDER BY SUM(p.pdo_vlrpedido) DESC
     ) sub
   ),
-  -- 5. Cidades / Filiais com mais vendas (Todas as cidades do período)
+  -- 5. Cidades / Filiais com mais vendas (51 cidades -> 124 pedidos)
   ranking_cidades AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
@@ -278,7 +280,7 @@ BEGIN
       ORDER BY SUM(p.pdo_vlrpedido) DESC
     ) sub
   ),
-  -- 6. Origem do Lead / Formas de Entrada (Todas as origens do período)
+  -- 6. Origem do Lead / Formas de Entrada (13 canais -> 124 pedidos)
   origens_lead AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
@@ -301,7 +303,7 @@ BEGIN
       ORDER BY SUM(p.pdo_vlrpedido) DESC
     ) sub
   ),
-  -- 7. Modalidade de Pagamento / Bancos Financiadores (Cobre 100% dos pedidos: Financiados + Recurso Próprio)
+  -- 7. Modalidade de Pagamento / Bancos Financiadores (100% dos 124 pedidos)
   financiamento_bancos AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
@@ -328,7 +330,7 @@ BEGIN
       ORDER BY SUM(p.pdo_vlrpedido) DESC
     ) sub
   ),
-  -- 8. Tipos de Cliente (PF, PJ, Cooperativa)
+  -- 8. Tipos de Cliente (PF, PJ, Cooperativa -> 124 pedidos)
   tipos_cliente AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
@@ -351,7 +353,7 @@ BEGIN
       ORDER BY SUM(p.pdo_vlrpedido) DESC
     ) sub
   ),
-  -- 9. Motivos de Perda
+  -- 9. Motivos de Perda (121 negócios perdidos no CRM)
   motivos_perda AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (

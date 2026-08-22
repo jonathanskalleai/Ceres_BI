@@ -327,10 +327,10 @@ export default function BiDesempenhoVendas() {
           loading={isLoading}
         />
 
-        {/* Card 6: MOTIVOS DE PERDA & CONCORRENTES */}
+        {/* Card 6: MOTIVOS DE PERDA DE NEGÓCIOS NO CRM */}
         <DesempenhoTableCard
-          eyebrow="INTELIGÊNCIA COMPETITIVA"
-          title="Motivos de perda &amp; concorrentes"
+          eyebrow="OPORTUNIDADES PERDIDAS · CRM"
+          title="Motivos de perda de negócios"
           firstColumnHeader="MOTIVO / CONCORRENTE"
           rows={data.motivosPerda.map((m) => ({
             name: m.name,
