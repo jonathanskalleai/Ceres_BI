@@ -199,9 +199,10 @@ export const DesempenhoDonutCard: React.FC<DesempenhoDonutCardProps> = ({
                   <div
                     key={`${item.name}-${idx}`}
                     className={cn(
-                      "flex items-center justify-between gap-3 text-xs p-2.5 rounded-xl transition-all duration-200 cursor-pointer relative",
+                      "flex items-center justify-between gap-3 text-xs p-2.5 rounded-2xl transition-all duration-200 cursor-pointer relative",
+                      "bg-[var(--voux-surface)]/40 border border-[var(--voux-card-border)]/40",
                       isHovered
-                        ? "scale-[1.02] -translate-y-0.5 z-20 bg-[var(--surface-raised)]/95 backdrop-blur-md shadow-[0_8px_24px_-4px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_24px_-4px_rgba(0,0,0,0.45)] ring-1 ring-emerald-500/40"
+                        ? "scale-[1.018] -translate-y-1 z-20 bg-white/80 dark:bg-[#15212b]/85 backdrop-blur-xl backdrop-saturate-150 border-white/90 dark:border-white/25 shadow-[0_12px_30px_-6px_rgba(0,0,0,0.14),0_0_0_1px_rgba(255,255,255,0.6)] dark:shadow-[0_16px_36px_-6px_rgba(0,0,0,0.55),0_0_0_1px_rgba(255,255,255,0.12)]"
                         : "hover:bg-[var(--voux-card-border)]/20"
                     )}
                     onMouseEnter={() => setHoveredIndex(idx)}
