@@ -11,19 +11,7 @@ interface DesempenhoDualLineChartProps {
   className?: string;
 }
 
-function formatPointLabel(val: number): string {
-  if (!val || val === 0) return "";
-  if (val >= 1_000_000) {
-    const formatted = (val / 1_000_000).toFixed(2).replace(".", ",");
-    return `R$ ${formatted}M`;
-  }
-  if (val >= 1_000) {
-    const formatted = (val / 1_000).toFixed(1).replace(".", ",");
-    return `R$ ${formatted}k`;
-  }
-  return formatBRL(val);
-}
-
+/** Cubic bezier smooth path */
 function smoothPath(points: { x: number; y: number }[]): string {
   if (points.length < 2) return points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
   let d = `M ${points[0].x} ${points[0].y}`;
@@ -45,107 +33,96 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
   const uid = useId().replace(/:/g, "");
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-  // Totais
+  // Totais do ano
   const totalValorGanho = data.reduce((acc, d) => acc + d.valorGanho, 0);
   const totalQtdGanho = data.reduce((acc, d) => acc + d.qtdGanho, 0);
   const totalValorPerda = data.reduce((acc, d) => acc + d.valorPerda, 0);
   const totalQtdPerda = data.reduce((acc, d) => acc + d.qtdPerda, 0);
 
-  // Dimensões do gráfico no padrão VOUX
-  const width = 880;
+  // Dimensões do gráfico unificado
+  const width = 920;
   const height = 300;
-  const padL = 30;
-  const padR = 40;
-  const padT = 30;
-  const padB = 40;
+  const padL = 35;
+  const padR = 45;
+  const padT = 40;
+  const padB = 45;
   const plotW = width - padL - padR;
   const plotH = height - padT - padB;
 
-  // Cada série ganha uma faixa/banda própria (metade superior e metade inferior)
-  const bandGap = 28;
-  const bandH = (plotH - bandGap) / 2;
-
-  // Escalas e normalização individual
+  // Escalas e normalizações independentes para que ambas as linhas aproveitem a altura do gráfico
   const maxGanho = Math.max(...data.map((d) => d.valorGanho), 1);
   const maxPerda = Math.max(...data.map((d) => d.valorPerda), 1);
 
   const xCoord = (i: number) =>
     padL + (data.length === 1 ? plotW / 2 : (i / (data.length - 1)) * plotW);
 
-  // Faixa A (Ganhos): parte superior (de padT até padT + bandH)
-  const bandATop = padT;
-  const bandABottom = padT + bandH;
-  const pointsA = data.map((d, i) => {
+  // Coordenadas das curvas (Ganhos na faixa superior/média e Perdas na faixa média/inferior)
+  const pointsGanho = data.map((d, i) => {
     const norm = d.valorGanho / maxGanho;
-    const y = bandABottom - norm * (bandH - 24);
+    // Ganhos: varia do topo (y = padT) até 65% da altura
+    const y = padT + plotH * 0.55 - norm * (plotH * 0.45);
     return { x: xCoord(i), y, ...d };
   });
 
-  // Faixa B (Perdas): parte inferior (de bandBTop até bandBBottom)
-  const bandBTop = padT + bandH + bandGap;
-  const bandBBottom = bandBTop + bandH;
-  const pointsB = data.map((d, i) => {
+  const pointsPerda = data.map((d, i) => {
     const norm = d.valorPerda / maxPerda;
-    const y = bandBBottom - norm * (bandH - 24);
+    // Perdas: varia da base (y = padT + plotH) até 40% da altura
+    const y = padT + plotH - norm * (plotH * 0.45);
     return { x: xCoord(i), y, ...d };
   });
 
-  const pathA = smoothPath(pointsA);
-  const pathB = smoothPath(pointsB);
+  const pathGanho = smoothPath(pointsGanho);
+  const pathPerda = smoothPath(pointsPerda);
 
-  // Áreas de preenchimento suaves
-  const areaA = pointsA.length > 0
-    ? `${pathA} L ${pointsA[pointsA.length - 1].x} ${bandABottom} L ${pointsA[0].x} ${bandABottom} Z`
+  // Área única e suave no fundo do gráfico
+  const areaBottom = pointsPerda.length > 0
+    ? `${pathPerda} L ${pointsPerda[pointsPerda.length - 1].x} ${padT + plotH} L ${pointsPerda[0].x} ${padT + plotH} Z`
     : "";
 
-  const areaB = pointsB.length > 0
-    ? `${pathB} L ${pointsB[pointsB.length - 1].x} ${bandBBottom} L ${pointsB[0].x} ${bandBBottom} Z`
-    : "";
-
-  const colorA = "#2d6a4f"; // Verde escuro elegante / VOUX
-  const colorB = "#b83a28"; // Terracota escuro / VOUX
+  const colorGanho = "#2b2824"; // Escuro elegante / Graphite da referência
+  const colorPerda = "#b83a28"; // Terracota / Vinho da referência
 
   const hoveredItem = hoveredIndex !== null ? data[hoveredIndex] : null;
 
   return (
     <div
       className={cn(
-        "rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-5 md:p-6 shadow-sm",
+        "rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-6 md:p-7 shadow-sm",
         className
       )}
     >
-      {/* Header no estilo do exemplo */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-3">
+      {/* Header com Tipografia VOUX Idêntica à Inspiração */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
         <div>
           <p
             className="text-[10px] font-bold tracking-[0.2em] uppercase text-[var(--voux-text-muted)]"
             style={{ fontFamily: "var(--voux-font-mono)" }}
           >
-            HISTÓRICO MENSAL · DINÂMICA DE DESFECHOS
+            HISTÓRICO MENSAL · RESULTADOS CONSOLIDADOS
           </p>
           <h2
-            className="text-[18px] md:text-[20px] font-bold tracking-tight text-[var(--voux-text-heading)] mt-0.5"
+            className="text-[20px] md:text-[22px] font-bold tracking-tight text-[var(--voux-text-heading)] mt-0.5"
             style={{ fontFamily: "var(--voux-font-display)" }}
           >
-            Ganhos vs. <span className="italic font-normal text-rose-700 dark:text-rose-400">Perdas</span> em {ano}
+            Desfechos de Vendas em <span className="italic font-normal text-rose-700 dark:text-rose-400">{ano}</span>
           </h2>
-          <p className="text-xs text-[var(--voux-text-muted)] mt-0.5">
-            Evolução de pedidos aprovados e negócios perdidos com escalas e eixos independentes.
+          <p className="text-xs text-[var(--voux-text-muted)] mt-0.5 font-sans">
+            Curvas mensais comparativas com escalas independentes por desfecho.
           </p>
         </div>
 
-        {/* Legenda compacta com bolinhas */}
-        <div className="flex items-center gap-4 text-xs font-medium">
+        {/* Legenda com Marcadores Redondos estilo Inspiração */}
+        <div className="flex items-center gap-5 text-xs font-sans">
           <div className="flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#2d6a4f] shrink-0" />
-            <span className="text-[var(--voux-text-primary)]">
-              Ganhos: <strong className="font-mono">{formatBRL(totalValorGanho)}</strong> ({totalQtdGanho} ped)
+            <span className="h-3 w-3 rounded-full bg-[#2b2824] dark:bg-emerald-400 shrink-0" />
+            <span className="text-[var(--voux-text-primary)] font-medium">
+              Ganhos: <strong className="font-mono font-bold">{formatBRL(totalValorGanho)}</strong> ({totalQtdGanho} pedidos)
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#b83a28] shrink-0" />
-            <span className="text-[var(--voux-text-primary)]">
-              Perdas: <strong className="font-mono">{formatBRL(totalValorPerda)}</strong> ({totalQtdPerda} neg)
+            <span className="h-3 w-3 rounded-full bg-[#b83a28] shrink-0" />
+            <span className="text-[var(--voux-text-primary)] font-medium">
+              Perdas: <strong className="font-mono font-bold">{formatBRL(totalValorPerda)}</strong> ({totalQtdPerda} negócios)
             </span>
           </div>
         </div>
@@ -155,66 +132,44 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
         <Skeleton className="h-[280px] w-full rounded-xl bg-[var(--voux-skeleton)]" />
       ) : (
         <div className="relative">
-          {/* Canvas SVG com Faixas e Curvas que não se cruzam */}
+          {/* Canvas SVG do Gráfico Único */}
           <div className="w-full overflow-hidden">
             <svg
               viewBox={`0 0 ${width} ${height}`}
               className="w-full h-[280px] overflow-visible"
               preserveAspectRatio="none"
+              shapeRendering="geometricPrecision"
+              textRendering="geometricPrecision"
             >
               <defs>
-                <linearGradient id={`${uid}-gradA`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={colorA} stopOpacity={0.18} />
-                  <stop offset="100%" stopColor={colorA} stopOpacity={0.02} />
-                </linearGradient>
-                <linearGradient id={`${uid}-gradB`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={colorB} stopOpacity={0.18} />
-                  <stop offset="100%" stopColor={colorB} stopOpacity={0.02} />
+                <linearGradient id={`${uid}-ambient`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#b83a28" stopOpacity="0.10" />
+                  <stop offset="100%" stopColor="#b83a28" stopOpacity="0.01" />
                 </linearGradient>
               </defs>
 
-              {/* Linha guia suave de base para cada faixa */}
-              <line
-                x1={padL}
-                y1={bandABottom}
-                x2={width - padR}
-                y2={bandABottom}
-                stroke="currentColor"
-                className="text-[var(--voux-card-border)]/50"
-                strokeWidth="1"
-              />
-              <line
-                x1={padL}
-                y1={bandBBottom}
-                x2={width - padR}
-                y2={bandBBottom}
-                stroke="currentColor"
-                className="text-[var(--voux-card-border)]/50"
-                strokeWidth="1"
-              />
+              {/* Área suave única no fundo */}
+              {areaBottom && <path d={areaBottom} fill={`url(#${uid}-ambient)`} />}
 
-              {/* Áreas sob as curvas */}
-              {areaA && <path d={areaA} fill={`url(#${uid}-gradA)`} />}
-              {areaB && <path d={areaB} fill={`url(#${uid}-gradB)`} />}
-
-              {/* Linha Superior (Ganhos) */}
-              {pathA && (
+              {/* Linha 1: Ganhos (Curva Suave Superior) */}
+              {pathGanho && (
                 <path
-                  d={pathA}
+                  d={pathGanho}
                   fill="none"
-                  stroke={colorA}
+                  stroke={colorGanho}
+                  className="dark:stroke-emerald-400"
                   strokeWidth="2.2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
               )}
 
-              {/* Linha Inferior (Perdas) */}
-              {pathB && (
+              {/* Linha 2: Perdas (Curva Suave Inferior) */}
+              {pathPerda && (
                 <path
-                  d={pathB}
+                  d={pathPerda}
                   fill="none"
-                  stroke={colorB}
+                  stroke={colorPerda}
                   strokeWidth="2.2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -224,82 +179,89 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
               {/* Linha vertical de foco no hover */}
               {hoveredIndex !== null && (
                 <line
-                  x1={pointsA[hoveredIndex]?.x}
-                  y1={padT - 10}
-                  x2={pointsA[hoveredIndex]?.x}
-                  y2={bandBBottom}
+                  x1={pointsGanho[hoveredIndex]?.x}
+                  y1={padT - 15}
+                  x2={pointsGanho[hoveredIndex]?.x}
+                  y2={padT + plotH + 5}
                   stroke="currentColor"
                   className="text-[var(--voux-text-muted)]"
                   strokeWidth="1.5"
-                  strokeDasharray="2 2"
+                  strokeDasharray="3 3"
                 />
               )}
 
-              {/* Pontos e Valores da Linha A (Ganhos) */}
-              {pointsA.map((p, i) => {
+              {/* Pontos e Valores da Linha Ganhos (Tipografia Refinada da Inspiração) */}
+              {pointsGanho.map((p, i) => {
                 const isHovered = hoveredIndex === i;
                 const hasValue = p.valorGanho > 0;
-                const label = formatPointLabel(p.valorGanho);
 
                 return (
-                  <g key={`pt-a-${i}`}>
+                  <g key={`pt-g-${i}`}>
                     <circle
                       cx={p.x}
                       cy={p.y}
-                      r={isHovered ? 5 : hasValue ? 3.5 : 2}
-                      fill={hasValue ? colorA : "var(--voux-card-border)"}
+                      r={isHovered ? 5.5 : hasValue ? 4 : 2}
+                      fill={hasValue ? colorGanho : "var(--voux-card-border)"}
+                      className="dark:fill-emerald-400"
                       stroke="#ffffff"
                       strokeWidth={hasValue ? 1.5 : 1}
                     />
 
-                    {/* Valor visível direto acima do ponto (estilo do print de inspiração) */}
+                    {/* Valor Visível Direto com Tipografia Elegante */}
                     {hasValue && (
                       <text
                         x={p.x}
-                        y={p.y - 8}
+                        y={p.y - 9}
                         textAnchor="middle"
-                        className="text-[10px] font-mono font-semibold fill-[var(--voux-text-primary)]"
+                        fontSize="11"
+                        fontWeight="600"
+                        fill="var(--voux-text-heading, #1a1714)"
+                        fontFamily="var(--voux-font-sans)"
+                        letterSpacing="-0.01em"
                       >
-                        {label}
+                        {formatBRL(p.valorGanho)}
                       </text>
                     )}
                   </g>
                 );
               })}
 
-              {/* Pontos e Valores da Linha B (Perdas) */}
-              {pointsB.map((p, i) => {
+              {/* Pontos e Valores da Linha Perdas (Tipografia Refinada da Inspiração) */}
+              {pointsPerda.map((p, i) => {
                 const isHovered = hoveredIndex === i;
                 const hasValue = p.valorPerda > 0;
-                const label = formatPointLabel(p.valorPerda);
 
                 return (
-                  <g key={`pt-b-${i}`}>
+                  <g key={`pt-p-${i}`}>
                     <circle
                       cx={p.x}
                       cy={p.y}
-                      r={isHovered ? 5 : hasValue ? 3.5 : 2}
-                      fill={hasValue ? colorB : "var(--voux-card-border)"}
+                      r={isHovered ? 5.5 : hasValue ? 4 : 2}
+                      fill={hasValue ? colorPerda : "var(--voux-card-border)"}
                       stroke="#ffffff"
                       strokeWidth={hasValue ? 1.5 : 1}
                     />
 
-                    {/* Valor visível direto acima do ponto (estilo do print de inspiração) */}
+                    {/* Valor Visível Direto com Tipografia Elegante */}
                     {hasValue && (
                       <text
                         x={p.x}
-                        y={p.y - 8}
+                        y={p.y - 9}
                         textAnchor="middle"
-                        className="text-[10px] font-mono font-semibold fill-[var(--voux-text-primary)]"
+                        fontSize="11"
+                        fontWeight="600"
+                        fill="var(--voux-text-heading, #1a1714)"
+                        fontFamily="var(--voux-font-sans)"
+                        letterSpacing="-0.01em"
                       >
-                        {label}
+                        {formatBRL(p.valorPerda)}
                       </text>
                     )}
                   </g>
                 );
               })}
 
-              {/* Rótulos do Eixo X (Meses) */}
+              {/* Rótulos do Eixo X (Meses no formato mmm/aa) */}
               {data.map((d, i) => {
                 const x = xCoord(i);
                 const isHovered = hoveredIndex === i;
@@ -308,21 +270,19 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
                   <text
                     key={`lbl-x-${i}`}
                     x={x}
-                    y={height - 8}
+                    y={height - 10}
                     textAnchor="middle"
-                    className={cn(
-                      "text-[11px] font-mono transition-all",
-                      isHovered
-                        ? "fill-[var(--voux-text-primary)] font-bold text-[12px]"
-                        : "fill-[var(--voux-text-muted)]"
-                    )}
+                    fontSize="11"
+                    fontWeight={isHovered ? "700" : "500"}
+                    fill={isHovered ? "var(--voux-text-primary)" : "var(--voux-text-muted)"}
+                    fontFamily="var(--voux-font-sans)"
                   >
-                    {d.mesNome}/{String(ano).slice(2)}
+                    {d.mesNome.toLowerCase()}/{String(ano).slice(2)}
                   </text>
                 );
               })}
 
-              {/* Zonas transparentes de captura de hover */}
+              {/* Zonas de captura de hover */}
               {data.map((_, i) => {
                 const x = xCoord(i);
                 const colWidth = plotW / (data.length || 1);
@@ -330,9 +290,9 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
                   <rect
                     key={`hit-${i}`}
                     x={x - colWidth / 2}
-                    y={padT - 15}
+                    y={padT - 20}
                     width={colWidth}
-                    height={plotH + 20}
+                    height={plotH + 35}
                     fill="transparent"
                     className="cursor-pointer"
                     onMouseEnter={() => setHoveredIndex(i)}
@@ -343,7 +303,7 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
             </svg>
           </div>
 
-          {/* Caixinha Tooltip Flutuante Detalhada ao Passar o Mouse (Elogiada pelo usuário) */}
+          {/* Caixinha Tooltip Flutuante Detalhada ao Passar o Mouse */}
           {hoveredItem && (
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[var(--voux-card-border)] bg-[var(--surface-raised)]/95 backdrop-blur-md p-4 shadow-xl flex items-center gap-6 pointer-events-none z-30 text-xs">
               <div className="border-r border-[var(--voux-card-border)] pr-4">
@@ -355,8 +315,8 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
 
               {/* Ganhos */}
               <div className="space-y-0.5">
-                <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-semibold">
-                  <span className="h-2 w-2 rounded-full bg-[#2d6a4f]" />
+                <div className="flex items-center gap-1.5 font-semibold text-[var(--voux-text-primary)]">
+                  <span className="h-2 w-2 rounded-full bg-[#2b2824] dark:bg-emerald-400" />
                   <span>Ganhos:</span>
                 </div>
                 <p className="font-mono font-bold text-[14px] text-[var(--voux-text-primary)]">
@@ -369,7 +329,7 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
 
               {/* Perdas */}
               <div className="space-y-0.5">
-                <div className="flex items-center gap-1.5 text-rose-700 dark:text-rose-400 font-semibold">
+                <div className="flex items-center gap-1.5 font-semibold text-rose-700 dark:text-rose-400">
                   <span className="h-2 w-2 rounded-full bg-[#b83a28]" />
                   <span>Perdas:</span>
                 </div>
