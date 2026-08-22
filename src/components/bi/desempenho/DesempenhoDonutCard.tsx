@@ -93,7 +93,7 @@ export const DesempenhoDonutCard: React.FC<DesempenhoDonutCardProps> = ({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-5 md:p-6 shadow-sm transition-shadow hover:shadow-md flex flex-col justify-between relative",
+        "rounded-2xl border border-[var(--voux-card-border)]/80 bg-[var(--surface-raised)]/85 dark:bg-[var(--surface-raised)]/75 backdrop-blur-xl p-5 md:p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.08)] transition-all flex flex-col justify-between relative",
         className
       )}
     >
