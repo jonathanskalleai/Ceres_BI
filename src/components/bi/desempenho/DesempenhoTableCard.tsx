@@ -39,8 +39,11 @@ export const DesempenhoTableCard: React.FC<DesempenhoTableCardProps> = ({
 }) => {
   const isRed = variant === "red";
 
-  // Calcula o valor máximo de ticket médio para a barra proporcional de background
+  // Calcula limites para o Mapa de Calor (Heatmap) de Ticket Médio
+  const validTickets = rows.map((r) => r.ticketMedio).filter((v) => v > 0);
+  const minTicket = validTickets.length > 0 ? Math.min(...validTickets) : 0;
   const maxTicket = Math.max(...rows.map((r) => r.ticketMedio), 1);
+
   const totalQtd = rows.reduce((acc, r) => acc + r.qtd, 0);
   const totalValor = rows.reduce((acc, r) => acc + r.valor, 0);
   const totalTicketMedio = totalQtd > 0 ? totalValor / totalQtd : 0;
@@ -88,21 +91,29 @@ export const DesempenhoTableCard: React.FC<DesempenhoTableCardProps> = ({
             {emptyMessage}
           </div>
         ) : (
-          /* Table Container com Rolagem Suave Direta e Efeito Zoom no Hover */
+          /* Table Container com Rolagem Suave Direta, Zoom Frontal e Mapa de Calor no Ticket Médio */
           <div className="overflow-x-auto -mx-2 px-2 max-h-[380px] overflow-y-auto sidebar-scroll pr-1">
-            <table className="w-full text-left text-xs border-separate border-spacing-y-1">
+            <table className="w-full text-left text-xs border-collapse">
               <thead className="sticky top-0 bg-[var(--voux-card-from)] z-10">
                 <tr className="border-b border-[var(--voux-card-border)] text-[10px] font-bold tracking-wider text-[var(--voux-text-muted)] uppercase">
-                  <th className="py-2.5 px-3 font-semibold rounded-l-lg">{firstColumnHeader}</th>
+                  <th className="py-2.5 pr-4 font-semibold">{firstColumnHeader}</th>
                   <th className="py-2.5 px-3 text-right font-semibold">QTD</th>
                   {showPercent && <th className="py-2.5 px-3 text-right font-semibold">%</th>}
                   <th className="py-2.5 px-3 text-right font-semibold">TICKET MÉDIO</th>
-                  <th className="py-2.5 px-3 text-right font-semibold rounded-r-lg">VALOR</th>
+                  <th className="py-2.5 pl-3 text-right font-semibold">VALOR</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-[var(--voux-card-border)]/60">
                 {rows.map((row, idx) => {
-                  const ticketPercent = Math.min(100, Math.round((row.ticketMedio / maxTicket) * 100));
+                  // Intensidade de calor de 0 a 1
+                  const intensity =
+                    maxTicket > minTicket
+                      ? Math.max(0, Math.min(1, (row.ticketMedio - minTicket) / (maxTicket - minTicket)))
+                      : 0.5;
+
+                  // Alfa proporcional para o fundo (0.08 a 0.32)
+                  const bgAlpha = (0.08 + intensity * 0.24).toFixed(3);
+                  const isHighIntensity = intensity >= 0.55;
 
                   return (
                     <tr
@@ -119,7 +130,7 @@ export const DesempenhoTableCard: React.FC<DesempenhoTableCardProps> = ({
                       )}
                     >
                       {/* Nome / Título */}
-                      <td className="py-2.5 px-3 rounded-l-xl max-w-[220px]">
+                      <td className="py-3 pr-4 max-w-[220px]">
                         <p
                           className="font-semibold text-[13px] text-[var(--voux-text-primary)] uppercase truncate group-hover:text-[var(--voux-text-heading)] transition-colors"
                           title={row.name}
@@ -134,39 +145,42 @@ export const DesempenhoTableCard: React.FC<DesempenhoTableCardProps> = ({
                       </td>
 
                       {/* Quantidade */}
-                      <td className="py-2.5 px-3 text-right tabular-nums font-mono font-medium text-[13px] text-[var(--voux-text-primary)]">
+                      <td className="py-3 px-3 text-right tabular-nums font-mono font-medium text-[13px] text-[var(--voux-text-primary)]">
                         {row.qtd.toLocaleString("pt-BR")}
                       </td>
 
                       {/* % Participação */}
                       {showPercent && (
-                        <td className="py-2.5 px-3 text-right tabular-nums font-mono text-[12px] text-[var(--voux-text-muted)]">
+                        <td className="py-3 px-3 text-right tabular-nums font-mono text-[12px] text-[var(--voux-text-muted)]">
                           {row.percent != null ? `${row.percent.toFixed(1)}%` : "—"}
                         </td>
                       )}
 
-                      {/* Ticket Médio com barra visual proporcional */}
-                      <td className="py-2 px-3 text-right relative">
-                        <div className="relative inline-flex items-center justify-end w-full min-w-[110px] px-2 py-1 rounded">
-                          <div
-                            className={cn(
-                              "absolute right-0 top-0 bottom-0 rounded pointer-events-none transition-all duration-300",
-                              isRed
-                                ? "bg-red-500/15 dark:bg-red-500/25 group-hover:bg-red-500/25"
-                                : "bg-emerald-500/15 dark:bg-emerald-500/20 group-hover:bg-emerald-500/25"
-                            )}
-                            style={{ width: `${ticketPercent}%` }}
-                          />
-                          <span className="relative z-10 font-mono text-[12px] font-medium text-[var(--voux-text-primary)]">
-                            {formatBRL(row.ticketMedio)}
-                          </span>
+                      {/* Ticket Médio com Mapa de Calor (Heatmap Pill Completo) */}
+                      <td className="py-2 px-3 text-right">
+                        <div
+                          className={cn(
+                            "inline-flex items-center justify-end w-full min-w-[110px] px-2.5 py-1 rounded-xl transition-all duration-200 font-mono text-[12px]",
+                            isHighIntensity
+                              ? isRed
+                                ? "text-red-700 dark:text-red-300 font-bold"
+                                : "text-emerald-800 dark:text-emerald-300 font-bold"
+                              : "text-[var(--voux-text-primary)] font-medium"
+                          )}
+                          style={{
+                            backgroundColor: isRed
+                              ? `rgba(220, 38, 38, ${bgAlpha})`
+                              : `rgba(45, 106, 79, ${bgAlpha})`,
+                          }}
+                        >
+                          <span>{formatBRL(row.ticketMedio)}</span>
                         </div>
                       </td>
 
                       {/* Valor Total */}
                       <td
                         className={cn(
-                          "py-2.5 px-3 rounded-r-xl text-right tabular-nums font-mono text-[13px] font-semibold transition-colors",
+                          "py-3 pl-3 text-right tabular-nums font-mono text-[13px] font-semibold transition-colors",
                           isRed
                             ? "text-red-600 dark:text-red-400 group-hover:text-red-700 dark:group-hover:text-red-300 font-bold"
                             : "text-emerald-700 dark:text-emerald-400 group-hover:text-emerald-800 dark:group-hover:text-emerald-300 font-bold"
