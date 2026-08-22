@@ -88,30 +88,42 @@ export const DesempenhoTableCard: React.FC<DesempenhoTableCardProps> = ({
             {emptyMessage}
           </div>
         ) : (
-          /* Table Container com Rolagem Suave Direta e Cabeçalho Fixo */
+          /* Table Container com Rolagem Suave Direta e Efeito Zoom Vidro no Hover */
           <div className="overflow-x-auto -mx-2 px-2 max-h-[380px] overflow-y-auto sidebar-scroll pr-1">
-            <table className="w-full text-left text-xs border-collapse">
+            <table className="w-full text-left text-xs border-separate border-spacing-y-1">
               <thead className="sticky top-0 bg-[var(--voux-card-from)] z-10">
                 <tr className="border-b border-[var(--voux-card-border)] text-[10px] font-bold tracking-wider text-[var(--voux-text-muted)] uppercase">
-                  <th className="py-2.5 pr-4 font-semibold">{firstColumnHeader}</th>
+                  <th className="py-2.5 px-3 font-semibold rounded-l-lg">{firstColumnHeader}</th>
                   <th className="py-2.5 px-3 text-right font-semibold">QTD</th>
                   {showPercent && <th className="py-2.5 px-3 text-right font-semibold">%</th>}
                   <th className="py-2.5 px-3 text-right font-semibold">TICKET MÉDIO</th>
-                  <th className="py-2.5 pl-3 text-right font-semibold">VALOR</th>
+                  <th className="py-2.5 px-3 text-right font-semibold rounded-r-lg">VALOR</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[var(--voux-card-border)]/60">
+              <tbody>
                 {rows.map((row, idx) => {
                   const ticketPercent = Math.min(100, Math.round((row.ticketMedio / maxTicket) * 100));
 
                   return (
                     <tr
                       key={`${row.name}-${idx}`}
-                      className="group hover:bg-[var(--voux-card-border)]/30 transition-colors"
+                      className={cn(
+                        "group transition-all duration-200 cursor-pointer relative",
+                        "hover:scale-[1.018] hover:-translate-y-[1.5px] hover:z-30",
+                        "hover:bg-[var(--surface-raised)]/95 hover:backdrop-blur-md",
+                        "hover:shadow-[0_8px_24px_-4px_rgba(0,0,0,0.12)] dark:hover:shadow-[0_8px_24px_-4px_rgba(0,0,0,0.45)]",
+                        "hover:ring-1",
+                        isRed
+                          ? "hover:ring-red-500/40"
+                          : "hover:ring-emerald-500/40"
+                      )}
                     >
                       {/* Nome / Título */}
-                      <td className="py-3 pr-4 max-w-[220px]">
-                        <p className="font-semibold text-[13px] text-[var(--voux-text-primary)] uppercase truncate" title={row.name}>
+                      <td className="py-2.5 px-3 rounded-l-xl max-w-[220px]">
+                        <p
+                          className="font-semibold text-[13px] text-[var(--voux-text-primary)] uppercase truncate group-hover:text-[var(--voux-text-heading)] transition-colors"
+                          title={row.name}
+                        >
                           {row.name}
                         </p>
                         {row.subtitle && (
@@ -122,13 +134,13 @@ export const DesempenhoTableCard: React.FC<DesempenhoTableCardProps> = ({
                       </td>
 
                       {/* Quantidade */}
-                      <td className="py-3 px-3 text-right tabular-nums font-mono font-medium text-[13px] text-[var(--voux-text-primary)]">
+                      <td className="py-2.5 px-3 text-right tabular-nums font-mono font-medium text-[13px] text-[var(--voux-text-primary)]">
                         {row.qtd.toLocaleString("pt-BR")}
                       </td>
 
                       {/* % Participação */}
                       {showPercent && (
-                        <td className="py-3 px-3 text-right tabular-nums font-mono text-[12px] text-[var(--voux-text-muted)]">
+                        <td className="py-2.5 px-3 text-right tabular-nums font-mono text-[12px] text-[var(--voux-text-muted)]">
                           {row.percent != null ? `${row.percent.toFixed(1)}%` : "—"}
                         </td>
                       )}
@@ -140,8 +152,8 @@ export const DesempenhoTableCard: React.FC<DesempenhoTableCardProps> = ({
                             className={cn(
                               "absolute right-0 top-0 bottom-0 rounded pointer-events-none transition-all duration-300",
                               isRed
-                                ? "bg-red-500/15 dark:bg-red-500/25"
-                                : "bg-emerald-500/15 dark:bg-emerald-500/20"
+                                ? "bg-red-500/15 dark:bg-red-500/25 group-hover:bg-red-500/25"
+                                : "bg-emerald-500/15 dark:bg-emerald-500/20 group-hover:bg-emerald-500/25"
                             )}
                             style={{ width: `${ticketPercent}%` }}
                           />
@@ -154,10 +166,10 @@ export const DesempenhoTableCard: React.FC<DesempenhoTableCardProps> = ({
                       {/* Valor Total */}
                       <td
                         className={cn(
-                          "py-3 pl-3 text-right tabular-nums font-mono text-[13px] font-semibold",
+                          "py-2.5 px-3 rounded-r-xl text-right tabular-nums font-mono text-[13px] font-semibold transition-colors",
                           isRed
-                            ? "text-red-600 dark:text-red-400"
-                            : "text-emerald-700 dark:text-emerald-400"
+                            ? "text-red-600 dark:text-red-400 group-hover:text-red-700 dark:group-hover:text-red-300 font-bold"
+                            : "text-emerald-700 dark:text-emerald-400 group-hover:text-emerald-800 dark:group-hover:text-emerald-300 font-bold"
                         )}
                       >
                         {formatBRL(row.valor)}
