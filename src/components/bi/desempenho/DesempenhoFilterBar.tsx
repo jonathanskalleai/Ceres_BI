@@ -48,7 +48,7 @@ export const DesempenhoFilterBar: React.FC<DesempenhoFilterBarProps> = ({
   hasActiveFilters,
 }) => {
   return (
-    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-4 rounded-2xl border border-[var(--voux-card-border)]/80 bg-[var(--surface-raised)]/85 dark:bg-[var(--surface-raised)]/75 backdrop-blur-xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)]">
+    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-4 rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] shadow-sm">
       {/* Lado Esquerdo: Seletor Rápido de Anos (Visão Anual) */}
       <div className="flex items-center gap-2 flex-wrap">
         <div className="flex items-center gap-1 text-xs font-semibold text-[var(--voux-text-muted)] mr-1">

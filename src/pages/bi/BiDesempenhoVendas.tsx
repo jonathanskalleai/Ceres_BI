@@ -113,10 +113,10 @@ export default function BiDesempenhoVendas() {
         hasActiveFilters={hasActiveFilters}
       />
 
-      {/* Ribbon de KPIs Principais com Efeito Soft Glass */}
+      {/* Ribbon de KPIs Principais */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
         {/* KPI 1: Faturamento Ganhos */}
-        <div className="rounded-2xl border border-[var(--voux-card-border)]/80 bg-[var(--surface-raised)]/85 dark:bg-[var(--surface-raised)]/75 backdrop-blur-xl p-4 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.08)] transition-all">
+        <div className="rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4 shadow-sm">
           <div className="flex items-center justify-between text-[var(--voux-text-muted)] mb-1">
             <span className="text-[10px] font-bold tracking-wider uppercase" style={{ fontFamily: "var(--voux-font-mono)" }}>
               Faturamento Ganho
@@ -136,7 +136,7 @@ export default function BiDesempenhoVendas() {
         </div>
 
         {/* KPI 2: Quantidade de Pedidos Ganhos */}
-        <div className="rounded-2xl border border-[var(--voux-card-border)]/80 bg-[var(--surface-raised)]/85 dark:bg-[var(--surface-raised)]/75 backdrop-blur-xl p-4 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.08)] transition-all">
+        <div className="rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4 shadow-sm">
           <div className="flex items-center justify-between text-[var(--voux-text-muted)] mb-1">
             <span className="text-[10px] font-bold tracking-wider uppercase" style={{ fontFamily: "var(--voux-font-mono)" }}>
               Pedidos Ganhos
@@ -156,7 +156,7 @@ export default function BiDesempenhoVendas() {
         </div>
 
         {/* KPI 3: Ticket Médio Geral */}
-        <div className="rounded-2xl border border-[var(--voux-card-border)]/80 bg-[var(--surface-raised)]/85 dark:bg-[var(--surface-raised)]/75 backdrop-blur-xl p-4 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.08)] transition-all">
+        <div className="rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4 shadow-sm">
           <div className="flex items-center justify-between text-[var(--voux-text-muted)] mb-1">
             <span className="text-[10px] font-bold tracking-wider uppercase" style={{ fontFamily: "var(--voux-font-mono)" }}>
               Ticket Médio
@@ -176,7 +176,7 @@ export default function BiDesempenhoVendas() {
         </div>
 
         {/* KPI 4: Perdas no Período */}
-        <div className="rounded-2xl border border-[var(--voux-card-border)]/80 bg-[var(--surface-raised)]/85 dark:bg-[var(--surface-raised)]/75 backdrop-blur-xl p-4 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.08)] transition-all">
+        <div className="rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4 shadow-sm">
           <div className="flex items-center justify-between text-[var(--voux-text-muted)] mb-1">
             <span className="text-[10px] font-bold tracking-wider uppercase" style={{ fontFamily: "var(--voux-font-mono)" }}>
               Negócios Perdidos
@@ -198,7 +198,7 @@ export default function BiDesempenhoVendas() {
         </div>
 
         {/* KPI 5: Top Vendedor */}
-        <div className="rounded-2xl border border-[var(--voux-card-border)]/80 bg-[var(--surface-raised)]/85 dark:bg-[var(--surface-raised)]/75 backdrop-blur-xl p-4 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.08)] transition-all">
+        <div className="rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4 shadow-sm">
           <div className="flex items-center justify-between text-[var(--voux-text-muted)] mb-1">
             <span className="text-[10px] font-bold tracking-wider uppercase" style={{ fontFamily: "var(--voux-font-mono)" }}>
               Líder em Vendas
@@ -222,7 +222,7 @@ export default function BiDesempenhoVendas() {
         </div>
 
         {/* KPI 6: Top Produto */}
-        <div className="rounded-2xl border border-[var(--voux-card-border)]/80 bg-[var(--surface-raised)]/85 dark:bg-[var(--surface-raised)]/75 backdrop-blur-xl p-4 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)] hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.08)] transition-all">
+        <div className="rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4 shadow-sm">
           <div className="flex items-center justify-between text-[var(--voux-text-muted)] mb-1">
             <span className="text-[10px] font-bold tracking-wider uppercase" style={{ fontFamily: "var(--voux-font-mono)" }}>
               Top Produto
@@ -347,7 +347,7 @@ export default function BiDesempenhoVendas() {
 
       {/* Resumo Histórico Anual */}
       {data.resumoAnual.length > 0 && (
-        <div className="rounded-2xl border border-[var(--voux-card-border)]/80 bg-[var(--surface-raised)]/85 dark:bg-[var(--surface-raised)]/75 backdrop-blur-xl p-5 md:p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.04)]">
+        <div className="rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-5 md:p-6 shadow-sm">
           <div className="mb-4">
             <p
               className="text-[10px] font-bold tracking-[0.2em] uppercase text-[var(--voux-text-muted)]"
@@ -368,7 +368,7 @@ export default function BiDesempenhoVendas() {
               <div
                 key={res.ano}
                 onClick={() => setSelectedAno(res.ano)}
-                className="p-4 rounded-xl border border-[var(--voux-card-border)]/70 bg-[var(--surface-raised)]/60 dark:bg-[var(--surface-raised)]/50 backdrop-blur-md hover:border-emerald-600/50 cursor-pointer transition-all"
+                className="p-4 rounded-xl border border-[var(--voux-card-border)] bg-[var(--voux-surface)] hover:border-emerald-600/50 cursor-pointer transition-all"
               >
                 <div className="flex items-center justify-between text-xs font-semibold text-[var(--voux-text-muted)]">
                   <span className="font-mono text-[14px] text-[var(--voux-text-primary)] font-bold">{res.ano}</span>
