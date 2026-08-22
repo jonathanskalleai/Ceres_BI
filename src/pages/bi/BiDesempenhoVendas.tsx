@@ -110,7 +110,7 @@ export default function BiDesempenhoVendas() {
   const taxaConversao = totalDecididos > 0 ? ((data.kpis.totalPedidos || 0) / totalDecididos) * 100 : 0;
 
   return (
-    <div className="space-y-4 pb-12">
+    <div className="px-4 sm:px-6 lg:px-10 pb-12 space-y-5 max-w-full">
       {/* Barra de Filtros e Abas Integrada com Frosted Glass Sticky */}
       <DesempenhoFilterBar
         activeTab={activeTab}
