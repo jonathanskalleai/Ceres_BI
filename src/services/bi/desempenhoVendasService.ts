@@ -41,6 +41,10 @@ export async function fetchDesempenhoVendas(
     if (options.vendedor) params.p_vendedor = options.vendedor;
     if (options.cidade) params.p_cidade = options.cidade;
     if (options.condicao) params.p_condicao = options.condicao;
+    if (options.produto) params.p_produto = options.produto;
+    if (options.origem) params.p_origem = options.origem;
+    if (options.banco) params.p_banco = options.banco;
+    if (options.motivoPerda) params.p_motivo_perda = options.motivoPerda;
 
     const { data, error } = await supabase.rpc("rpc_desempenho_vendas_bi", params);
     if (!error && data) {

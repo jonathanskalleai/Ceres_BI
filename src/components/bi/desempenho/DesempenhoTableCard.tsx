@@ -2,6 +2,7 @@ import React from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatBRL } from "@/lib/dateUtils";
 import { cn } from "@/lib/utils";
+import { Check } from "lucide-react";
 
 export interface DesempenhoTableRow {
   name: string;
@@ -22,6 +23,8 @@ interface DesempenhoTableCardProps {
   emptyMessage?: string;
   variant?: "emerald" | "red";
   unitLabel?: string;
+  selectedItemName?: string | null;
+  onRowClick?: (row: DesempenhoTableRow) => void;
   className?: string;
 }
 
@@ -35,6 +38,8 @@ export const DesempenhoTableCard: React.FC<DesempenhoTableCardProps> = ({
   emptyMessage = "Nenhum registro encontrado no período selecionado.",
   variant = "emerald",
   unitLabel,
+  selectedItemName,
+  onRowClick,
   className,
 }) => {
   const isRed = variant === "red";
@@ -51,6 +56,10 @@ export const DesempenhoTableCard: React.FC<DesempenhoTableCardProps> = ({
   const defaultUnit = isRed ? "negócios perdidos" : "pedidos";
   const finalUnitLabel = unitLabel || defaultUnit;
 
+  const hasSelectionInThisCard = Boolean(
+    selectedItemName && rows.some((r) => r.name.toLowerCase() === selectedItemName.toLowerCase())
+  );
+
   return (
     <div
       className={cn(
@@ -60,21 +69,29 @@ export const DesempenhoTableCard: React.FC<DesempenhoTableCardProps> = ({
     >
       <div>
         {/* Header no estilo editorial limpo */}
-        <div className="mb-4">
-          <p
-            className={cn(
-              "text-[10px] font-bold tracking-[0.2em] uppercase font-mono",
-              isRed ? "text-red-600 dark:text-red-400" : "text-[var(--voux-text-muted)]"
-            )}
-          >
-            {eyebrow}
-          </p>
-          <h2
-            className="text-[18px] md:text-[20px] font-bold tracking-tight text-[var(--voux-text-heading)] mt-0.5"
-            style={{ fontFamily: "var(--voux-font-display)" }}
-          >
-            {title}
-          </h2>
+        <div className="mb-4 flex items-start justify-between gap-2">
+          <div>
+            <p
+              className={cn(
+                "text-[10px] font-bold tracking-[0.2em] uppercase font-mono",
+                isRed ? "text-red-600 dark:text-red-400" : "text-[var(--voux-text-muted)]"
+              )}
+            >
+              {eyebrow}
+            </p>
+            <h2
+              className="text-[18px] md:text-[20px] font-bold tracking-tight text-[var(--voux-text-heading)] mt-0.5"
+              style={{ fontFamily: "var(--voux-font-display)" }}
+            >
+              {title}
+            </h2>
+          </div>
+
+          {onRowClick && (
+            <span className="text-[10px] text-[var(--voux-text-muted)] font-sans hidden sm:inline-block">
+              Clique para filtrar
+            </span>
+          )}
         </div>
 
         {/* Loading State */}
@@ -91,7 +108,7 @@ export const DesempenhoTableCard: React.FC<DesempenhoTableCardProps> = ({
             {emptyMessage}
           </div>
         ) : (
-          /* Table Container com Rolagem Suave Direta, Zoom Frontal e Mapa de Calor no Ticket Médio */
+          /* Table Container com Rolagem Suave Direta, Zoom Frontal, Filtro Interativo e Heatmap */
           <div className="overflow-x-auto -mx-2 px-2 max-h-[380px] overflow-y-auto sidebar-scroll pr-1">
             <table className="w-full text-left text-xs border-collapse">
               <thead className="sticky top-0 bg-[var(--voux-card-from)] z-10">
@@ -115,33 +132,60 @@ export const DesempenhoTableCard: React.FC<DesempenhoTableCardProps> = ({
                   const bgAlpha = (0.08 + intensity * 0.24).toFixed(3);
                   const isHighIntensity = intensity >= 0.55;
 
+                  const isSelected = Boolean(
+                    selectedItemName && row.name.toLowerCase() === selectedItemName.toLowerCase()
+                  );
+
                   return (
                     <tr
                       key={`${row.name}-${idx}`}
+                      onClick={() => onRowClick && onRowClick(row)}
                       className={cn(
                         "group transition-all duration-200 cursor-pointer relative",
-                        "hover:scale-[1.018] hover:-translate-y-[1.5px] hover:z-30",
-                        "hover:bg-[var(--surface-raised)]/95 hover:backdrop-blur-md",
-                        "hover:shadow-[0_8px_24px_-4px_rgba(0,0,0,0.12)] dark:hover:shadow-[0_8px_24px_-4px_rgba(0,0,0,0.45)]",
-                        "hover:ring-1",
-                        isRed
-                          ? "hover:ring-red-500/40"
-                          : "hover:ring-emerald-500/40"
+                        isSelected
+                          ? isRed
+                            ? "bg-red-500/15 border-l-4 border-l-red-600 dark:bg-red-950/40 shadow-sm z-20 font-bold scale-[1.01]"
+                            : "bg-emerald-500/15 border-l-4 border-l-emerald-600 dark:bg-emerald-950/40 shadow-sm z-20 font-bold scale-[1.01]"
+                          : hasSelectionInThisCard
+                            ? "opacity-60 hover:opacity-100 hover:scale-[1.015] hover:-translate-y-[1px]"
+                            : "hover:scale-[1.018] hover:-translate-y-[1.5px] hover:z-30 hover:bg-[var(--surface-raised)]/95 hover:backdrop-blur-md hover:shadow-[0_8px_24px_-4px_rgba(0,0,0,0.12)] dark:hover:shadow-[0_8px_24px_-4px_rgba(0,0,0,0.45)] hover:ring-1",
+                        !isSelected && (isRed ? "hover:ring-red-500/40" : "hover:ring-emerald-500/40")
                       )}
                     >
                       {/* Nome / Título */}
                       <td className="py-3 pr-4 max-w-[220px]">
-                        <p
-                          className="font-semibold text-[13px] text-[var(--voux-text-primary)] uppercase truncate group-hover:text-[var(--voux-text-heading)] transition-colors"
-                          title={row.name}
-                        >
-                          {row.name}
-                        </p>
-                        {row.subtitle && (
-                          <p className="text-[10px] text-[var(--voux-text-muted)] truncate">
-                            {row.subtitle}
-                          </p>
-                        )}
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          {isSelected && (
+                            <span
+                              className={cn(
+                                "h-4 w-4 rounded-full flex items-center justify-center text-white shrink-0",
+                                isRed ? "bg-red-600" : "bg-emerald-600"
+                              )}
+                            >
+                              <Check className="h-2.5 w-2.5" />
+                            </span>
+                          )}
+                          <div className="truncate">
+                            <p
+                              className={cn(
+                                "font-semibold text-[13px] uppercase truncate transition-colors",
+                                isSelected
+                                  ? isRed
+                                    ? "text-red-700 dark:text-red-300"
+                                    : "text-emerald-800 dark:text-emerald-300"
+                                  : "text-[var(--voux-text-primary)] group-hover:text-[var(--voux-text-heading)]"
+                              )}
+                              title={row.name}
+                            >
+                              {row.name}
+                            </p>
+                            {row.subtitle && (
+                              <p className="text-[10px] text-[var(--voux-text-muted)] truncate">
+                                {row.subtitle}
+                              </p>
+                            )}
+                          </div>
+                        </div>
                       </td>
 
                       {/* Quantidade */}

@@ -2,6 +2,7 @@ import React, { useId, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatBRL } from "@/lib/dateUtils";
 import { cn } from "@/lib/utils";
+import { Check } from "lucide-react";
 
 export interface DesempenhoDonutItem {
   name: string;
@@ -18,6 +19,8 @@ interface DesempenhoDonutCardProps {
   items: DesempenhoDonutItem[];
   loading?: boolean;
   emptyMessage?: string;
+  selectedItemName?: string | null;
+  onItemClick?: (item: DesempenhoDonutItem) => void;
   className?: string;
 }
 
@@ -50,6 +53,8 @@ export const DesempenhoDonutCard: React.FC<DesempenhoDonutCardProps> = ({
   items,
   loading = false,
   emptyMessage = "Nenhum registro no período.",
+  selectedItemName,
+  onItemClick,
   className,
 }) => {
   const uid = useId().replace(/:/g, "");
@@ -89,6 +94,9 @@ export const DesempenhoDonutCard: React.FC<DesempenhoDonutCardProps> = ({
   const midRadius = outerRadius - thickness / 2;
 
   const hoveredItem = hoveredIndex !== null ? itemsWithColor[hoveredIndex] : null;
+  const hasSelection = Boolean(
+    selectedItemName && itemsWithColor.some((i) => i.name.toLowerCase() === selectedItemName.toLowerCase())
+  );
 
   return (
     <div
@@ -99,19 +107,27 @@ export const DesempenhoDonutCard: React.FC<DesempenhoDonutCardProps> = ({
     >
       <div>
         {/* Header no estilo do exemplo */}
-        <div className="mb-4">
-          <p
-            className="text-[10px] font-bold tracking-[0.2em] uppercase text-[var(--voux-text-muted)]"
-            style={{ fontFamily: "var(--voux-font-mono)" }}
-          >
-            {eyebrow}
-          </p>
-          <h2
-            className="text-[18px] md:text-[20px] font-bold tracking-tight text-[var(--voux-text-heading)] mt-0.5"
-            style={{ fontFamily: "var(--voux-font-display)" }}
-          >
-            {title}
-          </h2>
+        <div className="mb-4 flex items-start justify-between gap-2">
+          <div>
+            <p
+              className="text-[10px] font-bold tracking-[0.2em] uppercase text-[var(--voux-text-muted)]"
+              style={{ fontFamily: "var(--voux-font-mono)" }}
+            >
+              {eyebrow}
+            </p>
+            <h2
+              className="text-[18px] md:text-[20px] font-bold tracking-tight text-[var(--voux-text-heading)] mt-0.5"
+              style={{ fontFamily: "var(--voux-font-display)" }}
+            >
+              {title}
+            </h2>
+          </div>
+
+          {onItemClick && (
+            <span className="text-[10px] text-[var(--voux-text-muted)] font-sans hidden sm:inline-block">
+              Clique para filtrar
+            </span>
+          )}
         </div>
 
         {/* Loading State */}
@@ -136,7 +152,10 @@ export const DesempenhoDonutCard: React.FC<DesempenhoDonutCardProps> = ({
               <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="overflow-visible">
                 {arcs.map((arc, idx) => {
                   const isHovered = hoveredIndex === idx;
-                  const isOtherHovered = hoveredIndex !== null && !isHovered;
+                  const isSelected = Boolean(
+                    selectedItemName && arc.name.toLowerCase() === selectedItemName.toLowerCase()
+                  );
+                  const isOtherHovered = (hoveredIndex !== null && !isHovered) || (hasSelection && !isSelected);
 
                   if (arc.angle >= 359.99) {
                     return (
@@ -147,8 +166,9 @@ export const DesempenhoDonutCard: React.FC<DesempenhoDonutCardProps> = ({
                         r={midRadius}
                         fill="none"
                         stroke={arc.color}
-                        strokeWidth={isHovered ? thickness + 4 : thickness}
+                        strokeWidth={isHovered || isSelected ? thickness + 4 : thickness}
                         opacity={isOtherHovered ? 0.35 : 1}
+                        onClick={() => onItemClick && onItemClick(arc)}
                         onMouseEnter={() => setHoveredIndex(idx)}
                         onMouseLeave={() => setHoveredIndex(null)}
                         style={{ cursor: "pointer", transition: "all 0.2s ease" }}
@@ -163,9 +183,10 @@ export const DesempenhoDonutCard: React.FC<DesempenhoDonutCardProps> = ({
                       d={path}
                       fill="none"
                       stroke={arc.color}
-                      strokeWidth={isHovered ? thickness + 4 : thickness}
+                      strokeWidth={isHovered || isSelected ? thickness + 4 : thickness}
                       strokeLinecap="butt"
                       opacity={isOtherHovered ? 0.35 : 1}
+                      onClick={() => onItemClick && onItemClick(arc)}
                       onMouseEnter={() => setHoveredIndex(idx)}
                       onMouseLeave={() => setHoveredIndex(null)}
                       style={{ cursor: "pointer", transition: "all 0.2s ease" }}
@@ -194,26 +215,43 @@ export const DesempenhoDonutCard: React.FC<DesempenhoDonutCardProps> = ({
             <div className="flex-1 w-full space-y-2">
               {itemsWithColor.map((item, idx) => {
                 const isHovered = hoveredIndex === idx;
+                const isSelected = Boolean(
+                  selectedItemName && item.name.toLowerCase() === selectedItemName.toLowerCase()
+                );
 
                 return (
                   <div
                     key={`${item.name}-${idx}`}
+                    onClick={() => onItemClick && onItemClick(item)}
                     className={cn(
                       "flex items-center justify-between gap-3 text-xs p-2.5 rounded-xl transition-all duration-200 cursor-pointer relative",
-                      isHovered
-                        ? "scale-[1.02] -translate-y-0.5 z-20 bg-[var(--surface-raised)]/95 backdrop-blur-md shadow-[0_8px_24px_-4px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_24px_-4px_rgba(0,0,0,0.45)] ring-1 ring-emerald-500/40"
-                        : "hover:bg-[var(--voux-card-border)]/20"
+                      isSelected
+                        ? "bg-emerald-500/15 border-l-4 border-l-emerald-600 dark:bg-emerald-950/40 shadow-sm z-20 font-bold scale-[1.01]"
+                        : isHovered
+                          ? "scale-[1.02] -translate-y-0.5 z-20 bg-[var(--surface-raised)]/95 backdrop-blur-md shadow-[0_8px_24px_-4px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_24px_-4px_rgba(0,0,0,0.45)] ring-1 ring-emerald-500/40"
+                          : hasSelection
+                            ? "opacity-60 hover:opacity-100 hover:bg-[var(--voux-card-border)]/20"
+                            : "hover:bg-[var(--voux-card-border)]/20"
                     )}
                     onMouseEnter={() => setHoveredIndex(idx)}
                     onMouseLeave={() => setHoveredIndex(null)}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
+                      {isSelected ? (
+                        <span className="h-4 w-4 rounded-full bg-emerald-600 flex items-center justify-center text-white shrink-0">
+                          <Check className="h-2.5 w-2.5" />
+                        </span>
+                      ) : (
+                        <span
+                          className="h-2.5 w-2.5 rounded-full shrink-0"
+                          style={{ backgroundColor: item.color }}
+                        />
+                      )}
                       <span
-                        className="h-2.5 w-2.5 rounded-full shrink-0"
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <span
-                        className="font-medium text-[13px] text-[var(--voux-text-primary)] truncate"
+                        className={cn(
+                          "font-medium text-[13px] truncate",
+                          isSelected ? "text-emerald-800 dark:text-emerald-300 font-bold" : "text-[var(--voux-text-primary)]"
+                        )}
                         title={item.name}
                       >
                         {item.name}
@@ -250,25 +288,17 @@ export const DesempenhoDonutCard: React.FC<DesempenhoDonutCardProps> = ({
               <p className="font-bold text-[13px] text-emerald-700 dark:text-emerald-400">{formatBRL(hoveredItem.valor)}</p>
             </div>
             <div>
-              <p className="text-[10px] text-[var(--voux-text-muted)] uppercase">Volume / Share</p>
-              <p className="font-bold text-[12px] text-[var(--voux-text-primary)]">{hoveredItem.qtd} ped ({hoveredItem.calculatedPercent.toFixed(1)}%)</p>
+              <p className="text-[10px] text-[var(--voux-text-muted)] uppercase">Quantidade</p>
+              <p className="font-bold text-[13px] text-[var(--voux-text-primary)]">{hoveredItem.qtd} pedidos</p>
             </div>
-            <div className="col-span-2 pt-1 border-t border-[var(--voux-card-border)]/50 flex items-center justify-between">
-              <span className="text-[10px] text-[var(--voux-text-muted)] uppercase">Ticket Médio Financiado:</span>
+          </div>
+
+          {hoveredItem.ticketMedio && hoveredItem.ticketMedio > 0 && (
+            <div className="border-t border-[var(--voux-card-border)] pt-1.5 font-mono flex items-center justify-between">
+              <span className="text-[10px] text-[var(--voux-text-muted)] uppercase">Ticket Médio Financiamento</span>
               <span className="font-bold text-[12px] text-[var(--voux-text-primary)]">{formatBRL(hoveredItem.ticketMedio)}</span>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Footer com Totalizador Geral */}
-      {!loading && itemsWithColor.length > 0 && (
-        <div className="mt-4 pt-3 border-t border-[var(--voux-card-border)] flex items-center justify-between text-[11px] text-[var(--voux-text-muted)]">
-          <span className="font-medium">Total Financiado:</span>
-          <div className="flex items-center gap-3 font-mono">
-            <span><strong>{totalQtd.toLocaleString("pt-BR")}</strong> pedidos</span>
-            <span className="font-bold text-emerald-700 dark:text-emerald-400">{formatBRL(totalValor)}</span>
-          </div>
+          )}
         </div>
       )}
     </div>

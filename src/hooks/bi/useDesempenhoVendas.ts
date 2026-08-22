@@ -12,6 +12,10 @@ export function useDesempenhoVendas(options: DesempenhoVendasFilterOptions = {})
       options.vendedor,
       options.cidade,
       options.condicao,
+      options.produto,
+      options.origem,
+      options.banco,
+      options.motivoPerda,
     ],
     queryFn: () => fetchDesempenhoVendas(options),
     staleTime: 5 * 60_000,
@@ -23,5 +27,6 @@ export function useDesempenhoVendas(options: DesempenhoVendasFilterOptions = {})
     isError: query.isError,
     error: query.error as Error | null,
     refetch: query.refetch,
+    isFetching: query.isFetching,
   };
 }

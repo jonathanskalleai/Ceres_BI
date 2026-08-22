@@ -1,7 +1,7 @@
--- Migration: RPC para o Dashboard de Desempenho de Vendas (v6 - Nomes de Vendedores Resolvidos em Perdas)
+-- Migration: RPC para o Dashboard de Desempenho de Vendas (v7 - Filtro Cruzado / Cross-Filtering Dimensional)
 -- Autor: Ceres BI Team
 -- Data: 2026-08-21
--- Descrição: Resolve nomes completos de vendedores via mirror.usuarios e alinha diagnósticos de perdas.
+-- Descrição: Adiciona suporte a filtro cruzado por Produto, Origem, Banco/Modalidade e Motivo de Perda.
 
 CREATE OR REPLACE FUNCTION public.rpc_desempenho_vendas_bi(
   p_from date DEFAULT NULL,
@@ -9,31 +9,33 @@ CREATE OR REPLACE FUNCTION public.rpc_desempenho_vendas_bi(
   p_ano integer DEFAULT NULL,
   p_vendedor text DEFAULT NULL,
   p_cidade text DEFAULT NULL,
-  p_condicao text DEFAULT NULL
+  p_condicao text DEFAULT NULL,
+  p_produto text DEFAULT NULL,
+  p_origem text DEFAULT NULL,
+  p_banco text DEFAULT NULL,
+  p_motivo_perda text DEFAULT NULL
 )
 RETURNS json
-LANGUAGE plpgsql
+LANGUAGE sql
 STABLE
 SECURITY DEFINER
 AS $$
-DECLARE
-  result json;
-  v_from date;
-  v_to date;
-  v_target_year integer;
-BEGIN
-  -- Definir ano alvo e intervalo de datas
-  IF p_ano IS NOT NULL THEN
-    v_target_year := p_ano;
-    v_from := make_date(p_ano, 1, 1);
-    v_to := make_date(p_ano, 12, 31);
-  ELSE
-    v_target_year := EXTRACT(YEAR FROM COALESCE(p_from, CURRENT_DATE))::integer;
-    v_from := COALESCE(p_from, make_date(EXTRACT(YEAR FROM CURRENT_DATE)::integer, 1, 1));
-    v_to := COALESCE(p_to, CURRENT_DATE);
-  END IF;
-
-  WITH negocios_canonicos AS (
+  WITH params AS (
+    SELECT
+      CASE
+        WHEN p_ano IS NOT NULL THEN make_date(p_ano, 1, 1)
+        ELSE COALESCE(p_from, make_date(EXTRACT(YEAR FROM CURRENT_DATE)::integer, 1, 1))
+      END AS v_from,
+      CASE
+        WHEN p_ano IS NOT NULL THEN make_date(p_ano, 12, 31)
+        ELSE COALESCE(p_to, CURRENT_DATE)
+      END AS v_to,
+      CASE
+        WHEN p_ano IS NOT NULL THEN p_ano
+        ELSE EXTRACT(YEAR FROM COALESCE(p_from, CURRENT_DATE))::integer
+      END AS v_target_year
+  ),
+  negocios_canonicos AS (
     SELECT DISTINCT ON (n.ngo_numero)
       n.ngo_numero,
       n.ngo_conclusao,
@@ -89,12 +91,26 @@ BEGIN
       n.prd_grupoproduto
     FROM pedidos_dedup p
     INNER JOIN negocios_canonicos n ON n.ngo_numero = p.ngo_numero
+    CROSS JOIN params pr
     WHERE p.is_aprovado
       AND n.status_class = 'ganho'
-      AND p.dth_evento_pedido::date BETWEEN v_from AND v_to
+      AND p.dth_evento_pedido::date BETWEEN pr.v_from AND pr.v_to
       AND (p_vendedor IS NULL OR p.pdo_vendedor ILIKE '%' || p_vendedor || '%' OR n.ngo_vendedores ILIKE '%' || p_vendedor || '%')
       AND (p_cidade IS NULL OR p.cidade_entrega ILIKE '%' || p_cidade || '%' OR n.cli_cidade ILIKE '%' || p_cidade || '%')
       AND (p_condicao IS NULL OR n.prd_condicaoproduto ILIKE '%' || p_condicao || '%')
+      AND (
+        p_produto IS NULL 
+        OR n.prd_dscproduto ILIKE '%' || p_produto || '%' 
+        OR n.prd_marcaproduto ILIKE '%' || p_produto || '%' 
+        OR n.prd_grupoproduto ILIKE '%' || p_produto || '%'
+        OR TRIM(SPLIT_PART(SPLIT_PART(n.prd_dscproduto, E'\n', 1), ' - Descricao', 1)) ILIKE '%' || p_produto || '%'
+      )
+      AND (p_origem IS NULL OR n.ngo_formaentrada ILIKE '%' || p_origem || '%')
+      AND (
+        p_banco IS NULL
+        OR (p_banco ILIKE '%próprio%' AND (p.pdo_vlrfinanciado = 0 OR p.pdo_banco IS NULL OR p.pdo_banco = 'Não Informado'))
+        OR p.pdo_banco ILIKE '%' || p_banco || '%'
+      )
   ),
   -- Negócios perdidos filtrados pela janela com resolução de vendedor
   negocios_perdidos_periodo AS (
@@ -104,22 +120,35 @@ BEGIN
       COALESCE(NULLIF(TRIM(n.cli_cidade), ''), NULLIF(TRIM(n.emp_cidade), ''), 'Não Informada') AS cidade_perda,
       COALESCE(u_cod.usr_nomeusuario, u_id.usr_nomeusuario, NULLIF(TRIM(n.ngo_vendedores), ''), 'Não Informado') AS vendedor_perda
     FROM negocios_canonicos n
+    CROSS JOIN params pr
     LEFT JOIN mirror.usuarios u_cod ON u_cod.usr_codusuario = n.ngo_vendedores AND u_cod.usr_codusuario IS NOT NULL AND u_cod.usr_codusuario != ''
     LEFT JOIN mirror.usuarios u_id ON u_id.usr_idusuario = n.ngo_vendedores
     WHERE n.status_class = 'perdido'
-      AND n.dth_evento_negocio::date BETWEEN v_from AND v_to
+      AND n.dth_evento_negocio::date BETWEEN pr.v_from AND pr.v_to
       AND (p_vendedor IS NULL OR n.ngo_vendedores ILIKE '%' || p_vendedor || '%' OR u_cod.usr_nomeusuario ILIKE '%' || p_vendedor || '%' OR u_id.usr_nomeusuario ILIKE '%' || p_vendedor || '%')
       AND (p_cidade IS NULL OR n.cli_cidade ILIKE '%' || p_cidade || '%' OR n.emp_cidade ILIKE '%' || p_cidade || '%')
       AND (p_condicao IS NULL OR n.prd_condicaoproduto ILIKE '%' || p_condicao || '%')
+      AND (
+        p_produto IS NULL 
+        OR n.prd_dscproduto ILIKE '%' || p_produto || '%' 
+        OR n.prd_marcaproduto ILIKE '%' || p_produto || '%' 
+        OR n.prd_grupoproduto ILIKE '%' || p_produto || '%'
+        OR TRIM(SPLIT_PART(SPLIT_PART(n.prd_dscproduto, E'\n', 1), ' - Descricao', 1)) ILIKE '%' || p_produto || '%'
+      )
+      AND (p_origem IS NULL OR n.ngo_formaentrada ILIKE '%' || p_origem || '%')
+      AND (p_motivo_perda IS NULL OR n.ngo_motivoperda ILIKE '%' || p_motivo_perda || '%')
   ),
   -- Pipeline aberto
   negocios_andamento_periodo AS (
     SELECT n.*
     FROM negocios_canonicos n
+    CROSS JOIN params pr
     WHERE n.status_class = 'andamento'
       AND (p_vendedor IS NULL OR n.ngo_vendedores ILIKE '%' || p_vendedor || '%')
       AND (p_cidade IS NULL OR n.cli_cidade ILIKE '%' || p_cidade || '%' OR n.emp_cidade ILIKE '%' || p_cidade || '%')
       AND (p_condicao IS NULL OR n.prd_condicaoproduto ILIKE '%' || p_condicao || '%')
+      AND (p_produto IS NULL OR n.prd_dscproduto ILIKE '%' || p_produto || '%')
+      AND (p_origem IS NULL OR n.ngo_formaentrada ILIKE '%' || p_origem || '%')
   ),
   -- Totais Gerais de Ganhos
   totais_ganhos AS (
@@ -185,12 +214,26 @@ BEGIN
           SUM(p.pdo_vlrpedido) AS valor_ganho
         FROM pedidos_dedup p
         INNER JOIN negocios_canonicos n ON n.ngo_numero = p.ngo_numero
+        CROSS JOIN params pr
         WHERE p.is_aprovado
           AND n.status_class = 'ganho'
-          AND EXTRACT(YEAR FROM p.dth_evento_pedido) = v_target_year
+          AND EXTRACT(YEAR FROM p.dth_evento_pedido) = pr.v_target_year
           AND (p_vendedor IS NULL OR p.pdo_vendedor ILIKE '%' || p_vendedor || '%' OR n.ngo_vendedores ILIKE '%' || p_vendedor || '%')
           AND (p_cidade IS NULL OR p.cidade_entrega ILIKE '%' || p_cidade || '%' OR n.cli_cidade ILIKE '%' || p_cidade || '%')
           AND (p_condicao IS NULL OR n.prd_condicaoproduto ILIKE '%' || p_condicao || '%')
+          AND (
+            p_produto IS NULL 
+            OR n.prd_dscproduto ILIKE '%' || p_produto || '%' 
+            OR n.prd_marcaproduto ILIKE '%' || p_produto || '%' 
+            OR n.prd_grupoproduto ILIKE '%' || p_produto || '%'
+            OR TRIM(SPLIT_PART(SPLIT_PART(n.prd_dscproduto, E'\n', 1), ' - Descricao', 1)) ILIKE '%' || p_produto || '%'
+          )
+          AND (p_origem IS NULL OR n.ngo_formaentrada ILIKE '%' || p_origem || '%')
+          AND (
+            p_banco IS NULL
+            OR (p_banco ILIKE '%próprio%' AND (p.pdo_vlrfinanciado = 0 OR p.pdo_banco IS NULL OR p.pdo_banco = 'Não Informado'))
+            OR p.pdo_banco ILIKE '%' || p_banco || '%'
+          )
         GROUP BY 1
       ),
       perdas_m AS (
@@ -199,11 +242,21 @@ BEGIN
           COUNT(DISTINCT n.ngo_numero) AS qtd_perda,
           SUM(n.ngo_vlrtotalnegociado) AS valor_perda
         FROM negocios_canonicos n
+        CROSS JOIN params pr
         WHERE n.status_class = 'perdido'
-          AND EXTRACT(YEAR FROM n.dth_evento_negocio) = v_target_year
+          AND EXTRACT(YEAR FROM n.dth_evento_negocio) = pr.v_target_year
           AND (p_vendedor IS NULL OR n.ngo_vendedores ILIKE '%' || p_vendedor || '%')
           AND (p_cidade IS NULL OR n.cli_cidade ILIKE '%' || p_cidade || '%' OR n.emp_cidade ILIKE '%' || p_cidade || '%')
           AND (p_condicao IS NULL OR n.prd_condicaoproduto ILIKE '%' || p_condicao || '%')
+          AND (
+            p_produto IS NULL 
+            OR n.prd_dscproduto ILIKE '%' || p_produto || '%' 
+            OR n.prd_marcaproduto ILIKE '%' || p_produto || '%' 
+            OR n.prd_grupoproduto ILIKE '%' || p_produto || '%'
+            OR TRIM(SPLIT_PART(SPLIT_PART(n.prd_dscproduto, E'\n', 1), ' - Descricao', 1)) ILIKE '%' || p_produto || '%'
+          )
+          AND (p_origem IS NULL OR n.ngo_formaentrada ILIKE '%' || p_origem || '%')
+          AND (p_motivo_perda IS NULL OR n.ngo_motivoperda ILIKE '%' || p_motivo_perda || '%')
         GROUP BY 1
       )
       SELECT
@@ -537,8 +590,5 @@ BEGIN
       'origensLead', (SELECT val FROM origens_lead_perda),
       'motivosPerda', (SELECT val FROM motivos_perda)
     )
-  ) INTO result;
-
-  RETURN result;
-END;
+  );
 $$;

@@ -121,4 +121,8 @@ export interface DesempenhoVendasFilterOptions {
   vendedor?: string | null;
   cidade?: string | null;
   condicao?: string | null;
+  produto?: string | null;
+  origem?: string | null;
+  banco?: string | null;
+  motivoPerda?: string | null;
 }

@@ -20,6 +20,7 @@ import { DesempenhoDualLineChart } from "@/components/bi/desempenho/DesempenhoDu
 import {
   DesempenhoFilterBar,
   type DesempenhoTab,
+  type ActiveCrossFilter,
 } from "@/components/bi/desempenho/DesempenhoFilterBar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -42,25 +43,43 @@ export default function BiDesempenhoVendas() {
   // Aba ativa: padrão "ganhos" (Vendas), com opção "perdas" (Diagnóstico de Perdas)
   const [activeTab, setActiveTab] = useState<DesempenhoTab>("ganhos");
 
-  // Estado de filtros
+  // Estado de filtros principais
   const currentYear = new Date().getFullYear();
   const [selectedAno, setSelectedAno] = useState<number | null>(currentYear);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [selectedVendedor, setSelectedVendedor] = useState<string>("");
   const [selectedCidade, setSelectedCidade] = useState<string>("");
-  const [selectedCondicao, setSelectedCondicao] = useState<string>("");
 
-  // Monta opções de filtro para o hook
+  // Estado de Filtro Cruzado Interativo (PowerBI / Tableau Style)
+  const [activeCrossFilter, setActiveCrossFilter] = useState<ActiveCrossFilter | null>(null);
+
+  const handleCrossFilterClick = (type: ActiveCrossFilter["type"], label: string, value: string) => {
+    if (activeCrossFilter?.type === type && activeCrossFilter.value.toLowerCase() === value.toLowerCase()) {
+      // Toggle off / Limpa
+      setActiveCrossFilter(null);
+    } else {
+      setActiveCrossFilter({ type, label, value });
+    }
+  };
+
+  const handleClearCrossFilter = () => {
+    setActiveCrossFilter(null);
+  };
+
+  // Monta opções de filtro para o hook (incluindo filtro cruzado)
   const filterOptions = useMemo(() => {
     return {
       ano: selectedAno,
       from: dateRange?.from ? toISODate(dateRange.from) : null,
       to: dateRange?.to ? toISODate(dateRange.to) : dateRange?.from ? toISODate(dateRange.from) : null,
-      vendedor: selectedVendedor || null,
-      cidade: selectedCidade || null,
-      condicao: selectedCondicao || null,
+      vendedor: activeCrossFilter?.type === "vendedor" ? activeCrossFilter.value : selectedVendedor || null,
+      cidade: activeCrossFilter?.type === "cidade" ? activeCrossFilter.value : selectedCidade || null,
+      produto: activeCrossFilter?.type === "produto" ? activeCrossFilter.value : null,
+      origem: activeCrossFilter?.type === "origem" ? activeCrossFilter.value : null,
+      banco: activeCrossFilter?.type === "banco" ? activeCrossFilter.value : null,
+      motivoPerda: activeCrossFilter?.type === "motivo" ? activeCrossFilter.value : null,
     };
-  }, [selectedAno, dateRange, selectedVendedor, selectedCidade, selectedCondicao]);
+  }, [selectedAno, dateRange, selectedVendedor, selectedCidade, activeCrossFilter]);
 
   const { data, isLoading, refetch, isFetching } = useDesempenhoVendas(filterOptions);
 
@@ -87,7 +106,7 @@ export default function BiDesempenhoVendas() {
       dateRange?.to ||
       selectedVendedor ||
       selectedCidade ||
-      selectedCondicao
+      activeCrossFilter
   );
 
   const handleResetFilters = () => {
@@ -95,7 +114,7 @@ export default function BiDesempenhoVendas() {
     setDateRange(undefined);
     setSelectedVendedor("");
     setSelectedCidade("");
-    setSelectedCondicao("");
+    setActiveCrossFilter(null);
   };
 
   // Top destaques para cards rápidos
@@ -114,7 +133,10 @@ export default function BiDesempenhoVendas() {
       {/* Barra de Filtros e Abas Integrada com Frosted Glass Sticky */}
       <DesempenhoFilterBar
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={(tab) => {
+          setActiveTab(tab);
+          setActiveCrossFilter(null); // Reseta filtro cruzado ao alternar de aba
+        }}
         ano={selectedAno}
         onAnoChange={setSelectedAno}
         dateRange={dateRange}
@@ -125,8 +147,8 @@ export default function BiDesempenhoVendas() {
         cidade={selectedCidade}
         onCidadeChange={setSelectedCidade}
         cidadeOptions={cidadeOptions}
-        condicao={selectedCondicao}
-        onCondicaoChange={setSelectedCondicao}
+        activeCrossFilter={activeCrossFilter}
+        onClearCrossFilter={handleClearCrossFilter}
         onResetFilters={handleResetFilters}
         hasActiveFilters={hasActiveFilters}
         onRefresh={() => refetch()}
@@ -280,7 +302,7 @@ export default function BiDesempenhoVendas() {
             />
           )}
 
-          {/* Grid de Tabelas Analíticas de Vendas (4 Tabelas Principais) */}
+          {/* Grid de Tabelas Analíticas de Vendas com Filtro Cruzado Interativo */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Card 1: VENDAS POR VENDEDOR */}
             <DesempenhoTableCard
@@ -288,6 +310,8 @@ export default function BiDesempenhoVendas() {
               title="Vendas por vendedor"
               firstColumnHeader="VENDEDOR"
               rows={data.rankingVendedores}
+              selectedItemName={activeCrossFilter?.type === "vendedor" ? activeCrossFilter.value : null}
+              onRowClick={(row) => handleCrossFilterClick("vendedor", "Vendedor", row.name)}
               loading={isLoading}
             />
 
@@ -304,6 +328,8 @@ export default function BiDesempenhoVendas() {
                 ticketMedio: p.ticketMedio,
                 valor: p.valor,
               }))}
+              selectedItemName={activeCrossFilter?.type === "produto" ? activeCrossFilter.value : null}
+              onRowClick={(row) => handleCrossFilterClick("produto", "Produto", row.name)}
               loading={isLoading}
             />
 
@@ -313,6 +339,8 @@ export default function BiDesempenhoVendas() {
               title="Vendas por cidade de entrega"
               firstColumnHeader="CIDADE"
               rows={data.rankingCidades}
+              selectedItemName={activeCrossFilter?.type === "cidade" ? activeCrossFilter.value : null}
+              onRowClick={(row) => handleCrossFilterClick("cidade", "Cidade", row.name)}
               loading={isLoading}
             />
 
@@ -322,6 +350,8 @@ export default function BiDesempenhoVendas() {
               title="Origem do lead (Forma de Entrada)"
               firstColumnHeader="CANAL / ORIGEM"
               rows={data.origensLead}
+              selectedItemName={activeCrossFilter?.type === "origem" ? activeCrossFilter.value : null}
+              onRowClick={(row) => handleCrossFilterClick("origem", "Origem", row.name)}
               loading={isLoading}
             />
           </div>
@@ -339,6 +369,8 @@ export default function BiDesempenhoVendas() {
                 ticketMedio: b.ticketMedio,
                 percent: b.percent,
               }))}
+              selectedItemName={activeCrossFilter?.type === "banco" ? activeCrossFilter.value : null}
+              onItemClick={(item) => handleCrossFilterClick("banco", "Banco/Modalidade", item.name)}
               loading={isLoading}
             />
 
@@ -357,6 +389,8 @@ export default function BiDesempenhoVendas() {
                 ticketMedio: m.qtd > 0 ? m.valor / m.qtd : 0,
                 valor: m.valor,
               }))}
+              selectedItemName={activeCrossFilter?.type === "motivo" ? activeCrossFilter.value : null}
+              onRowClick={(row) => handleCrossFilterClick("motivo", "Motivo de Perda", row.name)}
               loading={isLoading}
             />
           </div>
@@ -383,7 +417,12 @@ export default function BiDesempenhoVendas() {
                   <div
                     key={res.ano}
                     onClick={() => setSelectedAno(res.ano)}
-                    className="p-4 rounded-xl border border-[var(--voux-card-border)] bg-[var(--voux-surface)] hover:border-emerald-600/50 cursor-pointer transition-all"
+                    className={cn(
+                      "p-4 rounded-xl border transition-all cursor-pointer",
+                      selectedAno === res.ano
+                        ? "border-emerald-600 bg-emerald-500/10 shadow-sm ring-1 ring-emerald-600"
+                        : "border-[var(--voux-card-border)] bg-[var(--voux-surface)] hover:border-emerald-600/50"
+                    )}
                   >
                     <div className="flex items-center justify-between text-xs font-semibold text-[var(--voux-text-muted)]">
                       <span className="font-mono text-[14px] text-[var(--voux-text-primary)] font-bold">{res.ano}</span>
@@ -544,7 +583,7 @@ export default function BiDesempenhoVendas() {
             />
           )}
 
-          {/* Grid de Tabelas de Diagnóstico de Perdas (Todos em Tema Vermelho Sólido) */}
+          {/* Grid de Tabelas de Diagnóstico de Perdas com Filtro Cruzado Interativo */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Card 1: Motivos de Perda & Concorrentes */}
             <DesempenhoTableCard
@@ -561,6 +600,8 @@ export default function BiDesempenhoVendas() {
                 ticketMedio: m.ticketMedio || (m.qtd > 0 ? m.valor / m.qtd : 0),
                 valor: m.valor,
               }))}
+              selectedItemName={activeCrossFilter?.type === "motivo" ? activeCrossFilter.value : null}
+              onRowClick={(row) => handleCrossFilterClick("motivo", "Motivo de Perda", row.name)}
               loading={isLoading}
             />
 
@@ -572,6 +613,8 @@ export default function BiDesempenhoVendas() {
               variant="red"
               unitLabel="negócios perdidos"
               rows={data.perdas?.rankingVendedores ?? []}
+              selectedItemName={activeCrossFilter?.type === "vendedor" ? activeCrossFilter.value : null}
+              onRowClick={(row) => handleCrossFilterClick("vendedor", "Vendedor", row.name)}
               loading={isLoading}
             />
 
@@ -590,6 +633,8 @@ export default function BiDesempenhoVendas() {
                 ticketMedio: p.ticketMedio,
                 valor: p.valor,
               }))}
+              selectedItemName={activeCrossFilter?.type === "produto" ? activeCrossFilter.value : null}
+              onRowClick={(row) => handleCrossFilterClick("produto", "Produto", row.name)}
               loading={isLoading}
             />
 
@@ -601,6 +646,8 @@ export default function BiDesempenhoVendas() {
               variant="red"
               unitLabel="negócios perdidos"
               rows={data.perdas?.rankingCidades ?? []}
+              selectedItemName={activeCrossFilter?.type === "cidade" ? activeCrossFilter.value : null}
+              onRowClick={(row) => handleCrossFilterClick("cidade", "Cidade", row.name)}
               loading={isLoading}
             />
 
@@ -618,6 +665,8 @@ export default function BiDesempenhoVendas() {
                 ticketMedio: o.ticketMedio,
                 valor: o.valor,
               }))}
+              selectedItemName={activeCrossFilter?.type === "origem" ? activeCrossFilter.value : null}
+              onRowClick={(row) => handleCrossFilterClick("origem", "Origem", row.name)}
               loading={isLoading}
             />
           </div>

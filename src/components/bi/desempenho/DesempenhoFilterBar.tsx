@@ -1,5 +1,5 @@
 import React from "react";
-import { X, TrendingUp, TrendingDown, RefreshCw } from "lucide-react";
+import { X, TrendingUp, TrendingDown, RefreshCw, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -14,6 +14,12 @@ import { cn } from "@/lib/utils";
 
 export type DesempenhoTab = "ganhos" | "perdas";
 
+export interface ActiveCrossFilter {
+  type: "vendedor" | "produto" | "cidade" | "origem" | "banco" | "motivo";
+  label: string;
+  value: string;
+}
+
 interface DesempenhoFilterBarProps {
   activeTab: DesempenhoTab;
   onTabChange: (tab: DesempenhoTab) => void;
@@ -27,8 +33,8 @@ interface DesempenhoFilterBarProps {
   cidade: string;
   onCidadeChange: (cidade: string) => void;
   cidadeOptions: string[];
-  condicao: string;
-  onCondicaoChange: (condicao: string) => void;
+  activeCrossFilter?: ActiveCrossFilter | null;
+  onClearCrossFilter?: () => void;
   onResetFilters: () => void;
   hasActiveFilters: boolean;
   onRefresh?: () => void;
@@ -50,13 +56,15 @@ export const DesempenhoFilterBar: React.FC<DesempenhoFilterBarProps> = ({
   cidade,
   onCidadeChange,
   cidadeOptions,
-  condicao,
-  onCondicaoChange,
+  activeCrossFilter,
+  onClearCrossFilter,
   onResetFilters,
   hasActiveFilters,
   onRefresh,
   isRefreshing = false,
 }) => {
+  const isRed = activeTab === "perdas";
+
   return (
     <div className="sticky top-2 z-20 flex flex-col gap-3 p-3 md:p-3.5 rounded-2xl border border-[var(--voux-card-border)]/80 bg-[var(--voux-card-from)]/90 backdrop-blur-xl backdrop-saturate-150 shadow-md transition-all">
       {/* Linha Superior: Seletor de Abas + Anos Rápidos + Refresh */}
@@ -105,7 +113,7 @@ export const DesempenhoFilterBar: React.FC<DesempenhoFilterBarProps> = ({
                 className={cn(
                   "px-2.5 py-1 rounded-lg text-xs font-mono font-medium transition-all",
                   isSelected
-                    ? activeTab === "perdas"
+                    ? isRed
                       ? "bg-red-600 text-white shadow-sm"
                       : "bg-emerald-700 text-white dark:bg-emerald-600 shadow-sm"
                     : "bg-[var(--voux-card-border)]/40 text-[var(--voux-text-primary)] hover:bg-[var(--voux-card-border)]"
@@ -121,7 +129,7 @@ export const DesempenhoFilterBar: React.FC<DesempenhoFilterBarProps> = ({
             className={cn(
               "px-2.5 py-1 rounded-lg text-xs font-mono font-medium transition-all",
               ano === null
-                ? activeTab === "perdas"
+                ? isRed
                   ? "bg-red-600 text-white shadow-sm"
                   : "bg-emerald-700 text-white dark:bg-emerald-600 shadow-sm"
                 : "bg-[var(--voux-card-border)]/40 text-[var(--voux-text-primary)] hover:bg-[var(--voux-card-border)]"
@@ -145,7 +153,7 @@ export const DesempenhoFilterBar: React.FC<DesempenhoFilterBarProps> = ({
         </div>
       </div>
 
-      {/* Linha Inferior: Filtros Detalhados */}
+      {/* Linha Inferior: Filtro de Data + Vendedor + Cidade + Chip de Filtro Cruzado */}
       <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-[var(--voux-card-border)]/60">
         <DateRangePicker value={dateRange} onChange={onDateRangeChange} />
 
@@ -154,10 +162,10 @@ export const DesempenhoFilterBar: React.FC<DesempenhoFilterBarProps> = ({
           value={vendedor || "__all__"}
           onValueChange={(v) => onVendedorChange(v === "__all__" ? "" : v)}
         >
-          <SelectTrigger className="h-8 w-[150px] text-xs bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]">
+          <SelectTrigger className="h-8 w-[160px] text-xs bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]">
             <SelectValue placeholder="Vendedor" />
           </SelectTrigger>
-          <SelectContent className="bg-[var(--surface-raised)]/95 backdrop-blur-xl border-[var(--voux-card-border)]">
+          <SelectContent className="bg-[var(--surface-raised)]/95 backdrop-blur-xl border-[var(--voux-card-border)] max-h-[300px]">
             <SelectItem value="__all__">Todos vendedores</SelectItem>
             {vendedorOptions.map((v) => (
               <SelectItem key={v} value={v}>
@@ -172,10 +180,10 @@ export const DesempenhoFilterBar: React.FC<DesempenhoFilterBarProps> = ({
           value={cidade || "__all__"}
           onValueChange={(v) => onCidadeChange(v === "__all__" ? "" : v)}
         >
-          <SelectTrigger className="h-8 w-[150px] text-xs bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]">
+          <SelectTrigger className="h-8 w-[160px] text-xs bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]">
             <SelectValue placeholder="Cidade" />
           </SelectTrigger>
-          <SelectContent className="bg-[var(--surface-raised)]/95 backdrop-blur-xl border-[var(--voux-card-border)]">
+          <SelectContent className="bg-[var(--surface-raised)]/95 backdrop-blur-xl border-[var(--voux-card-border)] max-h-[300px]">
             <SelectItem value="__all__">Todas cidades</SelectItem>
             {cidadeOptions.map((c) => (
               <SelectItem key={c} value={c}>
@@ -185,22 +193,34 @@ export const DesempenhoFilterBar: React.FC<DesempenhoFilterBarProps> = ({
           </SelectContent>
         </Select>
 
-        {/* Condição: Novo / Usado */}
-        <Select
-          value={condicao || "__all__"}
-          onValueChange={(v) => onCondicaoChange(v === "__all__" ? "" : v)}
-        >
-          <SelectTrigger className="h-8 w-[130px] text-xs bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]">
-            <SelectValue placeholder="Condição" />
-          </SelectTrigger>
-          <SelectContent className="bg-[var(--surface-raised)]/95 backdrop-blur-xl border-[var(--voux-card-border)]">
-            <SelectItem value="__all__">Novos e Usados</SelectItem>
-            <SelectItem value="Novo">Apenas Novos</SelectItem>
-            <SelectItem value="Usado">Apenas Usados</SelectItem>
-          </SelectContent>
-        </Select>
+        {/* Pílula Chic de Filtro Cruzado Ativo (Drill-Down Interativo) */}
+        {activeCrossFilter && (
+          <div
+            className={cn(
+              "inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold border shadow-sm animate-in fade-in zoom-in-95",
+              isRed
+                ? "bg-red-500/15 border-red-500/40 text-red-700 dark:text-red-300"
+                : "bg-emerald-500/15 border-emerald-500/40 text-emerald-800 dark:text-emerald-300"
+            )}
+          >
+            <Filter className="h-3 w-3 shrink-0" />
+            <span className="font-mono text-[11px] uppercase tracking-wider opacity-75">
+              {activeCrossFilter.label}:
+            </span>
+            <span className="font-bold truncate max-w-[200px]" title={activeCrossFilter.value}>
+              {activeCrossFilter.value}
+            </span>
+            <button
+              onClick={onClearCrossFilter}
+              className="ml-1 p-0.5 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+              title="Limpar este filtro cruzado"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        )}
 
-        {/* Botão Limpar */}
+        {/* Botão Limpar Todos os Filtros */}
         {hasActiveFilters && (
           <Button
             variant="ghost"
@@ -209,7 +229,7 @@ export const DesempenhoFilterBar: React.FC<DesempenhoFilterBarProps> = ({
             className="h-8 px-2.5 text-xs text-[var(--voux-text-muted)] hover:text-[var(--voux-text-primary)] ml-auto"
           >
             <X className="h-3.5 w-3.5 mr-1" />
-            Limpar
+            Limpar Filtros
           </Button>
         )}
       </div>

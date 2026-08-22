@@ -51,6 +51,7 @@ export function BiTopbarPortal() {
   // impressão de que alteram KPIs calculados nas mesmas regras de /bi/acoes.
   const isRegistrosPage = location.pathname.includes("/crm/registros");
   const isResultadosNegociosPage = location.pathname === "/bi/comercial";
+  const isDesempenhoPage = location.pathname.startsWith("/bi/desempenho");
   const hideFunilFilters = isRegistrosPage || isResultadosNegociosPage;
 
   useEffect(() => {
@@ -63,12 +64,12 @@ export function BiTopbarPortal() {
   // Fetch filter lists from server-side RPC (no client-side aggregation)
   const from = toISODate(dateRange?.from) ?? "";
   const to = toISODate(dateRange?.to ?? dateRange?.from) ?? "";
-  const { data: listas } = useListasFiltrosRpc({ from, to, enabled: !!from && !!to });
+  const { data: listas } = useListasFiltrosRpc({ from, to, enabled: !!from && !!to && !isDesempenhoPage });
 
   const vendedorOptions = listas?.vendedores ?? [];
   const cidadeOptions = listas?.cidades ?? [];
 
-  if (!container) return null;
+  if (isDesempenhoPage || !container) return null;
 
   return createPortal(
     <div className="flex items-center gap-2 flex-wrap">
