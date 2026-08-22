@@ -332,6 +332,8 @@ export default function BiDesempenhoVendas() {
           eyebrow="OPORTUNIDADES PERDIDAS · CRM"
           title="Motivos de perda de negócios"
           firstColumnHeader="MOTIVO / CONCORRENTE"
+          variant="rose"
+          unitLabel="negócios perdidos"
           rows={data.motivosPerda.map((m) => ({
             name: m.name,
             subtitle: m.concorrenteTop ? `Concorrente: ${m.concorrenteTop}` : undefined,
@@ -341,7 +343,6 @@ export default function BiDesempenhoVendas() {
             valor: m.valor,
           }))}
           loading={isLoading}
-          maxDisplayRows={8}
         />
       </div>
 
