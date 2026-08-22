@@ -1,8 +1,7 @@
--- Migration: RPC para o Novo Dashboard de Desempenho de Vendas (v2 - Canon Ações & Pedidos)
+-- Migration: RPC para o Novo Dashboard de Desempenho de Vendas (v3 - Conciliação Completa 100% Pedidos)
 -- Autor: Ceres BI Team
 -- Data: 2026-08-21
--- Descrição: Alinha regras de Ganhos (pedidos aprovados em negócios ganhos sem repasse) e Perdas (negócios perdidos sem repasse).
---            Adiciona série mensal comparativa Ganho vs Perda com eixos independentes e produtos limpos.
+-- Descrição: Garante que todas as quebras (Cidades, Origens, Bancos, Vendedores, Produtos) totalizem 100% dos pedidos do período.
 
 CREATE OR REPLACE FUNCTION public.rpc_desempenho_vendas_bi(
   p_from date DEFAULT NULL,
@@ -139,14 +138,21 @@ BEGIN
         THEN ROUND(((SELECT faturamento_financiado FROM totais_ganhos) / (SELECT faturamento_total FROM totais_ganhos)) * 100, 1)
         ELSE 0
       END,
-      'valorPerdido', COALESCE((SELECT SUM(ngo_vlrtotalnegociado) FROM negocios_perdidos_periodo), 0),
-      'qtdPerdido', COALESCE((SELECT COUNT(*) FROM negocios_perdidos_periodo), 0),
-      'pipelineAberto', COALESCE((SELECT SUM(ngo_vlrtotalnegociado) FROM negocios_andamento_periodo), 0)
+      'percentRecursoProprio', CASE
+        WHEN (SELECT faturamento_total FROM totais_ganhos) > 0
+        THEN ROUND(((SELECT faturamento_proprio FROM totais_ganhos) / (SELECT faturamento_total FROM totais_ganhos)) * 100, 1)
+        ELSE 0
+      END,
+      'totalPerdido', (SELECT COUNT(DISTINCT ngo_numero) FROM negocios_perdidos_periodo),
+      'valorPerdido', (SELECT COALESCE(SUM(ngo_vlrtotalnegociado), 0) FROM negocios_perdidos_periodo),
+      'qtdPerdido', (SELECT COUNT(DISTINCT ngo_numero) FROM negocios_perdidos_periodo),
+      'totalEmAndamento', (SELECT COUNT(DISTINCT ngo_numero) FROM negocios_andamento_periodo),
+      'valorEmAndamento', (SELECT COALESCE(SUM(ngo_vlrtotalnegociado), 0) FROM negocios_andamento_periodo)
     ) AS val
   ),
-  -- 2. Série Mensal Ganho vs Perda (12 meses para o ano alvo)
+  -- 2. Série Mensal Ganho vs Perda (12 meses do ano alvo)
   serie_mensal AS (
-    SELECT COALESCE(json_agg(row_to_json(m_sub) ORDER BY m_sub.mes), '[]'::json) AS val
+    SELECT COALESCE(json_agg(row_to_json(m_sub)), '[]'::json) AS val
     FROM (
       WITH meses_ano AS (
         SELECT generate_series(1, 12) AS mes
@@ -154,8 +160,8 @@ BEGIN
       ganhos_m AS (
         SELECT
           EXTRACT(MONTH FROM p.dth_evento_pedido)::int AS mes,
-          COUNT(DISTINCT p.pdo_codigointerno)::int AS qtd_ganho,
-          COALESCE(SUM(p.pdo_vlrpedido), 0)::numeric AS valor_ganho
+          COUNT(DISTINCT p.pdo_codigointerno) AS qtd_ganho,
+          SUM(p.pdo_vlrpedido) AS valor_ganho
         FROM pedidos_dedup p
         INNER JOIN negocios_canonicos n ON n.ngo_numero = p.ngo_numero
         WHERE p.is_aprovado
@@ -169,8 +175,8 @@ BEGIN
       perdas_m AS (
         SELECT
           EXTRACT(MONTH FROM n.dth_evento_negocio)::int AS mes,
-          COUNT(DISTINCT n.ngo_numero)::int AS qtd_perda,
-          COALESCE(SUM(n.ngo_vlrtotalnegociado), 0)::numeric AS valor_perda
+          COUNT(DISTINCT n.ngo_numero) AS qtd_perda,
+          SUM(n.ngo_vlrtotalnegociado) AS valor_perda
         FROM negocios_canonicos n
         WHERE n.status_class = 'perdido'
           AND EXTRACT(YEAR FROM n.dth_evento_negocio) = v_target_year
@@ -197,7 +203,7 @@ BEGIN
       ORDER BY ma.mes
     ) m_sub
   ),
-  -- 3. Ranking de Vendedores
+  -- 3. Ranking de Vendedores (Todos os vendedores do período)
   ranking_vendedores AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
@@ -218,7 +224,6 @@ BEGIN
       FROM pedidos_ganhos_periodo p
       GROUP BY p.pdo_vendedor
       ORDER BY SUM(p.pdo_vlrpedido) DESC
-      LIMIT 20
     ) sub
   ),
   -- 4. Produtos Mais Vendidos (Itens de pedidos com nome limpo)
@@ -248,10 +253,9 @@ BEGIN
         COALESCE(NULLIF(TRIM(pi.pdo_itemmarca), ''), 'Outras'),
         COALESCE(NULLIF(TRIM(pi.pdo_itemgrupo), ''), 'Geral')
       ORDER BY SUM(pi.pdo_itemvlrunitario::numeric * GREATEST(pi.pdo_itemqtde::numeric, 1)) DESC
-      LIMIT 20
     ) sub
   ),
-  -- 5. Cidades / Filiais com mais vendas
+  -- 5. Cidades / Filiais com mais vendas (Todas as cidades do período)
   ranking_cidades AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
@@ -272,10 +276,9 @@ BEGIN
       FROM pedidos_ganhos_periodo p
       GROUP BY p.cidade_entrega
       ORDER BY SUM(p.pdo_vlrpedido) DESC
-      LIMIT 20
     ) sub
   ),
-  -- 6. Origem do Lead / Formas de Entrada
+  -- 6. Origem do Lead / Formas de Entrada (Todas as origens do período)
   origens_lead AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
@@ -296,32 +299,33 @@ BEGIN
       FROM pedidos_ganhos_periodo p
       GROUP BY p.ngo_formaentrada
       ORDER BY SUM(p.pdo_vlrpedido) DESC
-      LIMIT 10
     ) sub
   ),
-  -- 7. Financiamento & Bancos
+  -- 7. Modalidade de Pagamento / Bancos Financiadores (Cobre 100% dos pedidos: Financiados + Recurso Próprio)
   financiamento_bancos AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
       SELECT
-        p.pdo_banco AS name,
-        COUNT(DISTINCT p.pdo_codigointerno)::int AS qtd,
-        COALESCE(SUM(p.pdo_vlrfinanciado), 0)::numeric AS valor,
         CASE
-          WHEN (SELECT faturamento_financiado FROM totais_ganhos) > 0
-          THEN ROUND((SUM(p.pdo_vlrfinanciado) / (SELECT faturamento_financiado FROM totais_ganhos)) * 100, 1)
+          WHEN p.pdo_vlrfinanciado > 0 AND p.pdo_banco != 'Não Informado' THEN p.pdo_banco
+          WHEN p.pdo_vlrfinanciado > 0 THEN 'Financiamento (Banco a Definir)'
+          ELSE 'Recurso Próprio / À Vista'
+        END AS name,
+        COUNT(DISTINCT p.pdo_codigointerno)::int AS qtd,
+        COALESCE(SUM(p.pdo_vlrpedido), 0)::numeric AS valor,
+        CASE
+          WHEN (SELECT faturamento_total FROM totais_ganhos) > 0
+          THEN ROUND((SUM(p.pdo_vlrpedido) / (SELECT faturamento_total FROM totais_ganhos)) * 100, 1)
           ELSE 0
         END AS percent,
         CASE
           WHEN COUNT(DISTINCT p.pdo_codigointerno) > 0
-          THEN ROUND(SUM(p.pdo_vlrfinanciado) / COUNT(DISTINCT p.pdo_codigointerno), 2)
+          THEN ROUND(SUM(p.pdo_vlrpedido) / COUNT(DISTINCT p.pdo_codigointerno), 2)
           ELSE 0
         END AS "ticketMedio"
       FROM pedidos_ganhos_periodo p
-      WHERE p.pdo_vlrfinanciado > 0
-      GROUP BY p.pdo_banco
-      ORDER BY SUM(p.pdo_vlrfinanciado) DESC
-      LIMIT 10
+      GROUP BY 1
+      ORDER BY SUM(p.pdo_vlrpedido) DESC
     ) sub
   ),
   -- 8. Tipos de Cliente (PF, PJ, Cooperativa)
@@ -353,26 +357,33 @@ BEGIN
     FROM (
       SELECT
         n.ngo_motivoperda AS name,
-        n.mpp_produtoperdamarca AS "concorrenteTop",
-        COUNT(*)::int AS qtd,
+        COUNT(DISTINCT n.ngo_numero)::int AS qtd,
         COALESCE(SUM(n.ngo_vlrtotalnegociado), 0)::numeric AS valor,
         CASE
-          WHEN (SELECT SUM(ngo_vlrtotalnegociado) FROM negocios_perdidos_periodo) > 0
+          WHEN (SELECT COALESCE(SUM(ngo_vlrtotalnegociado), 0) FROM negocios_perdidos_periodo) > 0
           THEN ROUND((SUM(n.ngo_vlrtotalnegociado) / (SELECT SUM(ngo_vlrtotalnegociado) FROM negocios_perdidos_periodo)) * 100, 1)
           ELSE 0
-        END AS percent
+        END AS percent,
+        (
+          SELECT mpp_produtoperdamarca
+          FROM negocios_perdidos_periodo n2
+          WHERE n2.ngo_motivoperda = n.ngo_motivoperda
+            AND n2.mpp_produtoperdamarca != 'Não Informada'
+          GROUP BY mpp_produtoperdamarca
+          ORDER BY COUNT(*) DESC
+          LIMIT 1
+        ) AS "concorrenteTop"
       FROM negocios_perdidos_periodo n
-      GROUP BY n.ngo_motivoperda, n.mpp_produtoperdamarca
+      GROUP BY n.ngo_motivoperda
       ORDER BY SUM(n.ngo_vlrtotalnegociado) DESC
-      LIMIT 10
     ) sub
   ),
-  -- 10. Resumo Anual
+  -- 10. Resumo Anual (Histórico Multianual)
   resumo_anual AS (
-    SELECT COALESCE(json_agg(row_to_json(sub) ORDER BY sub.ano DESC), '[]'::json) AS val
+    SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
       SELECT
-        EXTRACT(YEAR FROM p.dth_evento_pedido)::integer AS ano,
+        EXTRACT(YEAR FROM p.dth_evento_pedido)::int AS ano,
         COUNT(DISTINCT p.pdo_codigointerno)::int AS qtd,
         COALESCE(SUM(p.pdo_vlrpedido), 0)::numeric AS faturamento,
         CASE
@@ -384,8 +395,9 @@ BEGIN
       INNER JOIN negocios_canonicos n ON n.ngo_numero = p.ngo_numero
       WHERE p.is_aprovado
         AND n.status_class = 'ganho'
-        AND EXTRACT(YEAR FROM p.dth_evento_pedido) >= EXTRACT(YEAR FROM CURRENT_DATE) - 3
-      GROUP BY EXTRACT(YEAR FROM p.dth_evento_pedido)
+        AND EXTRACT(YEAR FROM p.dth_evento_pedido) >= 2024
+      GROUP BY 1
+      ORDER BY ano DESC
     ) sub
   )
   SELECT json_build_object(
@@ -404,5 +416,3 @@ BEGIN
   RETURN result;
 END;
 $$;
-
-NOTIFY pgrst, 'reload schema';
