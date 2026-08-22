@@ -13,6 +13,7 @@ import {
 import { toISODate, formatBRL } from "@/lib/dateUtils";
 import { useDesempenhoVendas } from "@/hooks/bi/useDesempenhoVendas";
 import { DesempenhoTableCard } from "@/components/bi/desempenho/DesempenhoTableCard";
+import { DesempenhoDonutCard } from "@/components/bi/desempenho/DesempenhoDonutCard";
 import { DesempenhoDualLineChart } from "@/components/bi/desempenho/DesempenhoDualLineChart";
 import { DesempenhoFilterBar } from "@/components/bi/desempenho/DesempenhoFilterBar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -245,7 +246,7 @@ export default function BiDesempenhoVendas() {
         </div>
       </div>
 
-      {/* Gráfico de Linhas Ganhos vs Perdas (Eixos Independentes) — Posicionado Logo Após os Cards */}
+      {/* Gráfico de Linhas Ganhos vs Perdas (Eixo Único com Curvas e Tipografia Editorial) */}
       {data.serieMensal.length > 0 && (
         <DesempenhoDualLineChart
           data={data.serieMensal}
@@ -310,22 +311,20 @@ export default function BiDesempenhoVendas() {
         />
       </div>
 
-      {/* Terceira Linha: Financiamento/Bancos & Inteligência Competitiva (Perdas) */}
+      {/* Terceira Linha: Financiamento/Bancos (Donut com Hover Calculado) & Inteligência Competitiva */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Card 5: MODALIDADE DE PAGAMENTO -> Bancos Financiadores em Tabela Analítica */}
-        <DesempenhoTableCard
-          eyebrow="MODALIDADE &amp; BANCOS"
+        {/* Card 5: MODALIDADE DE PAGAMENTO -> Bancos Financiadores com Donut + Legenda + Ticket Médio no Hover */}
+        <DesempenhoDonutCard
+          eyebrow="MODALIDADE DE PAGAMENTO"
           title="Vendas por instituição financeira"
-          firstColumnHeader="INSTITUIÇÃO / BANCO"
-          rows={data.financiamentoBancos.map((b) => ({
+          items={data.financiamentoBancos.map((b) => ({
             name: b.name,
             qtd: b.qtd,
-            percent: b.percent,
-            ticketMedio: b.ticketMedio,
             valor: b.valor,
+            ticketMedio: b.ticketMedio,
+            percent: b.percent,
           }))}
           loading={isLoading}
-          maxDisplayRows={8}
         />
 
         {/* Card 6: MOTIVOS DE PERDA & CONCORRENTES */}

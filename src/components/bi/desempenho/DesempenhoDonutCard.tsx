@@ -7,6 +7,7 @@ export interface DesempenhoDonutItem {
   name: string;
   qtd: number;
   valor: number;
+  ticketMedio?: number;
   percent?: number;
   color?: string;
 }
@@ -20,15 +21,15 @@ interface DesempenhoDonutCardProps {
   className?: string;
 }
 
-const DEFAULT_COLORS = [
-  "#2e7d32", // Emerald / Dark Green
-  "#e65100", // Orange
-  "#f57c00", // Amber / Warm Yellow
-  "#0288d1", // Light Blue
-  "#7b1fa2", // Purple
-  "#c2185b", // Rose
-  "#546e7a", // Slate
-  "#8d6e63", // Brown
+const PALETTE = [
+  "#2d6a4f", // Verde Floresta VOUX
+  "#b83a28", // Terracota VOUX
+  "#c49000", // Mostarda / Ouro VOUX
+  "#20639b", // Azul Petróleo
+  "#6c5b7b", // Roxo suave
+  "#d97724", // Laranja queimado
+  "#4a5568", // Grafite
+  "#008080", // Teal
 ];
 
 function describeArc(cx: number, cy: number, r: number, startAngle: number, endAngle: number): string {
@@ -58,13 +59,19 @@ export const DesempenhoDonutCard: React.FC<DesempenhoDonutCardProps> = ({
   const totalValor = validItems.reduce((acc, i) => acc + i.valor, 0);
   const totalQtd = validItems.reduce((acc, i) => acc + i.qtd, 0);
 
-  const itemsWithColor = validItems.map((item, idx) => ({
-    ...item,
-    color: item.color || DEFAULT_COLORS[idx % DEFAULT_COLORS.length],
-    calculatedPercent: totalValor > 0 ? (item.valor / totalValor) * 100 : totalQtd > 0 ? (item.qtd / totalQtd) * 100 : 0,
-  }));
+  const itemsWithColor = validItems.map((item, idx) => {
+    const calcPercent = totalValor > 0 ? (item.valor / totalValor) * 100 : 0;
+    const calcTicket = item.ticketMedio ?? (item.qtd > 0 ? item.valor / item.qtd : 0);
 
-  // Gera os arcos SVG
+    return {
+      ...item,
+      color: item.color || PALETTE[idx % PALETTE.length],
+      calculatedPercent: calcPercent,
+      ticketMedio: calcTicket,
+    };
+  });
+
+  // Arcos SVG
   let cumAngle = 0;
   const arcs = itemsWithColor.map((item) => {
     const angle = item.calculatedPercent > 0 ? (item.calculatedPercent / 100) * 360 : 0;
@@ -74,17 +81,19 @@ export const DesempenhoDonutCard: React.FC<DesempenhoDonutCardProps> = ({
     return { ...item, startAngle, endAngle, angle };
   });
 
-  const size = 160;
+  const size = 180;
   const cx = size / 2;
   const cy = size / 2;
-  const outerRadius = 72;
+  const outerRadius = 80;
   const thickness = 28;
   const midRadius = outerRadius - thickness / 2;
+
+  const hoveredItem = hoveredIndex !== null ? itemsWithColor[hoveredIndex] : null;
 
   return (
     <div
       className={cn(
-        "rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-5 md:p-6 shadow-sm transition-shadow hover:shadow-md flex flex-col justify-between",
+        "rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-5 md:p-6 shadow-sm transition-shadow hover:shadow-md flex flex-col justify-between relative",
         className
       )}
     >
@@ -121,11 +130,14 @@ export const DesempenhoDonutCard: React.FC<DesempenhoDonutCardProps> = ({
           </div>
         ) : (
           /* Visual Layout: Donut on the Left, List on the Right */
-          <div className="flex flex-col sm:flex-row items-center sm:items-center justify-between gap-6 py-2">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-6 py-2">
             {/* SVG Donut */}
             <div className="relative shrink-0 flex items-center justify-center">
               <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="overflow-visible">
                 {arcs.map((arc, idx) => {
+                  const isHovered = hoveredIndex === idx;
+                  const isOtherHovered = hoveredIndex !== null && !isHovered;
+
                   if (arc.angle >= 359.99) {
                     return (
                       <circle
@@ -135,11 +147,11 @@ export const DesempenhoDonutCard: React.FC<DesempenhoDonutCardProps> = ({
                         r={midRadius}
                         fill="none"
                         stroke={arc.color}
-                        strokeWidth={thickness}
-                        opacity={hoveredIndex === null || hoveredIndex === idx ? 1 : 0.4}
+                        strokeWidth={isHovered ? thickness + 4 : thickness}
+                        opacity={isOtherHovered ? 0.35 : 1}
                         onMouseEnter={() => setHoveredIndex(idx)}
                         onMouseLeave={() => setHoveredIndex(null)}
-                        style={{ cursor: "pointer", transition: "opacity 0.2s" }}
+                        style={{ cursor: "pointer", transition: "all 0.2s ease" }}
                       />
                     );
                   }
@@ -151,75 +163,111 @@ export const DesempenhoDonutCard: React.FC<DesempenhoDonutCardProps> = ({
                       d={path}
                       fill="none"
                       stroke={arc.color}
-                      strokeWidth={thickness}
+                      strokeWidth={isHovered ? thickness + 4 : thickness}
                       strokeLinecap="butt"
-                      opacity={hoveredIndex === null || hoveredIndex === idx ? 1 : 0.4}
+                      opacity={isOtherHovered ? 0.35 : 1}
                       onMouseEnter={() => setHoveredIndex(idx)}
                       onMouseLeave={() => setHoveredIndex(null)}
-                      style={{ cursor: "pointer", transition: "opacity 0.2s" }}
+                      style={{ cursor: "pointer", transition: "all 0.2s ease" }}
                     />
                   );
                 })}
               </svg>
 
-              {/* Centro com Valor Total */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+              {/* Centro com Valor Dinâmico (Total ou Item em Foco) */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-4">
                 <span
                   className="text-[9px] font-bold tracking-wider uppercase text-[var(--voux-text-muted)]"
                   style={{ fontFamily: "var(--voux-font-mono)" }}
                 >
-                  TOTAL
+                  {hoveredItem ? "PARTICIPAÇÃO" : "TOTAL"}
                 </span>
                 <span className="text-[13px] font-bold font-mono text-[var(--voux-text-primary)]">
-                  {totalQtd.toLocaleString("pt-BR")}
+                  {hoveredItem
+                    ? `${hoveredItem.calculatedPercent.toFixed(1)}%`
+                    : `${totalQtd.toLocaleString("pt-BR")} ped`}
                 </span>
               </div>
             </div>
 
-            {/* Legenda Lateral no estilo exato da imagem */}
-            <div className="flex-1 w-full space-y-2.5">
-              {itemsWithColor.map((item, idx) => (
-                <div
-                  key={`${item.name}-${idx}`}
-                  className={cn(
-                    "flex items-center justify-between gap-3 text-xs p-1.5 rounded-lg transition-colors cursor-pointer",
-                    hoveredIndex === idx ? "bg-[var(--voux-card-border)]/40" : "hover:bg-[var(--voux-card-border)]/20"
-                  )}
-                  onMouseEnter={() => setHoveredIndex(idx)}
-                  onMouseLeave={() => setHoveredIndex(null)}
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span
-                      className="h-2.5 w-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: item.color }}
-                    />
-                    <span className="font-medium text-[13px] text-[var(--voux-text-primary)] truncate" title={item.name}>
-                      {item.name}
-                    </span>
-                  </div>
+            {/* Legenda Lateral Interativa */}
+            <div className="flex-1 w-full space-y-2">
+              {itemsWithColor.map((item, idx) => {
+                const isHovered = hoveredIndex === idx;
 
-                  <div className="flex items-center gap-2 font-mono shrink-0 tabular-nums">
-                    <span className="text-[12px] text-[var(--voux-text-primary)]">
-                      {item.qtd} ({item.calculatedPercent.toFixed(1)}%)
-                    </span>
-                    <span className="text-[12px] font-semibold text-emerald-700 dark:text-emerald-400">
-                      {formatBRL(item.valor)}
-                    </span>
+                return (
+                  <div
+                    key={`${item.name}-${idx}`}
+                    className={cn(
+                      "flex items-center justify-between gap-3 text-xs p-2 rounded-xl transition-all cursor-pointer",
+                      isHovered
+                        ? "bg-[var(--voux-card-border)]/50 shadow-sm"
+                        : "hover:bg-[var(--voux-card-border)]/20"
+                    )}
+                    onMouseEnter={() => setHoveredIndex(idx)}
+                    onMouseLeave={() => setHoveredIndex(null)}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span
+                        className="h-2.5 w-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <span
+                        className="font-medium text-[13px] text-[var(--voux-text-primary)] truncate"
+                        title={item.name}
+                      >
+                        {item.name}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-3 font-mono shrink-0 tabular-nums">
+                      <span className="text-[12px] text-[var(--voux-text-muted)]">
+                        {item.calculatedPercent.toFixed(1)}%
+                      </span>
+                      <span className="text-[13px] font-bold text-emerald-700 dark:text-emerald-400">
+                        {formatBRL(item.valor)}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
       </div>
 
-      {/* Footer com Totalizador */}
+      {/* Tooltip Flutuante Detalhado com Ticket Médio no Hover */}
+      {hoveredItem && (
+        <div className="absolute top-4 right-4 rounded-2xl border border-[var(--voux-card-border)] bg-[var(--surface-raised)]/95 backdrop-blur-md p-4 shadow-xl pointer-events-none z-30 text-xs min-w-[240px] space-y-1.5 animate-in fade-in zoom-in-95 duration-150">
+          <div className="flex items-center gap-2 border-b border-[var(--voux-card-border)] pb-2">
+            <span className="h-3 w-3 rounded-full shrink-0" style={{ backgroundColor: hoveredItem.color }} />
+            <p className="font-bold text-[13px] text-[var(--voux-text-primary)] truncate">{hoveredItem.name}</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 pt-1 font-mono">
+            <div>
+              <p className="text-[10px] text-[var(--voux-text-muted)] uppercase">Valor Financiado</p>
+              <p className="font-bold text-[13px] text-emerald-700 dark:text-emerald-400">{formatBRL(hoveredItem.valor)}</p>
+            </div>
+            <div>
+              <p className="text-[10px] text-[var(--voux-text-muted)] uppercase">Volume / Share</p>
+              <p className="font-bold text-[12px] text-[var(--voux-text-primary)]">{hoveredItem.qtd} ped ({hoveredItem.calculatedPercent.toFixed(1)}%)</p>
+            </div>
+            <div className="col-span-2 pt-1 border-t border-[var(--voux-card-border)]/50 flex items-center justify-between">
+              <span className="text-[10px] text-[var(--voux-text-muted)] uppercase">Ticket Médio Financiado:</span>
+              <span className="font-bold text-[12px] text-[var(--voux-text-primary)]">{formatBRL(hoveredItem.ticketMedio)}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Footer com Totalizador Geral */}
       {!loading && itemsWithColor.length > 0 && (
         <div className="mt-4 pt-3 border-t border-[var(--voux-card-border)] flex items-center justify-between text-[11px] text-[var(--voux-text-muted)]">
-          <span className="font-medium">Total Geral:</span>
+          <span className="font-medium">Total Financiado:</span>
           <div className="flex items-center gap-3 font-mono">
-            <span><strong>{totalQtd.toLocaleString("pt-BR")}</strong> unidades</span>
-            <span className="font-semibold text-emerald-700 dark:text-emerald-400">{formatBRL(totalValor)}</span>
+            <span><strong>{totalQtd.toLocaleString("pt-BR")}</strong> pedidos</span>
+            <span className="font-bold text-emerald-700 dark:text-emerald-400">{formatBRL(totalValor)}</span>
           </div>
         </div>
       )}
