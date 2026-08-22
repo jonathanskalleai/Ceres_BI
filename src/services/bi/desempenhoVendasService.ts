@@ -51,6 +51,7 @@ export async function fetchDesempenhoVendas(
         kpis: { ...EMPTY_DESEMPENHO_DATA.kpis, ...(raw as Partial<DesempenhoVendasData>)?.kpis },
         serieMensal: (raw as Partial<DesempenhoVendasData>)?.serieMensal ?? [],
         rankingProdutos: (raw as Partial<DesempenhoVendasData>)?.rankingProdutos ?? [],
+        perdas: (raw as Partial<DesempenhoVendasData>)?.perdas,
       };
     }
 

@@ -5,9 +5,14 @@ export interface DesempenhoKPIs {
   valorFinanciado: number;
   valorRecursoProprio: number;
   percentFinanciado: number;
+  percentRecursoProprio?: number;
   valorPerdido: number;
+  totalPerdido?: number;
   qtdPerdido?: number;
-  pipelineAberto: number;
+  ticketMedioPerdido?: number;
+  totalEmAndamento?: number;
+  valorEmAndamento?: number;
+  pipelineAberto?: number;
 }
 
 export interface DesempenhoMensalItem {
@@ -76,6 +81,7 @@ export interface DesempenhoMotivoPerdaItem {
   concorrenteTop?: string;
   qtd: number;
   percent: number;
+  ticketMedio?: number;
   valor: number;
 }
 
@@ -84,6 +90,14 @@ export interface DesempenhoResumoAnualItem {
   qtd: number;
   faturamento: number;
   ticketMedio: number;
+}
+
+export interface DesempenhoPerdasData {
+  rankingVendedores: DesempenhoVendedorItem[];
+  rankingProdutos: DesempenhoProdutoItem[];
+  rankingCidades: DesempenhoCidadeItem[];
+  origensLead: DesempenhoOrigemItem[];
+  motivosPerda: DesempenhoMotivoPerdaItem[];
 }
 
 export interface DesempenhoVendasData {
@@ -97,6 +111,7 @@ export interface DesempenhoVendasData {
   tiposCliente: DesempenhoTipoClienteItem[];
   motivosPerda: DesempenhoMotivoPerdaItem[];
   resumoAnual: DesempenhoResumoAnualItem[];
+  perdas?: DesempenhoPerdasData;
 }
 
 export interface DesempenhoVendasFilterOptions {

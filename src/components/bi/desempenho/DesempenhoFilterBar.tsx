@@ -1,5 +1,5 @@
 import React from "react";
-import { X, Calendar } from "lucide-react";
+import { X, TrendingUp, TrendingDown, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -12,7 +12,11 @@ import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { type DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 
+export type DesempenhoTab = "ganhos" | "perdas";
+
 interface DesempenhoFilterBarProps {
+  activeTab: DesempenhoTab;
+  onTabChange: (tab: DesempenhoTab) => void;
   ano: number | null;
   onAnoChange: (ano: number | null) => void;
   dateRange?: DateRange;
@@ -27,11 +31,15 @@ interface DesempenhoFilterBarProps {
   onCondicaoChange: (condicao: string) => void;
   onResetFilters: () => void;
   hasActiveFilters: boolean;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 }
 
 const AVAILABLE_YEARS = [2026, 2025, 2024];
 
 export const DesempenhoFilterBar: React.FC<DesempenhoFilterBarProps> = ({
+  activeTab,
+  onTabChange,
   ano,
   onAnoChange,
   dateRange,
@@ -46,49 +54,99 @@ export const DesempenhoFilterBar: React.FC<DesempenhoFilterBarProps> = ({
   onCondicaoChange,
   onResetFilters,
   hasActiveFilters,
+  onRefresh,
+  isRefreshing = false,
 }) => {
   return (
-    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-4 rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] shadow-sm">
-      {/* Lado Esquerdo: Seletor Rápido de Anos (Visão Anual) */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="flex items-center gap-1 text-xs font-semibold text-[var(--voux-text-muted)] mr-1">
-          <Calendar className="h-3.5 w-3.5" />
-          <span>Visão Anual:</span>
+    <div className="flex flex-col gap-3 p-3.5 md:p-4 rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] shadow-sm">
+      {/* Linha Superior: Seletor de Abas Estratégicas + Anos Rápidos + Refresh */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Toggle de Abas: Vendas (Ganhos) vs Diagnóstico de Perdas */}
+        <div className="inline-flex items-center p-1 rounded-xl bg-[var(--voux-surface)] border border-[var(--voux-card-border)] self-start">
+          <button
+            onClick={() => onTabChange("ganhos")}
+            className={cn(
+              "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all",
+              activeTab === "ganhos"
+                ? "bg-emerald-600 text-white shadow-sm font-bold"
+                : "text-[var(--voux-text-muted)] hover:text-[var(--voux-text-primary)]"
+            )}
+          >
+            <TrendingUp className="h-3.5 w-3.5" />
+            <span>🟢 Vendas & Ganhos</span>
+          </button>
+
+          <button
+            onClick={() => onTabChange("perdas")}
+            className={cn(
+              "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all",
+              activeTab === "perdas"
+                ? "bg-rose-600 text-white shadow-sm font-bold"
+                : "text-[var(--voux-text-muted)] hover:text-[var(--voux-text-primary)]"
+            )}
+          >
+            <TrendingDown className="h-3.5 w-3.5" />
+            <span>🔴 Diagnóstico de Perdas</span>
+          </button>
         </div>
 
-        {AVAILABLE_YEARS.map((y) => {
-          const isSelected = ano === y;
-          return (
-            <button
-              key={y}
-              onClick={() => onAnoChange(isSelected ? null : y)}
-              className={cn(
-                "px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition-all",
-                isSelected
-                  ? "bg-emerald-700 text-white dark:bg-emerald-600 shadow-sm"
-                  : "bg-[var(--voux-card-border)]/40 text-[var(--voux-text-primary)] hover:bg-[var(--voux-card-border)]"
-              )}
-            >
-              {y}
-            </button>
-          );
-        })}
+        {/* Seletor Rápido de Anos */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--voux-text-muted)] mr-1 font-mono">
+            Ano:
+          </span>
 
-        <button
-          onClick={() => onAnoChange(null)}
-          className={cn(
-            "px-3 py-1.5 rounded-lg text-xs font-mono font-medium transition-all",
-            ano === null
-              ? "bg-emerald-700 text-white dark:bg-emerald-600 shadow-sm"
-              : "bg-[var(--voux-card-border)]/40 text-[var(--voux-text-primary)] hover:bg-[var(--voux-card-border)]"
+          {AVAILABLE_YEARS.map((y) => {
+            const isSelected = ano === y;
+            return (
+              <button
+                key={y}
+                onClick={() => onAnoChange(isSelected ? null : y)}
+                className={cn(
+                  "px-2.5 py-1 rounded-lg text-xs font-mono font-medium transition-all",
+                  isSelected
+                    ? activeTab === "perdas"
+                      ? "bg-rose-600 text-white shadow-sm"
+                      : "bg-emerald-700 text-white dark:bg-emerald-600 shadow-sm"
+                    : "bg-[var(--voux-card-border)]/40 text-[var(--voux-text-primary)] hover:bg-[var(--voux-card-border)]"
+                )}
+              >
+                {y}
+              </button>
+            );
+          })}
+
+          <button
+            onClick={() => onAnoChange(null)}
+            className={cn(
+              "px-2.5 py-1 rounded-lg text-xs font-mono font-medium transition-all",
+              ano === null
+                ? activeTab === "perdas"
+                  ? "bg-rose-600 text-white shadow-sm"
+                  : "bg-emerald-700 text-white dark:bg-emerald-600 shadow-sm"
+                : "bg-[var(--voux-card-border)]/40 text-[var(--voux-text-primary)] hover:bg-[var(--voux-card-border)]"
+            )}
+          >
+            Todos
+          </button>
+
+          {onRefresh && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              className="h-7 w-7 p-0 ml-1 border-[var(--voux-card-border)] text-[var(--voux-text-muted)] hover:text-[var(--voux-text-primary)]"
+              title="Atualizar dados"
+            >
+              <RefreshCw className={cn("h-3.5 w-3.5", isRefreshing && "animate-spin")} />
+            </Button>
           )}
-        >
-          Todo o Período
-        </button>
+        </div>
       </div>
 
-      {/* Lado Direito: Filtros Específicos (Período Personalizado, Vendedor, Cidade, Condição) */}
-      <div className="flex items-center gap-2 flex-wrap">
+      {/* Linha Inferior: Filtros Detalhados */}
+      <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-[var(--voux-card-border)]/60">
         <DateRangePicker value={dateRange} onChange={onDateRangeChange} />
 
         {/* Vendedor */}
@@ -148,7 +206,7 @@ export const DesempenhoFilterBar: React.FC<DesempenhoFilterBarProps> = ({
             variant="ghost"
             size="sm"
             onClick={onResetFilters}
-            className="h-8 px-2.5 text-xs text-[var(--voux-text-muted)] hover:text-[var(--voux-text-primary)]"
+            className="h-8 px-2.5 text-xs text-[var(--voux-text-muted)] hover:text-[var(--voux-text-primary)] ml-auto"
           >
             <X className="h-3.5 w-3.5 mr-1" />
             Limpar

@@ -1,7 +1,7 @@
--- Migration: RPC para o Novo Dashboard de Desempenho de Vendas (v4 - 100% Cravado 124 Pedidos em Todos os Produtos)
+-- Migration: RPC para o Dashboard de Desempenho de Vendas (v5 - Suporte Dual Tab: Ganhos & Perdas)
 -- Autor: Ceres BI Team
 -- Data: 2026-08-21
--- Descrição: Alinha produtos para totalizar exatamente 124 pedidos (1 por venda) e R$ 15.314.047,18.
+-- Descrição: Alinha conciliação total de 124 vendas e adiciona diagnósticos completos para a nova aba de Perdas.
 
 CREATE OR REPLACE FUNCTION public.rpc_desempenho_vendas_bi(
   p_from date DEFAULT NULL,
@@ -98,7 +98,11 @@ BEGIN
   ),
   -- Negócios perdidos filtrados pela janela
   negocios_perdidos_periodo AS (
-    SELECT n.*
+    SELECT
+      n.*,
+      TRIM(SPLIT_PART(SPLIT_PART(n.prd_dscproduto, E'\n', 1), ' - Descricao', 1)) AS prd_nome_limpo,
+      COALESCE(NULLIF(TRIM(n.cli_cidade), ''), NULLIF(TRIM(n.emp_cidade), ''), 'Não Informada') AS cidade_perda,
+      COALESCE(NULLIF(TRIM(n.ngo_vendedores), ''), 'Não Informado') AS vendedor_perda
     FROM negocios_canonicos n
     WHERE n.status_class = 'perdido'
       AND n.dth_evento_negocio::date BETWEEN v_from AND v_to
@@ -124,6 +128,13 @@ BEGIN
       COALESCE(SUM(pdo_vlrrecursoproprio), 0) AS faturamento_proprio
     FROM pedidos_ganhos_periodo
   ),
+  -- Totais Gerais de Perdas
+  totais_perdas AS (
+    SELECT
+      COUNT(DISTINCT ngo_numero) AS qtd_total_perda,
+      COALESCE(SUM(ngo_vlrtotalnegociado), 0) AS valor_total_perda
+    FROM negocios_perdidos_periodo
+  ),
   -- 1. KPIs
   kpis AS (
     SELECT json_build_object(
@@ -146,9 +157,14 @@ BEGIN
         THEN ROUND(((SELECT faturamento_proprio FROM totais_ganhos) / (SELECT faturamento_total FROM totais_ganhos)) * 100, 1)
         ELSE 0
       END,
-      'totalPerdido', (SELECT COUNT(DISTINCT ngo_numero) FROM negocios_perdidos_periodo),
-      'valorPerdido', (SELECT COALESCE(SUM(ngo_vlrtotalnegociado), 0) FROM negocios_perdidos_periodo),
-      'qtdPerdido', (SELECT COUNT(DISTINCT ngo_numero) FROM negocios_perdidos_periodo),
+      'totalPerdido', (SELECT qtd_total_perda FROM totais_perdas),
+      'valorPerdido', (SELECT valor_total_perda FROM totais_perdas),
+      'ticketMedioPerdido', CASE
+        WHEN (SELECT qtd_total_perda FROM totais_perdas) > 0
+        THEN ROUND((SELECT valor_total_perda FROM totais_perdas) / (SELECT qtd_total_perda FROM totais_perdas), 2)
+        ELSE 0
+      END,
+      'qtdPerdido', (SELECT qtd_total_perda FROM totais_perdas),
       'totalEmAndamento', (SELECT COUNT(DISTINCT ngo_numero) FROM negocios_andamento_periodo),
       'valorEmAndamento', (SELECT COALESCE(SUM(ngo_vlrtotalnegociado), 0) FROM negocios_andamento_periodo)
     ) AS val
@@ -206,7 +222,7 @@ BEGIN
       ORDER BY ma.mes
     ) m_sub
   ),
-  -- 3. Ranking de Vendedores (Todos os vendedores do período -> 124 pedidos)
+  -- 3. Ranking de Vendedores (Ganhos)
   ranking_vendedores AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
@@ -229,7 +245,7 @@ BEGIN
       ORDER BY SUM(p.pdo_vlrpedido) DESC
     ) sub
   ),
-  -- 4. Produtos Mais Vendidos (124 vendas cravadas agrupadas por modelo/produto)
+  -- 4. Produtos Mais Vendidos (Ganhos)
   ranking_produtos AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
@@ -257,7 +273,7 @@ BEGIN
       ORDER BY SUM(p.pdo_vlrpedido) DESC
     ) sub
   ),
-  -- 5. Cidades / Filiais com mais vendas (51 cidades -> 124 pedidos)
+  -- 5. Cidades / Filiais com mais vendas (Ganhos)
   ranking_cidades AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
@@ -280,7 +296,7 @@ BEGIN
       ORDER BY SUM(p.pdo_vlrpedido) DESC
     ) sub
   ),
-  -- 6. Origem do Lead / Formas de Entrada (13 canais -> 124 pedidos)
+  -- 6. Origem do Lead / Formas de Entrada (Ganhos)
   origens_lead AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
@@ -303,7 +319,7 @@ BEGIN
       ORDER BY SUM(p.pdo_vlrpedido) DESC
     ) sub
   ),
-  -- 7. Modalidade de Pagamento / Bancos Financiadores (100% dos 124 pedidos)
+  -- 7. Modalidade de Pagamento / Bancos Financiadores (Ganhos)
   financiamento_bancos AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
@@ -330,7 +346,7 @@ BEGIN
       ORDER BY SUM(p.pdo_vlrpedido) DESC
     ) sub
   ),
-  -- 8. Tipos de Cliente (PF, PJ, Cooperativa -> 124 pedidos)
+  -- 8. Tipos de Cliente (Ganhos)
   tipos_cliente AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
@@ -353,7 +369,7 @@ BEGIN
       ORDER BY SUM(p.pdo_vlrpedido) DESC
     ) sub
   ),
-  -- 9. Motivos de Perda (121 negócios perdidos no CRM)
+  -- 9. Motivos de Perda
   motivos_perda AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
@@ -362,10 +378,15 @@ BEGIN
         COUNT(DISTINCT n.ngo_numero)::int AS qtd,
         COALESCE(SUM(n.ngo_vlrtotalnegociado), 0)::numeric AS valor,
         CASE
-          WHEN (SELECT COALESCE(SUM(ngo_vlrtotalnegociado), 0) FROM negocios_perdidos_periodo) > 0
-          THEN ROUND((SUM(n.ngo_vlrtotalnegociado) / (SELECT SUM(ngo_vlrtotalnegociado) FROM negocios_perdidos_periodo)) * 100, 1)
+          WHEN (SELECT valor_total_perda FROM totais_perdas) > 0
+          THEN ROUND((SUM(n.ngo_vlrtotalnegociado) / (SELECT valor_total_perda FROM totais_perdas)) * 100, 1)
           ELSE 0
         END AS percent,
+        CASE
+          WHEN COUNT(DISTINCT n.ngo_numero) > 0
+          THEN ROUND(SUM(n.ngo_vlrtotalnegociado) / COUNT(DISTINCT n.ngo_numero), 2)
+          ELSE 0
+        END AS "ticketMedio",
         (
           SELECT mpp_produtoperdamarca
           FROM negocios_perdidos_periodo n2
@@ -380,7 +401,101 @@ BEGIN
       ORDER BY SUM(n.ngo_vlrtotalnegociado) DESC
     ) sub
   ),
-  -- 10. Resumo Anual (Histórico Multianual)
+  -- 10. Ranking de Vendedores com Mais Perdas (Aba Perdas)
+  ranking_vendedores_perda AS (
+    SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
+    FROM (
+      SELECT
+        n.vendedor_perda AS name,
+        COUNT(DISTINCT n.ngo_numero)::int AS qtd,
+        COALESCE(SUM(n.ngo_vlrtotalnegociado), 0)::numeric AS valor,
+        CASE
+          WHEN (SELECT valor_total_perda FROM totais_perdas) > 0
+          THEN ROUND((SUM(n.ngo_vlrtotalnegociado) / (SELECT valor_total_perda FROM totais_perdas)) * 100, 1)
+          ELSE 0
+        END AS percent,
+        CASE
+          WHEN COUNT(DISTINCT n.ngo_numero) > 0
+          THEN ROUND(SUM(n.ngo_vlrtotalnegociado) / COUNT(DISTINCT n.ngo_numero), 2)
+          ELSE 0
+        END AS "ticketMedio"
+      FROM negocios_perdidos_periodo n
+      GROUP BY n.vendedor_perda
+      ORDER BY SUM(n.ngo_vlrtotalnegociado) DESC
+    ) sub
+  ),
+  -- 11. Ranking de Produtos Mais Perdidos (Aba Perdas)
+  ranking_produtos_perda AS (
+    SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
+    FROM (
+      SELECT
+        n.prd_nome_limpo AS name,
+        n.prd_marcaproduto AS marca,
+        n.prd_grupoproduto AS grupo,
+        COUNT(DISTINCT n.ngo_numero)::int AS qtd,
+        COALESCE(SUM(n.ngo_vlrtotalnegociado), 0)::numeric AS valor,
+        CASE
+          WHEN (SELECT valor_total_perda FROM totais_perdas) > 0
+          THEN ROUND((SUM(n.ngo_vlrtotalnegociado) / (SELECT valor_total_perda FROM totais_perdas)) * 100, 1)
+          ELSE 0
+        END AS percent,
+        CASE
+          WHEN COUNT(DISTINCT n.ngo_numero) > 0
+          THEN ROUND(SUM(n.ngo_vlrtotalnegociado) / COUNT(DISTINCT n.ngo_numero), 2)
+          ELSE 0
+        END AS "ticketMedio"
+      FROM negocios_perdidos_periodo n
+      GROUP BY n.prd_nome_limpo, n.prd_marcaproduto, n.prd_grupoproduto
+      ORDER BY SUM(n.ngo_vlrtotalnegociado) DESC
+    ) sub
+  ),
+  -- 12. Ranking de Cidades com Mais Perdas (Aba Perdas)
+  ranking_cidades_perda AS (
+    SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
+    FROM (
+      SELECT
+        n.cidade_perda AS name,
+        COUNT(DISTINCT n.ngo_numero)::int AS qtd,
+        COALESCE(SUM(n.ngo_vlrtotalnegociado), 0)::numeric AS valor,
+        CASE
+          WHEN (SELECT valor_total_perda FROM totais_perdas) > 0
+          THEN ROUND((SUM(n.ngo_vlrtotalnegociado) / (SELECT valor_total_perda FROM totais_perdas)) * 100, 1)
+          ELSE 0
+        END AS percent,
+        CASE
+          WHEN COUNT(DISTINCT n.ngo_numero) > 0
+          THEN ROUND(SUM(n.ngo_vlrtotalnegociado) / COUNT(DISTINCT n.ngo_numero), 2)
+          ELSE 0
+        END AS "ticketMedio"
+      FROM negocios_perdidos_periodo n
+      GROUP BY n.cidade_perda
+      ORDER BY SUM(n.ngo_vlrtotalnegociado) DESC
+    ) sub
+  ),
+  -- 13. Origens de Lead com Mais Perdas (Aba Perdas)
+  origens_lead_perda AS (
+    SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
+    FROM (
+      SELECT
+        n.ngo_formaentrada AS name,
+        COUNT(DISTINCT n.ngo_numero)::int AS qtd,
+        COALESCE(SUM(n.ngo_vlrtotalnegociado), 0)::numeric AS valor,
+        CASE
+          WHEN (SELECT valor_total_perda FROM totais_perdas) > 0
+          THEN ROUND((SUM(n.ngo_vlrtotalnegociado) / (SELECT valor_total_perda FROM totais_perdas)) * 100, 1)
+          ELSE 0
+        END AS percent,
+        CASE
+          WHEN COUNT(DISTINCT n.ngo_numero) > 0
+          THEN ROUND(SUM(n.ngo_vlrtotalnegociado) / COUNT(DISTINCT n.ngo_numero), 2)
+          ELSE 0
+        END AS "ticketMedio"
+      FROM negocios_perdidos_periodo n
+      GROUP BY n.ngo_formaentrada
+      ORDER BY SUM(n.ngo_vlrtotalnegociado) DESC
+    ) sub
+  ),
+  -- 14. Resumo Anual (Histórico Multianual)
   resumo_anual AS (
     SELECT COALESCE(json_agg(row_to_json(sub)), '[]'::json) AS val
     FROM (
@@ -412,7 +527,14 @@ BEGIN
     'financiamentoBancos', (SELECT val FROM financiamento_bancos),
     'tiposCliente', (SELECT val FROM tipos_cliente),
     'motivosPerda', (SELECT val FROM motivos_perda),
-    'resumoAnual', (SELECT val FROM resumo_anual)
+    'resumoAnual', (SELECT val FROM resumo_anual),
+    'perdas', json_build_object(
+      'rankingVendedores', (SELECT val FROM ranking_vendedores_perda),
+      'rankingProdutos', (SELECT val FROM ranking_produtos_perda),
+      'rankingCidades', (SELECT val FROM ranking_cidades_perda),
+      'origensLead', (SELECT val FROM origens_lead_perda),
+      'motivosPerda', (SELECT val FROM motivos_perda)
+    )
   ) INTO result;
 
   RETURN result;
