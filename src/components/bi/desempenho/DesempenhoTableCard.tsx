@@ -108,19 +108,19 @@ export const DesempenhoTableCard: React.FC<DesempenhoTableCardProps> = ({
             {emptyMessage}
           </div>
         ) : (
-          /* Table Container com Rolagem Suave Direta, Zoom Frontal com Efeito Vidro e Heatmap */
+          /* Table Container com Rolagem Suave, Zoom Frontal Efeito Vidro (Glassmorphism) e Heatmap */
           <div className="overflow-x-auto -mx-2 px-2 max-h-[380px] overflow-y-auto sidebar-scroll pr-1">
-            <table className="w-full text-left text-xs border-collapse">
+            <table className="w-full text-left text-xs border-separate border-spacing-y-1.5">
               <thead className="sticky top-0 bg-[var(--voux-card-from)] z-10">
                 <tr className="border-b border-[var(--voux-card-border)] text-[10px] font-bold tracking-wider text-[var(--voux-text-muted)] uppercase">
-                  <th className="py-2.5 pr-4 font-semibold">{firstColumnHeader}</th>
+                  <th className="py-2.5 px-3 font-semibold">{firstColumnHeader}</th>
                   <th className="py-2.5 px-3 text-right font-semibold">QTD</th>
                   {showPercent && <th className="py-2.5 px-3 text-right font-semibold">%</th>}
                   <th className="py-2.5 px-3 text-right font-semibold">TICKET MÉDIO</th>
-                  <th className="py-2.5 pl-3 text-right font-semibold">VALOR</th>
+                  <th className="py-2.5 px-3 text-right font-semibold">VALOR</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[var(--voux-card-border)]/60">
+              <tbody>
                 {rows.map((row, idx) => {
                   // Intensidade de calor de 0 a 1
                   const intensity =
@@ -141,19 +141,19 @@ export const DesempenhoTableCard: React.FC<DesempenhoTableCardProps> = ({
                       key={`${row.name}-${idx}`}
                       onClick={() => onRowClick && onRowClick(row)}
                       className={cn(
-                        "group transition-all duration-200 cursor-pointer relative",
+                        "group transition-all duration-200 cursor-pointer relative rounded-xl",
                         isSelected
                           ? isRed
                             ? "bg-red-500/20 border-l-4 border-l-red-600 dark:bg-red-950/50 shadow-md z-20 font-bold scale-[1.01]"
                             : "bg-emerald-500/20 border-l-4 border-l-emerald-600 dark:bg-emerald-950/50 shadow-md z-20 font-bold scale-[1.01]"
                           : hasSelectionInThisCard
-                            ? "opacity-60 hover:opacity-100 hover:scale-[1.015] hover:-translate-y-[1px] hover:bg-white/80 dark:hover:bg-[#15222e]/90 hover:backdrop-blur-xl"
-                            : "hover:scale-[1.016] hover:-translate-y-[1.5px] hover:z-30 hover:bg-white/85 dark:hover:bg-[#15222e]/90 hover:backdrop-blur-xl hover:shadow-[0_12px_28px_-6px_rgba(0,0,0,0.16)] dark:hover:shadow-[0_16px_36px_-6px_rgba(0,0,0,0.6)] hover:ring-1",
-                        !isSelected && (isRed ? "hover:ring-red-500/30" : "hover:ring-emerald-500/30")
+                            ? "opacity-60 hover:opacity-100 hover:scale-[1.018] hover:-translate-y-[2px] hover:bg-white/80 dark:hover:bg-[#15222e]/90 hover:backdrop-blur-xl"
+                            : "hover:scale-[1.018] hover:-translate-y-[2px] hover:z-30 hover:bg-white/85 dark:hover:bg-[#15222e]/90 hover:backdrop-blur-xl hover:shadow-[0_12px_32px_-4px_rgba(0,0,0,0.18),0_0_0_1px_rgba(255,255,255,0.75)] dark:hover:shadow-[0_16px_36px_-4px_rgba(0,0,0,0.65),0_0_0_1px_rgba(255,255,255,0.15)]",
+                        !isSelected && "border border-transparent hover:border-white/60 dark:hover:border-white/15"
                       )}
                     >
                       {/* Nome / Título */}
-                      <td className="py-3 pr-4 max-w-[220px]">
+                      <td className="py-2.5 px-3 rounded-l-xl max-w-[220px]">
                         <div className="flex items-center gap-1.5 min-w-0">
                           {isSelected && (
                             <span
@@ -189,13 +189,13 @@ export const DesempenhoTableCard: React.FC<DesempenhoTableCardProps> = ({
                       </td>
 
                       {/* Quantidade */}
-                      <td className="py-3 px-3 text-right tabular-nums font-mono font-medium text-[13px] text-[var(--voux-text-primary)]">
+                      <td className="py-2.5 px-3 text-right tabular-nums font-mono font-medium text-[13px] text-[var(--voux-text-primary)]">
                         {row.qtd.toLocaleString("pt-BR")}
                       </td>
 
                       {/* % Participação */}
                       {showPercent && (
-                        <td className="py-3 px-3 text-right tabular-nums font-mono text-[12px] text-[var(--voux-text-muted)]">
+                        <td className="py-2.5 px-3 text-right tabular-nums font-mono text-[12px] text-[var(--voux-text-muted)]">
                           {row.percent != null ? `${row.percent.toFixed(1)}%` : "—"}
                         </td>
                       )}
@@ -224,7 +224,7 @@ export const DesempenhoTableCard: React.FC<DesempenhoTableCardProps> = ({
                       {/* Valor Total */}
                       <td
                         className={cn(
-                          "py-3 pl-3 text-right tabular-nums font-mono text-[13px] font-semibold transition-colors",
+                          "py-2.5 px-3 rounded-r-xl text-right tabular-nums font-mono text-[13px] font-semibold transition-colors",
                           isRed
                             ? "text-red-600 dark:text-red-400 group-hover:text-red-700 dark:group-hover:text-red-300 font-bold"
                             : "text-emerald-700 dark:text-emerald-400 group-hover:text-emerald-800 dark:group-hover:text-emerald-300 font-bold"
