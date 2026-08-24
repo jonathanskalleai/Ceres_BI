@@ -37,10 +37,39 @@ function formatYAxis(val: number): string {
   return `R$ ${Math.round(val)}`;
 }
 
-/** Linha linear precisa e minimalista */
-function getLinearPath(points: { x: number; y: number }[]): string {
-  if (points.length === 0) return "";
-  return points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(" ");
+/** 
+ * Gera curva arredondada, suave e acentuada (Cardinal Spline com continuidade natural)
+ * Cria a curvatura suave e fluida que conecta os pontos sem cantos retos
+ */
+function getSmoothCurvedPath(points: { x: number; y: number }[], tension = 0.3): string {
+  const n = points.length;
+  if (n === 0) return "";
+  if (n === 1) return `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}`;
+  if (n === 2) {
+    const p0 = points[0];
+    const p1 = points[1];
+    const dx = p1.x - p0.x;
+    return `M ${p0.x.toFixed(2)} ${p0.y.toFixed(2)} C ${(p0.x + dx * 0.35).toFixed(2)} ${p0.y.toFixed(2)}, ${(p1.x - dx * 0.35).toFixed(2)} ${p1.y.toFixed(2)}, ${p1.x.toFixed(2)} ${p1.y.toFixed(2)}`;
+  }
+
+  let d = `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}`;
+
+  for (let i = 0; i < n - 1; i++) {
+    const p0 = i > 0 ? points[i - 1] : points[i];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = i < n - 2 ? points[i + 2] : p2;
+
+    const cp1x = p1.x + ((p2.x - p0.x) / 6) * (1 + tension);
+    const cp1y = p1.y + ((p2.y - p0.y) / 6) * (1 + tension);
+
+    const cp2x = p2.x - ((p3.x - p1.x) / 6) * (1 + tension);
+    const cp2y = p2.y - ((p3.y - p1.y) / 6) * (1 + tension);
+
+    d += ` C ${cp1x.toFixed(2)} ${cp1y.toFixed(2)}, ${cp2x.toFixed(2)} ${cp2y.toFixed(2)}, ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`;
+  }
+
+  return d;
 }
 
 export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = ({
@@ -96,8 +125,8 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
     ...d,
   }));
 
-  const pathGanho = getLinearPath(pointsGanho);
-  const pathPerda = getLinearPath(pointsPerda);
+  const pathGanho = getSmoothCurvedPath(pointsGanho);
+  const pathPerda = getSmoothCurvedPath(pointsPerda);
 
   // Áreas sob as curvas
   const areaGanho = pointsGanho.length > 0
@@ -184,7 +213,7 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
         <Skeleton className="h-[290px] w-full rounded-xl bg-[var(--voux-skeleton)]" />
       ) : (
         <div className="relative">
-          {/* Canvas SVG Minimalista com Linhas Finas e Legendas Permanentes em cima dos Pontos */}
+          {/* Canvas SVG Minimalista com Curvas Arredondadas e Legendas Permanentes em cima dos Pontos */}
           <div className="w-full">
             <svg
               viewBox={`0 0 ${width} ${height}`}
@@ -214,7 +243,7 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
                 </linearGradient>
               </defs>
 
-              {/* Área e Linha Fina de Ganhos */}
+              {/* Área e Curva Arredondada de Ganhos */}
               {areaGanho && (
                 <path
                   d={areaGanho}
@@ -228,7 +257,7 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
                   d={pathGanho}
                   fill="none"
                   stroke={colorGanho}
-                  strokeWidth={hoveredSeries === "ganhos" ? "2.4" : "1.75"}
+                  strokeWidth={hoveredSeries === "ganhos" ? "2.6" : "2"}
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   opacity={hoveredSeries === "perdas" ? 0.25 : 1}
@@ -236,7 +265,7 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
                 />
               )}
 
-              {/* Área e Linha Fina de Perdas */}
+              {/* Área e Curva Arredondada de Perdas */}
               {areaPerda && (
                 <path
                   d={areaPerda}
@@ -250,7 +279,7 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
                   d={pathPerda}
                   fill="none"
                   stroke={colorPerda}
-                  strokeWidth={hoveredSeries === "perdas" ? "2.4" : "1.75"}
+                  strokeWidth={hoveredSeries === "perdas" ? "2.6" : "2"}
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   opacity={hoveredSeries === "ganhos" ? 0.25 : 1}
