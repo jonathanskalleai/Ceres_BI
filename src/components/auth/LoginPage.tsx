@@ -5,38 +5,46 @@ import { useAuth } from '@/hooks/useAuth';
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { signIn, session, isLoading: authLoading } = useAuth();
+  const { signIn, session, isLoading: authLoading, authError, retrySession } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Redirect if already logged in
-  if (!authLoading && session) {
+  if (!authLoading && !isSubmitting && session) {
     navigate('/', { replace: true });
     return null;
   }
 
   const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const isPasswordValid = password.length >= 6;
-  const canSubmit = isEmailValid && isPasswordValid && !isSubmitting;
+  const canSubmit = isEmailValid && isPasswordValid && !isSubmitting && !authLoading;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!canSubmit) return;
 
     setIsSubmitting(true);
-    const { error } = await signIn(email, password);
-    setIsSubmitting(false);
+    try {
+      const { error } = await signIn(email, password);
 
-    if (error) {
+      if (error) {
+        toast.error('Falha no login', {
+          description: error,
+        });
+        return;
+      }
+
+      navigate('/', { replace: true });
+    } catch (error) {
+      console.error('[LoginPage] Unexpected sign-in failure:', error);
       toast.error('Falha no login', {
-        description: error,
+        description: 'Não foi possível concluir o login. Tente novamente.',
       });
-      return;
+    } finally {
+      setIsSubmitting(false);
     }
-
-    navigate('/', { replace: true });
   }
 
   return (
@@ -53,6 +61,23 @@ export function LoginPage() {
               Sistema de Business Intelligence
             </p>
           </div>
+
+          {authError && (
+            <div
+              role="alert"
+              className="mb-5 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+            >
+              <p>{authError}</p>
+              <button
+                type="button"
+                onClick={() => void retrySession()}
+                disabled={authLoading}
+                className="mt-2 text-xs font-semibold underline underline-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {authLoading ? 'Verificando sessão...' : 'Tentar novamente'}
+              </button>
+            </div>
+          )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
@@ -100,7 +125,12 @@ export function LoginPage() {
               disabled={!canSubmit}
               className="mt-2 rounded-full bg-champagne-400 px-6 py-3.5 font-medium text-ink-1000 transition-colors hover:bg-champagne-300 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isSubmitting ? (
+              {authLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-ink-1000 border-t-transparent" />
+                  Verificando sessão...
+                </span>
+              ) : isSubmitting ? (
                 <span className="flex items-center justify-center gap-2">
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-ink-1000 border-t-transparent" />
                   Entrando...
