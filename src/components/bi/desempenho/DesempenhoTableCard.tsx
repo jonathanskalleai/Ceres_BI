@@ -108,7 +108,7 @@ export const DesempenhoTableCard: React.FC<DesempenhoTableCardProps> = ({
             {emptyMessage}
           </div>
         ) : (
-          /* Table Container com Rolagem Suave Direta, Zoom Frontal, Filtro Interativo e Heatmap */
+          /* Table Container com Rolagem Suave Direta, Zoom Frontal com Efeito Vidro e Heatmap */
           <div className="overflow-x-auto -mx-2 px-2 max-h-[380px] overflow-y-auto sidebar-scroll pr-1">
             <table className="w-full text-left text-xs border-collapse">
               <thead className="sticky top-0 bg-[var(--voux-card-from)] z-10">
@@ -144,12 +144,12 @@ export const DesempenhoTableCard: React.FC<DesempenhoTableCardProps> = ({
                         "group transition-all duration-200 cursor-pointer relative",
                         isSelected
                           ? isRed
-                            ? "bg-red-500/15 border-l-4 border-l-red-600 dark:bg-red-950/40 shadow-sm z-20 font-bold scale-[1.01]"
-                            : "bg-emerald-500/15 border-l-4 border-l-emerald-600 dark:bg-emerald-950/40 shadow-sm z-20 font-bold scale-[1.01]"
+                            ? "bg-red-500/20 border-l-4 border-l-red-600 dark:bg-red-950/50 shadow-md z-20 font-bold scale-[1.01]"
+                            : "bg-emerald-500/20 border-l-4 border-l-emerald-600 dark:bg-emerald-950/50 shadow-md z-20 font-bold scale-[1.01]"
                           : hasSelectionInThisCard
-                            ? "opacity-60 hover:opacity-100 hover:scale-[1.015] hover:-translate-y-[1px]"
-                            : "hover:scale-[1.018] hover:-translate-y-[1.5px] hover:z-30 hover:bg-[var(--surface-raised)]/95 hover:backdrop-blur-md hover:shadow-[0_8px_24px_-4px_rgba(0,0,0,0.12)] dark:hover:shadow-[0_8px_24px_-4px_rgba(0,0,0,0.45)] hover:ring-1",
-                        !isSelected && (isRed ? "hover:ring-red-500/40" : "hover:ring-emerald-500/40")
+                            ? "opacity-60 hover:opacity-100 hover:scale-[1.015] hover:-translate-y-[1px] hover:bg-white/80 dark:hover:bg-[#15222e]/90 hover:backdrop-blur-xl"
+                            : "hover:scale-[1.016] hover:-translate-y-[1.5px] hover:z-30 hover:bg-white/85 dark:hover:bg-[#15222e]/90 hover:backdrop-blur-xl hover:shadow-[0_12px_28px_-6px_rgba(0,0,0,0.16)] dark:hover:shadow-[0_16px_36px_-6px_rgba(0,0,0,0.6)] hover:ring-1",
+                        !isSelected && (isRed ? "hover:ring-red-500/30" : "hover:ring-emerald-500/30")
                       )}
                     >
                       {/* Nome / Título */}
