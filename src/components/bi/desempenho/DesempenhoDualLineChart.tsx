@@ -11,7 +11,7 @@ interface DesempenhoDualLineChartProps {
   className?: string;
 }
 
-/** Formata valor para o eixo Y de forma compacta e limpa */
+/** Formata valor para o eixo Y de forma limpa */
 function formatYAxis(val: number): string {
   if (!val || val === 0) return "R$ 0";
   if (val >= 1_000_000) {
@@ -24,18 +24,10 @@ function formatYAxis(val: number): string {
   return `R$ ${Math.round(val)}`;
 }
 
-/** Gera caminho suave natural (Cubic Bezier) */
-function getSmoothPath(points: { x: number; y: number }[]): string {
+/** Gera linha limpa, precisa e profissional (Polyline linear com junções arredondadas) */
+function getLinearPath(points: { x: number; y: number }[]): string {
   if (points.length === 0) return "";
-  if (points.length === 1) return `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}`;
-  let d = `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}`;
-  for (let i = 1; i < points.length; i++) {
-    const prev = points[i - 1];
-    const curr = points[i];
-    const cpx = (prev.x + curr.x) / 2;
-    d += ` C ${cpx.toFixed(2)} ${prev.y.toFixed(2)}, ${cpx.toFixed(2)} ${curr.y.toFixed(2)}, ${curr.x.toFixed(2)} ${curr.y.toFixed(2)}`;
-  }
-  return d;
+  return points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(" ");
 }
 
 export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = ({
@@ -64,7 +56,7 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
   const plotW = width - padL - padR;
   const plotH = height - padT - padB;
 
-  // Escala máxima unificada natural para que as duas séries compartilhem o mesmo espaço real
+  // Escala máxima unificada natural
   const maxValor = Math.max(
     ...data.map((d) => Math.max(d.valorGanho, d.valorPerda)),
     1
@@ -78,7 +70,7 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
     return padT + plotH - norm * plotH;
   };
 
-  // Coordenadas das duas séries no mesmo gráfico padrão
+  // Coordenadas das duas séries
   const pointsGanho = data.map((d, i) => ({
     x: xCoord(i),
     y: yCoord(d.valorGanho),
@@ -91,8 +83,8 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
     ...d,
   }));
 
-  const pathGanho = getSmoothPath(pointsGanho);
-  const pathPerda = getSmoothPath(pointsPerda);
+  const pathGanho = getLinearPath(pointsGanho);
+  const pathPerda = getLinearPath(pointsPerda);
 
   // Áreas sob as curvas
   const areaGanho = pointsGanho.length > 0
@@ -179,7 +171,7 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
         <Skeleton className="h-[300px] w-full rounded-xl bg-[var(--voux-skeleton)]" />
       ) : (
         <div className="relative">
-          {/* Canvas SVG do Gráfico Padrão Unificado */}
+          {/* Canvas SVG do Gráfico Linear Preciso */}
           <div className="w-full">
             <svg
               viewBox={`0 0 ${width} ${height}`}
@@ -223,7 +215,7 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
                   d={pathGanho}
                   fill="none"
                   stroke={colorGanho}
-                  strokeWidth={hoveredSeries === "ganhos" ? "3.2" : "2.6"}
+                  strokeWidth={hoveredSeries === "ganhos" ? "3.5" : "2.6"}
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   opacity={hoveredSeries === "perdas" ? 0.25 : 1}
@@ -245,7 +237,7 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
                   d={pathPerda}
                   fill="none"
                   stroke={colorPerda}
-                  strokeWidth={hoveredSeries === "perdas" ? "3.2" : "2.6"}
+                  strokeWidth={hoveredSeries === "perdas" ? "3.5" : "2.6"}
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   opacity={hoveredSeries === "ganhos" ? 0.25 : 1}
@@ -267,11 +259,9 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
                 />
               )}
 
-              {/* Pontos da Linha Ganhos */}
+              {/* Pontos da Linha Ganhos (Arredondados e com Destaque no Hover) */}
               {pointsGanho.map((p, i) => {
                 const isHovered = hoveredIndex === i;
-                const hasValue = p.valorGanho > 0;
-
                 return (
                   <g
                     key={`pt-g-${i}`}
@@ -282,7 +272,7 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
                       <circle
                         cx={p.x}
                         cy={p.y}
-                        r="8"
+                        r="12"
                         fill={colorGanho}
                         fillOpacity="0.25"
                       />
@@ -290,21 +280,19 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
                     <circle
                       cx={p.x}
                       cy={p.y}
-                      r={isHovered ? 5.5 : hasValue ? 3.5 : 2}
-                      fill={hasValue ? colorGanho : "var(--voux-card-border)"}
-                      stroke="#ffffff"
-                      strokeWidth={hasValue ? 1.5 : 1}
+                      r={isHovered ? 6.5 : 4}
+                      fill="#ffffff"
+                      stroke={colorGanho}
+                      strokeWidth={isHovered ? 3 : 2}
                       className="transition-all duration-150"
                     />
                   </g>
                 );
               })}
 
-              {/* Pontos da Linha Perdas */}
+              {/* Pontos da Linha Perdas (Arredondados e com Destaque no Hover) */}
               {pointsPerda.map((p, i) => {
                 const isHovered = hoveredIndex === i;
-                const hasValue = p.valorPerda > 0;
-
                 return (
                   <g
                     key={`pt-p-${i}`}
@@ -315,7 +303,7 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
                       <circle
                         cx={p.x}
                         cy={p.y}
-                        r="8"
+                        r="12"
                         fill={colorPerda}
                         fillOpacity="0.25"
                       />
@@ -323,10 +311,10 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
                     <circle
                       cx={p.x}
                       cy={p.y}
-                      r={isHovered ? 5.5 : hasValue ? 3.5 : 2}
-                      fill={hasValue ? colorPerda : "var(--voux-card-border)"}
-                      stroke="#ffffff"
-                      strokeWidth={hasValue ? 1.5 : 1}
+                      r={isHovered ? 6.5 : 4}
+                      fill="#ffffff"
+                      stroke={colorPerda}
+                      strokeWidth={isHovered ? 3 : 2}
                       className="transition-all duration-150"
                     />
                   </g>
@@ -402,7 +390,7 @@ export const DesempenhoDualLineChart: React.FC<DesempenhoDualLineChartProps> = (
             </svg>
           </div>
 
-          {/* Caixinha Tooltip Flutuante com o MESMO EFEITO VIDRO da Barra de Filtros (Glassmorphism Real) */}
+          {/* Caixinha Tooltip Flutuante em Vidro Fosco (Efeito Vidro idêntico à FilterBar) */}
           {hoveredItem && (
             <div
               className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-2xl p-4 md:p-5 flex items-center gap-6 pointer-events-none z-30 animate-in fade-in zoom-in-95 duration-150 border border-[var(--voux-card-border)]/80 bg-[var(--voux-card-from)]/80 dark:bg-[#121c24]/80 backdrop-blur-xl backdrop-saturate-150 shadow-2xl"
