@@ -74,17 +74,6 @@ export function buildNavItems(modules: AppModule[], isAdmin: boolean): NavItem[]
     }
   }
 
-  // Novo Dashboard em validacao: garante presenca na navegacao
-  const hasDesempenho = items.some((it) => it.route === '/bi/desempenho');
-  if (!hasDesempenho) {
-    items.push({
-      id: 'bi.desempenho',
-      label: 'Desempenho Vendas',
-      icon: BarChart3,
-      route: '/bi/desempenho',
-    });
-  }
-
   // Add Configuracoes group if user is admin and has >=1 of the settings modules
   if (isAdmin && settingsModules.length > 0) {
     items.push({
