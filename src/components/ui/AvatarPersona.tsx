@@ -6,7 +6,6 @@ interface AvatarPersonaProps {
   name: string;
   className?: string;
   size?: "sm" | "md" | "lg";
-  style?: "lorelei" | "adventurer" | "avataaars" | "personas" | "notionists";
 }
 
 function getInitials(name: string) {
@@ -19,11 +18,10 @@ export const AvatarPersona = memo(function AvatarPersona({
   name,
   className,
   size = "md",
-  style = "lorelei",
 }: AvatarPersonaProps) {
   const [hasError, setHasError] = useState(false);
   const initials = getInitials(name);
-  const avatarUrl = getConsultorAvatarUrl(name, style);
+  const avatarUrl = getConsultorAvatarUrl(name);
 
   const sizeClasses = {
     sm: "h-8 w-8 text-[11px]",
@@ -34,7 +32,7 @@ export const AvatarPersona = memo(function AvatarPersona({
   return (
     <div
       className={cn(
-        "relative flex shrink-0 items-center justify-center rounded-full border overflow-hidden bg-black/5 dark:bg-white/10 ring-2 ring-black/10 dark:ring-white/10 font-mono font-bold transition-transform",
+        "relative flex shrink-0 items-center justify-center rounded-full border overflow-hidden bg-slate-800 ring-2 ring-black/10 dark:ring-white/10 font-mono font-bold transition-transform",
         sizeClasses,
         className
       )}
@@ -44,7 +42,7 @@ export const AvatarPersona = memo(function AvatarPersona({
         <img
           src={avatarUrl}
           alt={name}
-          className="h-full w-full object-cover select-none"
+          className="h-full w-full object-cover select-none scale-105"
           loading="lazy"
           onError={() => setHasError(true)}
         />
