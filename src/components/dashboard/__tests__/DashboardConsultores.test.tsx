@@ -55,7 +55,7 @@ const emptyDesempenho: EquipeDesempenhoData = {
 };
 
 describe("DashboardConsultores", () => {
-  it("renderiza o cockpit com resumo executivo, ranking de performance e tabela de desempenho", () => {
+  it("renderiza o cockpit com inteligência IA, ranking horizontal e tabela de desempenho", () => {
     render(
       <QueryClientProvider client={queryClient}>
         <DashboardConsultores
@@ -77,11 +77,10 @@ describe("DashboardConsultores", () => {
       </QueryClientProvider>
     );
 
-    expect(screen.getByText("Resumo Executivo")).toBeInTheDocument();
-    expect(screen.getByText("Ranking de Performance")).toBeInTheDocument();
+    expect(screen.getByText("Inteligência da Equipe & Oportunidades")).toBeInTheDocument();
+    expect(screen.getByText("Ações Sugeridas para a Gestão")).toBeInTheDocument();
+    expect(screen.getByText("Performance Ranking")).toBeInTheDocument();
     expect(screen.getByText("Análise de Desempenho da Equipe")).toBeInTheDocument();
-    expect(screen.getByText("Clientes Atendidos")).toBeInTheDocument();
     expect(screen.getByText("CARLOS AUGUSTO AUGUSTIN")).toBeInTheDocument();
-    expect(screen.getByText("0 vendas · 25 visitas · 31 ações")).toBeInTheDocument();
   });
 });

@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
 import type { Vendedor, Registro, Filters } from "@/types/comercial";
-import { CalendarDays, Users, ChevronDown, ChevronUp, FileSpreadsheet } from "lucide-react";
+import { CalendarDays, Users, ChevronDown, ChevronUp, FileSpreadsheet, UserCheck } from "lucide-react";
 import { filterRegistros, hasActiveFilters } from "@/lib/filterUtils";
-import { ResumoExecutivoCard } from "./consultor/ResumoExecutivoCard";
-import { RankingPerformanceCard } from "./RankingPerformanceCard";
+import { AiInsightsOpportunitiesCard } from "./consultor/AiInsightsOpportunitiesCard";
+import { AiSuggestedActionsCard } from "./consultor/AiSuggestedActionsCard";
+import { RankingPerformanceHorizontal } from "./RankingPerformanceHorizontal";
 import { RankingClientesNovos } from "./RankingClientesNovos";
 import { EquipeDesempenhoTable } from "./EquipeDesempenhoTable";
 import { ConsultoresValidationTable } from "./ConsultoresValidationTable";
@@ -34,6 +35,7 @@ export const DashboardConsultores = ({
   isAdmin,
 }: DashboardConsultoresProps) => {
   const isFiltered = hasActiveFilters(filters);
+  const [showClientes, setShowClientes] = useState(false);
   const [showAuditoria, setShowAuditoria] = useState(false);
 
   const periodoLabel = filters.dateRange
@@ -61,7 +63,7 @@ export const DashboardConsultores = ({
               Equipe Comercial & Consultores
             </h2>
             <p className="text-[12px] text-muted-foreground">
-              Cockpit de inteligência, ranking e desempenho da equipe
+              Cockpit executivo de inteligência, ranking e desempenho da equipe
             </p>
           </div>
         </div>
@@ -87,32 +89,26 @@ export const DashboardConsultores = ({
         </div>
       </div>
 
-      {/* Top Grid: 3 Equal Columns (Executive Summary + Ranking + Clientes) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-stretch">
-        {/* Coluna 1: Resumo Executivo & Inteligência */}
+      {/* Row 1: Top 2 Cards (AI Opportunities & Suggested Actions - 100% visible) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
         <div className="h-full">
-          <ResumoExecutivoCard resumo={resumo} consultores={consultorNames} />
+          <AiInsightsOpportunitiesCard />
         </div>
-
-        {/* Coluna 2: Ranking de Performance (Top 5) */}
         <div className="h-full">
-          <RankingPerformanceCard
-            vendedores={vendedores}
-            resumo={resumo}
-            onSelectConsultor={onSelectConsultor}
-          />
-        </div>
-
-        {/* Coluna 3: Clientes Atendidos & Cobertura */}
-        <div className="h-full md:col-span-2 lg:col-span-1">
-          <RankingClientesNovos
-            registros={isFiltered ? filterRegistros(registros, filters) : registros}
-            filters={filters}
-          />
+          <AiSuggestedActionsCard resumo={resumo} consultores={consultorNames} />
         </div>
       </div>
 
-      {/* Bottom Section: Full-Width 100% Team Performance Matrix Table */}
+      {/* Row 2: Performance Ranking (Horizontal 5 Cards Row) */}
+      <div className="w-full">
+        <RankingPerformanceHorizontal
+          vendedores={vendedores}
+          resumo={resumo}
+          onSelectConsultor={onSelectConsultor}
+        />
+      </div>
+
+      {/* Row 3: Team Performance Matrix Table (100% Full Width) */}
       <div className="w-full">
         <EquipeDesempenhoTable
           ano={anoDesempenho}
@@ -121,24 +117,49 @@ export const DashboardConsultores = ({
         />
       </div>
 
-      {/* Auditoria & Conferência Geral (Colapsável) */}
-      <div className="pt-2">
-        <div className="flex items-center justify-between">
+      {/* Auxiliary Sections: Clientes Atendidos & Conferência Técnica */}
+      <div className="pt-2 space-y-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowClientes(!showClientes)}
+            className="h-8 gap-2 text-[12px] font-mono text-muted-foreground hover:text-foreground border"
+            style={{ borderColor: "var(--voux-card-border)", background: "var(--surface-raised)" }}
+          >
+            <UserCheck className="h-3.5 w-3.5" />
+            <span>{showClientes ? "Ocultar clientes atendidos" : "Ver clientes atendidos por consultor"}</span>
+            {showClientes ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+          </Button>
+
           <Button
             type="button"
             variant="ghost"
             size="sm"
             onClick={() => setShowAuditoria(!showAuditoria)}
-            className="h-8 gap-2 text-[12px] font-mono text-muted-foreground hover:text-foreground"
+            className="h-8 gap-2 text-[12px] font-mono text-muted-foreground hover:text-foreground border"
+            style={{ borderColor: "var(--voux-card-border)", background: "var(--surface-raised)" }}
           >
             <FileSpreadsheet className="h-3.5 w-3.5" />
-            <span>{showAuditoria ? "Ocultar quadro de conferência técnica" : "Abrir quadro de conferência e auditoria de consultores"}</span>
+            <span>{showAuditoria ? "Ocultar quadro de conferência técnica" : "Abrir quadro de conferência e auditoria"}</span>
             {showAuditoria ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
           </Button>
         </div>
 
+        {/* Clientes Atendidos expandido */}
+        {showClientes && (
+          <div className="w-full">
+            <RankingClientesNovos
+              registros={isFiltered ? filterRegistros(registros, filters) : registros}
+              filters={filters}
+            />
+          </div>
+        )}
+
+        {/* Quadro de Conferência expandido */}
         {showAuditoria && (
-          <div className="mt-3">
+          <div className="w-full">
             <ConsultoresValidationTable
               resumo={resumo}
               from={filters.dateRange?.from ?? ""}
