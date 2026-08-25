@@ -119,6 +119,8 @@ export const DashboardConsultores = ({
           ano={anoDesempenho}
           data={desempenho}
           isAdmin={isAdmin}
+          filters={filters}
+          onSelectConsultor={onSelectConsultor}
         />
       </div>
 
