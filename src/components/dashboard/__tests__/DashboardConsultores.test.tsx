@@ -1,12 +1,16 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { DashboardConsultores } from "../DashboardConsultores";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { Vendedor } from "@/types/comercial";
 import type { RpcConsultorResumoAcoes } from "@/types/consultoresRpc";
+import type { EquipeDesempenhoData } from "@/types/equipeDesempenho";
 
-vi.mock("../consultor/InsightsEquipeCard", () => ({
-  InsightsEquipeCard: () => <div>Resumo semanal da equipe</div>,
-}));
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { retry: false },
+  },
+});
 
 const vendedores: Vendedor[] = [
   {
@@ -45,30 +49,39 @@ const resumo: RpcConsultorResumoAcoes[] = [
   },
 ];
 
+const emptyDesempenho: EquipeDesempenhoData = {
+  rows: [],
+  team: [],
+};
+
 describe("DashboardConsultores", () => {
-  it("restaura o resumo semanal de IA, ranking de performance e conferência", () => {
+  it("renderiza o cockpit com resumo executivo, ranking de performance e tabela de desempenho", () => {
     render(
-      <DashboardConsultores
-        vendedores={vendedores}
-        registros={[]}
-        resumo={resumo}
-        filters={{
-          cidade: "",
-          tipoAcao: "",
-          categoria: "",
-          funil: "",
-          dateRange: { from: "2026-08-01", to: "2026-08-31" },
-        }}
-        onSelectConsultor={vi.fn()}
-      />,
+      <QueryClientProvider client={queryClient}>
+        <DashboardConsultores
+          vendedores={vendedores}
+          registros={[]}
+          resumo={resumo}
+          filters={{
+            cidade: "",
+            tipoAcao: "",
+            categoria: "",
+            funil: "",
+            dateRange: { from: "2026-08-01", to: "2026-08-31" },
+          }}
+          onSelectConsultor={vi.fn()}
+          anoDesempenho={2026}
+          desempenho={emptyDesempenho}
+          isAdmin={true}
+        />
+      </QueryClientProvider>
     );
 
-    expect(screen.getByText("Resumo semanal da equipe")).toBeInTheDocument();
-    expect(screen.getByText("Ranking de performance")).toBeInTheDocument();
-    expect(screen.getByText("Todos os consultores")).toBeInTheDocument();
-    expect(screen.getByText("Ranking e conferência por consultor")).toBeInTheDocument();
-    expect(screen.getAllByText("CARLOS AUGUSTO AUGUSTIN")).toHaveLength(3);
+    expect(screen.getByText("Resumo Executivo")).toBeInTheDocument();
+    expect(screen.getByText("Ranking de Performance")).toBeInTheDocument();
+    expect(screen.getByText("Análise de Desempenho da Equipe")).toBeInTheDocument();
+    expect(screen.getByText("Clientes Atendidos")).toBeInTheDocument();
+    expect(screen.getByText("CARLOS AUGUSTO AUGUSTIN")).toBeInTheDocument();
     expect(screen.getByText("0 vendas · 25 visitas · 31 ações")).toBeInTheDocument();
-    expect(screen.getAllByText("R$ 0")).not.toHaveLength(0);
   });
 });

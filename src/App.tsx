@@ -14,17 +14,18 @@ import BiLayout from "./components/bi/BiLayout";
 import CrmLayout from "./components/crm/CrmLayout";
 import NotFound from "./pages/NotFound";
 
-// CRM pages (thin wrappers — eager since they're tiny)
-import CrmOverview from "./pages/crm/CrmOverview";
-import CrmConsultores from "./pages/crm/CrmConsultores";
-import CrmConsultorDetail from "./pages/crm/CrmConsultorDetail";
-
-import CrmRegistros from "./pages/crm/CrmRegistros";
-import CrmCriticos from "./pages/crm/CrmCriticos";
-import CrmMapa from "./pages/crm/CrmMapa";
-import CrmInsights from "./pages/crm/CrmInsights";
-import CrmNegocios from "./pages/crm/CrmNegocios";
-import CrmAdministrativo from "./pages/crm/CrmAdministrativo";
+// CRM pages load after navigation. Some of their detail views include charting
+// libraries, so keeping the whole CRM tree out of the bootstrap makes login
+// and the protected shell much faster to parse.
+const CrmOverview = lazy(() => import("./pages/crm/CrmOverview"));
+const CrmConsultores = lazy(() => import("./pages/crm/CrmConsultores"));
+const CrmConsultorDetail = lazy(() => import("./pages/crm/CrmConsultorDetail"));
+const CrmRegistros = lazy(() => import("./pages/crm/CrmRegistros"));
+const CrmCriticos = lazy(() => import("./pages/crm/CrmCriticos"));
+const CrmMapa = lazy(() => import("./pages/crm/CrmMapa"));
+const CrmInsights = lazy(() => import("./pages/crm/CrmInsights"));
+const CrmNegocios = lazy(() => import("./pages/crm/CrmNegocios"));
+const CrmAdministrativo = lazy(() => import("./pages/crm/CrmAdministrativo"));
 
 // BI pages (lazy — heavy chart sections)
 const BiComercial = lazy(() => import("./pages/bi/BiComercial"));
@@ -98,16 +99,16 @@ const App = () => (
 
               {/* CRM — wrapped by CrmLayout (shared filter context + topbar portal) */}
               <Route path="crm" element={<CrmLayout />}>
-                <Route path="overview" element={<ModuleGuard moduleId="crm.overview"><CrmOverview /></ModuleGuard>} />
-                <Route path="consultores" element={<ModuleGuard moduleId="crm.consultores"><CrmConsultores /></ModuleGuard>} />
-                <Route path="consultores/:vendedor" element={<ModuleGuard moduleId="crm.consultores"><CrmConsultorDetail /></ModuleGuard>} />
+                <Route path="overview" element={<ModuleGuard moduleId="crm.overview"><LazySuspense><CrmOverview /></LazySuspense></ModuleGuard>} />
+                <Route path="consultores" element={<ModuleGuard moduleId="crm.consultores"><LazySuspense><CrmConsultores /></LazySuspense></ModuleGuard>} />
+                <Route path="consultores/:vendedor" element={<ModuleGuard moduleId="crm.consultores"><LazySuspense><CrmConsultorDetail /></LazySuspense></ModuleGuard>} />
 
-                <Route path="registros" element={<ModuleGuard moduleId="crm.registros"><CrmRegistros /></ModuleGuard>} />
-                <Route path="criticos" element={<ModuleGuard moduleId="crm.criticos"><CrmCriticos /></ModuleGuard>} />
-                <Route path="mapa" element={<ModuleGuard moduleId="crm.mapa"><CrmMapa /></ModuleGuard>} />
-                <Route path="insights" element={<ModuleGuard moduleId="crm.insights"><CrmInsights /></ModuleGuard>} />
-                <Route path="negocios" element={<ModuleGuard moduleId="crm.negocios"><CrmNegocios /></ModuleGuard>} />
-                <Route path="administrativo" element={<ModuleGuard moduleId="crm.administrativo"><CrmAdministrativo /></ModuleGuard>} />
+                <Route path="registros" element={<ModuleGuard moduleId="crm.registros"><LazySuspense><CrmRegistros /></LazySuspense></ModuleGuard>} />
+                <Route path="criticos" element={<ModuleGuard moduleId="crm.criticos"><LazySuspense><CrmCriticos /></LazySuspense></ModuleGuard>} />
+                <Route path="mapa" element={<ModuleGuard moduleId="crm.mapa"><LazySuspense><CrmMapa /></LazySuspense></ModuleGuard>} />
+                <Route path="insights" element={<ModuleGuard moduleId="crm.insights"><LazySuspense><CrmInsights /></LazySuspense></ModuleGuard>} />
+                <Route path="negocios" element={<ModuleGuard moduleId="crm.negocios"><LazySuspense><CrmNegocios /></LazySuspense></ModuleGuard>} />
+                <Route path="administrativo" element={<ModuleGuard moduleId="crm.administrativo"><LazySuspense><CrmAdministrativo /></LazySuspense></ModuleGuard>} />
               </Route>
 
               {/* BI — wrapped by BiLayout (shared filter context + topbar portal) */}

@@ -108,6 +108,22 @@ export default function AcoesSection({ active, dateRange }: Props) {
   const from = useMemo(() => toISODate(dateRange?.from), [dateRange?.from]);
   const to = useMemo(() => toISODate(dateRange?.to ?? dateRange?.from), [dateRange?.to, dateRange?.from]);
 
+  // A abertura da tela disparava mapa, tabelas e análises abaixo da dobra ao
+  // mesmo tempo que os cards principais. Priorizamos resumo e funil; as
+  // consultas secundárias entram após o primeiro paint e são reprogramadas a
+  // cada troca de filtro.
+  const [carregarSecundarios, setCarregarSecundarios] = useState(false);
+  useEffect(() => {
+    if (!active) {
+      setCarregarSecundarios(false);
+      return;
+    }
+
+    setCarregarSecundarios(false);
+    const timer = window.setTimeout(() => setCarregarSecundarios(true), 250);
+    return () => window.clearTimeout(timer);
+  }, [active, from, to, vendedor, cidade, tipoAcao, statusNegocio]);
+
   // Paginacao server-side da tabela de detalhe
   const [detalhePage, setDetalhePage] = useState(1);
 
@@ -131,7 +147,7 @@ export default function AcoesSection({ active, dateRange }: Props) {
     vendedor: vendedor || undefined,
     tipoAcao: tipoAcao || undefined,
     cidade: cidade || undefined,
-    enabled: active,
+    enabled: active && carregarSecundarios,
   });
 
   // Tabela de detalhe em RPC separada: rpc_acoes_bi roda 4x no app (2x aqui,
@@ -144,7 +160,7 @@ export default function AcoesSection({ active, dateRange }: Props) {
     cidade: cidade || undefined,
     statusNegocio: statusNegocio || undefined,
     page: detalhePage,
-    enabled: active,
+    enabled: active && carregarSecundarios,
   });
 
   const detalheTotal = detalhe?.total ?? 0;
@@ -154,16 +170,18 @@ export default function AcoesSection({ active, dateRange }: Props) {
   const { data: riscoData, isLoading: riscoLoading } = useClientesRiscoRpc({
     vendedor: vendedor || undefined,
     cidade: cidade || undefined,
-    enabled: active,
+    enabled: active && carregarSecundarios,
   });
 
   const { data: clientesCriticos, isLoading: clientesCriticosLoading, error: clientesCriticosError } = useClientesCriticosRpc({
     vendedor: vendedor || undefined,
     cidade: cidade || undefined,
-    enabled: active,
+    enabled: active && carregarSecundarios,
   });
 
-  const { data: sinaisSemanaIA, isLoading: sinaisSemanaIALoading, error: sinaisSemanaIAError } = useAcoesSinaisSemanaIA(active);
+  const { data: sinaisSemanaIA, isLoading: sinaisSemanaIALoading, error: sinaisSemanaIAError } = useAcoesSinaisSemanaIA(
+    active && carregarSecundarios,
+  );
 
   // Oportunidades pela primeira entrada no funil VENDAS da janela, nao por
   // cadastro e nem por negocios antigos apenas tocados por uma acao. Ranking e
@@ -198,7 +216,7 @@ export default function AcoesSection({ active, dateRange }: Props) {
     vendedor: vendedor || undefined,
     tipoAcao: tipoAcao || undefined,
     cidade: cidade || undefined,
-    enabled: active && !!fromPrev,
+    enabled: active && carregarSecundarios && !!fromPrev,
   });
 
   // A taxa de ganho usa o MESMO agregado de entradas no funil VENDAS exibido no
@@ -208,7 +226,7 @@ export default function AcoesSection({ active, dateRange }: Props) {
     to: toPrev,
     vendedor: vendedor || undefined,
     cidade: cidade || undefined,
-    enabled: active && !!fromPrev && !!toPrev,
+    enabled: active && carregarSecundarios && !!fromPrev && !!toPrev,
   });
 
   const { kpis, porVendedor, porCidade, porTipoAcao, porTipoContato, porVendedorCidade, clientesMaisAtendidos } = data ?? EMPTY;
@@ -278,7 +296,7 @@ export default function AcoesSection({ active, dateRange }: Props) {
             to={to}
             vendedor={vendedor || undefined}
             cidade={cidade || undefined}
-            active={active}
+            active={active && carregarSecundarios}
           />
         </div>
       </div>
@@ -300,7 +318,7 @@ export default function AcoesSection({ active, dateRange }: Props) {
           to={to}
           vendedor={vendedor || undefined}
           cidade={cidade || undefined}
-          active={active}
+          active={active && carregarSecundarios}
         />
       </div>
 
@@ -402,7 +420,7 @@ export default function AcoesSection({ active, dateRange }: Props) {
         to={to}
         vendedor={vendedor || undefined}
         cidade={cidade || undefined}
-        active={active}
+        active={active && carregarSecundarios}
         drill={drill}
         onClearDrill={() => setDrill(null)}
       />
@@ -413,7 +431,7 @@ export default function AcoesSection({ active, dateRange }: Props) {
         cidade={cidade || undefined}
         from={from}
         to={to}
-        active={active}
+        active={active && carregarSecundarios}
       />
 
       {/* Artefato principal — tabela com filtro de status */}

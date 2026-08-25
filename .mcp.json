@@ -50,6 +50,13 @@
     "supabase-self-hosted": {
       "type": "http",
       "url": "http://127.0.0.1:18080/mcp"
+    },
+    "stitch": {
+      "type": "http",
+      "url": "https://stitch.googleapis.com/mcp",
+      "headers": {
+        "X-Goog-Api-Key": "${STITCH_API_KEY}"
+      }
     }
   }
 }

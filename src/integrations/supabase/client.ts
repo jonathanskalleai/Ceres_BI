@@ -4,13 +4,84 @@ import type { Database } from './types';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const AUTH_LOGIN_ATTEMPTS = 4;
+const AUTH_LOGIN_ATTEMPT_TIMEOUT_MS = 4_000;
+const AUTH_LOGIN_RETRY_DELAY_MS = 250;
+
+export const AUTH_STORAGE_KEY = `sb-${new URL(SUPABASE_URL).hostname.split('.')[0]}-auth-token`;
+
+function isPasswordLoginRequest(input: RequestInfo | URL, init?: RequestInit): boolean {
+  const url = typeof input === 'string'
+    ? input
+    : input instanceof URL
+      ? input.href
+      : input.url;
+  const method = (init?.method ?? 'GET').toUpperCase();
+
+  return method === 'POST'
+    && new URL(url, window.location.origin).pathname.endsWith('/auth/v1/token')
+    && new URL(url, window.location.origin).searchParams.get('grant_type') === 'password';
+}
+
+function waitForRetry(delayMs: number): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, delayMs));
+}
+
+/**
+ * Some client networks intermittently stall while opening an HTTPS connection
+ * before the request reaches Traefik. Retrying only the idempotent credential
+ * exchange with a fresh, aborted fetch keeps a transient connection failure
+ * from leaving the login screen stuck indefinitely.
+ */
+async function resilientAuthFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  if (!isPasswordLoginRequest(input, init)) return globalThis.fetch(input, init);
+
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= AUTH_LOGIN_ATTEMPTS; attempt += 1) {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), AUTH_LOGIN_ATTEMPT_TIMEOUT_MS);
+    const parentSignal = init?.signal;
+    const abortFromParent = () => controller.abort(parentSignal?.reason);
+
+    if (parentSignal?.aborted) abortFromParent();
+    else parentSignal?.addEventListener('abort', abortFromParent, { once: true });
+
+    try {
+      return await globalThis.fetch(input, { ...init, signal: controller.signal });
+    } catch (error) {
+      lastError = error;
+      if (parentSignal?.aborted || attempt === AUTH_LOGIN_ATTEMPTS) throw error;
+      await waitForRetry(AUTH_LOGIN_RETRY_DELAY_MS);
+    } finally {
+      window.clearTimeout(timeoutId);
+      parentSignal?.removeEventListener('abort', abortFromParent);
+    }
+  }
+
+  throw lastError;
+}
+
+export function clearPersistedAuthSession(): void {
+  try {
+    localStorage.removeItem(AUTH_STORAGE_KEY);
+    localStorage.removeItem(`${AUTH_STORAGE_KEY}-code-verifier`);
+    localStorage.removeItem(`${AUTH_STORAGE_KEY}-user`);
+  } catch (error) {
+    console.warn('[Supabase] Failed to clear persisted auth session:', error);
+  }
+}
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  global: {
+    fetch: resilientAuthFetch,
+  },
   auth: {
     storage: localStorage,
+    storageKey: AUTH_STORAGE_KEY,
     persistSession: true,
     autoRefreshToken: true,
   }
