@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, memo } from "react";
 import { ArrowUpRight, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Vendedor } from "@/types/comercial";
@@ -30,7 +30,7 @@ const POSITION_RIBBONS = [
   { text: "5", bg: "bg-white/10 text-muted-foreground font-medium border-white/10" },
 ];
 
-export function RankingPerformanceHorizontal({
+export const RankingPerformanceHorizontal = memo(function RankingPerformanceHorizontal({
   vendedores,
   resumo,
   onSelectConsultor,
@@ -168,4 +168,4 @@ export function RankingPerformanceHorizontal({
       </div>
     </div>
   );
-}
+});

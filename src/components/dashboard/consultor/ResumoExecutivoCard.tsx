@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, memo } from "react";
 import { Users, ShoppingBag, CalendarCheck, DollarSign } from "lucide-react";
 import type { RpcConsultorResumoAcoes } from "@/types/consultoresRpc";
 import { formatBRL } from "@/lib/dateUtils";
@@ -7,27 +7,34 @@ interface ResumoExecutivoCardProps {
   resumo: RpcConsultorResumoAcoes[];
 }
 
-export function ResumoExecutivoCard({ resumo }: ResumoExecutivoCardProps) {
+export const ResumoExecutivoCard = memo(function ResumoExecutivoCard({ resumo }: ResumoExecutivoCardProps) {
   // Aggregated totals from real RPC data
   const totais = useMemo(() => {
-    return resumo.reduce(
-      (acc, item) => ({
-        totalVendido: acc.totalVendido + Number(item.valor_ganho || 0),
-        totalGanhos: acc.totalGanhos + Number(item.ganhos || 0),
-        totalAcoes: acc.totalAcoes + Number(item.acoes || 0),
-        totalVisitas: acc.totalVisitas + Number(item.visitas || 0),
-        totalClientes: acc.totalClientes + Number(item.clientes || 0),
-        totalPipeline: acc.totalPipeline + Number(item.pipeline_aberto_gerado || 0),
-      }),
-      {
-        totalVendido: 0,
-        totalGanhos: 0,
-        totalAcoes: 0,
-        totalVisitas: 0,
-        totalClientes: 0,
-        totalPipeline: 0,
-      }
-    );
+    let totalVendido = 0;
+    let totalGanhos = 0;
+    let totalAcoes = 0;
+    let totalVisitas = 0;
+    let totalClientes = 0;
+    let totalPipeline = 0;
+
+    for (let i = 0; i < resumo.length; i++) {
+      const item = resumo[i];
+      totalVendido += Number(item.valor_ganho || 0);
+      totalGanhos += Number(item.ganhos || 0);
+      totalAcoes += Number(item.acoes || 0);
+      totalVisitas += Number(item.visitas || 0);
+      totalClientes += Number(item.clientes || 0);
+      totalPipeline += Number(item.pipeline_aberto_gerado || 0);
+    }
+
+    return {
+      totalVendido,
+      totalGanhos,
+      totalAcoes,
+      totalVisitas,
+      totalClientes,
+      totalPipeline,
+    };
   }, [resumo]);
 
   return (
@@ -137,4 +144,4 @@ export function ResumoExecutivoCard({ resumo }: ResumoExecutivoCardProps) {
       </div>
     </div>
   );
-}
+});

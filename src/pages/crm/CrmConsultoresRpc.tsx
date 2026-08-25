@@ -33,8 +33,8 @@ function mapVendedor(resumo: RpcConsultorResumoAcoes): Vendedor {
 }
 
 /**
- * Mantém os blocos históricos da dashboard. A tabela mensal é uma carga
- * independente e server-side, posicionada apenas onde existia a grade de cards.
+ * Carrega a visão de consultores e equipe com renderização progressiva.
+ * Apenas o resumo principal bloqueia a casca; registros detalhados hidratam sob demanda.
  */
 export default function CrmConsultoresRpc() {
   const { dateRange, cidade, vendedor, tipoAcao, categoria, funil } = useNegociosFilter();
@@ -61,7 +61,8 @@ export default function CrmConsultoresRpc() {
     tipoAcao: tipoAcao || undefined,
     enabled,
   });
-  const { data: registrosRpc, isLoading: loadingRegistros } = useRegistrosRecentes({
+
+  const { data: registrosRpc } = useRegistrosRecentes({
     from,
     to,
     vendedor: vendedor || undefined,
@@ -69,6 +70,7 @@ export default function CrmConsultoresRpc() {
     limit: 100,
     enabled,
   });
+
   const { data: desempenhoRpc } = useEquipeDesempenho({
     ano: anoDesempenho,
     consultor: vendedor || undefined,
@@ -78,14 +80,21 @@ export default function CrmConsultoresRpc() {
   const vendedores = useMemo<Vendedor[]>(() => (resumoRpc ?? []).map(mapVendedor), [resumoRpc]);
   const registros = useMemo(() => (registrosRpc ?? []).map(mapRegistroRecente), [registrosRpc]);
 
-  if (loadingResumo || loadingRegistros) {
+  if (loadingResumo && !resumoRpc) {
     return (
-      <div className="space-y-4 p-6">
-        <Skeleton className="h-8 w-48" />
-        <div className="grid grid-cols-5 gap-4">
-          {Array.from({ length: 5 }).map((_, index) => <Skeleton key={index} className="h-40" />)}
+      <div className="space-y-6 p-6 max-w-[1920px] mx-auto">
+        <Skeleton className="h-8 w-64 rounded-xl" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <Skeleton className="h-64 rounded-2xl" />
+          <Skeleton className="h-64 rounded-2xl" />
+          <Skeleton className="h-64 rounded-2xl" />
         </div>
-        <Skeleton className="h-64" />
+        <div className="grid grid-cols-5 gap-3.5">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <Skeleton key={index} className="h-32 rounded-2xl" />
+          ))}
+        </div>
+        <Skeleton className="h-80 rounded-2xl" />
       </div>
     );
   }

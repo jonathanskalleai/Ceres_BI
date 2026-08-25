@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, memo } from "react";
 import type { Registro, Filters } from "@/types/comercial";
 import { ChevronDown, ChevronUp, Users, MapPin, Building2 } from "lucide-react";
 import { hasActiveFilters } from "@/lib/filterUtils";
@@ -37,43 +37,57 @@ const AVATAR_COLORS = [
   "bg-rose-500/10 text-rose-600 dark:text-rose-300 border-rose-500/40 ring-rose-500/20",
 ];
 
-export const RankingClientesNovos = ({ registros, filters }: RankingClientesNovosProps) => {
+export const RankingClientesNovos = memo(function RankingClientesNovos({
+  registros,
+  filters,
+}: RankingClientesNovosProps) {
   const [expandedConsultor, setExpandedConsultor] = useState<string | null>(null);
   const isFiltered = filters ? hasActiveFilters(filters) : false;
 
   const ranking = useMemo<ConsultorClientes[]>(() => {
+    if (!registros.length) return [];
     const map = new Map<string, Map<string, { cidade: string; acoes: number; ultimaAcao: string }>>();
 
-    for (const r of registros) {
+    for (let i = 0; i < registros.length; i++) {
+      const r = registros[i];
       if (!r.vendedor || !r.cliente) continue;
-      if (!map.has(r.vendedor)) map.set(r.vendedor, new Map());
-      const cMap = map.get(r.vendedor)!;
-      if (!cMap.has(r.cliente)) {
-        cMap.set(r.cliente, { cidade: r.cidade, acoes: 0, ultimaAcao: "" });
+      let cMap = map.get(r.vendedor);
+      if (!cMap) {
+        cMap = new Map();
+        map.set(r.vendedor, cMap);
       }
-      const c = cMap.get(r.cliente)!;
-      c.acoes++;
-      if (!c.cidade && r.cidade) c.cidade = r.cidade;
-      if (r.dtConclusao > c.ultimaAcao) c.ultimaAcao = r.dtConclusao;
+      let c = cMap.get(r.cliente);
+      if (!c) {
+        c = { cidade: r.cidade, acoes: 1, ultimaAcao: r.dtConclusao };
+        cMap.set(r.cliente, c);
+      } else {
+        c.acoes++;
+        if (!c.cidade && r.cidade) c.cidade = r.cidade;
+        if (r.dtConclusao > c.ultimaAcao) c.ultimaAcao = r.dtConclusao;
+      }
     }
 
-    return Array.from(map.entries())
-      .map(([nome, cMap]) => {
-        const clientes = Array.from(cMap.entries())
-          .map(([cNome, info]) => ({ nome: cNome, ...info }))
-          .sort((a, b) => b.acoes - a.acoes);
+    const result: ConsultorClientes[] = [];
+    for (const [nome, cMap] of map.entries()) {
+      const clientes: { nome: string; cidade: string; acoes: number; ultimaAcao: string }[] = [];
+      const regMap = new Map<string, number>();
 
-        const regMap = new Map<string, number>();
-        for (const c of clientes) {
-          if (c.cidade) regMap.set(c.cidade, (regMap.get(c.cidade) || 0) + 1);
+      for (const [cNome, info] of cMap.entries()) {
+        clientes.push({ nome: cNome, ...info });
+        if (info.cidade) {
+          regMap.set(info.cidade, (regMap.get(info.cidade) || 0) + 1);
         }
-        const regioes = Array.from(regMap.entries())
-          .map(([cidade, qtd]) => ({ cidade, qtd }))
-          .sort((a, b) => b.qtd - a.qtd);
+      }
+      clientes.sort((a, b) => b.acoes - a.acoes);
 
-        return { nome, totalClientes: clientes.length, clientes, regioes };
-      })
-      .sort((a, b) => b.totalClientes - a.totalClientes);
+      const regioes = Array.from(regMap.entries())
+        .map(([cidade, qtd]) => ({ cidade, qtd }))
+        .sort((a, b) => b.qtd - a.qtd);
+
+      result.push({ nome, totalClientes: clientes.length, clientes, regioes });
+    }
+
+    return result.sort((a, b) => b.totalClientes - a.totalClientes);
   }, [registros]);
 
   const toggle = (nome: string) =>
@@ -233,4 +247,4 @@ export const RankingClientesNovos = ({ registros, filters }: RankingClientesNovo
       </div>
     </div>
   );
-};
+});

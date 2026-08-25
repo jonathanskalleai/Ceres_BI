@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, memo } from "react";
 import { Sparkles, ChevronDown, ChevronUp, User, History, ArrowRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchAI } from "@/lib/fetchAI";
@@ -17,22 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { InsightConsultorCard } from "./InsightConsultorCard";
-
-interface InsightItem {
-  tipo: string;
-  titulo: string;
-  descricao: string;
-  consultor: string | null;
-  prioridade: string;
-}
-
-interface InsightEquipe {
-  destaque_semana?: string;
-  insights?: InsightItem[];
-  acoes_gestor?: string[];
-  semana_inicio?: string;
-  semana_fim?: string;
-}
+import { useAiInsightsEquipe, type InsightEquipe } from "@/hooks/useAiInsights";
 
 interface AiInsightsCardProps {
   consultores?: string[];
@@ -45,23 +30,12 @@ function formatDateShort(dateStr?: string) {
   return `${parts[2]}/${parts[1]}`;
 }
 
-export function AiInsightsCard({ consultores = [] }: AiInsightsCardProps) {
-  const [currentAi, setCurrentAi] = useState<InsightEquipe | null>(null);
+export const AiInsightsCard = memo(function AiInsightsCard({ consultores = [] }: AiInsightsCardProps) {
+  const { data: currentAi, isLoading: loading } = useAiInsightsEquipe();
   const [historico, setHistorico] = useState<InsightEquipe[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showHistorico, setShowHistorico] = useState(false);
   const [showResumoModal, setShowResumoModal] = useState(false);
   const [selectedConsultor, setSelectedConsultor] = useState<string>("");
-
-  useEffect(() => {
-    fetchAI("/api/ai/insights?tipo=equipe")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data && !data.message) setCurrentAi(data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
 
   const loadHistorico = () => {
     if (historico.length > 0) {
@@ -75,7 +49,8 @@ export function AiInsightsCard({ consultores = [] }: AiInsightsCardProps) {
           setHistorico(data.semanas.slice(1));
         }
         setShowHistorico(true);
-      });
+      })
+      .catch(() => {});
   };
 
   return (
@@ -257,4 +232,4 @@ export function AiInsightsCard({ consultores = [] }: AiInsightsCardProps) {
       </Dialog>
     </div>
   );
-}
+});

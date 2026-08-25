@@ -1,7 +1,7 @@
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useMemo, useState, memo } from "react";
 import { ChevronDown, ChevronRight, Settings2, Target, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { formatBRL, formatMonthYear } from "@/lib/dateUtils";
+import { formatMonthYear } from "@/lib/dateUtils";
 import type { EquipeDesempenhoData, EquipeDesempenhoLinha } from "@/types/equipeDesempenho";
 import { MetasEquipeDialog } from "./MetasEquipeDialog";
 import { cn } from "@/lib/utils";
@@ -12,16 +12,29 @@ interface EquipeDesempenhoTableProps {
   isAdmin: boolean;
 }
 
+// Pre-instantiated number formatters for ultra-fast rendering without garbage collection pressure
+const BRL_FORMATTER = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+  maximumFractionDigits: 0,
+});
+
+const NUMBER_FORMATTER = new Intl.NumberFormat("pt-BR");
+
+const PCT_FORMATTER = new Intl.NumberFormat("pt-BR", {
+  maximumFractionDigits: 1,
+});
+
 function asNumber(value: number | null | undefined): number {
   return Number(value ?? 0);
 }
 
 function pct(value: number | null | undefined): string {
-  return value == null ? "—" : `${Number(value).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
+  return value == null ? "—" : `${PCT_FORMATTER.format(Number(value))}%`;
 }
 
 function money(value: number | null | undefined): string {
-  return value == null ? "—" : formatBRL(asNumber(value));
+  return value == null ? "—" : BRL_FORMATTER.format(Number(value));
 }
 
 function rateBadge(value: number | null | undefined) {
@@ -63,10 +76,6 @@ function growthBadge(crescimento: number | null | undefined) {
   );
 }
 
-/**
- * A expansão mensal é uma leitura do funil aberto. Só lista consultores com
- * valor em ao menos uma das três etapas: oportunidade, cotação ou proposta.
- */
 function hasOpenPipeline(row: EquipeDesempenhoLinha): boolean {
   return [row.oportunidade, row.cotacao, row.proposta].some((value) => asNumber(value) !== 0);
 }
@@ -80,7 +89,7 @@ interface MetricRowProps {
   onToggle?: () => void;
 }
 
-function MetricRow({
+const MetricRow = memo(function MetricRow({
   row,
   label,
   nested = false,
@@ -88,10 +97,10 @@ function MetricRow({
   expanded = false,
   onToggle,
 }: MetricRowProps) {
-  const monthCell = stickyMonth ? "sticky top-[41px] z-10 bg-[var(--surface-raised)] backdrop-blur-md" : "";
+  const monthCell = stickyMonth ? "sticky top-[41px] z-10 bg-[var(--surface-raised)]" : "";
   const firstCell = stickyMonth
-    ? "sticky top-[41px] left-0 z-20 bg-[var(--surface-raised)] backdrop-blur-md shadow-[1px_0_0_0_var(--voux-card-border)]"
-    : "sticky left-0 z-10 bg-[var(--surface-raised)] backdrop-blur-md shadow-[1px_0_0_0_var(--voux-card-border)]";
+    ? "sticky top-[41px] left-0 z-20 bg-[var(--surface-raised)] shadow-[1px_0_0_0_var(--voux-card-border)]"
+    : "sticky left-0 z-10 bg-[var(--surface-raised)] shadow-[1px_0_0_0_var(--voux-card-border)]";
 
   const percentMeta = row.desempenho_meta != null ? Math.min(Math.max(Number(row.desempenho_meta), 0), 100) : 0;
 
@@ -188,17 +197,17 @@ function MetricRow({
 
       {/* Negócios */}
       <td className={cn(monthCell, "px-3 py-3 text-right tabular-nums font-mono")}>
-        {asNumber(row.negocios).toLocaleString("pt-BR")}
+        {NUMBER_FORMATTER.format(asNumber(row.negocios))}
       </td>
 
       {/* Oportunidades Abertas */}
       <td className={cn(monthCell, "px-3 py-3 text-right tabular-nums font-mono")}>
-        {asNumber(row.oportunidades_abertas).toLocaleString("pt-BR")}
+        {NUMBER_FORMATTER.format(asNumber(row.oportunidades_abertas))}
       </td>
 
       {/* Quantidade Vendas */}
       <td className={cn(monthCell, "px-3 py-3 text-right tabular-nums font-mono font-semibold text-emerald-600 dark:text-emerald-400")}>
-        {asNumber(row.quantidade_vendas).toLocaleString("pt-BR")}
+        {NUMBER_FORMATTER.format(asNumber(row.quantidade_vendas))}
       </td>
 
       {/* Ticket Médio */}
@@ -208,7 +217,7 @@ function MetricRow({
 
       {/* Clientes */}
       <td className={cn(monthCell, "px-3 py-3 text-right tabular-nums font-mono")}>
-        {asNumber(row.clientes).toLocaleString("pt-BR")}
+        {NUMBER_FORMATTER.format(asNumber(row.clientes))}
       </td>
 
       {/* Taxa Conversão Negócios */}
@@ -218,7 +227,7 @@ function MetricRow({
 
       {/* Prospecção Máquina */}
       <td className={cn(monthCell, "px-3 py-3 text-right tabular-nums font-mono")}>
-        {asNumber(row.prospeccao_maquina).toLocaleString("pt-BR")}
+        {NUMBER_FORMATTER.format(asNumber(row.prospeccao_maquina))}
       </td>
 
       {/* Taxa Conversão Máquina */}
@@ -227,9 +236,13 @@ function MetricRow({
       </td>
     </tr>
   );
-}
+});
 
-export function EquipeDesempenhoTable({ ano, data, isAdmin }: EquipeDesempenhoTableProps) {
+export const EquipeDesempenhoTable = memo(function EquipeDesempenhoTable({
+  ano,
+  data,
+  isAdmin,
+}: EquipeDesempenhoTableProps) {
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(() => new Set());
   const [metasOpen, setMetasOpen] = useState(false);
 
@@ -243,11 +256,14 @@ export function EquipeDesempenhoTable({ ano, data, isAdmin }: EquipeDesempenhoTa
 
   const consultoresPorMes = useMemo(() => {
     const grouped = new Map<string, EquipeDesempenhoLinha[]>();
-    data.rows.forEach((row) => {
-      const rows = grouped.get(row.competencia) ?? [];
+    for (const row of data.rows) {
+      let rows = grouped.get(row.competencia);
+      if (!rows) {
+        rows = [];
+        grouped.set(row.competencia, rows);
+      }
       rows.push(row);
-      grouped.set(row.competencia, rows);
-    });
+    }
     grouped.forEach((rows, competencia) => {
       grouped.set(
         competencia,
@@ -308,12 +324,16 @@ export function EquipeDesempenhoTable({ ano, data, isAdmin }: EquipeDesempenhoTa
         </div>
       </div>
 
-      {/* Table Container */}
+      {/* Table Container with hardware acceleration */}
       <div
         className="overflow-hidden rounded-xl border"
-        style={{ borderColor: "var(--voux-card-border)", background: "var(--surface-base)" }}
+        style={{
+          borderColor: "var(--voux-card-border)",
+          background: "var(--surface-base)",
+          transform: "translateZ(0)",
+        }}
       >
-        <div className="max-h-[min(70vh,620px)] overflow-auto">
+        <div className="max-h-[min(70vh,620px)] overflow-auto will-change-scroll">
           <table className="w-full min-w-[2000px] text-[12px]" style={{ fontFamily: "var(--voux-font-sans)" }}>
             <thead>
               <tr
@@ -342,7 +362,7 @@ export function EquipeDesempenhoTable({ ano, data, isAdmin }: EquipeDesempenhoTa
                   <th
                     key={header}
                     className={cn(
-                      "sticky top-0 z-20 whitespace-nowrap bg-[var(--surface-raised)] backdrop-blur-md px-3.5 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.08em] shadow-[0_1px_0_0_var(--voux-card-border)]",
+                      "sticky top-0 z-20 whitespace-nowrap bg-[var(--surface-raised)] px-3.5 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.08em] shadow-[0_1px_0_0_var(--voux-card-border)]",
                       index === 0 && "left-0 z-30 text-left shadow-[1px_1px_0_0_var(--voux-card-border)]"
                     )}
                   >
@@ -411,4 +431,4 @@ export function EquipeDesempenhoTable({ ano, data, isAdmin }: EquipeDesempenhoTa
       />
     </div>
   );
-}
+});
