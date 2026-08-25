@@ -3,6 +3,7 @@ import { ArrowUpRight, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Vendedor } from "@/types/comercial";
 import type { RpcConsultorResumoAcoes } from "@/types/consultoresRpc";
+import { AvatarPersona } from "@/components/ui/AvatarPersona";
 
 interface RankingPerformanceHorizontalProps {
   vendedores: Vendedor[];
@@ -15,12 +16,6 @@ const formatCurrency = (value: number) => {
   if (value >= 1e3) return `R$ ${(value / 1e3).toLocaleString("pt-BR", { maximumFractionDigits: 0 })} mil`;
   return `R$ ${value.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`;
 };
-
-function getInitials(name: string) {
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
 
 const POSITION_RIBBONS = [
   { text: "1", bg: "bg-amber-500 text-amber-950 font-bold border-amber-400" },
@@ -86,7 +81,6 @@ export const RankingPerformanceHorizontal = memo(function RankingPerformanceHori
           const valorGanho = Number(item?.valor_ganho ?? 0);
           const percentual = (valorGanho / maxVendas) * 100;
           const ribbon = POSITION_RIBBONS[index] || POSITION_RIBBONS[4];
-          const initials = getInitials(vendedor.nome);
 
           return (
             <button
@@ -106,15 +100,14 @@ export const RankingPerformanceHorizontal = memo(function RankingPerformanceHori
                 boxShadow: "var(--voux-card-shadow)",
               }}
             >
-              {/* Top Row: Avatar & Position Ribbon */}
+              {/* Top Row: Avatar Persona Caricature & Position Ribbon */}
               <div className="flex items-start justify-between gap-2 mb-3">
-                {/* Avatar */}
-                <div
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border ring-2 ring-black/10 dark:ring-white/10 font-mono font-bold text-xs bg-black/5 dark:bg-white/10 text-foreground transition-transform group-hover:scale-105"
-                  style={{ borderColor: "var(--voux-card-border)" }}
-                >
-                  {initials}
-                </div>
+                <AvatarPersona
+                  name={vendedor.nome}
+                  size="md"
+                  style="lorelei"
+                  className="group-hover:scale-110 shadow-sm"
+                />
 
                 {/* Ribbon Tag */}
                 <span

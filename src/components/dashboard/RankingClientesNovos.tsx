@@ -2,7 +2,7 @@ import { useState, useMemo, memo } from "react";
 import type { Registro, Filters } from "@/types/comercial";
 import { ChevronDown, ChevronUp, Users, MapPin, Building2 } from "lucide-react";
 import { hasActiveFilters } from "@/lib/filterUtils";
-import { cn } from "@/lib/utils";
+import { AvatarPersona } from "@/components/ui/AvatarPersona";
 
 interface RankingClientesNovosProps {
   registros: Registro[];
@@ -16,26 +16,12 @@ interface ConsultorClientes {
   regioes: { cidade: string; qtd: number }[];
 }
 
-function getInitials(name: string) {
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
 const formatDate = (d: string) => {
   if (!d) return "—";
   const parts = d.split("-");
   if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
   return d;
 };
-
-const AVATAR_COLORS = [
-  "bg-sky-500/10 text-sky-600 dark:text-sky-300 border-sky-500/40 ring-sky-500/20",
-  "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border-emerald-500/40 ring-emerald-500/20",
-  "bg-purple-500/10 text-purple-600 dark:text-purple-300 border-purple-500/40 ring-purple-500/20",
-  "bg-amber-500/10 text-amber-600 dark:text-amber-300 border-amber-500/40 ring-amber-500/20",
-  "bg-rose-500/10 text-rose-600 dark:text-rose-300 border-rose-500/40 ring-rose-500/20",
-];
 
 export const RankingClientesNovos = memo(function RankingClientesNovos({
   registros,
@@ -128,8 +114,6 @@ export const RankingClientesNovos = memo(function RankingClientesNovos({
           <div className="space-y-2 max-h-[380px] overflow-y-auto pr-1">
             {ranking.map((cons, idx) => {
               const isOpen = expandedConsultor === cons.nome;
-              const initials = getInitials(cons.nome);
-              const avatarColor = AVATAR_COLORS[idx % AVATAR_COLORS.length];
 
               return (
                 <div
@@ -142,15 +126,13 @@ export const RankingClientesNovos = memo(function RankingClientesNovos({
                     onClick={() => toggle(cons.nome)}
                     className="flex items-center gap-3 w-full p-2.5 text-left transition-colors duration-150 hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
                   >
-                    {/* Avatar */}
-                    <div
-                      className={cn(
-                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ring-1 font-mono font-bold text-[11px]",
-                        avatarColor
-                      )}
-                    >
-                      {initials}
-                    </div>
+                    {/* Avatar Persona */}
+                    <AvatarPersona
+                      name={cons.nome}
+                      size="sm"
+                      style="lorelei"
+                      className="shadow-sm"
+                    />
 
                     {/* Name & Position */}
                     <div className="min-w-0 flex-1">
