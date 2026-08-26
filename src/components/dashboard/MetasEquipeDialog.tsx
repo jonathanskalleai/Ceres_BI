@@ -206,7 +206,7 @@ export function MetasEquipeDialog({ open, onOpenChange, ano, consultores }: Meta
                     className="mt-1.5 text-right font-mono text-base font-semibold"
                     type="text"
                     inputMode="decimal"
-                    value={metaAnual}
+                    value={formatLiveNumber(metaAnual)}
                     onChange={(event) => setMetaAnual(formatLiveNumber(event.target.value))}
                     onBlur={() => setMetaAnual(formatInputNumber(metaAnual))}
                     placeholder="33000000"
@@ -243,7 +243,7 @@ export function MetasEquipeDialog({ open, onOpenChange, ano, consultores }: Meta
                         id={`percentual-${index}`}
                         type="text"
                         inputMode="decimal"
-                        value={percentuais[index] ?? ""}
+                        value={formatLiveNumber(percentuais[index] ?? "")}
                         onChange={(event) => atualizarPercentual(index, formatLiveNumber(event.target.value))}
                         onBlur={() => atualizarPercentual(index, formatInputNumber(percentuais[index] ?? ""))}
                         className="pr-7 text-right font-mono"
@@ -294,7 +294,7 @@ export function MetasEquipeDialog({ open, onOpenChange, ano, consultores }: Meta
                           aria-label={`Meta anual de ${consultor}`}
                           type="text"
                           inputMode="decimal"
-                          value={metasConsultores[consultor] ?? ""}
+                          value={formatLiveNumber(metasConsultores[consultor] ?? "")}
                           onChange={(event) => atualizarMetaConsultor(consultor, formatLiveNumber(event.target.value))}
                           onBlur={() => atualizarMetaConsultor(consultor, formatInputNumber(metasConsultores[consultor] ?? ""))}
                           placeholder="0,00"
