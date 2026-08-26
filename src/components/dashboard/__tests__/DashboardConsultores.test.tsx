@@ -77,7 +77,7 @@ describe("DashboardConsultores", () => {
       </QueryClientProvider>
     );
 
-    expect(screen.getByText("Resumo Executivo")).toBeInTheDocument();
+    expect(screen.getByText(/Resumo Executivo/i)).toBeInTheDocument();
     expect(screen.getByText("Inteligência da Equipe · IA")).toBeInTheDocument();
     expect(screen.getByText("Clientes Atendidos")).toBeInTheDocument();
     expect(screen.getByText(/Performance Ranking/i)).toBeInTheDocument();

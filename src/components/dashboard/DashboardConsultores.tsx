@@ -91,7 +91,12 @@ export const DashboardConsultores = ({
       {/* Top 3-Column Grid: Resumo Executivo (Esq) | Insights da IA (Meio) | Clientes Atendidos (Dir) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-stretch">
         <div className="h-full">
-          <ResumoExecutivoCard resumo={resumo} />
+          <ResumoExecutivoCard
+            resumo={resumo}
+            desempenho={desempenho}
+            anoDesempenho={anoDesempenho}
+            filters={filters}
+          />
         </div>
         <div className="h-full">
           <AiInsightsCard consultores={consultorNames} />
