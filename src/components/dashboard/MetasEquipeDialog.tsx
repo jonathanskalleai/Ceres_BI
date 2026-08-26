@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, Loader2, Save, Target, WandSparkles } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Loader2, Save, Search, Target, WandSparkles } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
@@ -75,11 +75,16 @@ function formatLiveNumber(value: string): string {
   return `${negative ? "-" : ""}${grouped}${hasDecimal ? `,${decimalPart}` : ""}`;
 }
 
+function normalizeSearch(value: string): string {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
+}
+
 export function MetasEquipeDialog({ open, onOpenChange, ano, consultores }: MetasEquipeDialogProps) {
   const queryClient = useQueryClient();
   const [metaAnual, setMetaAnual] = useState("");
   const [percentuais, setPercentuais] = useState<string[]>(CURVA_MENSAL_PADRAO.map((item) => String(item.percentual)));
   const [metasConsultores, setMetasConsultores] = useState<Record<string, string>>({});
+  const [buscaConsultor, setBuscaConsultor] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -88,6 +93,7 @@ export function MetasEquipeDialog({ open, onOpenChange, ano, consultores }: Meta
     if (!open) return;
     let active = true;
     setError(null);
+    setBuscaConsultor("");
     setLoading(true);
 
     fetchConfiguracaoMetas(ano, consultores)
@@ -121,6 +127,11 @@ export function MetasEquipeDialog({ open, onOpenChange, ano, consultores }: Meta
   const totalDistribuido = consultorValues.reduce((sum, item) => sum + item.metaAnual, 0);
   const saldo = metaAnualValue - totalDistribuido;
   const percentualDistribuido = metaAnualValue > 0 ? (totalDistribuido / metaAnualValue) * 100 : 0;
+  const consultoresFiltrados = useMemo(() => {
+    const query = normalizeSearch(buscaConsultor.trim());
+    if (!query) return consultores;
+    return consultores.filter((consultor) => normalizeSearch(consultor).includes(query));
+  }, [buscaConsultor, consultores]);
   const curvaValida = Math.abs(percentualTotal - 100) <= 0.01;
   const metaValida = metaAnualValue > 0;
   const podeSalvar = metaValida && curvaValida && !loading && !saving;
@@ -273,9 +284,20 @@ export function MetasEquipeDialog({ open, onOpenChange, ano, consultores }: Meta
                   <h3 className="text-sm font-semibold">3. Metas anuais por consultor</h3>
                   <p className="mt-1 text-xs text-muted-foreground">Informe os valores anuais. Os meses serão calculados pela curva acima.</p>
                 </div>
-                <div className="text-right text-xs text-muted-foreground">
-                  Distribuído: <strong className="font-mono text-foreground">{percentage(percentualDistribuido)}</strong> da meta
+                <div className="flex items-center gap-3 text-right text-xs text-muted-foreground">
+                  <span>Exibindo <strong className="font-mono text-foreground">{consultoresFiltrados.length}</strong> de <strong className="font-mono text-foreground">{consultores.length}</strong></span>
+                  <span>Distribuído: <strong className="font-mono text-foreground">{percentage(percentualDistribuido)}</strong> da meta</span>
                 </div>
+              </div>
+              <div className="relative mb-3 max-w-md">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  aria-label="Pesquisar consultor"
+                  placeholder="Pesquisar consultor…"
+                  value={buscaConsultor}
+                  onChange={(event) => setBuscaConsultor(event.target.value)}
+                  className="pl-9"
+                />
               </div>
               <div className="overflow-hidden rounded-lg border" style={{ borderColor: "var(--voux-card-border)" }}>
                 <div className="grid grid-cols-[1fr_180px_130px] gap-3 bg-black/[0.03] px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground dark:bg-white/[0.04]">
@@ -284,7 +306,9 @@ export function MetasEquipeDialog({ open, onOpenChange, ano, consultores }: Meta
                 <div className="max-h-72 overflow-y-auto">
                   {consultores.length === 0 ? (
                     <p className="px-3 py-5 text-center text-sm text-muted-foreground">Nenhum consultor disponível para lançamento.</p>
-                  ) : consultores.map((consultor) => {
+                  ) : consultoresFiltrados.length === 0 ? (
+                    <p className="px-3 py-5 text-center text-sm text-muted-foreground">Nenhum consultor encontrado para essa pesquisa.</p>
+                  ) : consultoresFiltrados.map((consultor) => {
                     const value = toNumber(metasConsultores[consultor] ?? "");
                     const share = metaAnualValue > 0 ? (value / metaAnualValue) * 100 : 0;
                     return (
