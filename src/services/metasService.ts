@@ -125,7 +125,10 @@ export async function salvarConfiguracaoMetas(
     p_ano: input.ano,
     p_meta_anual: input.metaAnual,
     p_curva_mensal: input.curvaMensal,
-    p_consultores: input.consultores,
+    p_consultores: input.consultores.map((item) => ({
+      consultor: item.consultor,
+      meta_anual: item.metaAnual,
+    })),
   });
 
   if (error) {
