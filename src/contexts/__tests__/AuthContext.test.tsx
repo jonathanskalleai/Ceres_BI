@@ -12,6 +12,7 @@ vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     auth: authMocks,
   },
+  clearPersistedAuthSession: vi.fn(),
 }));
 
 import { AuthProvider, useAuthContext } from '../AuthContext';

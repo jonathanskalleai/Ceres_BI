@@ -8,6 +8,10 @@ const AUTH_LOGIN_ATTEMPTS = 4;
 const AUTH_LOGIN_ATTEMPT_TIMEOUT_MS = 4_000;
 const AUTH_LOGIN_RETRY_DELAY_MS = 250;
 
+const GENERAL_ATTEMPTS = 3;
+const GENERAL_TIMEOUT_MS = 15_000;
+const GENERAL_RETRY_DELAY_MS = 300;
+
 export const AUTH_STORAGE_KEY = `sb-${new URL(SUPABASE_URL).hostname.split('.')[0]}-auth-token`;
 
 function isPasswordLoginRequest(input: RequestInfo | URL, init?: RequestInit): boolean {
@@ -16,7 +20,7 @@ function isPasswordLoginRequest(input: RequestInfo | URL, init?: RequestInit): b
     : input instanceof URL
       ? input.href
       : input.url;
-  const method = (init?.method ?? 'GET').toUpperCase();
+  const method = (init?.method ?? (typeof Request !== 'undefined' && input instanceof Request ? input.method : 'GET')).toUpperCase();
 
   return method === 'POST'
     && new URL(url, window.location.origin).pathname.endsWith('/auth/v1/token')
@@ -29,18 +33,21 @@ function waitForRetry(delayMs: number): Promise<void> {
 
 /**
  * Some client networks intermittently stall while opening an HTTPS connection
- * before the request reaches Traefik. Retrying only the idempotent credential
- * exchange with a fresh, aborted fetch keeps a transient connection failure
- * from leaving the login screen stuck indefinitely.
+ * before the request reaches Traefik. Retrying with a fresh, aborted fetch
+ * keeps transient connection failures from crashing user actions or leaving
+ * the login screen stuck.
  */
-async function resilientAuthFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
-  if (!isPasswordLoginRequest(input, init)) return globalThis.fetch(input, init);
+async function resilientSupabaseFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  const isAuth = isPasswordLoginRequest(input, init);
+  const maxAttempts = isAuth ? AUTH_LOGIN_ATTEMPTS : GENERAL_ATTEMPTS;
+  const timeoutMs = isAuth ? AUTH_LOGIN_ATTEMPT_TIMEOUT_MS : GENERAL_TIMEOUT_MS;
+  const retryDelay = isAuth ? AUTH_LOGIN_RETRY_DELAY_MS : GENERAL_RETRY_DELAY_MS;
 
   let lastError: unknown;
 
-  for (let attempt = 1; attempt <= AUTH_LOGIN_ATTEMPTS; attempt += 1) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     const controller = new AbortController();
-    const timeoutId = window.setTimeout(() => controller.abort(), AUTH_LOGIN_ATTEMPT_TIMEOUT_MS);
+    const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
     const parentSignal = init?.signal;
     const abortFromParent = () => controller.abort(parentSignal?.reason);
 
@@ -51,8 +58,8 @@ async function resilientAuthFetch(input: RequestInfo | URL, init?: RequestInit):
       return await globalThis.fetch(input, { ...init, signal: controller.signal });
     } catch (error) {
       lastError = error;
-      if (parentSignal?.aborted || attempt === AUTH_LOGIN_ATTEMPTS) throw error;
-      await waitForRetry(AUTH_LOGIN_RETRY_DELAY_MS);
+      if (parentSignal?.aborted || attempt === maxAttempts) throw error;
+      await waitForRetry(retryDelay);
     } finally {
       window.clearTimeout(timeoutId);
       parentSignal?.removeEventListener('abort', abortFromParent);
@@ -77,7 +84,7 @@ export function clearPersistedAuthSession(): void {
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   global: {
-    fetch: resilientAuthFetch,
+    fetch: resilientSupabaseFetch,
   },
   auth: {
     storage: localStorage,

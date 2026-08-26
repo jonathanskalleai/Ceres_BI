@@ -84,6 +84,7 @@ export function MetasEquipeDialog({ open, onOpenChange, ano, consultores }: Meta
   const [metaAnual, setMetaAnual] = useState("");
   const [percentuais, setPercentuais] = useState<string[]>(CURVA_MENSAL_PADRAO.map((item) => String(item.percentual)));
   const [metasConsultores, setMetasConsultores] = useState<Record<string, string>>({});
+  const [listaConsultores, setListaConsultores] = useState<string[]>([]);
   const [buscaConsultor, setBuscaConsultor] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -104,6 +105,7 @@ export function MetasEquipeDialog({ open, onOpenChange, ano, consultores }: Meta
         setMetasConsultores(
           Object.fromEntries(config.consultores.map((item) => [item.consultor, inputValue(item.metaAnual)])),
         );
+        setListaConsultores(config.consultores.map((item) => item.consultor));
       })
       .catch((loadError) => {
         if (active) setError(loadError instanceof Error ? loadError.message : "Não foi possível carregar as metas.");
@@ -117,21 +119,26 @@ export function MetasEquipeDialog({ open, onOpenChange, ano, consultores }: Meta
     };
   }, [ano, consultores, open]);
 
+  const todosConsultores = useMemo(() => {
+    if (listaConsultores.length > 0) return listaConsultores;
+    return consultores;
+  }, [listaConsultores, consultores]);
+
   const metaAnualValue = toNumber(metaAnual);
   const percentuaisValue = useMemo(() => percentuais.map(toNumber), [percentuais]);
   const percentualTotal = percentuaisValue.reduce((sum, value) => sum + value, 0);
   const consultorValues = useMemo<MetaConsultorAnual[]>(
-    () => consultores.map((consultor) => ({ consultor, metaAnual: toNumber(metasConsultores[consultor] ?? "") })),
-    [consultores, metasConsultores],
+    () => todosConsultores.map((consultor) => ({ consultor, metaAnual: toNumber(metasConsultores[consultor] ?? "") })),
+    [todosConsultores, metasConsultores],
   );
   const totalDistribuido = consultorValues.reduce((sum, item) => sum + item.metaAnual, 0);
   const saldo = metaAnualValue - totalDistribuido;
   const percentualDistribuido = metaAnualValue > 0 ? (totalDistribuido / metaAnualValue) * 100 : 0;
   const consultoresFiltrados = useMemo(() => {
     const query = normalizeSearch(buscaConsultor.trim());
-    if (!query) return consultores;
-    return consultores.filter((consultor) => normalizeSearch(consultor).includes(query));
-  }, [buscaConsultor, consultores]);
+    if (!query) return todosConsultores;
+    return todosConsultores.filter((consultor) => normalizeSearch(consultor).includes(query));
+  }, [buscaConsultor, todosConsultores]);
   const curvaValida = Math.abs(percentualTotal - 100) <= 0.01;
   const metaValida = metaAnualValue > 0;
   const podeSalvar = metaValida && curvaValida && !loading && !saving;
@@ -285,7 +292,7 @@ export function MetasEquipeDialog({ open, onOpenChange, ano, consultores }: Meta
                   <p className="mt-1 text-xs text-muted-foreground">Informe os valores anuais. Os meses serão calculados pela curva acima.</p>
                 </div>
                 <div className="flex items-center gap-3 text-right text-xs text-muted-foreground">
-                  <span>Exibindo <strong className="font-mono text-foreground">{consultoresFiltrados.length}</strong> de <strong className="font-mono text-foreground">{consultores.length}</strong></span>
+                  <span>Exibindo <strong className="font-mono text-foreground">{consultoresFiltrados.length}</strong> de <strong className="font-mono text-foreground">{todosConsultores.length}</strong></span>
                   <span>Distribuído: <strong className="font-mono text-foreground">{percentage(percentualDistribuido)}</strong> da meta</span>
                 </div>
               </div>
@@ -304,7 +311,7 @@ export function MetasEquipeDialog({ open, onOpenChange, ano, consultores }: Meta
                   <span>Consultor</span><span className="text-right">Meta anual</span><span className="text-right">Participação</span>
                 </div>
                 <div className="max-h-72 overflow-y-auto">
-                  {consultores.length === 0 ? (
+                  {todosConsultores.length === 0 ? (
                     <p className="px-3 py-5 text-center text-sm text-muted-foreground">Nenhum consultor disponível para lançamento.</p>
                   ) : consultoresFiltrados.length === 0 ? (
                     <p className="px-3 py-5 text-center text-sm text-muted-foreground">Nenhum consultor encontrado para essa pesquisa.</p>
