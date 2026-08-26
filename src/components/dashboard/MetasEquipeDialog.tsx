@@ -22,6 +22,7 @@ import type { MetaConsultorAnual, MetaCurvaMensal } from "@/types/equipeDesempen
 
 const MONTHS = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 const MONEY_FORMATTER = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+const INPUT_NUMBER_FORMATTER = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const NUMBER_FORMATTER = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 });
 
 interface MetasEquipeDialogProps {
@@ -40,7 +41,7 @@ function toNumber(value: string): number {
 }
 
 function inputValue(value: number): string {
-  return value === 0 ? "" : String(value);
+  return value === 0 ? "" : INPUT_NUMBER_FORMATTER.format(value);
 }
 
 function money(value: number): string {
@@ -49,6 +50,11 @@ function money(value: number): string {
 
 function percentage(value: number): string {
   return `${NUMBER_FORMATTER.format(value)}%`;
+}
+
+function formatInputNumber(value: string): string {
+  const parsed = toNumber(value);
+  return parsed === 0 && value.trim() === "" ? "" : INPUT_NUMBER_FORMATTER.format(parsed);
 }
 
 export function MetasEquipeDialog({ open, onOpenChange, ano, consultores }: MetasEquipeDialogProps) {
@@ -180,11 +186,11 @@ export function MetasEquipeDialog({ open, onOpenChange, ano, consultores }: Meta
                   <Input
                     id="meta-anual-empresa"
                     className="mt-1.5 text-right font-mono text-base font-semibold"
-                    type="number"
-                    min="0"
-                    step="0.01"
+                    type="text"
+                    inputMode="decimal"
                     value={metaAnual}
                     onChange={(event) => setMetaAnual(event.target.value)}
+                    onBlur={() => setMetaAnual(formatInputNumber(metaAnual))}
                     placeholder="33000000"
                   />
                 </div>
@@ -217,12 +223,11 @@ export function MetasEquipeDialog({ open, onOpenChange, ano, consultores }: Meta
                     <div className="relative">
                       <Input
                         id={`percentual-${index}`}
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.01"
+                        type="text"
+                        inputMode="decimal"
                         value={percentuais[index] ?? ""}
                         onChange={(event) => atualizarPercentual(index, event.target.value)}
+                        onBlur={() => atualizarPercentual(index, formatInputNumber(percentuais[index] ?? ""))}
                         className="pr-7 text-right font-mono"
                       />
                       <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-xs text-muted-foreground">%</span>
@@ -231,12 +236,16 @@ export function MetasEquipeDialog({ open, onOpenChange, ano, consultores }: Meta
                   </div>
                 ))}
               </div>
-              <div className={cn("mt-3 flex items-center justify-between rounded-lg border px-3 py-2 text-xs", curvaValida ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-700 dark:text-emerald-300" : "border-amber-500/30 bg-amber-500/5 text-amber-700 dark:text-amber-300")}>
+              <div className={cn("mt-3 flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-xs", curvaValida ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-700 dark:text-emerald-300" : "border-amber-500/30 bg-amber-500/5 text-amber-700 dark:text-amber-300")}>
                 <span className="flex items-center gap-1.5">
                   {curvaValida ? <CheckCircle2 className="h-3.5 w-3.5" /> : <AlertTriangle className="h-3.5 w-3.5" />}
-                  {curvaValida ? "Curva mensal fechada em 100%." : "Ajuste os percentuais até fechar em 100%."}
+                  {curvaValida
+                    ? "Curva mensal fechada em 100%."
+                    : percentualTotal < 100
+                      ? `Faltam ${percentage(100 - percentualTotal)} — aumente qualquer mês nesse total.`
+                      : `Excede ${percentage(percentualTotal - 100)} — reduza qualquer mês nesse total.`}
                 </span>
-                <strong className="font-mono">{percentage(percentualTotal)}</strong>
+                <strong className="shrink-0 font-mono">{percentage(percentualTotal)} / 100%</strong>
               </div>
             </section>
 
@@ -265,11 +274,11 @@ export function MetasEquipeDialog({ open, onOpenChange, ano, consultores }: Meta
                         <span className="truncate text-sm">{consultor}</span>
                         <Input
                           aria-label={`Meta anual de ${consultor}`}
-                          type="number"
-                          min="0"
-                          step="0.01"
+                          type="text"
+                          inputMode="decimal"
                           value={metasConsultores[consultor] ?? ""}
                           onChange={(event) => atualizarMetaConsultor(consultor, event.target.value)}
+                          onBlur={() => atualizarMetaConsultor(consultor, formatInputNumber(metasConsultores[consultor] ?? ""))}
                           placeholder="0,00"
                           className="text-right font-mono"
                         />
