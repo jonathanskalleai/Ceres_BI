@@ -85,21 +85,24 @@ describe("DashboardConsultores", () => {
     expect(screen.getAllByText("CARLOS AUGUSTO AUGUSTIN")).not.toHaveLength(0);
   });
 
-  it("ordena os cartões do Performance Ranking estritamente pelo maior volume de vendas", () => {
-    const vendedoresMulti: Vendedor[] = [
-      { nome: "CONSULTOR BAIXO", totalAcoes: 10, visitas: 5, clientes: 5, pipeline: 100000, negocios: 1, conversao: null, crmQuality: 100, evolucao: [], topClientes: [], regioes: [], tiposAcao: {} },
-      { nome: "CONSULTOR TOPO", totalAcoes: 20, visitas: 10, clientes: 10, pipeline: 500000, negocios: 2, conversao: null, crmQuality: 100, evolucao: [], topClientes: [], regioes: [], tiposAcao: {} },
-      { nome: "CONSULTOR MEDIO", totalAcoes: 15, visitas: 8, clientes: 8, pipeline: 200000, negocios: 2, conversao: null, crmQuality: 100, evolucao: [], topClientes: [], regioes: [], tiposAcao: {} },
-    ];
-
+  it("ordena os cartões do Performance Ranking priorizando a quantidade de vendas", () => {
     const desempenhoMock: EquipeDesempenhoData = {
       rows: [
-        { consultor: "CONSULTOR BAIXO", competencia: "2026-08-01", total_venda: 50000, meta: 100000, total: 100000, oportunidade: 50000, cotacao: 30000, proposta: 20000 },
-        { consultor: "CONSULTOR TOPO", competencia: "2026-08-01", total_venda: 450000, meta: 200000, total: 500000, oportunidade: 200000, cotacao: 150000, proposta: 150000 },
-        { consultor: "CONSULTOR MEDIO", competencia: "2026-08-01", total_venda: 180000, meta: 150000, total: 200000, oportunidade: 100000, cotacao: 50000, proposta: 50000 },
+        // CONSULTOR COM MAIS VENDAS (LUIZ CARLOS CUNICO: 2 vendas, 75.700)
+        { consultor: "LUIZ CARLOS CUNICO", competencia: "2026-08-01", total_venda: 75700, quantidade_vendas: 2, meta: 100000, total: 100000, oportunidade: 50000, cotacao: 30000, proposta: 20000 },
+        // CONSULTOR COM MAIOR VALOR MAS APENAS 1 VENDA (EDIOMAR: 1 venda, 145.000)
+        { consultor: "EDIOMAR CARLOS ZILLI", competencia: "2026-08-01", total_venda: 145000, quantidade_vendas: 1, meta: 200000, total: 500000, oportunidade: 200000, cotacao: 150000, proposta: 150000 },
+        // CONSULTOR COM 1 VENDA E MENOR VALOR (DIEGO KNOPF: 1 venda, 107.500)
+        { consultor: "DIEGO KNOPF", competencia: "2026-08-01", total_venda: 107500, quantidade_vendas: 1, meta: 150000, total: 200000, oportunidade: 100000, cotacao: 50000, proposta: 50000 },
       ],
       team: [],
     };
+
+    const vendedoresMulti: Vendedor[] = [
+      { nome: "EDIOMAR CARLOS ZILLI", totalAcoes: 10, visitas: 5, clientes: 5, pipeline: 100000, negocios: 1, conversao: null, crmQuality: 100, evolucao: [], topClientes: [], regioes: [], tiposAcao: {} },
+      { nome: "DIEGO KNOPF", totalAcoes: 20, visitas: 10, clientes: 10, pipeline: 500000, negocios: 2, conversao: null, crmQuality: 100, evolucao: [], topClientes: [], regioes: [], tiposAcao: {} },
+      { nome: "LUIZ CARLOS CUNICO", totalAcoes: 15, visitas: 8, clientes: 8, pipeline: 200000, negocios: 2, conversao: null, crmQuality: 100, evolucao: [], topClientes: [], regioes: [], tiposAcao: {} },
+    ];
 
     render(
       <QueryClientProvider client={queryClient}>
@@ -122,7 +125,8 @@ describe("DashboardConsultores", () => {
       </QueryClientProvider>
     );
 
-    // O consultor com maior venda (CONSULTOR TOPO: 450.000) deve aparecer como #1
+    // O consultor com mais vendas (LUIZ CARLOS CUNICO: 2 vendas) deve ser o #1,
+    // seguido pelos de 1 venda desempatados pelo valor (EDIOMAR: 145k #2, DIEGO KNOPF: 107.5k #3)
     expect(screen.getByText("Posição #1")).toBeInTheDocument();
     expect(screen.getByText("Posição #2")).toBeInTheDocument();
     expect(screen.getByText("Posição #3")).toBeInTheDocument();
@@ -130,7 +134,7 @@ describe("DashboardConsultores", () => {
     const cardHeadings = screen.getAllByRole("heading", { level: 4 });
     const cardNames = cardHeadings.map((h) => h.textContent);
 
-    expect(cardNames).toEqual(["CONSULTOR TOPO", "CONSULTOR MEDIO", "CONSULTOR BAIXO"]);
+    expect(cardNames).toEqual(["LUIZ CARLOS CUNICO", "EDIOMAR CARLOS ZILLI", "DIEGO KNOPF"]);
   });
 
   it("desempata consultores sem vendas no mês pelo acumulado de vendas no ano", () => {

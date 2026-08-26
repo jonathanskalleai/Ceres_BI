@@ -384,7 +384,9 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
       switch (ordenacao) {
         case "vendas_mes":
           return (
+            (b.quantidadeVendasPeriodo - a.quantidadeVendasPeriodo) ||
             (b.vendaPeriodo - a.vendaPeriodo) ||
+            (b.quantidadeVendasAno - a.quantidadeVendasAno) ||
             (b.vendaAno - a.vendaAno) ||
             ((b.desempenhoMetaPeriodo ?? 0) - (a.desempenhoMetaPeriodo ?? 0)) ||
             (b.totalPipeline - a.totalPipeline) ||
@@ -392,7 +394,9 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
           );
         case "vendas_mes_menor":
           return (
+            (a.quantidadeVendasPeriodo - b.quantidadeVendasPeriodo) ||
             (a.vendaPeriodo - b.vendaPeriodo) ||
+            (a.quantidadeVendasAno - b.quantidadeVendasAno) ||
             (a.vendaAno - b.vendaAno) ||
             ((a.desempenhoMetaPeriodo ?? 0) - (b.desempenhoMetaPeriodo ?? 0)) ||
             (a.totalPipeline - b.totalPipeline) ||
@@ -400,7 +404,9 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
           );
         case "vendas_ano":
           return (
+            (b.quantidadeVendasAno - a.quantidadeVendasAno) ||
             (b.vendaAno - a.vendaAno) ||
+            (b.quantidadeVendasPeriodo - a.quantidadeVendasPeriodo) ||
             (b.vendaPeriodo - a.vendaPeriodo) ||
             ((b.desempenhoMetaAno ?? 0) - (a.desempenhoMetaAno ?? 0)) ||
             (b.totalPipeline - a.totalPipeline) ||

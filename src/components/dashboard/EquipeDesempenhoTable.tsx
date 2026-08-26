@@ -174,6 +174,10 @@ function aggregateConsultorRows(rows: EquipeDesempenhoLinha[]): EquipeDesempenho
 }
 
 function sortByVendas(a: EquipeDesempenhoLinha, b: EquipeDesempenhoLinha): number {
+  const qA = asNumber(a.quantidade_vendas);
+  const qB = asNumber(b.quantidade_vendas);
+  if (qB !== qA) return qB - qA;
+
   const vA = asNumber(a.total_venda);
   const vB = asNumber(b.total_venda);
   if (vB !== vA) return vB - vA;

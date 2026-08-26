@@ -165,4 +165,33 @@ describe("EquipeDesempenhoTable", () => {
     // Consultores under the month should appear
     expect(screen.getByText("ANA PAULA")).toBeInTheDocument();
   });
+
+  it("ordena os consultores na tabela priorizando a quantidade de vendas", () => {
+    render(
+      <QueryClientProvider client={queryClient}>
+        <EquipeDesempenhoTable
+          ano={2026}
+          data={mockData}
+          isAdmin={true}
+          filters={{
+            cidade: "",
+            tipoAcao: "",
+            categoria: "",
+            funil: "",
+            dateRange: { from: "2026-08-01", to: "2026-08-31" },
+          }}
+        />
+      </QueryClientProvider>
+    );
+
+    // ANA PAULA tem 5 vendas (115.000) e BRUNO SILVA tem 4 vendas (125.000).
+    // ANA PAULA deve ser ordenada primeiro por ter maior quantidade de vendas.
+    const rows = screen.getAllByRole("row");
+    const consultorTexts = rows
+      .map((r) => r.textContent ?? "")
+      .filter((t) => t.includes("ANA PAULA") || t.includes("BRUNO SILVA"));
+
+    expect(consultorTexts[0]).toContain("ANA PAULA");
+    expect(consultorTexts[1]).toContain("BRUNO SILVA");
+  });
 });
