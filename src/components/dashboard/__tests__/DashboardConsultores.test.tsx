@@ -220,10 +220,10 @@ describe("DashboardConsultores", () => {
     );
 
     // Quando o filtro é o ano todo, o card deve mostrar:
-    // Vendido no Período: R$ 3.000.000,00
-    // 25 vendas (10 + 15), NÃO 0 vendas!
-    expect(screen.getByText("Vendido no Período")).toBeInTheDocument();
-    expect(screen.getByText("25 vendas")).toBeInTheDocument();
+    // Faturado no Ano: R$ 3.000.000,00
+    // 25 pedidos no ano (10 + 15), NÃO 0 vendas!
+    expect(screen.getByText("Faturado no Ano")).toBeInTheDocument();
+    expect(screen.getByText("25 pedidos no ano")).toBeInTheDocument();
     expect(screen.getByText("no período selecionado")).toBeInTheDocument();
   });
 });

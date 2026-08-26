@@ -78,7 +78,19 @@ function formatPct(value: number | null | undefined): string {
 
 function formatRatio(value: number | null | undefined, unit: string): string {
   if (value == null || !Number.isFinite(value) || value <= 0) return "—";
-  return `${PCT_EXACT.format(value)} ${unit}`;
+  return `${value.toFixed(1)} ${unit}`;
+}
+
+const MESES_LONGOS = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+];
+
+function getNomeMes(ym: string): string {
+  if (!ym) return "";
+  const parts = ym.split("-");
+  const m = parseInt(parts[1] ?? "1", 10);
+  return MESES_LONGOS[m - 1] ?? ym;
 }
 
 const POSITION_RIBBONS = [
@@ -622,6 +634,18 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
             const metaMesSuperada = desempenhoMetaValor != null && desempenhoMetaValor >= 100;
             const emRotaMes = desempenhoMetaValor != null && desempenhoMetaValor >= 70 && desempenhoMetaValor < 100;
 
+            const anoStr = toYm.slice(0, 4);
+            const isYtd = fromYm.endsWith("-01") && toYm.slice(0, 4) === fromYm.slice(0, 4);
+            const [y1, m1] = fromYm.split("-").map(Number);
+            const [y2, m2] = toYm.split("-").map(Number);
+            const numMesesPeriodo = Math.max((y2 - y1) * 12 + (m2 - m1) + 1, 1);
+            const labelFimPeriodo = getNomeMes(toYm);
+            const labelInicioPeriodo = getNomeMes(fromYm);
+            const labelPeriodo = isYtd
+              ? `até ${labelFimPeriodo}`
+              : `${labelInicioPeriodo} a ${labelFimPeriodo}`;
+            const mediaMensalRealizada = c.vendaPeriodo / numMesesPeriodo;
+
             const crmBadge =
               c.crmQuality >= 70
                 ? { label: "Nota A", bg: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20" }
@@ -685,9 +709,36 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
                       </div>
                     </div>
 
-                    {/* Meta do Mês / Período Badge */}
+                    {/* Meta Badge */}
                     <div className="flex flex-col items-end gap-1 shrink-0">
-                      {desempenhoMetaValor != null && metaMesValor > 0 ? (
+                      {isMultiMonth ? (
+                        c.desempenhoMetaAno != null && c.metaAno > 0 ? (
+                          <span
+                            className={cn(
+                              "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-mono font-bold border tabular-nums",
+                              c.desempenhoMetaAno >= 100
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                                : c.desempenhoMetaAno >= 70
+                                ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                                : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                            )}
+                            title={`Meta Anual: ${formatPct(c.desempenhoMetaAno)} · Ritmo até ${labelFimPeriodo}: ${formatPct(c.desempenhoMetaPeriodo)}`}
+                          >
+                            {c.desempenhoMetaAno >= 100 ? (
+                              <CheckCircle2 className="h-3 w-3" />
+                            ) : c.desempenhoMetaAno >= 70 ? (
+                              <Sparkles className="h-3 w-3" />
+                            ) : (
+                              <AlertCircle className="h-3 w-3 text-rose-500" />
+                            )}
+                            {formatPct(c.desempenhoMetaAno)} ano
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-mono text-muted-foreground border border-black/5 dark:border-white/10">
+                            Sem meta anual
+                          </span>
+                        )
+                      ) : desempenhoMetaValor != null && metaMesValor > 0 ? (
                         <span
                           className={cn(
                             "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-mono font-bold border tabular-nums",
@@ -712,143 +763,236 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
                               )}
                             />
                           )}
-                          {formatPct(desempenhoMetaValor)}
+                          {formatPct(desempenhoMetaValor)} mês
                         </span>
                       ) : (
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-mono text-muted-foreground border border-black/5 dark:border-white/10">
-                          {isMultiMonth ? "Sem meta período" : "Sem meta mês"}
+                          Sem meta mês
                         </span>
                       )}
                     </div>
                   </div>
 
-                  {/* BLOCO 1: META DO MÊS / PERÍODO & VENDAS ATUAIS */}
-                  <div className="mb-2.5 rounded-xl border p-3 bg-black/[0.02] dark:bg-white/[0.02]" style={{ borderColor: "var(--voux-card-border)" }}>
-                    <div className="flex items-center justify-between text-[11px] mb-1.5">
-                      <span className="font-semibold text-muted-foreground flex items-center gap-1">
-                        <Target className="h-3.5 w-3.5 text-amber-500" />
-                        {isMultiMonth ? "Meta no Período: " : "Meta do Mês: "}<strong className="font-mono text-foreground">{formatBRL(metaMesValor)}</strong>
-                      </span>
-                      {saldoMetaValor > 0 && metaMesValor > 0 ? (
-                        <span className="text-[10px] font-mono text-muted-foreground">
-                          Falta: <strong className="text-rose-500">{formatBRL(saldoMetaValor)}</strong>
+                  {/* SELEÇÃO CONDICIONAL DE BLOCOS DE METAS: MULTIMÊS / ANO vs MÊS ÚNICO */}
+                  {isMultiMonth ? (
+                    /* BLOCO UNIFICADO: META ANUAL (12 MESES) & RITMO ACUMULADO NO PERÍODO */
+                    <div className="mb-2.5 rounded-xl border p-3 bg-black/[0.01] dark:bg-white/[0.01]" style={{ borderColor: "var(--voux-card-border)" }}>
+                      {/* 1. Meta Anual 12 Meses */}
+                      <div className="flex items-center justify-between text-[11px] mb-1.5">
+                        <span className="font-semibold text-muted-foreground flex items-center gap-1">
+                          <Award className="h-3.5 w-3.5 text-amber-500" />
+                          Meta Anual {anoStr} (12 Meses): <strong className="font-mono text-foreground">{formatBRL(c.metaAno)}</strong>
                         </span>
-                      ) : metaMesValor > 0 ? (
-                        <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
-                          Meta Batida!
-                        </span>
-                      ) : null}
-                    </div>
-
-                    {/* Barra de Progresso do Mês / Período */}
-                    {metaMesValor > 0 && (
-                      <div className="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
-                        <div
-                          className={cn(
-                            "h-full rounded-full transition-all duration-500",
-                            metaMesSuperada
-                              ? "bg-gradient-to-r from-emerald-500 to-teal-400"
-                              : emRotaMes
-                              ? "bg-gradient-to-r from-amber-500 to-emerald-500"
-                              : "bg-gradient-to-r from-rose-500 to-amber-500"
-                          )}
-                          style={{ width: `${percentMetaMes}%` }}
-                        />
-                      </div>
-                    )}
-
-                    {/* Grid Mês / Período: Vendido Atual vs Mês Passado / Vendido no Ano */}
-                    <div className="grid grid-cols-2 gap-2 pt-1 border-t" style={{ borderColor: "var(--voux-card-border)" }}>
-                      <div>
-                        <p className="text-[10px] uppercase font-semibold text-muted-foreground font-mono">
-                          {isMultiMonth ? "Vendido no Período" : "Vendido no Mês"}
-                        </p>
-                        <p className="font-mono font-bold text-[13px] text-emerald-600 dark:text-emerald-400 tabular-nums">
-                          {formatBRL(vendaMesValor)}
-                        </p>
-                        <p className="text-[10px] font-mono text-muted-foreground">
-                          {quantidadeVendasValor} {quantidadeVendasValor === 1 ? "venda" : "vendas"}
-                        </p>
+                        {c.desempenhoMetaAno != null ? (
+                          <span className="text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400">
+                            {formatPct(c.desempenhoMetaAno)} batido
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-mono text-muted-foreground">Sem meta</span>
+                        )}
                       </div>
 
-                      <div className="border-l pl-2" style={{ borderColor: "var(--voux-card-border)" }}>
-                        <p className="text-[10px] uppercase font-semibold text-muted-foreground font-mono">
-                          {isMultiMonth ? "Vendido no Ano (YTD)" : "Mês Passado"}
-                        </p>
-                        <div className="flex items-center gap-1">
-                          <p className="font-mono font-semibold text-[12px] text-foreground tabular-nums">
-                            {formatBRL(isMultiMonth ? c.vendaAno : c.vendaAnterior)}
+                      {/* Barra de Progresso da Meta Anual */}
+                      {c.metaAno > 0 && (
+                        <div className="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
+                          <div
+                            className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-amber-500 via-amber-400 to-emerald-500"
+                            style={{ width: `${percentMetaAno}%` }}
+                          />
+                        </div>
+                      )}
+
+                      {/* Grid Anual: Faturado no Ano vs Falta p/ Meta Anual */}
+                      <div className="grid grid-cols-2 gap-2 pt-1 border-t" style={{ borderColor: "var(--voux-card-border)" }}>
+                        <div>
+                          <p className="text-[10px] uppercase font-semibold text-muted-foreground font-mono">Faturado no Ano</p>
+                          <p className="font-mono font-bold text-[13px] text-emerald-600 dark:text-emerald-400 tabular-nums">
+                            {formatBRL(c.vendaAno)}
                           </p>
-                          {!isMultiMonth && c.deltaVenda != null && (
-                            <span
-                              className={cn(
-                                "flex items-center text-[10px] font-mono font-bold",
-                                c.deltaVenda >= 0 ? "text-emerald-500" : "text-rose-500"
-                              )}
-                            >
-                              {c.deltaVenda >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-                              {Math.abs(c.deltaVenda).toFixed(0)}%
-                            </span>
-                          )}
-                          {isMultiMonth && (
-                            <span className="text-[10px] font-mono text-muted-foreground">
-                              ({c.quantidadeVendasAno} ped.)
-                            </span>
-                          )}
+                          <p className="text-[10px] font-mono text-muted-foreground">
+                            {c.quantidadeVendasAno} {c.quantidadeVendasAno === 1 ? "pedido" : "pedidos"} no ano
+                          </p>
+                        </div>
+
+                        <div className="border-l pl-2" style={{ borderColor: "var(--voux-card-border)" }}>
+                          <p className="text-[10px] uppercase font-semibold text-muted-foreground font-mono">Falta p/ Meta Anual</p>
+                          <p className="font-mono font-semibold text-[13px] text-rose-500 tabular-nums">
+                            {c.saldoMetaAno > 0 ? formatBRL(c.saldoMetaAno) : "Meta Anual Batida!"}
+                          </p>
+                          <p className="text-[10px] font-mono text-muted-foreground">
+                            {c.negociosAno} neg no ano
+                          </p>
                         </div>
                       </div>
-                    </div>
-                  </div>
 
-                  {/* BLOCO 2: ACUMULADO DO ANO (YTD) */}
-                  <div className="mb-2.5 rounded-xl border p-3 bg-black/[0.01] dark:bg-white/[0.01]" style={{ borderColor: "var(--voux-card-border)" }}>
-                    <div className="flex items-center justify-between text-[11px] mb-1.5">
-                      <span className="font-semibold text-muted-foreground flex items-center gap-1">
-                        <Award className="h-3.5 w-3.5 text-amber-500" />
-                        Meta Anual (YTD): <strong className="font-mono text-foreground">{formatBRL(c.metaAno)}</strong>
-                      </span>
-                      {c.desempenhoMetaAno != null ? (
-                        <span className="text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400">
-                          {formatPct(c.desempenhoMetaAno)}
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-mono text-muted-foreground">Sem meta</span>
+                      {/* 2. Sub-painel Didático: Ritmo Acumulado Esperado até o Momento (YTD) */}
+                      {c.metaPeriodo > 0 && (
+                        <div className="mt-2.5 pt-2 border-t rounded-lg bg-black/[0.02] dark:bg-white/[0.02] p-2" style={{ borderColor: "var(--voux-card-border)" }}>
+                          <div className="flex items-center justify-between text-[10px] mb-1">
+                            <span className="font-semibold text-muted-foreground font-mono flex items-center gap-1">
+                              <Target className="h-3 w-3 text-sky-500" />
+                              {isYtd
+                                ? `Ritmo Esperado até ${labelFimPeriodo} (${numMesesPeriodo} meses)`
+                                : `Meta do Período (${labelPeriodo})`}
+                            </span>
+                            <span className="font-mono font-bold text-sky-600 dark:text-sky-400">
+                              {formatBRL(c.metaPeriodo)} ({formatPct(c.desempenhoMetaPeriodo)})
+                            </span>
+                          </div>
+
+                          {/* Mini barra de ritmo */}
+                          <div className="mb-1.5 h-1 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
+                            <div
+                              className={cn(
+                                "h-full rounded-full transition-all duration-500",
+                                c.desempenhoMetaPeriodo != null && c.desempenhoMetaPeriodo >= 100
+                                  ? "bg-emerald-500"
+                                  : c.desempenhoMetaPeriodo != null && c.desempenhoMetaPeriodo >= 70
+                                  ? "bg-amber-500"
+                                  : "bg-rose-500"
+                              )}
+                              style={{ width: `${Math.min(Math.max(c.desempenhoMetaPeriodo ?? 0, 0), 100)}%` }}
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground">
+                            <span>
+                              {saldoMetaValor > 0 ? (
+                                <>Déficit no ritmo: <strong className="text-rose-500">{formatBRL(saldoMetaValor)}</strong></>
+                              ) : (
+                                <strong className="text-emerald-500 font-bold">Ritmo do período superado!</strong>
+                              )}
+                            </span>
+                            <span>
+                              Média: <strong className="text-foreground">{formatBRL(mediaMensalRealizada)}/mês</strong>
+                            </span>
+                          </div>
+                        </div>
                       )}
                     </div>
+                  ) : (
+                    /* VISUALIZAÇÃO DE MÊS ÚNICO (BLOCO 1: MÊS ATUAL + BLOCO 2: ANO) */
+                    <>
+                      {/* BLOCO 1: META DO MÊS & VENDAS DO MÊS */}
+                      <div className="mb-2.5 rounded-xl border p-3 bg-black/[0.02] dark:bg-white/[0.02]" style={{ borderColor: "var(--voux-card-border)" }}>
+                        <div className="flex items-center justify-between text-[11px] mb-1.5">
+                          <span className="font-semibold text-muted-foreground flex items-center gap-1">
+                            <Target className="h-3.5 w-3.5 text-amber-500" />
+                            Meta de {getNomeMes(compAtual)}: <strong className="font-mono text-foreground">{formatBRL(c.metaMes)}</strong>
+                          </span>
+                          {c.saldoMetaMes > 0 && c.metaMes > 0 ? (
+                            <span className="text-[10px] font-mono text-muted-foreground">
+                              Falta: <strong className="text-rose-500">{formatBRL(c.saldoMetaMes)}</strong>
+                            </span>
+                          ) : c.metaMes > 0 ? (
+                            <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                              Meta Batida!
+                            </span>
+                          ) : null}
+                        </div>
 
-                    {/* Barra de Progresso Anual */}
-                    {c.metaAno > 0 && (
-                      <div className="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
-                        <div
-                          className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-amber-500 via-amber-400 to-emerald-500"
-                          style={{ width: `${percentMetaAno}%` }}
-                        />
-                      </div>
-                    )}
+                        {/* Barra de Progresso do Mês */}
+                        {c.metaMes > 0 && (
+                          <div className="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
+                            <div
+                              className={cn(
+                                "h-full rounded-full transition-all duration-500",
+                                metaMesSuperada
+                                  ? "bg-gradient-to-r from-emerald-500 to-teal-400"
+                                  : emRotaMes
+                                  ? "bg-gradient-to-r from-amber-500 to-emerald-500"
+                                  : "bg-gradient-to-r from-rose-500 to-amber-500"
+                              )}
+                              style={{ width: `${percentMetaMes}%` }}
+                            />
+                          </div>
+                        )}
 
-                    {/* Grid Ano: Vendido no Ano vs Falta p/ Meta Anual */}
-                    <div className="grid grid-cols-2 gap-2 pt-1 border-t" style={{ borderColor: "var(--voux-card-border)" }}>
-                      <div>
-                        <p className="text-[10px] uppercase font-semibold text-muted-foreground font-mono">Vendido no Ano</p>
-                        <p className="font-mono font-bold text-[13px] text-foreground tabular-nums">
-                          {formatBRL(c.vendaAno)}
-                        </p>
-                        <p className="text-[10px] font-mono text-muted-foreground">
-                          {c.quantidadeVendasAno} pedidos no ano
-                        </p>
+                        {/* Grid Mês: Vendido Atual vs Mês Passado */}
+                        <div className="grid grid-cols-2 gap-2 pt-1 border-t" style={{ borderColor: "var(--voux-card-border)" }}>
+                          <div>
+                            <p className="text-[10px] uppercase font-semibold text-muted-foreground font-mono">Vendido no Mês</p>
+                            <p className="font-mono font-bold text-[13px] text-emerald-600 dark:text-emerald-400 tabular-nums">
+                              {formatBRL(c.vendaMes)}
+                            </p>
+                            <p className="text-[10px] font-mono text-muted-foreground">
+                              {c.quantidadeVendasMes} {c.quantidadeVendasMes === 1 ? "venda" : "vendas"}
+                            </p>
+                          </div>
+
+                          <div className="border-l pl-2" style={{ borderColor: "var(--voux-card-border)" }}>
+                            <p className="text-[10px] uppercase font-semibold text-muted-foreground font-mono">Mês Passado</p>
+                            <div className="flex items-center gap-1">
+                              <p className="font-mono font-semibold text-[12px] text-foreground tabular-nums">
+                                {formatBRL(c.vendaAnterior)}
+                              </p>
+                              {c.deltaVenda != null && (
+                                <span
+                                  className={cn(
+                                    "flex items-center text-[10px] font-mono font-bold",
+                                    c.deltaVenda >= 0 ? "text-emerald-500" : "text-rose-500"
+                                  )}
+                                >
+                                  {c.deltaVenda >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                                  {Math.abs(c.deltaVenda).toFixed(0)}%
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="border-l pl-2" style={{ borderColor: "var(--voux-card-border)" }}>
-                        <p className="text-[10px] uppercase font-semibold text-muted-foreground font-mono">Falta p/ Meta do Ano</p>
-                        <p className="font-mono font-semibold text-[12px] text-rose-500 tabular-nums">
-                          {c.saldoMetaAno > 0 ? formatBRL(c.saldoMetaAno) : "Meta Anual Batida!"}
-                        </p>
-                        <p className="text-[10px] font-mono text-muted-foreground">
-                          {c.negociosAno} neg no ano
-                        </p>
+                      {/* BLOCO 2: ACUMULADO DO ANO (12 MESES) */}
+                      <div className="mb-2.5 rounded-xl border p-3 bg-black/[0.01] dark:bg-white/[0.01]" style={{ borderColor: "var(--voux-card-border)" }}>
+                        <div className="flex items-center justify-between text-[11px] mb-1.5">
+                          <span className="font-semibold text-muted-foreground flex items-center gap-1">
+                            <Award className="h-3.5 w-3.5 text-amber-500" />
+                            Meta Anual {anoStr} (12 Meses): <strong className="font-mono text-foreground">{formatBRL(c.metaAno)}</strong>
+                          </span>
+                          {c.desempenhoMetaAno != null ? (
+                            <span className="text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400">
+                              {formatPct(c.desempenhoMetaAno)}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-mono text-muted-foreground">Sem meta</span>
+                          )}
+                        </div>
+
+                        {/* Barra de Progresso Anual */}
+                        {c.metaAno > 0 && (
+                          <div className="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
+                            <div
+                              className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-amber-500 via-amber-400 to-emerald-500"
+                              style={{ width: `${percentMetaAno}%` }}
+                            />
+                          </div>
+                        )}
+
+                        {/* Grid Ano: Vendido no Ano vs Falta p/ Meta Anual */}
+                        <div className="grid grid-cols-2 gap-2 pt-1 border-t" style={{ borderColor: "var(--voux-card-border)" }}>
+                          <div>
+                            <p className="text-[10px] uppercase font-semibold text-muted-foreground font-mono">Vendido no Ano</p>
+                            <p className="font-mono font-bold text-[13px] text-foreground tabular-nums">
+                              {formatBRL(c.vendaAno)}
+                            </p>
+                            <p className="text-[10px] font-mono text-muted-foreground">
+                              {c.quantidadeVendasAno} pedidos no ano
+                            </p>
+                          </div>
+
+                          <div className="border-l pl-2" style={{ borderColor: "var(--voux-card-border)" }}>
+                            <p className="text-[10px] uppercase font-semibold text-muted-foreground font-mono">Falta p/ Meta do Ano</p>
+                            <p className="font-mono font-semibold text-[12px] text-rose-500 tabular-nums">
+                              {c.saldoMetaAno > 0 ? formatBRL(c.saldoMetaAno) : "Meta Anual Batida!"}
+                            </p>
+                            <p className="text-[10px] font-mono text-muted-foreground">
+                              {c.negociosAno} neg no ano
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
+                    </>
+                  )}
 
                   {/* BLOCO 3: PIPELINE ATIVO (3 ETAPAS COM VALORES EXATOS) */}
                   <div className="mb-2.5">
