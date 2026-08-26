@@ -4,14 +4,13 @@ import {
   Search,
   ArrowUpRight,
   ArrowDownRight,
-  TrendingUp,
   Target,
+  Calendar,
   Briefcase,
   Users,
   Compass,
   CheckCircle2,
   AlertCircle,
-  Clock,
   Sparkles,
   ChevronDown,
   ChevronUp,
@@ -32,51 +31,34 @@ interface RankingPerformanceCardsProps {
   onSelectConsultor: (nome: string) => void;
 }
 
-type SortOption = "vendas" | "meta" | "pipeline" | "visitas" | "conversao" | "nome";
-type FilterStatus = "todos" | "meta_batida" | "em_rota" | "abaixo" | "com_vendas";
+type SortOption = "vendas_mes" | "vendas_ano" | "meta_mes" | "meta_ano" | "pipeline" | "visitas" | "conversao" | "nome";
+type FilterStatus = "todos" | "meta_mes_batida" | "meta_ano_alta" | "em_rota" | "abaixo" | "com_vendas";
 
-const BRL_COMPACT = new Intl.NumberFormat("pt-BR", {
+const BRL_EXACT = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
-  maximumFractionDigits: 1,
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
 });
 
-const BRL_FULL = new Intl.NumberFormat("pt-BR", {
-  style: "currency",
-  currency: "BRL",
-  maximumFractionDigits: 0,
-});
-
-const PCT_FORMATTER = new Intl.NumberFormat("pt-BR", {
+const PCT_EXACT = new Intl.NumberFormat("pt-BR", {
   minimumFractionDigits: 1,
   maximumFractionDigits: 1,
 });
 
-function formatCurrency(value: number | null | undefined): string {
-  if (value == null || value === 0) return "R$ 0";
-  const num = Number(value);
-  if (Math.abs(num) >= 1e6) {
-    return `R$ ${(num / 1e6).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} mi`;
-  }
-  if (Math.abs(num) >= 1e3) {
-    return `R$ ${(num / 1e3).toLocaleString("pt-BR", { maximumFractionDigits: 0 })} mil`;
-  }
-  return BRL_FULL.format(num);
-}
-
-function formatFullCurrency(value: number | null | undefined): string {
-  if (value == null || value === 0) return "R$ 0";
-  return BRL_FULL.format(Number(value));
+function formatBRL(value: number | null | undefined): string {
+  if (value == null) return "R$ 0,00";
+  return BRL_EXACT.format(Number(value));
 }
 
 function formatPct(value: number | null | undefined): string {
-  if (value == null) return "—";
-  return `${PCT_FORMATTER.format(Number(value))}%`;
+  if (value == null || !Number.isFinite(Number(value))) return "—";
+  return `${PCT_EXACT.format(Number(value))}%`;
 }
 
 function formatRatio(value: number | null | undefined, unit: string): string {
   if (value == null || !Number.isFinite(value) || value <= 0) return "—";
-  return `${PCT_FORMATTER.format(value)} ${unit}`;
+  return `${PCT_EXACT.format(value)} ${unit}`;
 }
 
 const POSITION_RIBBONS = [
@@ -105,7 +87,7 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
   onSelectConsultor,
 }: RankingPerformanceCardsProps) {
   const [busca, setBusca] = useState("");
-  const [ordenacao, setOrdenacao] = useState<SortOption>("vendas");
+  const [ordenacao, setOrdenacao] = useState<SortOption>("vendas_mes");
   const [filtroStatus, setFiltroStatus] = useState<FilterStatus>("todos");
   const [expandido, setExpandido] = useState(false);
 
@@ -135,35 +117,45 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
     return { compAtual: current, compAnterior: previous };
   }, [filters.dateRange]);
 
-  // Consolidar dados de cada consultor
+  // Consolidar dados completos e acumulados de cada consultor
   const consultoresProcessados = useMemo(() => {
-    const rowsAtualMap = new Map<string, typeof desempenho.rows[0]>();
-    const rowsAnteriorMap = new Map<string, typeof desempenho.rows[0]>();
-
+    const rowsPorConsultor = new Map<string, typeof desempenho.rows>();
     for (const r of desempenho.rows) {
       if (!r.consultor) continue;
-      if (r.competencia === compAtual) {
-        rowsAtualMap.set(r.consultor, r);
-      } else if (r.competencia === compAnterior) {
-        rowsAnteriorMap.set(r.consultor, r);
+      if (!rowsPorConsultor.has(r.consultor)) {
+        rowsPorConsultor.set(r.consultor, []);
       }
+      rowsPorConsultor.get(r.consultor)!.push(r);
     }
 
     return vendedores.map((v) => {
-      const rAtual = rowsAtualMap.get(v.nome);
-      const rAnterior = rowsAnteriorMap.get(v.nome);
+      const cRows = rowsPorConsultor.get(v.nome) ?? [];
+      const rAtual = cRows.find((r) => r.competencia === compAtual);
+      const rAnterior = cRows.find((r) => r.competencia === compAnterior);
       const res = resumoPorConsultor.get(v.nome);
 
-      const vendaAtual = Number(res?.valor_ganho ?? rAtual?.total_venda ?? 0);
+      // --- MÊS ATUAL ---
+      const vendaMes = Number(rAtual?.total_venda ?? res?.valor_ganho ?? 0);
       const vendaAnterior = Number(rAnterior?.total_venda ?? 0);
       const deltaVenda =
-        vendaAnterior > 0 ? ((vendaAtual - vendaAnterior) / vendaAnterior) * 100 : null;
+        vendaAnterior > 0 ? ((vendaMes - vendaAnterior) / vendaAnterior) * 100 : null;
 
       const metaMes = Number(rAtual?.meta ?? 0);
-      const desempenhoMeta =
-        metaMes > 0 ? (vendaAtual / metaMes) * 100 : rAtual?.desempenho_meta != null ? Number(rAtual.desempenho_meta) : null;
-      const saldoMeta = metaMes - vendaAtual;
+      const desempenhoMetaMes =
+        metaMes > 0 ? (vendaMes / metaMes) * 100 : rAtual?.desempenho_meta != null ? Number(rAtual.desempenho_meta) : null;
+      const saldoMetaMes = metaMes - vendaMes;
 
+      // --- ACUMULADO DO ANO (YTD) ---
+      const metaAno = cRows.reduce((sum, r) => sum + Number(r.meta ?? 0), 0);
+      const vendaAno = cRows.reduce((sum, r) => sum + Number(r.total_venda ?? 0), 0);
+      const saldoMetaAno = metaAno - vendaAno;
+      const desempenhoMetaAno = metaAno > 0 ? (vendaAno / metaAno) * 100 : null;
+      const quantidadeVendasAno = cRows.reduce((sum, r) => sum + Number(r.quantidade_vendas ?? 0), 0);
+      const negociosAno = cRows.reduce((sum, r) => sum + Number(r.negocios ?? 0), 0);
+      const ticketMedioAno =
+        quantidadeVendasAno > 0 && vendaAno > 0 ? vendaAno / quantidadeVendasAno : null;
+
+      // --- PIPELINE EM ABERTO ---
       const oportunidade = Number(rAtual?.oportunidade ?? 0);
       const cotacao = Number(rAtual?.cotacao ?? 0);
       const proposta = Number(rAtual?.proposta ?? 0);
@@ -174,52 +166,71 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
           ? oportunidade + cotacao + proposta
           : Number(res?.carteira_ativa_trabalhada ?? 0);
 
-      const quantidadeVendas = Number(res?.ganhos ?? rAtual?.quantidade_vendas ?? 0);
-      const ticketMedio =
+      // --- QUANTIDADES E MÉDIAS DO MÊS ---
+      const quantidadeVendasMes = Number(rAtual?.quantidade_vendas ?? res?.ganhos ?? 0);
+      const oportunidadesAbertas = Number(rAtual?.oportunidades_abertas ?? 0);
+      const negociosMes = Number(rAtual?.negocios ?? res?.oportunidades_geradas ?? 0);
+
+      const ticketMedioMes =
         rAtual?.ticket_medio != null
           ? Number(rAtual.ticket_medio)
-          : quantidadeVendas > 0 && vendaAtual > 0
-          ? vendaAtual / quantidadeVendas
+          : quantidadeVendasMes > 0 && vendaMes > 0
+          ? vendaMes / quantidadeVendasMes
           : null;
 
-      const taxaConversao =
+      const taxaConversaoMes =
         rAtual?.taxa_conversao_negocios != null
           ? Number(rAtual.taxa_conversao_negocios)
           : res?.taxa_ganho != null
           ? Number(res.taxa_ganho)
           : null;
 
+      // --- AÇÕES E ESFORÇO DE CAMPO ---
       const visitas = Number(res?.visitas ?? v.visitas ?? 0);
       const clientes = Number(res?.clientes ?? rAtual?.clientes ?? v.clientes ?? 0);
-      const oportunidadesQtd = Number(res?.oportunidades_geradas ?? rAtual?.negocios ?? 0);
+      const prospeccaoMaquina = Number(rAtual?.prospeccao_maquina ?? 0);
 
+      // Médias precisas de esforço
       const visitasPorOportunidade =
-        oportunidadesQtd > 0 && visitas > 0 ? visitas / oportunidadesQtd : null;
+        negociosMes > 0 && visitas > 0 ? visitas / negociosMes : null;
       const clientesPorVenda =
-        quantidadeVendas > 0 && clientes > 0 ? clientes / quantidadeVendas : null;
+        quantidadeVendasMes > 0 && clientes > 0 ? clientes / quantidadeVendasMes : null;
       const visitasPorVenda =
-        quantidadeVendas > 0 && visitas > 0 ? visitas / quantidadeVendas : null;
+        quantidadeVendasMes > 0 && visitas > 0 ? visitas / quantidadeVendasMes : null;
 
       const crmQuality = res?.crm_quality ?? v.crmQuality ?? 0;
 
       return {
         nome: v.nome,
-        vendaAtual,
+        // Mês
+        vendaMes,
         vendaAnterior,
         deltaVenda,
         metaMes,
-        desempenhoMeta,
-        saldoMeta,
+        desempenhoMetaMes,
+        saldoMetaMes,
+        quantidadeVendasMes,
+        ticketMedioMes,
+        taxaConversaoMes,
+        // Ano
+        metaAno,
+        vendaAno,
+        saldoMetaAno,
+        desempenhoMetaAno,
+        quantidadeVendasAno,
+        negociosAno,
+        ticketMedioAno,
+        // Pipeline
         oportunidade,
         cotacao,
         proposta,
         totalPipeline,
-        quantidadeVendas,
-        ticketMedio,
-        taxaConversao,
+        oportunidadesAbertas,
+        negociosMes,
+        // Campo
         visitas,
         clientes,
-        oportunidadesQtd,
+        prospeccaoMaquina,
         visitasPorOportunidade,
         clientesPorVenda,
         visitasPorVenda,
@@ -233,20 +244,24 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
   const consultoresOrdenados = useMemo(() => {
     return [...consultoresProcessados].sort((a, b) => {
       switch (ordenacao) {
-        case "vendas":
-          return b.vendaAtual - a.vendaAtual || (b.desempenhoMeta ?? 0) - (a.desempenhoMeta ?? 0);
-        case "meta":
-          return (b.desempenhoMeta ?? -1) - (a.desempenhoMeta ?? -1) || b.vendaAtual - a.vendaAtual;
+        case "vendas_mes":
+          return b.vendaMes - a.vendaMes || (b.desempenhoMetaMes ?? 0) - (a.desempenhoMetaMes ?? 0);
+        case "vendas_ano":
+          return b.vendaAno - a.vendaAno || (b.desempenhoMetaAno ?? 0) - (a.desempenhoMetaAno ?? 0);
+        case "meta_mes":
+          return (b.desempenhoMetaMes ?? -1) - (a.desempenhoMetaMes ?? -1) || b.vendaMes - a.vendaMes;
+        case "meta_ano":
+          return (b.desempenhoMetaAno ?? -1) - (a.desempenhoMetaAno ?? -1) || b.vendaAno - a.vendaAno;
         case "pipeline":
-          return b.totalPipeline - a.totalPipeline || b.vendaAtual - a.vendaAtual;
+          return b.totalPipeline - a.totalPipeline || b.vendaMes - a.vendaMes;
         case "visitas":
-          return b.visitas - a.visitas || b.vendaAtual - a.vendaAtual;
+          return b.visitas - a.visitas || b.vendaMes - a.vendaMes;
         case "conversao":
-          return (b.taxaConversao ?? -1) - (a.taxaConversao ?? -1) || b.vendaAtual - a.vendaAtual;
+          return (b.taxaConversaoMes ?? -1) - (a.taxaConversaoMes ?? -1) || b.vendaMes - a.vendaMes;
         case "nome":
           return a.nome.localeCompare(b.nome, "pt-BR");
         default:
-          return b.vendaAtual - a.vendaAtual;
+          return b.vendaMes - a.vendaMes;
       }
     });
   }, [consultoresProcessados, ordenacao]);
@@ -258,14 +273,16 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
       if (q && !c.nome.toLowerCase().includes(q)) return false;
 
       switch (filtroStatus) {
-        case "meta_batida":
-          return c.desempenhoMeta != null && c.desempenhoMeta >= 100;
+        case "meta_mes_batida":
+          return c.desempenhoMetaMes != null && c.desempenhoMetaMes >= 100;
+        case "meta_ano_alta":
+          return c.desempenhoMetaAno != null && c.desempenhoMetaAno >= 50;
         case "em_rota":
-          return c.desempenhoMeta != null && c.desempenhoMeta >= 70 && c.desempenhoMeta < 100;
+          return c.desempenhoMetaMes != null && c.desempenhoMetaMes >= 70 && c.desempenhoMetaMes < 100;
         case "abaixo":
-          return c.desempenhoMeta != null && c.desempenhoMeta < 70 && c.metaMes > 0;
+          return c.desempenhoMetaMes != null && c.desempenhoMetaMes < 70 && c.metaMes > 0;
         case "com_vendas":
-          return c.vendaAtual > 0;
+          return c.vendaMes > 0;
         default:
           return true;
       }
@@ -301,7 +318,7 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
               </span>
             </div>
             <p className="text-[11px] text-muted-foreground">
-              Dossiê 360° com metas, pipeline ativo, eficiência comercial e esforço de campo
+              Dossiê 360° com valores não arredondados, metas do mês e do ano, pipeline ativo e médias de esforço
             </p>
           </div>
         </div>
@@ -324,8 +341,10 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
             className="h-8 rounded-md border bg-background px-2.5 text-[11px] font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-amber-500"
             style={{ borderColor: "var(--voux-card-border)" }}
           >
-            <option value="vendas">Maior Venda Realizada</option>
-            <option value="meta">Maior % da Meta</option>
+            <option value="vendas_mes">Maior Venda no Mês</option>
+            <option value="vendas_ano">Maior Venda no Ano (YTD)</option>
+            <option value="meta_mes">Maior % da Meta do Mês</option>
+            <option value="meta_ano">Maior % da Meta do Ano</option>
             <option value="pipeline">Maior Pipeline Ativo</option>
             <option value="visitas">Mais Visitas no Mês</option>
             <option value="conversao">Maior Taxa de Conversão</option>
@@ -338,10 +357,11 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
       <div className="flex flex-wrap items-center gap-1.5 pt-1">
         {[
           { id: "todos", label: "Todos" },
-          { id: "meta_batida", label: "🏆 Meta Batida (≥100%)" },
-          { id: "em_rota", label: "⚡ Em Rota (70%–99%)" },
-          { id: "abaixo", label: "⚠️ Abaixo (<70%)" },
-          { id: "com_vendas", label: "💰 Com Vendas" },
+          { id: "meta_mes_batida", label: "🏆 Meta do Mês Batida (≥100%)" },
+          { id: "em_rota", label: "⚡ Em Rota no Mês (70%–99%)" },
+          { id: "meta_ano_alta", label: "📅 Alta no Ano (≥50% do Ano)" },
+          { id: "abaixo", label: "⚠️ Abaixo no Mês (<70%)" },
+          { id: "com_vendas", label: "💰 Com Vendas no Mês" },
         ].map((f) => (
           <button
             key={f.id}
@@ -371,10 +391,11 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {cardsVisiveis.map((c, index) => {
             const ribbon = POSITION_RIBBONS[index];
-            const percentMeta = c.desempenhoMeta != null ? Math.min(Math.max(c.desempenhoMeta, 0), 100) : 0;
-            const isTop3 = index < 3 && ordenacao === "vendas";
-            const metaSuperada = c.desempenhoMeta != null && c.desempenhoMeta >= 100;
-            const emRota = c.desempenhoMeta != null && c.desempenhoMeta >= 70 && c.desempenhoMeta < 100;
+            const percentMetaMes = c.desempenhoMetaMes != null ? Math.min(Math.max(c.desempenhoMetaMes, 0), 100) : 0;
+            const percentMetaAno = c.desempenhoMetaAno != null ? Math.min(Math.max(c.desempenhoMetaAno, 0), 100) : 0;
+            const isTop3 = index < 3 && ordenacao === "vendas_mes";
+            const metaMesSuperada = c.desempenhoMetaMes != null && c.desempenhoMetaMes >= 100;
+            const emRotaMes = c.desempenhoMetaMes != null && c.desempenhoMetaMes >= 70 && c.desempenhoMetaMes < 100;
 
             const crmBadge =
               c.crmQuality >= 70
@@ -397,8 +418,8 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
                   boxShadow: "var(--voux-card-shadow)",
                 }}
               >
-                {/* Top Section: Avatar, Nome, Posição & Badges */}
                 <div>
+                  {/* Top Header: Avatar, Nome, Posição & Badges */}
                   <div className="flex items-start justify-between gap-2.5 mb-3">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="relative">
@@ -420,89 +441,87 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
                       </div>
 
                       <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <h4
-                            className="truncate text-[13px] font-bold text-foreground group-hover:text-amber-500 transition-colors cursor-pointer"
-                            onClick={() => onSelectConsultor(c.nome)}
-                            title={c.nome}
-                          >
-                            {c.nome}
-                          </h4>
-                        </div>
+                        <h4
+                          className="truncate text-[13px] font-bold text-foreground group-hover:text-amber-500 transition-colors cursor-pointer"
+                          onClick={() => onSelectConsultor(c.nome)}
+                          title={c.nome}
+                        >
+                          {c.nome}
+                        </h4>
                         <p className="text-[10px] font-mono text-muted-foreground truncate">
                           {c.totalAcoes} ações registradas · CRM {crmBadge.label}
                         </p>
                       </div>
                     </div>
 
-                    {/* Meta Badge */}
+                    {/* Meta do Mês Badge */}
                     <div className="flex flex-col items-end gap-1 shrink-0">
-                      {c.desempenhoMeta != null && c.metaMes > 0 ? (
+                      {c.desempenhoMetaMes != null && c.metaMes > 0 ? (
                         <span
                           className={cn(
                             "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-mono font-bold border tabular-nums",
-                            metaSuperada
+                            metaMesSuperada
                               ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                              : emRota
+                              : emRotaMes
                               ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
                               : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
                           )}
                         >
-                          {metaSuperada ? <CheckCircle2 className="h-3 w-3" /> : emRota ? <Sparkles className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
-                          {formatPct(c.desempenhoMeta)}
+                          {metaMesSuperada ? <CheckCircle2 className="h-3 w-3" /> : emRotaMes ? <Sparkles className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
+                          {formatPct(c.desempenhoMetaMes)}
                         </span>
                       ) : (
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-mono text-muted-foreground border border-black/5 dark:border-white/10">
-                          Sem meta
+                          Sem meta mês
                         </span>
                       )}
                     </div>
                   </div>
 
-                  {/* Bloco 1: Meta & Vendas (Mês Atual vs Passado) */}
-                  <div className="mb-3 rounded-xl border p-3 bg-black/[0.02] dark:bg-white/[0.02]" style={{ borderColor: "var(--voux-card-border)" }}>
+                  {/* BLOCO 1: META DO MÊS & VENDAS ATUAIS */}
+                  <div className="mb-2.5 rounded-xl border p-3 bg-black/[0.02] dark:bg-white/[0.02]" style={{ borderColor: "var(--voux-card-border)" }}>
                     <div className="flex items-center justify-between text-[11px] mb-1.5">
                       <span className="font-semibold text-muted-foreground flex items-center gap-1">
                         <Target className="h-3.5 w-3.5 text-amber-500" />
-                        Meta do Mês: <strong className="font-mono text-foreground">{formatCurrency(c.metaMes)}</strong>
+                        Meta do Mês: <strong className="font-mono text-foreground">{formatBRL(c.metaMes)}</strong>
                       </span>
-                      {c.saldoMeta > 0 && c.metaMes > 0 ? (
+                      {c.saldoMetaMes > 0 && c.metaMes > 0 ? (
                         <span className="text-[10px] font-mono text-muted-foreground">
-                          Falta: <strong className="text-rose-500">{formatCurrency(c.saldoMeta)}</strong>
+                          Falta: <strong className="text-rose-500">{formatBRL(c.saldoMetaMes)}</strong>
                         </span>
                       ) : c.metaMes > 0 ? (
                         <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
-                          Meta Superada!
+                          Meta Batida!
                         </span>
                       ) : null}
                     </div>
 
-                    {/* Barra de Progresso da Meta */}
+                    {/* Barra de Progresso do Mês */}
                     {c.metaMes > 0 && (
-                      <div className="mb-2.5 h-1.5 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
+                      <div className="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
                         <div
                           className={cn(
                             "h-full rounded-full transition-all duration-500",
-                            metaSuperada
+                            metaMesSuperada
                               ? "bg-gradient-to-r from-emerald-500 to-teal-400"
-                              : emRota
+                              : emRotaMes
                               ? "bg-gradient-to-r from-amber-500 to-emerald-500"
                               : "bg-gradient-to-r from-rose-500 to-amber-500"
                           )}
-                          style={{ width: `${percentMeta}%` }}
+                          style={{ width: `${percentMetaMes}%` }}
                         />
                       </div>
                     )}
 
-                    {/* Venda Atual vs Mês Passado */}
+                    {/* Grid Mês: Vendido Atual vs Mês Passado */}
                     <div className="grid grid-cols-2 gap-2 pt-1 border-t" style={{ borderColor: "var(--voux-card-border)" }}>
                       <div>
                         <p className="text-[10px] uppercase font-semibold text-muted-foreground font-mono">Vendido no Mês</p>
-                        <p className="font-mono font-bold text-[14px] text-emerald-600 dark:text-emerald-400 tabular-nums">
-                          {formatFullCurrency(c.vendaAtual)}
+                        <p className="font-mono font-bold text-[13px] text-emerald-600 dark:text-emerald-400 tabular-nums">
+                          {formatBRL(c.vendaMes)}
                         </p>
                         <p className="text-[10px] font-mono text-muted-foreground">
-                          {c.quantidadeVendas} {c.quantidadeVendas === 1 ? "venda" : "vendas"}
+                          {c.quantidadeVendasMes} {c.quantidadeVendasMes === 1 ? "venda" : "vendas"}
                         </p>
                       </div>
 
@@ -510,7 +529,7 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
                         <p className="text-[10px] uppercase font-semibold text-muted-foreground font-mono">Mês Passado</p>
                         <div className="flex items-center gap-1">
                           <p className="font-mono font-semibold text-[12px] text-foreground tabular-nums">
-                            {formatCurrency(c.vendaAnterior)}
+                            {formatBRL(c.vendaAnterior)}
                           </p>
                           {c.deltaVenda != null && (
                             <span
@@ -531,15 +550,63 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
                     </div>
                   </div>
 
-                  {/* Bloco 2: Pipeline em Aberto (Três Mini-Cards) */}
-                  <div className="mb-3">
+                  {/* BLOCO 2: META ANUAL & ACUMULADO DO ANO (YTD) */}
+                  <div className="mb-2.5 rounded-xl border p-3 bg-black/[0.02] dark:bg-white/[0.02]" style={{ borderColor: "var(--voux-card-border)" }}>
+                    <div className="flex items-center justify-between text-[11px] mb-1.5">
+                      <span className="font-semibold text-muted-foreground flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5 text-blue-500" />
+                        Meta Anual: <strong className="font-mono text-foreground">{formatBRL(c.metaAno)}</strong>
+                      </span>
+                      {c.desempenhoMetaAno != null && (
+                        <span className="text-[10px] font-mono font-bold text-blue-600 dark:text-blue-400">
+                          {formatPct(c.desempenhoMetaAno)} do ano
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Barra de Progresso Anual */}
+                    {c.metaAno > 0 && (
+                      <div className="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
+                        <div
+                          className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-blue-500 to-emerald-500"
+                          style={{ width: `${percentMetaAno}%` }}
+                        />
+                      </div>
+                    )}
+
+                    {/* Grid Ano: Vendido no Ano vs Falta p/ Meta Anual */}
+                    <div className="grid grid-cols-2 gap-2 pt-1 border-t" style={{ borderColor: "var(--voux-card-border)" }}>
+                      <div>
+                        <p className="text-[10px] uppercase font-semibold text-muted-foreground font-mono">Vendido no Ano</p>
+                        <p className="font-mono font-bold text-[13px] text-foreground tabular-nums">
+                          {formatBRL(c.vendaAno)}
+                        </p>
+                        <p className="text-[10px] font-mono text-muted-foreground">
+                          {c.quantidadeVendasAno} pedidos no ano
+                        </p>
+                      </div>
+
+                      <div className="border-l pl-2" style={{ borderColor: "var(--voux-card-border)" }}>
+                        <p className="text-[10px] uppercase font-semibold text-muted-foreground font-mono">Falta p/ Meta do Ano</p>
+                        <p className="font-mono font-semibold text-[12px] text-rose-500 tabular-nums">
+                          {c.saldoMetaAno > 0 ? formatBRL(c.saldoMetaAno) : "Meta Anual Batida!"}
+                        </p>
+                        <p className="text-[10px] font-mono text-muted-foreground">
+                          {c.negociosAno} neg no ano
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* BLOCO 3: PIPELINE ATIVO (3 ETAPAS COM VALORES EXATOS) */}
+                  <div className="mb-2.5">
                     <div className="flex items-center justify-between text-[11px] mb-1.5 px-0.5">
                       <span className="font-semibold text-muted-foreground flex items-center gap-1">
-                        <Briefcase className="h-3.5 w-3.5 text-blue-500" />
-                        Pipeline Ativo
+                        <Briefcase className="h-3.5 w-3.5 text-amber-500" />
+                        Pipeline Ativo ({c.oportunidadesAbertas} em aberto)
                       </span>
                       <span className="font-mono font-bold text-foreground text-[11px]">
-                        Total: {formatCurrency(c.totalPipeline)}
+                        Total: {formatBRL(c.totalPipeline)}
                       </span>
                     </div>
 
@@ -548,7 +615,7 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
                       <div className="rounded-lg border p-1.5 text-center bg-black/[0.01] dark:bg-white/[0.01]" style={{ borderColor: "var(--voux-card-border)" }}>
                         <p className="text-[9px] font-semibold uppercase text-muted-foreground truncate font-mono">1. Oport.</p>
                         <p className="text-[11px] font-bold font-mono text-foreground tabular-nums truncate">
-                          {formatCurrency(c.oportunidade)}
+                          {formatBRL(c.oportunidade)}
                         </p>
                       </div>
 
@@ -556,7 +623,7 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
                       <div className="rounded-lg border p-1.5 text-center bg-black/[0.01] dark:bg-white/[0.01]" style={{ borderColor: "var(--voux-card-border)" }}>
                         <p className="text-[9px] font-semibold uppercase text-muted-foreground truncate font-mono">2. Cotação</p>
                         <p className="text-[11px] font-bold font-mono text-foreground tabular-nums truncate">
-                          {formatCurrency(c.cotacao)}
+                          {formatBRL(c.cotacao)}
                         </p>
                       </div>
 
@@ -564,35 +631,37 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
                       <div className="rounded-lg border p-1.5 text-center bg-black/[0.01] dark:bg-white/[0.01]" style={{ borderColor: "var(--voux-card-border)" }}>
                         <p className="text-[9px] font-semibold uppercase text-muted-foreground truncate font-mono">3. Proposta</p>
                         <p className="text-[11px] font-bold font-mono text-foreground tabular-nums truncate">
-                          {formatCurrency(c.proposta)}
+                          {formatBRL(c.proposta)}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  {/* Bloco 3: Atributos de Eficiência Comercial & Esforço de Campo (Grid 2x2) */}
+                  {/* BLOCO 4: EFICIÊNCIA & MÉDIAS DE ESFORÇO DE CAMPO (GRID 2x2) */}
                   <div className="grid grid-cols-2 gap-2 text-[11px]">
                     {/* Ticket Médio */}
                     <div className="rounded-lg border p-2 bg-black/[0.01] dark:bg-white/[0.01]" style={{ borderColor: "var(--voux-card-border)" }}>
                       <p className="text-[10px] text-muted-foreground font-mono">Ticket Médio</p>
-                      <p className="font-mono font-bold text-foreground tabular-nums text-[12px]">
-                        {formatCurrency(c.ticketMedio)}
+                      <p className="font-mono font-bold text-foreground tabular-nums text-[12px] truncate">
+                        {formatBRL(c.ticketMedioMes ?? c.ticketMedioAno)}
                       </p>
-                      <p className="text-[9px] text-muted-foreground font-mono truncate">por pedido ganho</p>
+                      <p className="text-[9px] text-muted-foreground font-mono truncate">
+                        {c.ticketMedioMes != null ? "no mês atual" : "média no ano"}
+                      </p>
                     </div>
 
                     {/* Taxa de Conversão */}
                     <div className="rounded-lg border p-2 bg-black/[0.01] dark:bg-white/[0.01]" style={{ borderColor: "var(--voux-card-border)" }}>
                       <p className="text-[10px] text-muted-foreground font-mono">Tx. Conversão</p>
                       <p className="font-mono font-bold text-foreground tabular-nums text-[12px]">
-                        {formatPct(c.taxaConversao)}
+                        {formatPct(c.taxaConversaoMes)}
                       </p>
                       <p className="text-[9px] text-muted-foreground font-mono truncate">
-                        {c.quantidadeVendas} vda / {c.oportunidadesQtd} neg
+                        {c.quantidadeVendasMes} vda / {c.negociosMes} neg
                       </p>
                     </div>
 
-                    {/* Visitas no Mês */}
+                    {/* Visitas & Visitas p/ Oportunidade */}
                     <div className="rounded-lg border p-2 bg-black/[0.01] dark:bg-white/[0.01]" style={{ borderColor: "var(--voux-card-border)" }}>
                       <p className="text-[10px] text-muted-foreground font-mono flex items-center gap-1">
                         <Compass className="h-3 w-3 text-amber-500" />
@@ -601,12 +670,12 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
                       <p className="font-mono font-bold text-foreground tabular-nums text-[12px]">
                         {c.visitas} <span className="text-[10px] font-normal text-muted-foreground">visitas</span>
                       </p>
-                      <p className="text-[9px] text-muted-foreground font-mono truncate">
+                      <p className="text-[9px] text-amber-600 dark:text-amber-400 font-mono font-medium truncate">
                         {formatRatio(c.visitasPorOportunidade, "vis/oport.")}
                       </p>
                     </div>
 
-                    {/* Clientes Únicos */}
+                    {/* Clientes Únicos & Clientes p/ Venda */}
                     <div className="rounded-lg border p-2 bg-black/[0.01] dark:bg-white/[0.01]" style={{ borderColor: "var(--voux-card-border)" }}>
                       <p className="text-[10px] text-muted-foreground font-mono flex items-center gap-1">
                         <Users className="h-3 w-3 text-emerald-500" />
@@ -615,7 +684,7 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
                       <p className="font-mono font-bold text-foreground tabular-nums text-[12px]">
                         {c.clientes} <span className="text-[10px] font-normal text-muted-foreground">clientes</span>
                       </p>
-                      <p className="text-[9px] text-muted-foreground font-mono truncate">
+                      <p className="text-[9px] text-emerald-600 dark:text-emerald-400 font-mono font-medium truncate">
                         {formatRatio(c.clientesPorVenda, "cli/venda")}
                       </p>
                     </div>
@@ -623,7 +692,7 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
                 </div>
 
                 {/* Footer do Card / Ação */}
-                <div className="mt-3.5 pt-2.5 border-t flex items-center justify-between" style={{ borderColor: "var(--voux-card-border)" }}>
+                <div className="mt-3 pt-2.5 border-t flex items-center justify-between" style={{ borderColor: "var(--voux-card-border)" }}>
                   <span className="text-[10px] font-mono text-muted-foreground">
                     Posição #{index + 1}
                   </span>
