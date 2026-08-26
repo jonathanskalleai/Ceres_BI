@@ -454,9 +454,10 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
             return (
               <div
                 key={c.nome}
+                onDoubleClick={() => onSelectConsultor(c.nome)}
                 className={cn(
-                  "group relative flex flex-col justify-between rounded-2xl border p-4 transition-all duration-300",
-                  "hover:shadow-xl hover:scale-[1.01]",
+                  "group relative flex flex-col justify-between rounded-2xl border p-4 transition-all duration-300 cursor-pointer select-none",
+                  "hover:shadow-xl hover:scale-[1.01] hover:border-amber-500/40",
                   ribbon?.glow ?? "border-[var(--voux-card-border)]"
                 )}
                 style={{
@@ -464,12 +465,17 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
                   borderColor: isTop3 ? ribbon?.glow : "var(--voux-card-border)",
                   boxShadow: "var(--voux-card-shadow)",
                 }}
+                title="Dê um duplo clique para abrir o dossiê completo deste consultor"
               >
                 <div>
                   {/* Top Header: Avatar, Nome, Posição & Badges */}
                   <div className="flex items-start justify-between gap-2.5 mb-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="relative">
+                      <div
+                        className="relative cursor-pointer"
+                        onClick={() => onSelectConsultor(c.nome)}
+                        title="Ver dossiê do consultor"
+                      >
                         <AvatarPersona
                           name={c.nome}
                           size="md"
