@@ -23,6 +23,7 @@ import { InsightConsultorCard } from "./consultor/InsightConsultorCard";
 import { ConsultorClienteCard } from "./consultor/ConsultorClienteCard";
 import { ConsultorNegociosPipelineCard } from "./consultor/ConsultorNegociosPipelineCard";
 import { ConsultorDistribuicaoCampoCard } from "./consultor/ConsultorDistribuicaoCampoCard";
+import { ConsultorPipelineDistribuicaoCard } from "./consultor/ConsultorPipelineDistribuicaoCard";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { LineChart } from "@/components/bi/charts";
 import EvolucaoGPOChart from "@/components/bi/charts/EvolucaoGPOChart";
@@ -659,6 +660,11 @@ export const DashboardConsultorDetail = ({
         <div className="lg:col-span-4 h-full">
           <InsightConsultorCard consultor={v.nome} />
         </div>
+      </div>
+
+      {/* SEÇÃO 2.5: COMPOSIÇÃO DE PIPELINE POR PRODUTO E POR CIDADE */}
+      <div className="w-full">
+        <ConsultorPipelineDistribuicaoCard consultor={v.nome} />
       </div>
 
       {/* SEÇÃO 3: GRÁFICOS DE EVOLUÇÃO NO ANO ATUAL (Janeiro a Dezembro de 2026) */}

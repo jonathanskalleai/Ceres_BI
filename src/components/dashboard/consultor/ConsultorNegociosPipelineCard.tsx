@@ -38,36 +38,50 @@ function getEtapaBadge(etapa: string) {
 
 function getTermometroBadge(estrelas: number) {
   const count = Math.min(Math.max(estrelas || 0, 0), 5);
-  if (count >= 4) {
-    return {
-      label: `${count}★ Quente`,
-      color: "text-emerald-500",
-      bg: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
-      stars: "★".repeat(count) + "☆".repeat(5 - count),
-    };
+  switch (count) {
+    case 5:
+      return {
+        label: "5★ Quentíssimo",
+        color: "text-amber-400",
+        bg: "bg-amber-500/15 text-amber-600 dark:text-amber-300 border-amber-500/30",
+        stars: "★★★★★",
+      };
+    case 4:
+      return {
+        label: "4★ Alta Prob.",
+        color: "text-emerald-500",
+        bg: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
+        stars: "★★★★☆",
+      };
+    case 3:
+      return {
+        label: "3★ Morno",
+        color: "text-amber-500",
+        bg: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30",
+        stars: "★★★☆☆",
+      };
+    case 2:
+      return {
+        label: "2★ Frio",
+        color: "text-sky-500",
+        bg: "bg-sky-500/15 text-sky-600 dark:text-sky-400 border-sky-500/30",
+        stars: "★★☆☆☆",
+      };
+    case 1:
+      return {
+        label: "1★ Inicial",
+        color: "text-rose-500",
+        bg: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30",
+        stars: "★☆☆☆☆",
+      };
+    default:
+      return {
+        label: "0★ Neutro",
+        color: "text-muted-foreground",
+        bg: "bg-black/[0.03] dark:bg-white/[0.03] text-muted-foreground border-border/50",
+        stars: "☆☆☆☆☆",
+      };
   }
-  if (count === 3) {
-    return {
-      label: "3★ Morno",
-      color: "text-amber-500",
-      bg: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
-      stars: "★★★☆☆",
-    };
-  }
-  if (count > 0) {
-    return {
-      label: `${count}★ Frio`,
-      color: "text-rose-500",
-      bg: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20",
-      stars: "★".repeat(count) + "☆".repeat(5 - count),
-    };
-  }
-  return {
-    label: "0★ Neutro",
-    color: "text-muted-foreground",
-    bg: "bg-black/[0.03] dark:bg-white/[0.03] text-muted-foreground border-border/50",
-    stars: "☆☆☆☆☆",
-  };
 }
 
 type OrdenacaoTipo = "estrelas" | "valor" | "recentes";
@@ -272,9 +286,10 @@ export const ConsultorNegociosPipelineCard = memo(function ConsultorNegociosPipe
                       </span>
 
                       {/* Estrelinhas / Temperatura */}
-                      <span className={cn("inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold border tracking-wider", termometro.bg)}>
-                        <span>{termometro.stars}</span>
-                        <span>({n.estrelas || 0}★)</span>
+                      <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold border", termometro.bg)} title={termometro.label}>
+                        <Flame className="h-3 w-3 text-amber-500 shrink-0" />
+                        <span className="tracking-wider text-amber-500">{termometro.stars}</span>
+                        <span>{termometro.label}</span>
                       </span>
 
                       <span className="text-[11px] font-mono text-foreground font-medium truncate flex items-center gap-1 max-w-[200px]" title={n.produto}>

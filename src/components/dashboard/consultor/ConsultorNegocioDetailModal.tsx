@@ -63,36 +63,74 @@ function getEtapaBadge(etapa: string) {
 
 function getTermometroInfo(estrelas: number) {
   const count = Math.min(Math.max(estrelas || 0, 0), 5);
-  if (count >= 4) {
-    return {
-      label: `${count}/5 ★ Alta Probabilidade (Quente)`,
-      color: "text-emerald-500",
-      badgeBg: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
-      stars: "★".repeat(count) + "☆".repeat(5 - count),
-    };
+  switch (count) {
+    case 5:
+      return {
+        label: "5/5 ★ Quentíssimo (Fechamento Iminente)",
+        probabilidade: "100%",
+        percent: 100,
+        color: "text-amber-400",
+        barColor: "bg-gradient-to-r from-amber-500 via-amber-400 to-emerald-500",
+        badgeBg: "bg-amber-500/15 text-amber-600 dark:text-amber-300 border-amber-500/30",
+        stars: "★★★★★",
+        descricao: "Negócio com altíssima probabilidade de fechamento a curto prazo.",
+      };
+    case 4:
+      return {
+        label: "4/5 ★ Alta Probabilidade (Negociação Avançada)",
+        probabilidade: "80%",
+        percent: 80,
+        color: "text-emerald-500",
+        barColor: "bg-emerald-500",
+        badgeBg: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
+        stars: "★★★★☆",
+        descricao: "Proposta aceita em princípio, em fase de aprovação de crédito ou documentação.",
+      };
+    case 3:
+      return {
+        label: "3/5 ★ Probabilidade Média (Em Andamento / Morno)",
+        probabilidade: "60%",
+        percent: 60,
+        color: "text-amber-500",
+        barColor: "bg-amber-500",
+        badgeBg: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30",
+        stars: "★★★☆☆",
+        descricao: "Cliente demonstrando interesse real, cotações e simulações em andamento.",
+      };
+    case 2:
+      return {
+        label: "2/5 ★ Baixa Probabilidade (Qualificação / Frio)",
+        probabilidade: "40%",
+        percent: 40,
+        color: "text-sky-500",
+        barColor: "bg-sky-500",
+        badgeBg: "bg-sky-500/15 text-sky-600 dark:text-sky-400 border-sky-500/30",
+        stars: "★★☆☆☆",
+        descricao: "Primeiras sondagens de preço e verificação de disponibilidade.",
+      };
+    case 1:
+      return {
+        label: "1/5 ★ Prospecção Inicial",
+        probabilidade: "20%",
+        percent: 20,
+        color: "text-rose-500",
+        barColor: "bg-rose-500",
+        badgeBg: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30",
+        stars: "★☆☆☆☆",
+        descricao: "Contato inicial realizado, aguardando levantamento de necessidade.",
+      };
+    default:
+      return {
+        label: "Sem estrelas definidas",
+        probabilidade: "—",
+        percent: 0,
+        color: "text-muted-foreground",
+        barColor: "bg-muted",
+        badgeBg: "bg-muted text-muted-foreground border-border",
+        stars: "☆☆☆☆☆",
+        descricao: "Negócio ainda não classificado no termômetro de fechamento.",
+      };
   }
-  if (count === 3) {
-    return {
-      label: "3/5 ★ Probabilidade Média (Morno)",
-      color: "text-amber-500",
-      badgeBg: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
-      stars: "★★★☆☆",
-    };
-  }
-  if (count > 0) {
-    return {
-      label: `${count}/5 ★ Baixa Probabilidade (Frio)`,
-      color: "text-rose-500",
-      badgeBg: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20",
-      stars: "★".repeat(count) + "☆".repeat(5 - count),
-    };
-  }
-  return {
-    label: "Sem estrelas definidas",
-    color: "text-muted-foreground",
-    badgeBg: "bg-muted text-muted-foreground border-border",
-    stars: "☆☆☆☆☆",
-  };
 }
 
 export const ConsultorNegocioDetailModal = memo(function ConsultorNegocioDetailModal({
@@ -122,11 +160,16 @@ export const ConsultorNegocioDetailModal = memo(function ConsultorNegocioDetailM
               <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-mono font-bold border", etapaBadge.bg)}>
                 {etapaBadge.label}
               </span>
-              <span className={cn("inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold border", termometro.badgeBg)}>
-                <Flame className="h-3.5 w-3.5" />
-                <span className="tracking-widest">{termometro.stars}</span>
-                <span>({negocio.estrelas || 0}★)</span>
+              <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold border", termometro.badgeBg)}>
+                <Flame className="h-3.5 w-3.5 text-amber-500" />
+                <span className="tracking-widest text-amber-500">{termometro.stars}</span>
+                <span>{termometro.probabilidade}</span>
               </span>
+              {negocio.prioridade && negocio.prioridade !== "Média" && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold border bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20">
+                  Prioridade {negocio.prioridade}
+                </span>
+              )}
             </div>
 
             <span className="text-xs font-mono text-muted-foreground">
@@ -166,6 +209,46 @@ export const ConsultorNegocioDetailModal = memo(function ConsultorNegocioDetailM
 
         {/* Corpo com Grid de Informações */}
         <div className="p-6 space-y-5">
+          {/* Card de Termômetro & Ciclo de Vendas */}
+          <div className="rounded-xl border p-4 bg-black/[0.015] dark:bg-white/[0.015]" style={{ borderColor: "var(--voux-card-border)" }}>
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <div className="flex items-center gap-2">
+                <Flame className="h-4 w-4 text-amber-500" />
+                <span className="font-mono text-xs font-bold text-foreground">
+                  Termômetro de Fechamento: {termometro.label}
+                </span>
+              </div>
+              <span className="font-mono text-xs font-bold text-amber-500">
+                {termometro.probabilidade} probabilidade
+              </span>
+            </div>
+
+            {/* Barra de Temperatura */}
+            <div className="h-2 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10 mb-2">
+              <div
+                className={cn("h-full rounded-full transition-all duration-500", termometro.barColor)}
+                style={{ width: `${termometro.percent}%` }}
+              />
+            </div>
+            <p className="text-[11px] text-muted-foreground">{termometro.descricao}</p>
+
+            {/* Ciclo e Interações */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3 pt-3 border-t text-xs font-mono" style={{ borderColor: "var(--voux-card-border)" }}>
+              <div>
+                <span className="text-[10px] text-muted-foreground block">Tempo no Funil (Ciclo)</span>
+                <span className="font-bold text-foreground">{negocio.ciclo_vendas && Number(negocio.ciclo_vendas) > 0 ? `${negocio.ciclo_vendas} dias` : "Recente"}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-muted-foreground block">Interações / Ações</span>
+                <span className="font-bold text-foreground">{negocio.qtd_acoes || 0} ações registradas</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-muted-foreground block">Primeiro Contato</span>
+                <span className="font-bold text-foreground">{negocio.data_primeiro_contato ? formatDateBR(negocio.data_primeiro_contato) : "—"}</span>
+              </div>
+            </div>
+          </div>
+
           {/* Seção 1: Produto / Equipamento Negociado */}
           <div className="rounded-xl border p-4 bg-black/[0.01] dark:bg-white/[0.01]" style={{ borderColor: "var(--voux-card-border)" }}>
             <div className="flex items-center gap-2 mb-2 pb-2 border-b text-xs font-mono font-semibold uppercase text-muted-foreground" style={{ borderColor: "var(--voux-card-border)" }}>
@@ -174,9 +257,16 @@ export const ConsultorNegocioDetailModal = memo(function ConsultorNegocioDetailM
             </div>
 
             <div className="space-y-2">
-              <p className="text-sm font-bold text-foreground">
-                {negocio.produto}
-              </p>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-bold text-foreground">
+                  {negocio.produto}
+                </p>
+                {negocio.grupo_produto && negocio.grupo_produto !== "Outros" && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                    {negocio.grupo_produto}
+                  </span>
+                )}
+              </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-xs font-mono">
                 {negocio.marca && (
@@ -192,12 +282,12 @@ export const ConsultorNegocioDetailModal = memo(function ConsultorNegocioDetailM
                   </div>
                 )}
                 <div className="rounded-lg border p-2 bg-background/50" style={{ borderColor: "var(--voux-card-border)" }}>
-                  <span className="text-[10px] text-muted-foreground block">Quantidade</span>
-                  <span className="font-semibold text-foreground">{negocio.quantidade} un.</span>
+                  <span className="text-[10px] text-muted-foreground block">Condição</span>
+                  <span className="font-semibold text-foreground">{negocio.condicao_produto || "Novo"}</span>
                 </div>
                 <div className="rounded-lg border p-2 bg-background/50" style={{ borderColor: "var(--voux-card-border)" }}>
-                  <span className="text-[10px] text-muted-foreground block">Valor Unitário</span>
-                  <span className="font-semibold text-foreground">{formatBRL(negocio.valor_unitario)}</span>
+                  <span className="text-[10px] text-muted-foreground block">Quantidade & Unitário</span>
+                  <span className="font-semibold text-foreground">{negocio.quantidade} un. · {formatBRL(negocio.valor_unitario)}</span>
                 </div>
               </div>
             </div>
@@ -228,9 +318,15 @@ export const ConsultorNegocioDetailModal = memo(function ConsultorNegocioDetailM
                   </div>
                 )}
                 {negocio.orc_valor > 0 && (
-                  <div className="flex justify-between py-1">
+                  <div className="flex justify-between py-1 border-b" style={{ borderColor: "var(--voux-card-border)" }}>
                     <span className="text-muted-foreground">Valor Orçado:</span>
                     <span className="font-semibold text-emerald-500">{formatBRL(negocio.orc_valor)}</span>
+                  </div>
+                )}
+                {negocio.orc_observacao && (
+                  <div className="pt-1 text-[11px] text-muted-foreground">
+                    <span className="font-semibold block text-foreground">Obs. Financiamento:</span>
+                    <p>{negocio.orc_observacao}</p>
                   </div>
                 )}
               </div>
@@ -254,6 +350,12 @@ export const ConsultorNegocioDetailModal = memo(function ConsultorNegocioDetailM
                   <div className="flex justify-between py-1 border-b" style={{ borderColor: "var(--voux-card-border)" }}>
                     <span className="text-muted-foreground">Valor da Troca:</span>
                     <span className="font-semibold text-foreground">{formatBRL(negocio.usa_valor)}</span>
+                  </div>
+                )}
+                {negocio.usa_estado && (
+                  <div className="flex justify-between py-1 border-b" style={{ borderColor: "var(--voux-card-border)" }}>
+                    <span className="text-muted-foreground">Estado Conservação:</span>
+                    <span className="font-semibold text-foreground">{negocio.usa_estado}</span>
                   </div>
                 )}
                 <div className="flex justify-between py-1 border-b" style={{ borderColor: "var(--voux-card-border)" }}>
