@@ -169,8 +169,19 @@ export const DashboardConsultorDetail = ({
 }: Props) => {
   const { data: gpoData, isLoading: gpoLoading } = useEvolucaoGPO({
     vendedor: v.nome,
+    from: `${anoDesempenho}-01-01`,
+    to: `${anoDesempenho}-12-31`,
     enabled: !!v.nome,
   });
+
+  // Garantir que os gráficos mostrem exclusivamente os meses do ano corrente (2026)
+  const evolucaoAno = useMemo(() => {
+    return (v.evolucao ?? []).filter((d) => d.YearMonth.startsWith(String(anoDesempenho)));
+  }, [v.evolucao, anoDesempenho]);
+
+  const gpoDataAno = useMemo(() => {
+    return (gpoData ?? []).filter((d) => d.mes.startsWith(String(anoDesempenho)));
+  }, [gpoData, anoDesempenho]);
 
   // Competência Atual e Mês Anterior
   const { compAtual, compAnterior } = useMemo(() => {
@@ -636,7 +647,46 @@ export const DashboardConsultorDetail = ({
         </div>
       </div>
 
-      {/* SEÇÃO 3: DISTRIBUIÇÃO DE CAMPO & CLIENTES ATENDIDOS */}
+      {/* SEÇÃO 3: GRÁFICOS DE EVOLUÇÃO NO ANO ATUAL (Janeiro a Dezembro de 2026) */}
+      <div className="space-y-4">
+        {/* Evolução Mensal — Janeiro a Dezembro de 2026 */}
+        <ChartCard
+          title={`Evolução Mensal · Ano ${anoDesempenho}`}
+          description={`Ações e visitas mensais no ano de ${anoDesempenho} (Janeiro a Dezembro)`}
+          label={`EVOLUÇÃO · ANO ${anoDesempenho}`}
+          height={300}
+        >
+          <LineChart
+            series={[
+              {
+                name: "Ações",
+                data: evolucaoAno.map((d) => ({ x: formatMonthYear(d.YearMonth), y: d.acoes })),
+                color: "#4caf7a",
+              },
+              {
+                name: "Visitas",
+                data: evolucaoAno.map((d) => ({ x: formatMonthYear(d.YearMonth), y: d.visitas })),
+                color: "#d4a05a",
+              },
+            ]}
+            height={300}
+            independentAxes
+          />
+        </ChartCard>
+
+        {/* Desempenho Comercial — GPO (Ano 2026) */}
+        <ChartCard
+          title={`Desempenho Comercial (GPO) · Ano ${anoDesempenho}`}
+          description={`Vendas fechadas, perdas e novas oportunidades geradas no ano de ${anoDesempenho}`}
+          label={`COMERCIAL · ANO ${anoDesempenho}`}
+          height={280}
+          loading={gpoLoading}
+        >
+          <EvolucaoGPOChart data={gpoDataAno} height={280} />
+        </ChartCard>
+      </div>
+
+      {/* SEÇÃO 4: DISTRIBUIÇÃO DE CAMPO & CLIENTES ATENDIDOS */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* Distribuição de Ações de Campo (4 colunas) */}
         <div className="lg:col-span-4 h-full">
@@ -696,45 +746,6 @@ export const DashboardConsultorDetail = ({
             </div>
           </div>
         </div>
-      </div>
-
-      {/* SEÇÃO 4: GRÁFICOS FULL WIDTH (Evolução Mensal no Ano Atual & Desempenho Comercial GPO) */}
-      <div className="space-y-4">
-        {/* Evolução Mensal — Janeiro a Dezembro */}
-        <ChartCard
-          title={`Evolução Mensal · Ano ${anoDesempenho}`}
-          description="Ações e visitas mensais no ano corrente — cada linha com escala própria"
-          label="EVOLUÇÃO · ANO CORRENTE"
-          height={300}
-        >
-          <LineChart
-            series={[
-              {
-                name: "Ações",
-                data: v.evolucao.map((d) => ({ x: formatMonthYear(d.YearMonth), y: d.acoes })),
-                color: "#4caf7a",
-              },
-              {
-                name: "Visitas",
-                data: v.evolucao.map((d) => ({ x: formatMonthYear(d.YearMonth), y: d.visitas })),
-                color: "#d4a05a",
-              },
-            ]}
-            height={300}
-            independentAxes
-          />
-        </ChartCard>
-
-        {/* Desempenho Comercial — GPO */}
-        <ChartCard
-          title="Desempenho Comercial (GPO)"
-          description="Vendas fechadas, perdas e novas oportunidades geradas no ano"
-          label="COMERCIAL · 12M"
-          height={280}
-          loading={gpoLoading}
-        >
-          <EvolucaoGPOChart data={gpoData ?? []} height={280} />
-        </ChartCard>
       </div>
     </div>
   );
