@@ -816,9 +816,7 @@ export const EquipeDesempenhoTable = memo(function EquipeDesempenhoTable({
         onOpenChange={setMetasOpen}
         ano={ano}
         consultores={consultores}
-        rows={data.rows}
       />
     </div>
   );
 });
-

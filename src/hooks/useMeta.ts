@@ -7,5 +7,5 @@ export function useMeta(ano: number) {
     queryFn: () => fetchMetaAnual(ano),
     staleTime: 5 * 60_000, // 5 min
   });
-  return { metaAnual: data ?? 30_000_000, isLoading };
+  return { metaAnual: data ?? 33_000_000, isLoading };
 }

@@ -32,3 +32,20 @@ export interface MetaConsultorMensal {
   competencia: string;
   meta: number;
 }
+
+export interface MetaCurvaMensal {
+  mes: number;
+  percentual: number;
+}
+
+export interface MetaConsultorAnual {
+  consultor: string;
+  metaAnual: number;
+}
+
+export interface ConfiguracaoMetas {
+  ano: number;
+  metaAnual: number;
+  curvaMensal: MetaCurvaMensal[];
+  consultores: MetaConsultorAnual[];
+}
