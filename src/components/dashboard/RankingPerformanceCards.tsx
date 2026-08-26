@@ -237,7 +237,8 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
         crmQuality,
         totalAcoes: v.totalAcoes,
       };
-    });
+    })
+    .filter((c) => c.oportunidade > 0 || c.cotacao > 0 || c.proposta > 0);
   }, [vendedores, desempenho.rows, resumoPorConsultor, compAtual, compAnterior]);
 
   // Ordenação
@@ -314,11 +315,11 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
                 Performance Ranking · Cartões dos Consultores
               </h3>
               <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-mono text-muted-foreground bg-background">
-                {consultoresFiltrados.length} de {consultoresProcessados.length} consultores
+                {consultoresFiltrados.length} {consultoresFiltrados.length === 1 ? "consultor" : "consultores"} com pipeline ativo
               </span>
             </div>
             <p className="text-[11px] text-muted-foreground">
-              Dossiê 360° com valores não arredondados, metas do mês e do ano, pipeline ativo e médias de esforço
+              Dossiê 360° dos consultores com oportunidades, cotações ou propostas em aberto no funil
             </p>
           </div>
         </div>

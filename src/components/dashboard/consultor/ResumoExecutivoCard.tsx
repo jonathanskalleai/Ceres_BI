@@ -113,6 +113,26 @@ export const ResumoExecutivoCard = memo(function ResumoExecutivoCard({
     };
   }, [resumo, desempenho, metaAnualDb, compAtual]);
 
+  // Consultores com Pipeline Ativo (com oportunidade > 0 || cotacao > 0 || proposta > 0)
+  const consultoresComPipeline = useMemo(() => {
+    const rows = desempenho?.rows ?? [];
+    const rowsComp = rows.filter((r) => r.competencia === compAtual);
+    if (rowsComp.length > 0) {
+      const nomesAtivos = new Set(
+        rowsComp
+          .filter(
+            (r) =>
+              Number(r.oportunidade || 0) > 0 ||
+              Number(r.cotacao || 0) > 0 ||
+              Number(r.proposta || 0) > 0
+          )
+          .map((r) => r.consultor)
+      );
+      return resumo.filter((r) => nomesAtivos.has(r.consultor));
+    }
+    return resumo.filter((r) => Number(r.pipeline_aberto_gerado || 0) > 0);
+  }, [desempenho?.rows, compAtual, resumo]);
+
   const percentualAnoBar = Math.min(Math.max(totais.pctMetaAno, 0), 100);
 
   return (
@@ -137,7 +157,7 @@ export const ResumoExecutivoCard = memo(function ResumoExecutivoCard({
             </h3>
           </div>
           <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-mono text-muted-foreground bg-background">
-            {resumo.length} consultores
+            {consultoresComPipeline.length} {consultoresComPipeline.length === 1 ? "consultor" : "consultores"} no pipeline
           </span>
         </div>
 

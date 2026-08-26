@@ -41,9 +41,35 @@ export const DashboardConsultores = ({
     ? `${formatDateBR(filters.dateRange.from)} a ${formatDateBR(filters.dateRange.to)}`
     : "Período selecionado";
 
+  const compAtual = useMemo(() => {
+    if (filters.dateRange?.from) {
+      return `${filters.dateRange.from.slice(0, 7)}-01`;
+    }
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+  }, [filters.dateRange]);
+
+  const consultoresComPipeline = useMemo(() => {
+    const rowsPorConsultor = new Map<string, typeof desempenho.rows>();
+    for (const r of desempenho.rows) {
+      if (!r.consultor) continue;
+      if (!rowsPorConsultor.has(r.consultor)) rowsPorConsultor.set(r.consultor, []);
+      rowsPorConsultor.get(r.consultor)!.push(r);
+    }
+
+    return vendedores.filter((v) => {
+      const cRows = rowsPorConsultor.get(v.nome) ?? [];
+      const rAtual = cRows.find((r) => r.competencia === compAtual);
+      const op = Number(rAtual?.oportunidade ?? 0);
+      const cot = Number(rAtual?.cotacao ?? 0);
+      const prop = Number(rAtual?.proposta ?? 0);
+      return op > 0 || cot > 0 || prop > 0;
+    });
+  }, [vendedores, desempenho.rows, compAtual]);
+
   const consultorNames = useMemo(
-    () => vendedores.map((v) => v.nome),
-    [vendedores]
+    () => consultoresComPipeline.map((v) => v.nome),
+    [consultoresComPipeline]
   );
 
   return (
@@ -83,7 +109,7 @@ export const DashboardConsultores = ({
             className="inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-mono text-muted-foreground bg-background"
             style={{ borderColor: "var(--voux-card-border)" }}
           >
-            {vendedores.length} consultores ativos
+            {consultoresComPipeline.length} {consultoresComPipeline.length === 1 ? "consultor" : "consultores"} com pipeline ativo
           </span>
         </div>
       </div>
