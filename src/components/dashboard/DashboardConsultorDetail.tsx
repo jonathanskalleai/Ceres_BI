@@ -1,38 +1,299 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import {
+  ArrowLeft,
+  Target,
+  Calendar,
+  Briefcase,
+  Users,
+  Compass,
+  CheckCircle2,
+  AlertCircle,
+  Sparkles,
+  ArrowUpRight,
+  ArrowDownRight,
+  TrendingUp,
+  ShoppingBag,
+  Clock,
+  MapPin,
+} from "lucide-react";
 import type { Vendedor, Registro } from "@/types/comercial";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-import { ConsultorCharts } from "./consultor/ConsultorCharts";
-import { ConsultorClienteCard } from "./consultor/ConsultorClienteCard";
-import { InsightConsultorCard } from "./consultor/InsightConsultorCard";
 import type { RpcConsultorResumoAcoes } from "@/types/consultoresRpc";
+import type { EquipeDesempenhoData } from "@/types/equipeDesempenho";
+import { Button } from "@/components/ui/button";
+import { AvatarPersona } from "@/components/ui/AvatarPersona";
+import { InsightConsultorCard } from "./consultor/InsightConsultorCard";
+import { ConsultorClienteCard } from "./consultor/ConsultorClienteCard";
+import { ChartCard } from "@/components/bi/ChartCard";
+import { LineChart } from "@/components/bi/charts";
+import EvolucaoGPOChart from "@/components/bi/charts/EvolucaoGPOChart";
+import { useEvolucaoGPO } from "@/hooks/useEvolucaoGPO";
+import { formatMonthYear } from "@/lib/dateUtils";
 import { cn } from "@/lib/utils";
 
 interface Props {
   vendedor: Vendedor;
   resumo: RpcConsultorResumoAcoes;
+  desempenho?: EquipeDesempenhoData;
+  anoDesempenho?: number;
   registros: Registro[];
   from: string;
   to: string;
   onBack: () => void;
 }
 
-const fmtCurrency = (v: number) =>
-  v >= 1e6
-    ? `R$ ${(v / 1e6).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}mi`
-    : v >= 1e3
-      ? `R$ ${(v / 1e3).toLocaleString("pt-BR", { maximumFractionDigits: 0 })}k`
-      : `R$ ${v.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}`;
+const BRL_EXACT = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
 
-const fmtFull = (v: number) =>
-  `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+const PCT_EXACT = new Intl.NumberFormat("pt-BR", {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
 
-const CARD = "rounded-2xl border bg-[var(--surface-raised)]";
+function formatBRL(value: number | null | undefined): string {
+  if (value == null) return "R$ 0,00";
+  return BRL_EXACT.format(Number(value));
+}
 
-export const DashboardConsultorDetail = ({ vendedor: v, resumo, registros, from, to, onBack }: Props) => {
-  const gradeColor = v.crmQuality >= 70 ? "#1f6e3f" : v.crmQuality >= 50 ? "#9c5e1c" : "#b8421c";
-  const gradeBg = v.crmQuality >= 70 ? "rgba(31,110,63,0.08)" : v.crmQuality >= 50 ? "rgba(156,94,28,0.08)" : "rgba(184,66,28,0.08)";
-  const gradeLabel = v.crmQuality >= 70 ? "A" : v.crmQuality >= 50 ? "B" : v.crmQuality >= 30 ? "C" : "D";
+function formatPct(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(Number(value))) return "—";
+  return `${PCT_EXACT.format(Number(value))}%`;
+}
+
+function formatRatio(value: number | null | undefined, unit: string): string {
+  if (value == null || !Number.isFinite(value) || value <= 0) return "—";
+  return `${PCT_EXACT.format(value)} ${unit}`;
+}
+
+const EARTHY = ["#c97565", "#d4a05a", "#8ea3b8", "#7a9b6f", "#4caf7a", "#6e542f", "#d4b896"] as const;
+
+// Donut simples interativo
+function SimpleDonut({ data, size = 130, thickness = 14 }: { data: { label: string; value: number; color: string }[]; size?: number; thickness?: number }) {
+  const [hovered, setHovered] = useState<number | null>(null);
+  const total = data.reduce((s, d) => s + d.value, 0);
+  if (total === 0) return null;
+  const cx = size / 2;
+  const cy = size / 2;
+  const r = (size - thickness) / 2;
+  const circumference = 2 * Math.PI * r;
+
+  let offset = 0;
+  const arcs = data.map((d) => {
+    const pct = d.value / total;
+    const dashArray = `${pct * circumference} ${circumference}`;
+    const dashOffset = -offset * circumference;
+    offset += pct;
+    return { ...d, dashArray, dashOffset, pct };
+  });
+
+  const centerLabel = hovered !== null ? `${(arcs[hovered].pct * 100).toFixed(0)}%` : String(total);
+
+  return (
+    <div className="flex items-center gap-4">
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0 cursor-pointer">
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(214,207,193,0.1)" strokeWidth={thickness} />
+        {arcs.map((arc, i) => (
+          <circle
+            key={i}
+            cx={cx}
+            cy={cy}
+            r={r}
+            fill="none"
+            stroke={arc.color}
+            strokeWidth={hovered === i ? thickness + 4 : thickness}
+            strokeDasharray={arc.dashArray}
+            strokeDashoffset={arc.dashOffset}
+            strokeLinecap="round"
+            transform={`rotate(-90 ${cx} ${cy})`}
+            opacity={hovered === null || hovered === i ? 1 : 0.4}
+            className="transition-all duration-200"
+            onMouseEnter={() => setHovered(i)}
+            onMouseLeave={() => setHovered(null)}
+          />
+        ))}
+        <text
+          x={cx}
+          y={cy}
+          textAnchor="middle"
+          dominantBaseline="central"
+          style={{ fontFamily: "var(--voux-font-mono)", fontSize: 15, fontWeight: 700, fill: "var(--voux-text-primary)" }}
+        >
+          {centerLabel}
+        </text>
+      </svg>
+      <div className="space-y-1 min-w-0 flex-1">
+        {data.slice(0, 5).map((d, i) => {
+          const pct = total > 0 ? ((d.value / total) * 100).toFixed(0) : "0";
+          const isActive = hovered === i;
+          return (
+            <div
+              key={d.label}
+              className="flex items-center gap-1.5 py-0.5 px-1 rounded text-[11px] transition-colors cursor-default"
+              style={{ background: isActive ? "rgba(214,207,193,0.08)" : "transparent" }}
+              onMouseEnter={() => setHovered(i)}
+              onMouseLeave={() => setHovered(null)}
+            >
+              <span className="w-2 h-2 rounded-full shrink-0" style={{ background: d.color }} />
+              <span className="truncate text-muted-foreground">{d.label}</span>
+              <span className="ml-auto font-mono font-bold tabular-nums text-foreground">{d.value}</span>
+              <span className="text-[10px] font-mono text-muted-foreground">({pct}%)</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+export const DashboardConsultorDetail = ({
+  vendedor: v,
+  resumo,
+  desempenho,
+  anoDesempenho = new Date().getFullYear(),
+  registros,
+  from,
+  to,
+  onBack,
+}: Props) => {
+  const { data: gpoData, isLoading: gpoLoading } = useEvolucaoGPO({
+    vendedor: v.nome,
+    enabled: !!v.nome,
+  });
+
+  // Competência Atual e Mês Anterior
+  const { compAtual, compAnterior } = useMemo(() => {
+    let ym = "";
+    if (from) {
+      ym = from.slice(0, 7);
+    } else {
+      const now = new Date();
+      ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    }
+    const current = `${ym}-01`;
+
+    const [yearStr, monthStr] = ym.split("-");
+    const y = parseInt(yearStr, 10);
+    const m = parseInt(monthStr, 10);
+    const prevDate = new Date(y, m - 2, 1);
+    const prevYm = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, "0")}`;
+    const previous = `${prevYm}-01`;
+
+    return { compAtual: current, compAnterior: previous };
+  }, [from]);
+
+  // Consolidar todos os dados e métricas exatas do consultor
+  const consultorStats = useMemo(() => {
+    const cRows = (desempenho?.rows ?? []).filter((r) => r.consultor === v.nome);
+    const rAtual = cRows.find((r) => r.competencia === compAtual);
+    const rAnterior = cRows.find((r) => r.competencia === compAnterior);
+
+    // --- MÊS ATUAL ---
+    const vendaMes = Number(rAtual?.total_venda ?? resumo.valor_ganho ?? 0);
+    const vendaAnterior = Number(rAnterior?.total_venda ?? 0);
+    const deltaVenda =
+      vendaAnterior > 0 ? ((vendaMes - vendaAnterior) / vendaAnterior) * 100 : null;
+
+    const metaMes = Number(rAtual?.meta ?? 0);
+    const desempenhoMetaMes =
+      metaMes > 0 ? (vendaMes / metaMes) * 100 : rAtual?.desempenho_meta != null ? Number(rAtual.desempenho_meta) : null;
+    const saldoMetaMes = metaMes - vendaMes;
+
+    // --- ACUMULADO DO ANO (YTD) ---
+    const metaAno = cRows.reduce((sum, r) => sum + Number(r.meta ?? 0), 0);
+    const vendaAno = cRows.reduce((sum, r) => sum + Number(r.total_venda ?? 0), 0);
+    const saldoMetaAno = metaAno - vendaAno;
+    const desempenhoMetaAno = metaAno > 0 ? (vendaAno / metaAno) * 100 : null;
+    const quantidadeVendasAno = cRows.reduce((sum, r) => sum + Number(r.quantidade_vendas ?? 0), 0);
+    const negociosAno = cRows.reduce((sum, r) => sum + Number(r.negocios ?? 0), 0);
+    const ticketMedioAno =
+      quantidadeVendasAno > 0 && vendaAno > 0 ? vendaAno / quantidadeVendasAno : null;
+
+    // --- PIPELINE EM ABERTO ---
+    const oportunidade = Number(rAtual?.oportunidade ?? 0);
+    const cotacao = Number(rAtual?.cotacao ?? 0);
+    const proposta = Number(rAtual?.proposta ?? 0);
+    const totalPipeline =
+      Number(rAtual?.total ?? 0) > 0
+        ? Number(rAtual?.total)
+        : oportunidade + cotacao + proposta > 0
+        ? oportunidade + cotacao + proposta
+        : Number(resumo.carteira_ativa_trabalhada ?? 0);
+
+    // --- QUANTIDADES E MÉDIAS DO MÊS ---
+    const quantidadeVendasMes = Number(rAtual?.quantidade_vendas ?? resumo.ganhos ?? 0);
+    const oportunidadesAbertas = Number(rAtual?.oportunidades_abertas ?? 0);
+    const negociosMes = Number(rAtual?.negocios ?? resumo.oportunidades_geradas ?? 0);
+
+    const ticketMedioMes =
+      rAtual?.ticket_medio != null
+        ? Number(rAtual.ticket_medio)
+        : quantidadeVendasMes > 0 && vendaMes > 0
+        ? vendaMes / quantidadeVendasMes
+        : null;
+
+    const taxaConversaoMes =
+      rAtual?.taxa_conversao_negocios != null
+        ? Number(rAtual.taxa_conversao_negocios)
+        : resumo.taxa_ganho != null
+        ? Number(resumo.taxa_ganho)
+        : null;
+
+    // --- AÇÕES E ESFORÇO DE CAMPO ---
+    const visitas = Number(resumo.visitas ?? v.visitas ?? 0);
+    const clientes = Number(resumo.clientes ?? rAtual?.clientes ?? v.clientes ?? 0);
+
+    const visitasPorOportunidade =
+      negociosMes > 0 && visitas > 0 ? visitas / negociosMes : null;
+    const clientesPorVenda =
+      quantidadeVendasMes > 0 && clientes > 0 ? clientes / quantidadeVendasMes : null;
+    const visitasPorVenda =
+      quantidadeVendasMes > 0 && visitas > 0 ? visitas / quantidadeVendasMes : null;
+
+    return {
+      vendaMes,
+      vendaAnterior,
+      deltaVenda,
+      metaMes,
+      desempenhoMetaMes,
+      saldoMetaMes,
+      quantidadeVendasMes,
+      ticketMedioMes,
+      taxaConversaoMes,
+      metaAno,
+      vendaAno,
+      saldoMetaAno,
+      desempenhoMetaAno,
+      quantidadeVendasAno,
+      negociosAno,
+      ticketMedioAno,
+      oportunidade,
+      cotacao,
+      proposta,
+      totalPipeline,
+      oportunidadesAbertas,
+      negociosMes,
+      visitas,
+      clientes,
+      visitasPorOportunidade,
+      clientesPorVenda,
+      visitasPorVenda,
+    };
+  }, [v.nome, v.visitas, v.clientes, desempenho?.rows, resumo, compAtual, compAnterior]);
+
+  const percentMetaMes = consultorStats.desempenhoMetaMes != null ? Math.min(Math.max(consultorStats.desempenhoMetaMes, 0), 100) : 0;
+  const percentMetaAno = consultorStats.desempenhoMetaAno != null ? Math.min(Math.max(consultorStats.desempenhoMetaAno, 0), 100) : 0;
+  const metaMesSuperada = consultorStats.desempenhoMetaMes != null && consultorStats.desempenhoMetaMes >= 100;
+  const emRotaMes = consultorStats.desempenhoMetaMes != null && consultorStats.desempenhoMetaMes >= 70 && consultorStats.desempenhoMetaMes < 100;
+
+  const crmBadge =
+    v.crmQuality >= 70
+      ? { label: "Nota A", bg: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20" }
+      : v.crmQuality >= 50
+      ? { label: "Nota B", bg: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20" }
+      : { label: "Nota C", bg: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20" };
 
   const clientActions = useMemo(() => {
     const map = new Map<string, Registro[]>();
@@ -47,106 +308,483 @@ export const DashboardConsultorDetail = ({ vendedor: v, resumo, registros, from,
     return map;
   }, [registros, v.nome]);
 
-  return (
-    <div className="p-6 lg:p-8 space-y-6">
-      {/* Header — nome + badge CRM */}
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={onBack} className="rounded-full h-9 w-9 shrink-0">
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex items-center gap-3 min-w-0">
-          <h2
-            className="text-lg font-bold tracking-tight truncate"
-            style={{ color: "var(--voux-text-primary)" }}
-          >
-            {v.nome}
-          </h2>
-          <span
-            className="shrink-0 inline-flex items-center justify-center h-6 w-6 rounded-md text-[12px] font-bold"
-            style={{ background: gradeBg, color: gradeColor, fontFamily: "var(--voux-font-mono)" }}
-            title={`CRM Quality: ${v.crmQuality}%`}
-          >
-            {gradeLabel}
-          </span>
-        </div>
-      </div>
+  const tiposAcaoData = Object.entries(v.tiposAcao || {})
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value);
 
-      {/* KPIs — grid compacto */}
-      <div className="grid grid-cols-3 lg:grid-cols-6 gap-3">
-        {[
-          { label: "Vendas", value: fmtCurrency(Number(resumo.valor_ganho)), sub: `${resumo.ganhos} pedidos`, accent: true, raw: Number(resumo.valor_ganho) },
-          { label: "Carteira", value: fmtCurrency(Number(resumo.carteira_ativa_trabalhada)), sub: `${resumo.negocios_abertos_tocados} abertos`, accent: false, raw: Number(resumo.carteira_ativa_trabalhada) },
-          { label: "Conversão", value: resumo.taxa_ganho == null ? "—" : `${resumo.taxa_ganho}%`, sub: `${resumo.ganhos}/${resumo.oportunidades_geradas}`, accent: false },
-          { label: "Ações", value: Number(resumo.acoes).toLocaleString("pt-BR"), sub: "período", accent: false },
-          { label: "Visitas", value: Number(resumo.visitas).toLocaleString("pt-BR"), sub: "presenciais", accent: false },
-          { label: "Clientes", value: Number(resumo.clientes).toLocaleString("pt-BR"), sub: "únicos", accent: false },
-        ].map((kpi) => (
-          <div
-            key={kpi.label}
-            className={cn(CARD, "px-4 py-3")}
+  return (
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1920px] mx-auto">
+      {/* Top Navigation & Profile Header */}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-4" style={{ borderColor: "var(--voux-card-border)" }}>
+        <div className="flex items-center gap-3.5 min-w-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onBack}
+            className="rounded-xl h-9 w-9 shrink-0 border hover:bg-amber-500/10 hover:text-amber-500"
             style={{ borderColor: "var(--voux-card-border)" }}
           >
-            <p
-              className="text-[11px] tracking-[0.12em] uppercase mb-1.5 font-medium"
-              style={{
-                fontFamily: "var(--voux-font-mono)",
-                color: kpi.accent ? "#1f6e3f" : "var(--voux-text-muted)",
-              }}
-            >
-              {kpi.label}
-            </p>
-            <p
-              className="text-xl font-bold leading-none tabular-nums"
-              style={{ fontFamily: "var(--voux-font-sans)", color: "var(--voux-text-primary)" }}
-              title={kpi.raw ? fmtFull(kpi.raw) : undefined}
-            >
-              {kpi.value}
-            </p>
-            <p
-              className="text-[12px] mt-1 leading-none"
-              style={{ fontFamily: "var(--voux-font-sans)", color: "var(--voux-text-faint)" }}
-            >
-              {kpi.sub}
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+
+          <div className="relative">
+            <AvatarPersona
+              name={v.nome}
+              size="lg"
+              className="shadow-lg ring-2 ring-black/5 dark:ring-white/10"
+            />
+          </div>
+
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2
+                className="text-lg sm:text-xl font-bold tracking-tight text-foreground truncate"
+                style={{ fontFamily: "var(--voux-font-display)" }}
+              >
+                {v.nome}
+              </h2>
+              <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-mono font-bold border", crmBadge.bg)}>
+                CRM {crmBadge.label} ({v.crmQuality}%)
+              </span>
+            </div>
+            <p className="text-[11px] text-muted-foreground font-mono">
+              Dossiê individual 360° · {v.totalAcoes} ações registradas no período
             </p>
           </div>
-        ))}
+        </div>
+
+        {/* Badges de Meta no Header */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {consultorStats.desempenhoMetaMes != null && (
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 px-3 py-1 rounded-full text-[12px] font-mono font-bold border tabular-nums",
+                metaMesSuperada
+                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                  : emRotaMes
+                  ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                  : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+              )}
+            >
+              {metaMesSuperada ? <CheckCircle2 className="h-3.5 w-3.5" /> : emRotaMes ? <Sparkles className="h-3.5 w-3.5" /> : <AlertCircle className="h-3.5 w-3.5" />}
+              {formatPct(consultorStats.desempenhoMetaMes)} da Meta do Mês
+            </span>
+          )}
+
+          {consultorStats.desempenhoMetaAno != null && (
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[12px] font-mono font-bold border bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20 tabular-nums">
+              <Calendar className="h-3.5 w-3.5" />
+              {formatPct(consultorStats.desempenhoMetaAno)} da Meta Anual
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* Insight IA individual */}
-      <InsightConsultorCard consultor={v.nome} />
+      {/* SEÇÃO 1: OS 4 CARDS DO DOSSIÊ 360° COM VALORES NÃO ARREDONDADOS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: Meta do Mês & Vendas */}
+        <div
+          className="rounded-2xl border p-4 transition-all"
+          style={{
+            background: "var(--surface-raised)",
+            borderColor: "var(--voux-card-border)",
+            boxShadow: "var(--voux-card-shadow)",
+          }}
+        >
+          <div className="flex items-center justify-between text-[11px] mb-1.5">
+            <span className="font-semibold text-muted-foreground flex items-center gap-1 font-mono">
+              <Target className="h-3.5 w-3.5 text-amber-500" />
+              Meta do Mês
+            </span>
+            {consultorStats.saldoMetaMes > 0 && consultorStats.metaMes > 0 ? (
+              <span className="text-[10px] font-mono text-rose-500 font-bold">
+                Falta: {formatBRL(consultorStats.saldoMetaMes)}
+              </span>
+            ) : consultorStats.metaMes > 0 ? (
+              <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                Meta Batida!
+              </span>
+            ) : null}
+          </div>
 
-      {/* Gráficos */}
-      <ConsultorCharts evolucao={v.evolucao} tiposAcao={v.tiposAcao} regioes={v.regioes} consultorNome={v.nome} />
+          <p className="font-mono font-bold text-[18px] text-foreground tabular-nums mb-1">
+            {formatBRL(consultorStats.metaMes)}
+          </p>
 
-      {/* Tabela de clientes */}
+          {/* Barra de Progresso do Mês */}
+          {consultorStats.metaMes > 0 && (
+            <div className="mb-2.5 h-1.5 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
+              <div
+                className={cn(
+                  "h-full rounded-full transition-all duration-500",
+                  metaMesSuperada
+                    ? "bg-gradient-to-r from-emerald-500 to-teal-400"
+                    : emRotaMes
+                    ? "bg-gradient-to-r from-amber-500 to-emerald-500"
+                    : "bg-gradient-to-r from-rose-500 to-amber-500"
+                )}
+                style={{ width: `${percentMetaMes}%` }}
+              />
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-2 pt-2 border-t text-[11px]" style={{ borderColor: "var(--voux-card-border)" }}>
+            <div>
+              <p className="text-[10px] uppercase font-semibold text-muted-foreground font-mono">Vendido Mês</p>
+              <p className="font-mono font-bold text-[13px] text-emerald-600 dark:text-emerald-400 tabular-nums truncate">
+                {formatBRL(consultorStats.vendaMes)}
+              </p>
+              <p className="text-[9px] font-mono text-muted-foreground">
+                {consultorStats.quantidadeVendasMes} {consultorStats.quantidadeVendasMes === 1 ? "venda" : "vendas"}
+              </p>
+            </div>
+
+            <div className="border-l pl-2" style={{ borderColor: "var(--voux-card-border)" }}>
+              <p className="text-[10px] uppercase font-semibold text-muted-foreground font-mono">Mês Passado</p>
+              <p className="font-mono font-semibold text-[12px] text-foreground tabular-nums truncate">
+                {formatBRL(consultorStats.vendaAnterior)}
+              </p>
+              {consultorStats.deltaVenda != null && (
+                <p
+                  className={cn(
+                    "text-[9px] font-mono font-bold flex items-center gap-0.5",
+                    consultorStats.deltaVenda >= 0 ? "text-emerald-500" : "text-rose-500"
+                  )}
+                >
+                  {consultorStats.deltaVenda >= 0 ? <ArrowUpRight className="h-2.5 w-2.5" /> : <ArrowDownRight className="h-2.5 w-2.5" />}
+                  {Math.abs(consultorStats.deltaVenda).toFixed(0)}% vs anterior
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Card 2: Meta Anual & Acumulado do Ano */}
+        <div
+          className="rounded-2xl border p-4 transition-all"
+          style={{
+            background: "var(--surface-raised)",
+            borderColor: "var(--voux-card-border)",
+            boxShadow: "var(--voux-card-shadow)",
+          }}
+        >
+          <div className="flex items-center justify-between text-[11px] mb-1.5">
+            <span className="font-semibold text-muted-foreground flex items-center gap-1 font-mono">
+              <Calendar className="h-3.5 w-3.5 text-blue-500" />
+              Meta Anual {anoDesempenho}
+            </span>
+            {consultorStats.desempenhoMetaAno != null && (
+              <span className="text-[10px] font-mono font-bold text-blue-600 dark:text-blue-400">
+                {formatPct(consultorStats.desempenhoMetaAno)} do ano
+              </span>
+            )}
+          </div>
+
+          <p className="font-mono font-bold text-[18px] text-foreground tabular-nums mb-1">
+            {formatBRL(consultorStats.metaAno)}
+          </p>
+
+          {/* Barra de Progresso Anual */}
+          {consultorStats.metaAno > 0 && (
+            <div className="mb-2.5 h-1.5 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
+              <div
+                className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-blue-500 to-emerald-500"
+                style={{ width: `${percentMetaAno}%` }}
+              />
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-2 pt-2 border-t text-[11px]" style={{ borderColor: "var(--voux-card-border)" }}>
+            <div>
+              <p className="text-[10px] uppercase font-semibold text-muted-foreground font-mono">Vendido no Ano</p>
+              <p className="font-mono font-bold text-[13px] text-foreground tabular-nums truncate">
+                {formatBRL(consultorStats.vendaAno)}
+              </p>
+              <p className="text-[9px] font-mono text-muted-foreground">
+                {consultorStats.quantidadeVendasAno} pedidos no ano
+              </p>
+            </div>
+
+            <div className="border-l pl-2" style={{ borderColor: "var(--voux-card-border)" }}>
+              <p className="text-[10px] uppercase font-semibold text-muted-foreground font-mono">Falta no Ano</p>
+              <p className="font-mono font-semibold text-[12px] text-rose-500 tabular-nums truncate">
+                {consultorStats.saldoMetaAno > 0 ? formatBRL(consultorStats.saldoMetaAno) : "Meta Batida!"}
+              </p>
+              <p className="text-[9px] font-mono text-muted-foreground">
+                {consultorStats.negociosAno} neg no ano
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 3: Pipeline Ativo (As 3 Etapas) */}
+        <div
+          className="rounded-2xl border p-4 transition-all"
+          style={{
+            background: "var(--surface-raised)",
+            borderColor: "var(--voux-card-border)",
+            boxShadow: "var(--voux-card-shadow)",
+          }}
+        >
+          <div className="flex items-center justify-between text-[11px] mb-1.5">
+            <span className="font-semibold text-muted-foreground flex items-center gap-1 font-mono">
+              <Briefcase className="h-3.5 w-3.5 text-amber-500" />
+              Pipeline Total ({consultorStats.oportunidadesAbertas} em aberto)
+            </span>
+          </div>
+
+          <p className="font-mono font-bold text-[18px] text-foreground tabular-nums mb-2">
+            {formatBRL(consultorStats.totalPipeline)}
+          </p>
+
+          <div className="grid grid-cols-3 gap-1 pt-1 border-t" style={{ borderColor: "var(--voux-card-border)" }}>
+            <div className="rounded-lg border p-1 text-center bg-black/[0.01] dark:bg-white/[0.01]" style={{ borderColor: "var(--voux-card-border)" }}>
+              <p className="text-[9px] font-semibold uppercase text-muted-foreground font-mono truncate">1. Oport.</p>
+              <p className="text-[10px] font-bold font-mono text-foreground tabular-nums truncate">
+                {formatBRL(consultorStats.oportunidade)}
+              </p>
+            </div>
+
+            <div className="rounded-lg border p-1 text-center bg-black/[0.01] dark:bg-white/[0.01]" style={{ borderColor: "var(--voux-card-border)" }}>
+              <p className="text-[9px] font-semibold uppercase text-muted-foreground font-mono truncate">2. Cotação</p>
+              <p className="text-[10px] font-bold font-mono text-foreground tabular-nums truncate">
+                {formatBRL(consultorStats.cotacao)}
+              </p>
+            </div>
+
+            <div className="rounded-lg border p-1 text-center bg-black/[0.01] dark:bg-white/[0.01]" style={{ borderColor: "var(--voux-card-border)" }}>
+              <p className="text-[9px] font-semibold uppercase text-muted-foreground font-mono truncate">3. Prop.</p>
+              <p className="text-[10px] font-bold font-mono text-foreground tabular-nums truncate">
+                {formatBRL(consultorStats.proposta)}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 4: Eficiência & Médias de Esforço */}
+        <div
+          className="rounded-2xl border p-4 transition-all"
+          style={{
+            background: "var(--surface-raised)",
+            borderColor: "var(--voux-card-border)",
+            boxShadow: "var(--voux-card-shadow)",
+          }}
+        >
+          <div className="flex items-center justify-between text-[11px] mb-1.5">
+            <span className="font-semibold text-muted-foreground flex items-center gap-1 font-mono">
+              <Compass className="h-3.5 w-3.5 text-emerald-500" />
+              Eficiência & Médias
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 text-[11px]">
+            <div className="rounded-lg border p-1.5 bg-black/[0.01] dark:bg-white/[0.01]" style={{ borderColor: "var(--voux-card-border)" }}>
+              <p className="text-[9px] text-muted-foreground font-mono">Ticket Médio</p>
+              <p className="font-mono font-bold text-foreground tabular-nums text-[11px] truncate">
+                {formatBRL(consultorStats.ticketMedioMes ?? consultorStats.ticketMedioAno)}
+              </p>
+            </div>
+
+            <div className="rounded-lg border p-1.5 bg-black/[0.01] dark:bg-white/[0.01]" style={{ borderColor: "var(--voux-card-border)" }}>
+              <p className="text-[9px] text-muted-foreground font-mono">Tx. Conversão</p>
+              <p className="font-mono font-bold text-foreground tabular-nums text-[11px]">
+                {formatPct(consultorStats.taxaConversaoMes)}
+              </p>
+            </div>
+
+            <div className="rounded-lg border p-1.5 bg-black/[0.01] dark:bg-white/[0.01]" style={{ borderColor: "var(--voux-card-border)" }}>
+              <p className="text-[9px] text-muted-foreground font-mono">Visitas / Oport.</p>
+              <p className="font-mono font-bold text-amber-600 dark:text-amber-400 tabular-nums text-[11px] truncate">
+                {formatRatio(consultorStats.visitasPorOportunidade, "vis/oport.")}
+              </p>
+            </div>
+
+            <div className="rounded-lg border p-1.5 bg-black/[0.01] dark:bg-white/[0.01]" style={{ borderColor: "var(--voux-card-border)" }}>
+              <p className="text-[9px] text-muted-foreground font-mono">Clientes / Venda</p>
+              <p className="font-mono font-bold text-emerald-600 dark:text-emerald-400 tabular-nums text-[11px] truncate">
+                {formatRatio(consultorStats.clientesPorVenda, "cli/vda")}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* SEÇÃO 2: COCKPIT EM 3 COLUNAS (Distribuição por Ação | Inteligência IA | Top Clientes) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-stretch">
+        {/* Coluna 1: Tipos de Ação & Ações de Campo */}
+        <div
+          className="rounded-2xl border p-5 flex flex-col justify-between"
+          style={{
+            background: "var(--surface-raised)",
+            borderColor: "var(--voux-card-border)",
+            boxShadow: "var(--voux-card-shadow)",
+          }}
+        >
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold text-foreground" style={{ fontFamily: "var(--voux-font-sans)" }}>
+                Distribuição de Ações de Campo
+              </h3>
+              <span className="text-[11px] font-mono text-muted-foreground">
+                {v.totalAcoes} ações
+              </span>
+            </div>
+
+            {tiposAcaoData.length > 0 ? (
+              <SimpleDonut
+                data={tiposAcaoData.map((t, i) => ({
+                  label: t.name,
+                  value: t.value,
+                  color: EARTHY[i % EARTHY.length] as string,
+                }))}
+              />
+            ) : (
+              <p className="text-xs text-muted-foreground">Nenhuma ação registrada no período.</p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 pt-3 mt-3 border-t text-[11px] font-mono" style={{ borderColor: "var(--voux-card-border)" }}>
+            <div>
+              <span className="text-muted-foreground">Visitas Presenciais:</span>
+              <p className="font-bold text-foreground text-[13px]">{consultorStats.visitas}</p>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Clientes Atendidos:</span>
+              <p className="font-bold text-foreground text-[13px]">{consultorStats.clientes}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Coluna 2: Inteligência do Consultor · IA */}
+        <div className="h-full">
+          <InsightConsultorCard consultor={v.nome} />
+        </div>
+
+        {/* Coluna 3: Clientes em Foco / Top Clientes Atendidos */}
+        <div
+          className="rounded-2xl border p-5 flex flex-col justify-between md:col-span-2 lg:col-span-1"
+          style={{
+            background: "var(--surface-raised)",
+            borderColor: "var(--voux-card-border)",
+            boxShadow: "var(--voux-card-shadow)",
+          }}
+        >
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold text-foreground" style={{ fontFamily: "var(--voux-font-sans)" }}>
+                Principais Clientes em Foco
+              </h3>
+              <span className="text-[11px] font-mono text-muted-foreground">
+                {v.topClientes.length} clientes
+              </span>
+            </div>
+
+            <div className="space-y-2">
+              {v.topClientes.slice(0, 4).map((c, i) => (
+                <div
+                  key={c.nome}
+                  className="flex items-center justify-between p-2 rounded-xl border bg-black/[0.01] dark:bg-white/[0.01]"
+                  style={{ borderColor: "var(--voux-card-border)" }}
+                >
+                  <div className="min-w-0 pr-2">
+                    <p className="text-[12px] font-bold text-foreground truncate">{c.nome}</p>
+                    <p className="text-[10px] font-mono text-muted-foreground truncate">
+                      {c.cidade || "Região"} · {c.acoes} ações ({c.visitas} vis.)
+                    </p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-[11px] font-mono font-bold text-foreground">{formatBRL(c.negocioValor)}</p>
+                    {c.diasSemContato != null && (
+                      <span className={cn("text-[9px] font-mono font-medium", c.diasSemContato > 30 ? "text-rose-500" : "text-emerald-500")}>
+                        {c.diasSemContato}d sem contato
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="pt-2 text-[10px] font-mono text-muted-foreground text-center">
+            Role abaixo para ver a auditoria completa de todos os clientes
+          </div>
+        </div>
+      </div>
+
+      {/* SEÇÃO 3: GRÁFICOS FULL WIDTH (Evolução Mensal no Ano Atual & Desempenho Comercial GPO) */}
+      <div className="space-y-4">
+        {/* Evolução Mensal — Janeiro a Dezembro */}
+        <ChartCard
+          title={`Evolução Mensal · Ano ${anoDesempenho}`}
+          description="Ações e visitas mensais no ano corrente — cada linha com escala própria"
+          label="EVOLUÇÃO · ANO CORRENTE"
+          height={300}
+        >
+          <LineChart
+            series={[
+              {
+                name: "Ações",
+                data: v.evolucao.map((d) => ({ x: formatMonthYear(d.YearMonth), y: d.acoes })),
+                color: "#4caf7a",
+              },
+              {
+                name: "Visitas",
+                data: v.evolucao.map((d) => ({ x: formatMonthYear(d.YearMonth), y: d.visitas })),
+                color: "#d4a05a",
+              },
+            ]}
+            height={300}
+            independentAxes
+          />
+        </ChartCard>
+
+        {/* Desempenho Comercial — GPO */}
+        <ChartCard
+          title="Desempenho Comercial (GPO)"
+          description="Vendas fechadas, perdas e novas oportunidades geradas no ano"
+          label="COMERCIAL · 12M"
+          height={280}
+          loading={gpoLoading}
+        >
+          <EvolucaoGPOChart data={gpoData ?? []} height={280} />
+        </ChartCard>
+      </div>
+
+      {/* SEÇÃO 4: TABELA COMPLETA DE CLIENTES ATENDIDOS */}
       <div
-        className={cn(CARD, "p-0 overflow-hidden")}
-        style={{ borderColor: "var(--voux-card-border)", boxShadow: "var(--voux-card-shadow)" }}
+        className="rounded-2xl border overflow-hidden"
+        style={{ borderColor: "var(--voux-card-border)", background: "var(--surface-raised)", boxShadow: "var(--voux-card-shadow)" }}
       >
-        <div className="px-5 pt-4 pb-2 flex items-baseline justify-between">
-          <h3
-            className="text-sm font-semibold"
-            style={{ color: "var(--voux-text-primary)", fontFamily: "var(--voux-font-sans)" }}
-          >
-            Clientes atendidos
-          </h3>
-          <span
-            className="text-[12px] tabular-nums"
-            style={{ fontFamily: "var(--voux-font-sans)", color: "var(--voux-text-faint)" }}
-          >
-            {v.topClientes.length} clientes
+        <div className="px-5 pt-4 pb-3 flex items-baseline justify-between border-b" style={{ borderColor: "var(--voux-card-border)" }}>
+          <div>
+            <h3 className="text-sm font-bold text-foreground" style={{ fontFamily: "var(--voux-font-sans)" }}>
+              Clientes Atendidos pelo Consultor
+            </h3>
+            <p className="text-[11px] text-muted-foreground">
+              Auditoria de carteira, interações registradas e histórico de negócios
+            </p>
+          </div>
+          <span className="text-[11px] font-mono text-muted-foreground">
+            {v.topClientes.length} clientes na carteira
           </span>
         </div>
-        <div className="px-4 pb-4">
+
+        <div className="p-4">
           <div
-            className="grid grid-cols-[32px_1fr_100px_60px_60px_90px_80px_80px_32px] items-center px-2 py-2 border-b text-[11px] tracking-[0.14em] uppercase font-medium"
-            style={{ borderColor: "var(--voux-card-border)", fontFamily: "var(--voux-font-mono)", color: "var(--voux-text-faint)" }}
+            className="grid grid-cols-[32px_1fr_100px_60px_60px_110px_90px_80px_32px] items-center px-2 py-2 border-b text-[11px] tracking-[0.12em] uppercase font-semibold text-muted-foreground font-mono"
+            style={{ borderColor: "var(--voux-card-border)" }}
           >
-            <span>#</span><span>Cliente</span><span>Cidade</span>
-            <span className="text-center">Ações</span><span className="text-center">Visitas</span>
-            <span className="text-right">Valor vinculado</span><span className="text-center">Dias s/ Contato</span>
-            <span className="text-center">Status</span><span></span>
+            <span>#</span>
+            <span>Cliente</span>
+            <span>Cidade</span>
+            <span className="text-center">Ações</span>
+            <span className="text-center">Visitas</span>
+            <span className="text-right">Valor Vinculado</span>
+            <span className="text-center">Dias s/ Contato</span>
+            <span className="text-center">Status</span>
+            <span></span>
           </div>
+
           {v.topClientes.map((c, i) => (
             <ConsultorClienteCard
               key={c.nome}

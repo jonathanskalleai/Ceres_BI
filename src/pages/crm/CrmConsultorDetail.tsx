@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useClientesPorVendedor, useRegistrosRecentes, useEvolucaoMensal } from "@/hooks/useComercialRpc";
 import { useConsultoresResumoAcoes } from "@/hooks/useConsultoresRpc";
+import { useEquipeDesempenho } from "@/hooks/useEquipeDesempenho";
 import { useNegociosFilter } from "@/contexts/NegociosFilterContext";
 import { toISODate } from "@/lib/dateUtils";
 import { mapRegistroRecente } from "@/lib/comercialMappers";
@@ -30,6 +31,7 @@ export default function CrmConsultorDetail() {
   const from = toISODate(dateRange?.from) ?? "";
   const to = toISODate(dateRange?.to) ?? "";
   const enabled = !!from && !!to && !!nome;
+  const anoDesempenho = dateRange?.from?.getFullYear() ?? new Date().getFullYear();
 
   const { data: clientesRpc, isLoading: loadClientes } = useClientesPorVendedor({ vendedor: nome, from, to, enabled });
   const { data: registrosRpc, isLoading: loadRegistros } = useRegistrosRecentes({ from, to, vendedor: nome, enabled });
@@ -41,8 +43,21 @@ export default function CrmConsultorDetail() {
     tipoAcao: tipoAcao || undefined,
     enabled,
   });
-  // Evolucao mensal respeita o periodo selecionado no filtro global.
-  const { data: evolucaoRpc, isLoading: loadEvolucao } = useEvolucaoMensal({ from, to, vendedor: nome, enabled });
+
+  // Evolução mensal no ano corrente de Janeiro a Dezembro
+  const { data: evolucaoRpc, isLoading: loadEvolucao } = useEvolucaoMensal({
+    from: `${anoDesempenho}-01-01`,
+    to: `${anoDesempenho}-12-31`,
+    vendedor: nome,
+    enabled: !!nome,
+  });
+
+  // Dados de metas e pipeline detalhados do consultor
+  const { data: desempenhoRpc, isLoading: loadDesempenho } = useEquipeDesempenho({
+    ano: anoDesempenho,
+    consultor: nome || undefined,
+    cidade: cidade || undefined,
+  });
 
   const registros = useMemo(() => (registrosRpc ?? []).map(mapRegistroRecente), [registrosRpc]);
   const resumoConsultor = useMemo(
@@ -110,16 +125,16 @@ export default function CrmConsultorDetail() {
     };
   }, [resumoConsultor, clientesRpc, registros, evolucao, nome]);
 
-  const isLoading = loadClientes || loadRegistros || loadResumo || loadEvolucao;
+  const isLoading = loadClientes || loadRegistros || loadResumo || loadEvolucao || loadDesempenho;
 
-  if (isLoading) {
+  if (isLoading && !vendedor) {
     return (
       <div className="p-6 space-y-4">
         <Skeleton className="h-8 w-48" />
-        <div className="grid grid-cols-6 gap-3">
-          {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-20" />)}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-36 rounded-2xl" />)}
         </div>
-        <Skeleton className="h-64" />
+        <Skeleton className="h-64 rounded-2xl" />
       </div>
     );
   }
@@ -136,6 +151,8 @@ export default function CrmConsultorDetail() {
     <DashboardConsultorDetail
       vendedor={vendedor}
       resumo={resumoConsultor}
+      desempenho={desempenhoRpc}
+      anoDesempenho={anoDesempenho}
       registros={registros}
       from={from}
       to={to}
