@@ -5,7 +5,7 @@ import { filterRegistros, hasActiveFilters } from "@/lib/filterUtils";
 import { ResumoExecutivoCard } from "./consultor/ResumoExecutivoCard";
 import { AiInsightsCard } from "./consultor/AiInsightsCard";
 import { RankingClientesNovos } from "./RankingClientesNovos";
-import { RankingPerformanceHorizontal } from "./RankingPerformanceHorizontal";
+import { RankingPerformanceCards } from "./RankingPerformanceCards";
 import { EquipeDesempenhoTable } from "./EquipeDesempenhoTable";
 import { ConsultoresValidationTable } from "./ConsultoresValidationTable";
 import type { RpcConsultorResumoAcoes } from "@/types/consultoresRpc";
@@ -104,11 +104,13 @@ export const DashboardConsultores = ({
         </div>
       </div>
 
-      {/* Performance Ranking (Horizontal 5 Cards Row) */}
+      {/* Performance Ranking Cards Deck (Dossiê 360° dos Consultores) */}
       <div className="w-full">
-        <RankingPerformanceHorizontal
+        <RankingPerformanceCards
           vendedores={vendedores}
           resumo={resumo}
+          desempenho={desempenho}
+          filters={filters}
           onSelectConsultor={onSelectConsultor}
         />
       </div>

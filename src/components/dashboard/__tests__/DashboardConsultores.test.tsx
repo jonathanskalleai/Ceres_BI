@@ -80,7 +80,7 @@ describe("DashboardConsultores", () => {
     expect(screen.getByText("Resumo Executivo")).toBeInTheDocument();
     expect(screen.getByText("Inteligência da Equipe · IA")).toBeInTheDocument();
     expect(screen.getByText("Clientes Atendidos")).toBeInTheDocument();
-    expect(screen.getByText("Performance Ranking")).toBeInTheDocument();
+    expect(screen.getByText(/Performance Ranking/i)).toBeInTheDocument();
     expect(screen.getByText("Análise de Desempenho da Equipe")).toBeInTheDocument();
     expect(screen.getAllByText("CARLOS AUGUSTO AUGUSTIN")).not.toHaveLength(0);
   });
