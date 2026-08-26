@@ -33,7 +33,9 @@ interface MetasEquipeDialogProps {
 }
 
 function toNumber(value: string): number {
-  const normalized = value.includes(",")
+  const hasBrazilianDecimal = value.includes(",");
+  const hasGroupedThousands = /^-?\d{1,3}(\.\d{3})+$/.test(value.trim());
+  const normalized = hasBrazilianDecimal || hasGroupedThousands
     ? value.replace(/\./g, "").replace(",", ".")
     : value;
   const parsed = Number(normalized);
@@ -55,6 +57,22 @@ function percentage(value: number): string {
 function formatInputNumber(value: string): string {
   const parsed = toNumber(value);
   return parsed === 0 && value.trim() === "" ? "" : INPUT_NUMBER_FORMATTER.format(parsed);
+}
+
+function formatLiveNumber(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+
+  const negative = trimmed.startsWith("-");
+  const withoutSign = trimmed.replace(/^-/, "");
+  const commaIndex = withoutSign.lastIndexOf(",");
+  const hasDecimal = commaIndex >= 0;
+  const integerPart = hasDecimal ? withoutSign.slice(0, commaIndex) : withoutSign;
+  const decimalPart = hasDecimal ? withoutSign.slice(commaIndex + 1).replace(/\D/g, "").slice(0, 2) : "";
+  const digits = integerPart.replace(/\D/g, "").replace(/^0+(?=\d)/, "");
+  const grouped = (digits || "0").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+  return `${negative ? "-" : ""}${grouped}${hasDecimal ? `,${decimalPart}` : ""}`;
 }
 
 export function MetasEquipeDialog({ open, onOpenChange, ano, consultores }: MetasEquipeDialogProps) {
@@ -189,7 +207,7 @@ export function MetasEquipeDialog({ open, onOpenChange, ano, consultores }: Meta
                     type="text"
                     inputMode="decimal"
                     value={metaAnual}
-                    onChange={(event) => setMetaAnual(event.target.value)}
+                    onChange={(event) => setMetaAnual(formatLiveNumber(event.target.value))}
                     onBlur={() => setMetaAnual(formatInputNumber(metaAnual))}
                     placeholder="33000000"
                   />
@@ -226,7 +244,7 @@ export function MetasEquipeDialog({ open, onOpenChange, ano, consultores }: Meta
                         type="text"
                         inputMode="decimal"
                         value={percentuais[index] ?? ""}
-                        onChange={(event) => atualizarPercentual(index, event.target.value)}
+                        onChange={(event) => atualizarPercentual(index, formatLiveNumber(event.target.value))}
                         onBlur={() => atualizarPercentual(index, formatInputNumber(percentuais[index] ?? ""))}
                         className="pr-7 text-right font-mono"
                       />
@@ -277,7 +295,7 @@ export function MetasEquipeDialog({ open, onOpenChange, ano, consultores }: Meta
                           type="text"
                           inputMode="decimal"
                           value={metasConsultores[consultor] ?? ""}
-                          onChange={(event) => atualizarMetaConsultor(consultor, event.target.value)}
+                          onChange={(event) => atualizarMetaConsultor(consultor, formatLiveNumber(event.target.value))}
                           onBlur={() => atualizarMetaConsultor(consultor, formatInputNumber(metasConsultores[consultor] ?? ""))}
                           placeholder="0,00"
                           className="text-right font-mono"
