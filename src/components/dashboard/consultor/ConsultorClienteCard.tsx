@@ -7,8 +7,17 @@ import { toast } from "sonner";
 import { formatDateTimeBR } from "@/lib/dateUtils";
 import type { TopCliente, Registro } from "@/types/comercial";
 
-const fmtCurrency = (v: number) =>
-  v >= 1e6 ? `R$ ${(v / 1e6).toFixed(1)}M` : v >= 1e3 ? `R$ ${(v / 1e3).toFixed(0)}K` : `R$ ${v.toFixed(0)}`;
+const BRL_EXACT = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const fmtCurrency = (v: number) => {
+  if (v == null || !Number.isFinite(v)) return "R$ 0,00";
+  return BRL_EXACT.format(Number(v));
+};
 
 interface Props {
   cliente: TopCliente;
