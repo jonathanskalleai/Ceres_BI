@@ -1,7 +1,8 @@
-import { memo, useState } from "react";
-import { Briefcase, ChevronRight, Package, MessageSquare, MapPin } from "lucide-react";
+import { memo, useState, useMemo } from "react";
+import { Briefcase, Package, MessageSquare, MapPin, Search } from "lucide-react";
 import { useConsultorNegociosPipeline } from "@/hooks/useConsultoresRpc";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -35,12 +36,56 @@ function getEtapaBadge(etapa: string) {
 }
 
 export const ConsultorNegociosPipelineCard = memo(function ConsultorNegociosPipelineCard({ consultor }: Props) {
+  const [etapaFiltro, setEtapaFiltro] = useState<string>("TODOS");
+  const [busca, setBusca] = useState<string>("");
+
   const { data: negocios, isLoading } = useConsultorNegociosPipeline({
     consultor,
     enabled: !!consultor,
   });
 
-  const totalValor = (negocios ?? []).reduce((sum, n) => sum + Number(n.valor || 0), 0);
+  const totalValorGeral = useMemo(
+    () => (negocios ?? []).reduce((sum, n) => sum + Number(n.valor || 0), 0),
+    [negocios]
+  );
+
+  const contagensEtapa = useMemo(() => {
+    let oport = 0;
+    let cot = 0;
+    let prop = 0;
+    for (const n of negocios ?? []) {
+      const u = n.etapa.toUpperCase();
+      if (u.includes("1-") || u.includes("OPORTUNIDADE")) oport++;
+      else if (u.includes("2-") || u.includes("COTACAO") || u.includes("COTAÇÃO")) cot++;
+      else if (u.includes("3-") || u.includes("PROPOSTA")) prop++;
+    }
+    return { oport, cot, prop, total: negocios?.length ?? 0 };
+  }, [negocios]);
+
+  const negociosFiltrados = useMemo(() => {
+    return (negocios ?? []).filter((n) => {
+      if (busca.trim()) {
+        const q = busca.toLowerCase();
+        const matchCliente = n.cliente?.toLowerCase().includes(q);
+        const matchProduto = n.produto?.toLowerCase().includes(q);
+        const matchObs = n.observacao?.toLowerCase().includes(q);
+        const matchCidade = n.cidade?.toLowerCase().includes(q);
+        if (!matchCliente && !matchProduto && !matchObs && !matchCidade) return false;
+      }
+
+      if (etapaFiltro === "TODOS") return true;
+      const u = n.etapa.toUpperCase();
+      if (etapaFiltro === "OPORTUNIDADE") return u.includes("1-") || u.includes("OPORTUNIDADE");
+      if (etapaFiltro === "COTACAO") return u.includes("2-") || u.includes("COTACAO") || u.includes("COTAÇÃO");
+      if (etapaFiltro === "PROPOSTA") return u.includes("3-") || u.includes("PROPOSTA");
+      return true;
+    });
+  }, [negocios, etapaFiltro, busca]);
+
+  const totalValorFiltrado = useMemo(
+    () => negociosFiltrados.reduce((sum, n) => sum + Number(n.valor || 0), 0),
+    [negociosFiltrados]
+  );
 
   if (isLoading) {
     return (
@@ -58,7 +103,7 @@ export const ConsultorNegociosPipelineCard = memo(function ConsultorNegociosPipe
         </div>
         <div className="space-y-2">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-16 rounded-xl" />
+            <Skeleton key={i} className="h-20 rounded-xl" />
           ))}
         </div>
       </div>
@@ -67,7 +112,7 @@ export const ConsultorNegociosPipelineCard = memo(function ConsultorNegociosPipe
 
   return (
     <div
-      className="rounded-2xl border p-5 flex flex-col justify-between h-full"
+      className="rounded-2xl border p-5 flex flex-col justify-between h-full transition-all"
       style={{
         background: "var(--surface-raised)",
         borderColor: "var(--voux-card-border)",
@@ -86,76 +131,101 @@ export const ConsultorNegociosPipelineCard = memo(function ConsultorNegociosPipe
                 Negócios no Pipeline Ativo
               </h3>
               <p className="text-[10px] font-mono text-muted-foreground">
-                Oportunidades, Cotações e Propostas em andamento
+                Oportunidades, Cotações e Propostas reais em andamento
               </p>
             </div>
           </div>
 
           <div className="text-right">
             <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-mono text-muted-foreground bg-background">
-              {negocios?.length ?? 0} negócios
+              {contagensEtapa.total} negócios abertos
             </span>
           </div>
         </div>
 
-        {/* Lista de Negócios */}
-        {(!negocios || negocios.length === 0) ? (
-          <div className="py-8 text-center text-xs text-muted-foreground">
-            Nenhum negócio ativo no pipeline de vendas no momento.
+        {/* Filtros de Etapa em Abas Rápidas */}
+        <div className="flex items-center gap-1 mb-2.5 overflow-x-auto pb-1">
+          {[
+            { id: "TODOS", label: `Todos (${contagensEtapa.total})` },
+            { id: "OPORTUNIDADE", label: `1. Oport (${contagensEtapa.oport})` },
+            { id: "COTACAO", label: `2. Cotaç (${contagensEtapa.cot})` },
+            { id: "PROPOSTA", label: `3. Prop (${contagensEtapa.prop})` },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setEtapaFiltro(tab.id)}
+              className={cn(
+                "rounded-lg px-2 py-1 text-[10px] font-mono font-medium transition-all shrink-0",
+                etapaFiltro === tab.id
+                  ? "bg-amber-500 text-amber-950 font-bold shadow-sm"
+                  : "border bg-black/[0.02] dark:bg-white/[0.02] text-muted-foreground hover:text-foreground"
+              )}
+              style={{
+                borderColor: etapaFiltro === tab.id ? "transparent" : "var(--voux-card-border)",
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Lista de Negócios Reais do Pipeline */}
+        {negociosFiltrados.length === 0 ? (
+          <div className="py-10 text-center text-xs text-muted-foreground">
+            Nenhum negócio encontrado nesta etapa do pipeline.
           </div>
         ) : (
-          <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1">
-            {negocios.map((n) => {
+          <div className="space-y-2 max-h-[340px] overflow-y-auto pr-1">
+            {negociosFiltrados.map((n) => {
               const badge = getEtapaBadge(n.etapa);
               return (
                 <div
                   key={n.numero}
-                  className="rounded-xl border p-2.5 bg-black/[0.01] dark:bg-white/[0.01] hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition-colors"
+                  className="rounded-xl border p-3 bg-black/[0.01] dark:bg-white/[0.01] hover:bg-black/[0.03] dark:hover:bg-white/[0.03] transition-colors"
                   style={{ borderColor: "var(--voux-card-border)" }}
                 >
-                  {/* Linha 1: Cliente, Badge da Etapa e Valor */}
-                  <div className="flex items-start justify-between gap-2 mb-1">
+                  {/* Linha 1: Cliente e Valor */}
+                  <div className="flex items-start justify-between gap-2 mb-1.5">
                     <div className="min-w-0 flex-1">
-                      <p className="text-[12px] font-bold text-foreground truncate" title={n.cliente}>
+                      <p className="text-[13px] font-bold text-foreground truncate" title={n.cliente}>
                         {n.cliente}
                       </p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-[12px] font-mono font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                      <p className="text-[13px] font-mono font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
                         {formatBRL(n.valor)}
                       </p>
                     </div>
                   </div>
 
                   {/* Linha 2: Badge de Etapa e Produto */}
-                  <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-                    <span className={cn("inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-mono font-bold border", badge.bg)}>
+                  <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+                    <span className={cn("inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold border", badge.bg)}>
                       {badge.label}
                     </span>
-                    <span className="text-[10px] font-mono text-muted-foreground truncate flex items-center gap-1">
-                      <Package className="h-3 w-3 text-muted-foreground shrink-0" />
+                    <span className="text-[11px] font-mono text-foreground font-medium truncate flex items-center gap-1">
+                      <Package className="h-3 w-3 text-amber-500 shrink-0" />
                       {n.produto}
                     </span>
                   </div>
 
-                  {/* Linha 3: Observações */}
+                  {/* Linha 3: Observações Detalhadas */}
                   {n.observacao && (
-                    <p className="text-[10px] text-muted-foreground bg-black/[0.02] dark:bg-white/[0.03] rounded p-1.5 line-clamp-2 leading-relaxed flex items-start gap-1">
-                      <MessageSquare className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
-                      <span>{n.observacao}</span>
-                    </p>
-                  )}
-
-                  {/* Linha 4: Cidade / Praça */}
-                  {n.cidade && (
-                    <div className="mt-1 flex items-center justify-between text-[9px] font-mono text-muted-foreground">
-                      <span className="flex items-center gap-0.5">
-                        <MapPin className="h-2.5 w-2.5" />
-                        {n.cidade}
-                      </span>
-                      <span>#{n.numero}</span>
+                    <div className="text-[10px] text-muted-foreground bg-black/[0.02] dark:bg-white/[0.03] rounded-lg p-2 leading-relaxed flex items-start gap-1.5 border border-black/5 dark:border-white/5">
+                      <MessageSquare className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
+                      <span className="line-clamp-3">{n.observacao}</span>
                     </div>
                   )}
+
+                  {/* Linha 4: Cidade / Praça e Número */}
+                  <div className="mt-1.5 flex items-center justify-between text-[10px] font-mono text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <MapPin className="h-3 w-3 text-muted-foreground" />
+                      {n.cidade || "Praça principal"}
+                    </span>
+                    <span>Registro #{n.numero}</span>
+                  </div>
                 </div>
               );
             })}
@@ -163,10 +233,10 @@ export const ConsultorNegociosPipelineCard = memo(function ConsultorNegociosPipe
         )}
       </div>
 
-      {/* Footer com Totalizador */}
-      <div className="pt-2.5 mt-3 border-t flex items-center justify-between text-[11px] font-mono" style={{ borderColor: "var(--voux-card-border)" }}>
-        <span className="text-muted-foreground">Valor Total em Aberto:</span>
-        <span className="font-bold text-foreground">{formatBRL(totalValor)}</span>
+      {/* Footer com Totalizador da Etapa Selecionada */}
+      <div className="pt-3 mt-3 border-t flex items-center justify-between text-[11px] font-mono" style={{ borderColor: "var(--voux-card-border)" }}>
+        <span className="text-muted-foreground">Total {etapaFiltro === "TODOS" ? "em Aberto" : "na Etapa"}:</span>
+        <span className="font-bold text-foreground text-[13px] tabular-nums">{formatBRL(totalValorFiltrado)}</span>
       </div>
     </div>
   );

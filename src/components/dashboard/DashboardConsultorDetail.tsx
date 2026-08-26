@@ -22,6 +22,7 @@ import { AvatarPersona } from "@/components/ui/AvatarPersona";
 import { InsightConsultorCard } from "./consultor/InsightConsultorCard";
 import { ConsultorClienteCard } from "./consultor/ConsultorClienteCard";
 import { ConsultorNegociosPipelineCard } from "./consultor/ConsultorNegociosPipelineCard";
+import { ConsultorDistribuicaoCampoCard } from "./consultor/ConsultorDistribuicaoCampoCard";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { LineChart } from "@/components/bi/charts";
 import EvolucaoGPOChart from "@/components/bi/charts/EvolucaoGPOChart";
@@ -624,55 +625,14 @@ export const DashboardConsultorDetail = ({
 
       {/* SEÇÃO 2: COCKPIT EM 3 COLUNAS (Distribuição por Ação | Inteligência IA | Negócios no Pipeline Ativo) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-stretch">
-        {/* Coluna 1: Tipos de Ação & Ações de Campo */}
-        <div
-          className="rounded-2xl border p-5 flex flex-col justify-between h-full"
-          style={{
-            background: "var(--surface-raised)",
-            borderColor: "var(--voux-card-border)",
-            boxShadow: "var(--voux-card-shadow)",
-          }}
-        >
-          <div>
-            <div className="flex items-center justify-between mb-3.5 pb-2.5 border-b" style={{ borderColor: "var(--voux-card-border)" }}>
-              <div>
-                <h3 className="text-sm font-bold text-foreground" style={{ fontFamily: "var(--voux-font-sans)" }}>
-                  Distribuição de Ações de Campo
-                </h3>
-                <p className="text-[10px] font-mono text-muted-foreground">
-                  Canais e tipos de contatos registrados
-                </p>
-              </div>
-              <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-mono text-muted-foreground bg-background">
-                {v.totalAcoes} ações
-              </span>
-            </div>
-
-            {tiposAcaoData.length > 0 ? (
-              <div className="py-2">
-                <SimpleDonut
-                  data={tiposAcaoData.map((t, i) => ({
-                    label: t.name,
-                    value: t.value,
-                    color: EARTHY[i % EARTHY.length] as string,
-                  }))}
-                />
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground py-6 text-center">Nenhuma ação registrada no período.</p>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 pt-3 mt-3 border-t text-[11px] font-mono" style={{ borderColor: "var(--voux-card-border)" }}>
-            <div className="rounded-lg border p-2 bg-black/[0.01] dark:bg-white/[0.01]" style={{ borderColor: "var(--voux-card-border)" }}>
-              <span className="text-muted-foreground text-[10px]">Visitas Presenciais:</span>
-              <p className="font-bold text-foreground text-[14px]">{consultorStats.visitas}</p>
-            </div>
-            <div className="rounded-lg border p-2 bg-black/[0.01] dark:bg-white/[0.01]" style={{ borderColor: "var(--voux-card-border)" }}>
-              <span className="text-muted-foreground text-[10px]">Clientes Atendidos:</span>
-              <p className="font-bold text-foreground text-[14px]">{consultorStats.clientes}</p>
-            </div>
-          </div>
+        {/* Coluna 1: Distribuição de Ações de Campo */}
+        <div className="h-full">
+          <ConsultorDistribuicaoCampoCard
+            tiposAcao={v.tiposAcao}
+            totalAcoes={v.totalAcoes}
+            visitas={consultorStats.visitas}
+            clientes={consultorStats.clientes}
+          />
         </div>
 
         {/* Coluna 2: Inteligência do Consultor · IA */}
