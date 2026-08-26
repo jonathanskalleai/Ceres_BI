@@ -294,29 +294,12 @@ export const ConsultorNegocioDetailModal = memo(function ConsultorNegocioDetailM
             </div>
           </div>
 
-          {/* Seção 4: Contato Rápido com o Cliente */}
+          {/* Seção 4: Contato com o Cliente */}
           {negocio.telefone && (
-            <div className="flex items-center justify-between p-3 rounded-xl border bg-emerald-500/[0.03] border-emerald-500/20">
-              <div className="flex items-center gap-2 text-xs font-mono">
-                <Phone className="h-4 w-4 text-emerald-500" />
-                <span className="text-muted-foreground">Telefone de Contato:</span>
-                <span className="font-bold text-foreground">{negocio.telefone}</span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-xs h-7 gap-1 border-emerald-500/30 hover:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                  onClick={() => {
-                    const phone = negocio.telefone.replace(/\D/g, "");
-                    window.open(`https://wa.me/55${phone}`, "_blank");
-                  }}
-                >
-                  <MessageSquare className="h-3.5 w-3.5" />
-                  Abrir WhatsApp
-                </Button>
-              </div>
+            <div className="flex items-center gap-2 p-3 rounded-xl border bg-black/[0.01] dark:bg-white/[0.01]" style={{ borderColor: "var(--voux-card-border)" }}>
+              <Phone className="h-4 w-4 text-muted-foreground" />
+              <span className="text-xs font-mono text-muted-foreground">Telefone de Contato:</span>
+              <span className="text-xs font-mono font-bold text-foreground">{negocio.telefone}</span>
             </div>
           )}
         </div>

@@ -623,10 +623,23 @@ export const DashboardConsultorDetail = ({
         </div>
       </div>
 
-      {/* SEÇÃO 2: COCKPIT EM 3 COLUNAS (Distribuição por Ação | Inteligência IA | Negócios no Pipeline Ativo) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-stretch">
-        {/* Coluna 1: Distribuição de Ações de Campo */}
-        <div className="h-full">
+      {/* SEÇÃO 2: PIPELINE ATIVO & INTELIGÊNCIA ARTIFICIAL */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+        {/* Negócios no Pipeline Ativo (Largo - 8 colunas) */}
+        <div className="lg:col-span-8 h-full">
+          <ConsultorNegociosPipelineCard consultor={v.nome} />
+        </div>
+
+        {/* Inteligência do Consultor · IA (4 colunas) */}
+        <div className="lg:col-span-4 h-full">
+          <InsightConsultorCard consultor={v.nome} />
+        </div>
+      </div>
+
+      {/* SEÇÃO 3: DISTRIBUIÇÃO DE CAMPO & CLIENTES ATENDIDOS */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        {/* Distribuição de Ações de Campo (4 colunas) */}
+        <div className="lg:col-span-4 h-full">
           <ConsultorDistribuicaoCampoCard
             tiposAcao={v.tiposAcao}
             totalAcoes={v.totalAcoes}
@@ -635,18 +648,57 @@ export const DashboardConsultorDetail = ({
           />
         </div>
 
-        {/* Coluna 2: Inteligência do Consultor · IA */}
-        <div className="h-full">
-          <InsightConsultorCard consultor={v.nome} />
-        </div>
+        {/* Tabela de Clientes Atendidos (8 colunas) */}
+        <div className="lg:col-span-8">
+          <div
+            className="rounded-2xl border overflow-hidden"
+            style={{ borderColor: "var(--voux-card-border)", background: "var(--surface-raised)", boxShadow: "var(--voux-card-shadow)" }}
+          >
+            <div className="px-5 pt-4 pb-3 flex items-baseline justify-between border-b" style={{ borderColor: "var(--voux-card-border)" }}>
+              <div>
+                <h3 className="text-sm font-bold text-foreground" style={{ fontFamily: "var(--voux-font-sans)" }}>
+                  Clientes Atendidos pelo Consultor
+                </h3>
+                <p className="text-[11px] text-muted-foreground">
+                  Auditoria de carteira, interações registradas e histórico de negócios
+                </p>
+              </div>
+              <span className="text-[11px] font-mono text-muted-foreground">
+                {v.topClientes.length} clientes na carteira
+              </span>
+            </div>
 
-        {/* Coluna 3: Negócios no Pipeline Ativo (com Cliente, Produto, Obs, Etapa e Valor) */}
-        <div className="h-full md:col-span-2 lg:col-span-1">
-          <ConsultorNegociosPipelineCard consultor={v.nome} />
+            <div className="p-4 max-h-[460px] overflow-y-auto">
+              <div
+                className="grid grid-cols-[32px_1fr_100px_60px_60px_110px_90px_80px_32px] items-center px-2 py-2 border-b text-[11px] tracking-[0.12em] uppercase font-semibold text-muted-foreground font-mono"
+                style={{ borderColor: "var(--voux-card-border)" }}
+              >
+                <span>#</span>
+                <span>Cliente</span>
+                <span>Cidade</span>
+                <span className="text-center">Ações</span>
+                <span className="text-center">Visitas</span>
+                <span className="text-right">Valor Vinculado</span>
+                <span className="text-center">Dias s/ Contato</span>
+                <span className="text-center">Status</span>
+                <span></span>
+              </div>
+
+              {v.topClientes.map((c, i) => (
+                <ConsultorClienteCard
+                  key={c.nome}
+                  cliente={c}
+                  rank={i + 1}
+                  actions={clientActions.get(c.nome) || []}
+                  vendedorNome={v.nome}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* SEÇÃO 3: GRÁFICOS FULL WIDTH (Evolução Mensal no Ano Atual & Desempenho Comercial GPO) */}
+      {/* SEÇÃO 4: GRÁFICOS FULL WIDTH (Evolução Mensal no Ano Atual & Desempenho Comercial GPO) */}
       <div className="space-y-4">
         {/* Evolução Mensal — Janeiro a Dezembro */}
         <ChartCard
@@ -683,53 +735,6 @@ export const DashboardConsultorDetail = ({
         >
           <EvolucaoGPOChart data={gpoData ?? []} height={280} />
         </ChartCard>
-      </div>
-
-      {/* SEÇÃO 4: TABELA COMPLETA DE CLIENTES ATENDIDOS */}
-      <div
-        className="rounded-2xl border overflow-hidden"
-        style={{ borderColor: "var(--voux-card-border)", background: "var(--surface-raised)", boxShadow: "var(--voux-card-shadow)" }}
-      >
-        <div className="px-5 pt-4 pb-3 flex items-baseline justify-between border-b" style={{ borderColor: "var(--voux-card-border)" }}>
-          <div>
-            <h3 className="text-sm font-bold text-foreground" style={{ fontFamily: "var(--voux-font-sans)" }}>
-              Clientes Atendidos pelo Consultor
-            </h3>
-            <p className="text-[11px] text-muted-foreground">
-              Auditoria de carteira, interações registradas e histórico de negócios
-            </p>
-          </div>
-          <span className="text-[11px] font-mono text-muted-foreground">
-            {v.topClientes.length} clientes na carteira
-          </span>
-        </div>
-
-        <div className="p-4">
-          <div
-            className="grid grid-cols-[32px_1fr_100px_60px_60px_110px_90px_80px_32px] items-center px-2 py-2 border-b text-[11px] tracking-[0.12em] uppercase font-semibold text-muted-foreground font-mono"
-            style={{ borderColor: "var(--voux-card-border)" }}
-          >
-            <span>#</span>
-            <span>Cliente</span>
-            <span>Cidade</span>
-            <span className="text-center">Ações</span>
-            <span className="text-center">Visitas</span>
-            <span className="text-right">Valor Vinculado</span>
-            <span className="text-center">Dias s/ Contato</span>
-            <span className="text-center">Status</span>
-            <span></span>
-          </div>
-
-          {v.topClientes.map((c, i) => (
-            <ConsultorClienteCard
-              key={c.nome}
-              cliente={c}
-              rank={i + 1}
-              actions={clientActions.get(c.nome) || []}
-              vendedorNome={v.nome}
-            />
-          ))}
-        </div>
       </div>
     </div>
   );

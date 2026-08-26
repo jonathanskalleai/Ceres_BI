@@ -232,11 +232,11 @@ export const ConsultorNegociosPipelineCard = memo(function ConsultorNegociosPipe
 
           {/* Lista de Negócios Reais do Pipeline */}
           {negociosProcessados.length === 0 ? (
-            <div className="py-10 text-center text-xs text-muted-foreground">
+            <div className="py-12 text-center text-xs text-muted-foreground">
               Nenhum negócio encontrado nesta etapa do pipeline.
             </div>
           ) : (
-            <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5 max-h-[420px] overflow-y-auto pr-1">
               {negociosProcessados.map((n) => {
                 const etapaBadge = getEtapaBadge(n.etapa);
                 const termometro = getTermometroBadge(n.estrelas);
