@@ -170,7 +170,23 @@ function aggregateConsultorRows(rows: EquipeDesempenhoLinha[]): EquipeDesempenho
     });
   });
 
-  return result.sort((a, b) => (a.consultor ?? "").localeCompare(b.consultor ?? "", "pt-BR"));
+  return result.sort(sortByVendas);
+}
+
+function sortByVendas(a: EquipeDesempenhoLinha, b: EquipeDesempenhoLinha): number {
+  const vA = asNumber(a.total_venda);
+  const vB = asNumber(b.total_venda);
+  if (vB !== vA) return vB - vA;
+
+  const mA = asNumber(a.desempenho_meta);
+  const mB = asNumber(b.desempenho_meta);
+  if (mB !== mA) return mB - mA;
+
+  const pipeA = asNumber(a.total);
+  const pipeB = asNumber(b.total);
+  if (pipeB !== pipeA) return pipeB - pipeA;
+
+  return (a.consultor ?? "").localeCompare(b.consultor ?? "", "pt-BR");
 }
 
 function aggregateTeamRow(teamRows: EquipeDesempenhoLinha[]): EquipeDesempenhoLinha | null {
@@ -255,6 +271,7 @@ const HEADERS_COLUMNS = [
 interface MetricRowProps {
   row: EquipeDesempenhoLinha;
   label: string;
+  position?: number;
   isTeam?: boolean;
   nested?: boolean;
   stickyMonth?: boolean;
@@ -266,6 +283,7 @@ interface MetricRowProps {
 const MetricRow = memo(function MetricRow({
   row,
   label,
+  position,
   isTeam = false,
   nested = false,
   stickyMonth = false,
@@ -340,12 +358,44 @@ const MetricRow = memo(function MetricRow({
               nested ? "pl-7 text-[12px]" : "text-[12px]"
             )}
           >
-            <span className="h-1.5 w-1.5 rounded-full bg-amber-500/70 group-hover:bg-amber-500 transition-colors" />
-            <span className="truncate group-hover:underline">{label}</span>
+            {position != null && (
+              <span
+                className={cn(
+                  "inline-flex items-center justify-center h-4 min-w-[22px] px-1 rounded text-[10px] font-mono font-bold shrink-0",
+                  position === 1
+                    ? "bg-amber-500 text-amber-950 font-black shadow-sm"
+                    : position === 2
+                    ? "bg-slate-300 text-slate-900 font-bold"
+                    : position === 3
+                    ? "bg-amber-700 text-amber-100 font-bold"
+                    : "text-muted-foreground bg-black/5 dark:bg-white/10"
+                )}
+              >
+                #{position}
+              </span>
+            )}
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500/70 group-hover:bg-amber-500 transition-colors shrink-0" />
+            <span className="truncate group-hover:underline font-semibold">{label}</span>
           </button>
         ) : (
           <span className={cn("flex min-w-[170px] items-center gap-2 text-[12px]", nested ? "pl-7" : "")}>
-            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+            {position != null && (
+              <span
+                className={cn(
+                  "inline-flex items-center justify-center h-4 min-w-[22px] px-1 rounded text-[10px] font-mono font-bold shrink-0",
+                  position === 1
+                    ? "bg-amber-500 text-amber-950 font-black shadow-sm"
+                    : position === 2
+                    ? "bg-slate-300 text-slate-900 font-bold"
+                    : position === 3
+                    ? "bg-amber-700 text-amber-100 font-bold"
+                    : "text-muted-foreground bg-black/5 dark:bg-white/10"
+                )}
+              >
+                #{position}
+              </span>
+            )}
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
             <span className="truncate">{label}</span>
           </span>
         )}
@@ -511,7 +561,7 @@ export const EquipeDesempenhoTable = memo(function EquipeDesempenhoTable({
 
       const sortedRows = rawRows
         .filter((r) => r.consultor && r.consultor !== "Sem consultor" && hasOpenPipeline(r))
-        .sort((a, b) => (a.consultor ?? "").localeCompare(b.consultor ?? "", "pt-BR"));
+        .sort(sortByVendas);
 
       return {
         principalRows: sortedRows,
@@ -566,7 +616,7 @@ export const EquipeDesempenhoTable = memo(function EquipeDesempenhoTable({
         competencia,
         rows
           .filter(hasOpenPipeline)
-          .sort((a, b) => (a.consultor ?? "").localeCompare(b.consultor ?? "", "pt-BR"))
+          .sort(sortByVendas)
       );
     });
     return grouped;
@@ -696,11 +746,12 @@ export const EquipeDesempenhoTable = memo(function EquipeDesempenhoTable({
                     />
                   )}
                   {principalRows.length > 0 ? (
-                    principalRows.map((consultorRow) => (
+                    principalRows.map((consultorRow, index) => (
                       <MetricRow
                         key={`principal-${consultorRow.consultor}`}
                         row={consultorRow}
                         label={consultorRow.consultor ?? "Sem consultor"}
+                        position={index + 1}
                         onSelectConsultor={onSelectConsultor}
                       />
                     ))
@@ -724,7 +775,7 @@ export const EquipeDesempenhoTable = memo(function EquipeDesempenhoTable({
                 Negócios = oportunidades geradas no período · Tx. Conv. Neg. = qtd. de vendas ÷ negócios gerados · Tx. Conv. M. = qtd. de vendas ÷ clientes com Prospecção Maq.
               </span>
               <span className="font-mono text-muted-foreground">
-                {principalRows.length} consultores {targetPeriodInfo.type === "single" ? `em ${targetPeriodInfo.label}` : "no período"}
+                {principalRows.length} consultores {targetPeriodInfo.type === "single" ? `em ${targetPeriodInfo.label}` : "no período"} · Ordenados por Vendas
               </span>
             </div>
           </div>
@@ -776,11 +827,12 @@ export const EquipeDesempenhoTable = memo(function EquipeDesempenhoTable({
                           onToggle={() => toggleMonth(teamRow.competencia)}
                         />
                         {isExpanded &&
-                          rowsDoMes.map((consultorRow) => (
+                          rowsDoMes.map((consultorRow, index) => (
                             <MetricRow
                               key={`${consultorRow.consultor}-${consultorRow.competencia}`}
                               row={consultorRow}
                               label={consultorRow.consultor ?? "Sem consultor"}
+                              position={index + 1}
                               nested
                               onSelectConsultor={onSelectConsultor}
                             />

@@ -115,25 +115,31 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
     [resumo]
   );
 
-  // Determinar competência atual e mês anterior
-  const { compAtual, compAnterior } = useMemo(() => {
-    let ym = "";
+  // Determinar competência atual, mês anterior e se é período multi-mês (ex.: ano inteiro)
+  const { compAtual, compAnterior, isMultiMonth, startComp, endComp } = useMemo(() => {
+    let fromYm = "";
+    let toYm = "";
     if (filters.dateRange?.from) {
-      ym = filters.dateRange.from.slice(0, 7);
+      fromYm = filters.dateRange.from.slice(0, 7);
+      toYm = (filters.dateRange.to || filters.dateRange.from).slice(0, 7);
     } else {
       const now = new Date();
-      ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      fromYm = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      toYm = fromYm;
     }
-    const current = `${ym}-01`;
+    const isMulti = fromYm !== toYm;
+    const start = `${fromYm}-01`;
+    const end = `${toYm}-31`;
+    const current = `${toYm}-01`;
 
-    const [yearStr, monthStr] = ym.split("-");
+    const [yearStr, monthStr] = toYm.split("-");
     const y = parseInt(yearStr, 10);
     const m = parseInt(monthStr, 10);
     const prevDate = new Date(y, m - 2, 1);
     const prevYm = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, "0")}`;
     const previous = `${prevYm}-01`;
 
-    return { compAtual: current, compAnterior: previous };
+    return { compAtual: current, compAnterior: previous, isMultiMonth: isMulti, startComp: start, endComp: end };
   }, [filters.dateRange]);
 
   // Consolidar dados completos e acumulados de cada consultor
@@ -163,6 +169,19 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
       const desempenhoMetaMes =
         metaMes > 0 ? (vendaMes / metaMes) * 100 : rAtual?.desempenho_meta != null ? Number(rAtual.desempenho_meta) : null;
       const saldoMetaMes = metaMes - vendaMes;
+
+      // --- VENDAS DO PERÍODO SELECIONADO (MULTIMÊS OU ANO INTEIRO) ---
+      const rowsDoPeriodo = isMultiMonth
+        ? cRows.filter((r) => r.competencia >= startComp && r.competencia <= endComp)
+        : [];
+      const vendaPeriodo = isMultiMonth
+        ? rowsDoPeriodo.reduce((sum, r) => sum + Number(r.total_venda ?? 0), 0)
+        : vendaMes;
+      const metaPeriodo = isMultiMonth
+        ? rowsDoPeriodo.reduce((sum, r) => sum + Number(r.meta ?? 0), 0)
+        : metaMes;
+      const desempenhoMetaPeriodo =
+        metaPeriodo > 0 ? (vendaPeriodo / metaPeriodo) * 100 : desempenhoMetaMes;
 
       // --- ACUMULADO DO ANO (YTD) ---
       const metaAno = cRows.reduce((sum, r) => sum + Number(r.meta ?? 0), 0);
@@ -221,6 +240,10 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
 
       return {
         nome: v.nome,
+        // Período Selecionado
+        vendaPeriodo,
+        metaPeriodo,
+        desempenhoMetaPeriodo,
         // Mês
         vendaMes,
         vendaAnterior,
@@ -257,35 +280,79 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
         totalAcoes: v.totalAcoes,
       };
     })
-    .filter((c) => c.oportunidade > 0 || c.cotacao > 0 || c.proposta > 0);
-  }, [vendedores, desempenho.rows, resumoPorConsultor, compAtual, compAnterior]);
+    .filter((c) => c.oportunidade > 0 || c.cotacao > 0 || c.proposta > 0 || c.totalPipeline > 0 || c.vendaPeriodo > 0 || c.vendaMes > 0 || c.vendaAno > 0);
+  }, [vendedores, desempenho.rows, resumoPorConsultor, compAtual, compAnterior, isMultiMonth, startComp, endComp]);
 
   // Ordenação
   const consultoresOrdenados = useMemo(() => {
     return [...consultoresProcessados].sort((a, b) => {
       switch (ordenacao) {
         case "vendas_mes":
-          return b.vendaMes - a.vendaMes || (b.desempenhoMetaMes ?? 0) - (a.desempenhoMetaMes ?? 0);
+          return (
+            (b.vendaPeriodo - a.vendaPeriodo) ||
+            ((b.desempenhoMetaPeriodo ?? 0) - (a.desempenhoMetaPeriodo ?? 0)) ||
+            (b.totalPipeline - a.totalPipeline) ||
+            a.nome.localeCompare(b.nome, "pt-BR")
+          );
         case "vendas_mes_menor":
-          return a.vendaMes - b.vendaMes || (a.desempenhoMetaMes ?? 0) - (b.desempenhoMetaMes ?? 0);
+          return (
+            (a.vendaPeriodo - b.vendaPeriodo) ||
+            ((a.desempenhoMetaPeriodo ?? 0) - (b.desempenhoMetaPeriodo ?? 0)) ||
+            (a.totalPipeline - b.totalPipeline) ||
+            a.nome.localeCompare(b.nome, "pt-BR")
+          );
         case "vendas_ano":
-          return b.vendaAno - a.vendaAno || (b.desempenhoMetaAno ?? 0) - (a.desempenhoMetaAno ?? 0);
+          return (
+            (b.vendaAno - a.vendaAno) ||
+            ((b.desempenhoMetaAno ?? 0) - (a.desempenhoMetaAno ?? 0)) ||
+            (b.totalPipeline - a.totalPipeline) ||
+            a.nome.localeCompare(b.nome, "pt-BR")
+          );
         case "meta_mes":
-          return (b.desempenhoMetaMes ?? -1) - (a.desempenhoMetaMes ?? -1) || b.vendaMes - a.vendaMes;
+          return (
+            ((b.desempenhoMetaPeriodo ?? -1) - (a.desempenhoMetaPeriodo ?? -1)) ||
+            (b.vendaPeriodo - a.vendaPeriodo) ||
+            (b.totalPipeline - a.totalPipeline) ||
+            a.nome.localeCompare(b.nome, "pt-BR")
+          );
         case "meta_mes_menor":
-          return (a.desempenhoMetaMes ?? 999) - (b.desempenhoMetaMes ?? 999) || a.vendaMes - b.vendaMes;
+          return (
+            ((a.desempenhoMetaPeriodo ?? 999) - (b.desempenhoMetaPeriodo ?? 999)) ||
+            (a.vendaPeriodo - b.vendaPeriodo) ||
+            a.nome.localeCompare(b.nome, "pt-BR")
+          );
         case "meta_ano":
-          return (b.desempenhoMetaAno ?? -1) - (a.desempenhoMetaAno ?? -1) || b.vendaAno - a.vendaAno;
+          return (
+            ((b.desempenhoMetaAno ?? -1) - (a.desempenhoMetaAno ?? -1)) ||
+            (b.vendaAno - a.vendaAno) ||
+            a.nome.localeCompare(b.nome, "pt-BR")
+          );
         case "pipeline":
-          return b.totalPipeline - a.totalPipeline || b.vendaMes - a.vendaMes;
+          return (
+            (b.totalPipeline - a.totalPipeline) ||
+            (b.vendaPeriodo - a.vendaPeriodo) ||
+            a.nome.localeCompare(b.nome, "pt-BR")
+          );
         case "visitas":
-          return b.visitas - a.visitas || b.vendaMes - a.vendaMes;
+          return (
+            (b.visitas - a.visitas) ||
+            (b.vendaPeriodo - a.vendaPeriodo) ||
+            a.nome.localeCompare(b.nome, "pt-BR")
+          );
         case "conversao":
-          return (b.taxaConversaoMes ?? -1) - (a.taxaConversaoMes ?? -1) || b.vendaMes - a.vendaMes;
+          return (
+            ((b.taxaConversaoMes ?? -1) - (a.taxaConversaoMes ?? -1)) ||
+            (b.vendaPeriodo - a.vendaPeriodo) ||
+            a.nome.localeCompare(b.nome, "pt-BR")
+          );
         case "nome":
           return a.nome.localeCompare(b.nome, "pt-BR");
         default:
-          return b.vendaMes - a.vendaMes;
+          return (
+            (b.vendaPeriodo - a.vendaPeriodo) ||
+            ((b.desempenhoMetaPeriodo ?? 0) - (a.desempenhoMetaPeriodo ?? 0)) ||
+            a.nome.localeCompare(b.nome, "pt-BR")
+          );
       }
     });
   }, [consultoresProcessados, ordenacao]);
@@ -298,22 +365,22 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
 
       switch (filtroStatus) {
         case "meta_mes_batida":
-          return c.desempenhoMetaMes != null && c.desempenhoMetaMes >= 100;
+          return c.desempenhoMetaPeriodo != null && c.desempenhoMetaPeriodo >= 100;
         case "meta_ano_alta":
           return c.desempenhoMetaAno != null && c.desempenhoMetaAno >= 50;
         case "em_rota":
-          return c.desempenhoMetaMes != null && c.desempenhoMetaMes >= 70 && c.desempenhoMetaMes < 100;
+          return c.desempenhoMetaPeriodo != null && c.desempenhoMetaPeriodo >= 70 && c.desempenhoMetaPeriodo < 100;
         case "abaixo":
-          return c.desempenhoMetaMes != null && c.desempenhoMetaMes < 70 && c.metaMes > 0;
+          return c.desempenhoMetaPeriodo != null && c.desempenhoMetaPeriodo < 70 && c.metaPeriodo > 0;
         case "critico":
           return (
-            (c.desempenhoMetaMes != null && c.desempenhoMetaMes < 30 && c.metaMes > 0) ||
-            (c.vendaMes === 0 && c.metaMes > 0)
+            (c.desempenhoMetaPeriodo != null && c.desempenhoMetaPeriodo < 30 && c.metaPeriodo > 0) ||
+            (c.vendaPeriodo === 0 && c.metaPeriodo > 0)
           );
         case "sem_vendas":
-          return c.vendaMes === 0;
+          return c.vendaPeriodo === 0;
         case "com_vendas":
-          return c.vendaMes > 0;
+          return c.vendaPeriodo > 0;
         default:
           return true;
       }
@@ -323,7 +390,10 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
     // ordena automaticamente do pior para o melhor (crescente) para evidenciar os mais distantes da meta
     if (filtroStatus === "critico" && ordenacao === "vendas_mes") {
       return [...list].sort(
-        (a, b) => (a.desempenhoMetaMes ?? 0) - (b.desempenhoMetaMes ?? 0) || a.vendaMes - b.vendaMes
+        (a, b) =>
+          (a.desempenhoMetaPeriodo ?? 0) - (b.desempenhoMetaPeriodo ?? 0) ||
+          a.vendaPeriodo - b.vendaPeriodo ||
+          a.nome.localeCompare(b.nome, "pt-BR")
       );
     }
 
@@ -359,7 +429,7 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
               </span>
             </div>
             <p className="text-[11px] text-muted-foreground">
-              Dossiê 360° dos consultores com oportunidades, cotações ou propostas em aberto no funil
+              Dossiê 360° dos consultores ranqueados por vendas e acompanhamento de metas
             </p>
           </div>
         </div>
@@ -382,10 +452,18 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
             className="h-8 rounded-md border bg-background px-2.5 text-[11px] font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-amber-500"
             style={{ borderColor: "var(--voux-card-border)" }}
           >
-            <option value="vendas_mes">Maior Venda no Mês</option>
-            <option value="vendas_mes_menor">🚨 Menor Venda no Mês (Piores Resultados)</option>
-            <option value="meta_mes">Maior % da Meta do Mês</option>
-            <option value="meta_mes_menor">⚠️ Menor % da Meta (Mais Distante)</option>
+            <option value="vendas_mes">
+              {isMultiMonth ? "Maior Venda no Período Selecionado" : "Maior Venda no Mês"}
+            </option>
+            <option value="vendas_mes_menor">
+              {isMultiMonth ? "🚨 Menor Venda no Período" : "🚨 Menor Venda no Mês (Piores Resultados)"}
+            </option>
+            <option value="meta_mes">
+              {isMultiMonth ? "Maior % da Meta no Período" : "Maior % da Meta do Mês"}
+            </option>
+            <option value="meta_mes_menor">
+              {isMultiMonth ? "⚠️ Menor % da Meta no Período" : "⚠️ Menor % da Meta (Mais Distante)"}
+            </option>
             <option value="vendas_ano">Maior Venda no Ano (YTD)</option>
             <option value="meta_ano">Maior % da Meta do Ano</option>
             <option value="pipeline">Maior Pipeline Ativo</option>
@@ -438,11 +516,16 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {cardsVisiveis.map((c, index) => {
             const ribbon = POSITION_RIBBONS[index];
-            const percentMetaMes = c.desempenhoMetaMes != null ? Math.min(Math.max(c.desempenhoMetaMes, 0), 100) : 0;
+            const metaMesValor = isMultiMonth ? c.metaPeriodo : c.metaMes;
+            const vendaMesValor = isMultiMonth ? c.vendaPeriodo : c.vendaMes;
+            const saldoMetaValor = isMultiMonth ? c.metaPeriodo - c.vendaPeriodo : c.saldoMetaMes;
+            const desempenhoMetaValor = isMultiMonth ? c.desempenhoMetaPeriodo : c.desempenhoMetaMes;
+
+            const percentMetaMes = desempenhoMetaValor != null ? Math.min(Math.max(desempenhoMetaValor, 0), 100) : 0;
             const percentMetaAno = c.desempenhoMetaAno != null ? Math.min(Math.max(c.desempenhoMetaAno, 0), 100) : 0;
-            const isTop3 = index < 3 && ordenacao === "vendas_mes";
-            const metaMesSuperada = c.desempenhoMetaMes != null && c.desempenhoMetaMes >= 100;
-            const emRotaMes = c.desempenhoMetaMes != null && c.desempenhoMetaMes >= 70 && c.desempenhoMetaMes < 100;
+            const isTop3 = index < 3 && (ordenacao === "vendas_mes" || ordenacao === "vendas_ano");
+            const metaMesSuperada = desempenhoMetaValor != null && desempenhoMetaValor >= 100;
+            const emRotaMes = desempenhoMetaValor != null && desempenhoMetaValor >= 70 && desempenhoMetaValor < 100;
 
             const crmBadge =
               c.crmQuality >= 70
@@ -507,9 +590,9 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
                       </div>
                     </div>
 
-                    {/* Meta do Mês Badge */}
+                    {/* Meta do Mês / Período Badge */}
                     <div className="flex flex-col items-end gap-1 shrink-0">
-                      {c.desempenhoMetaMes != null && c.metaMes > 0 ? (
+                      {desempenhoMetaValor != null && metaMesValor > 0 ? (
                         <span
                           className={cn(
                             "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-mono font-bold border tabular-nums",
@@ -517,7 +600,7 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
                               ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
                               : emRotaMes
                               ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                              : c.desempenhoMetaMes < 30 || c.vendaMes === 0
+                              : desempenhoMetaValor < 30 || vendaMesValor === 0
                               ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30"
                               : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
                           )}
@@ -530,40 +613,40 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
                             <AlertCircle
                               className={cn(
                                 "h-3 w-3",
-                                (c.desempenhoMetaMes < 30 || c.vendaMes === 0) && "text-rose-500 animate-pulse"
+                                (desempenhoMetaValor < 30 || vendaMesValor === 0) && "text-rose-500 animate-pulse"
                               )}
                             />
                           )}
-                          {formatPct(c.desempenhoMetaMes)}
+                          {formatPct(desempenhoMetaValor)}
                         </span>
                       ) : (
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-mono text-muted-foreground border border-black/5 dark:border-white/10">
-                          Sem meta mês
+                          {isMultiMonth ? "Sem meta período" : "Sem meta mês"}
                         </span>
                       )}
                     </div>
                   </div>
 
-                  {/* BLOCO 1: META DO MÊS & VENDAS ATUAIS */}
+                  {/* BLOCO 1: META DO MÊS / PERÍODO & VENDAS ATUAIS */}
                   <div className="mb-2.5 rounded-xl border p-3 bg-black/[0.02] dark:bg-white/[0.02]" style={{ borderColor: "var(--voux-card-border)" }}>
                     <div className="flex items-center justify-between text-[11px] mb-1.5">
                       <span className="font-semibold text-muted-foreground flex items-center gap-1">
                         <Target className="h-3.5 w-3.5 text-amber-500" />
-                        Meta do Mês: <strong className="font-mono text-foreground">{formatBRL(c.metaMes)}</strong>
+                        {isMultiMonth ? "Meta no Período: " : "Meta do Mês: "}<strong className="font-mono text-foreground">{formatBRL(metaMesValor)}</strong>
                       </span>
-                      {c.saldoMetaMes > 0 && c.metaMes > 0 ? (
+                      {saldoMetaValor > 0 && metaMesValor > 0 ? (
                         <span className="text-[10px] font-mono text-muted-foreground">
-                          Falta: <strong className="text-rose-500">{formatBRL(c.saldoMetaMes)}</strong>
+                          Falta: <strong className="text-rose-500">{formatBRL(saldoMetaValor)}</strong>
                         </span>
-                      ) : c.metaMes > 0 ? (
+                      ) : metaMesValor > 0 ? (
                         <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
                           Meta Batida!
                         </span>
                       ) : null}
                     </div>
 
-                    {/* Barra de Progresso do Mês */}
-                    {c.metaMes > 0 && (
+                    {/* Barra de Progresso do Mês / Período */}
+                    {metaMesValor > 0 && (
                       <div className="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
                         <div
                           className={cn(
@@ -579,12 +662,14 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
                       </div>
                     )}
 
-                    {/* Grid Mês: Vendido Atual vs Mês Passado */}
+                    {/* Grid Mês / Período: Vendido Atual vs Mês Passado */}
                     <div className="grid grid-cols-2 gap-2 pt-1 border-t" style={{ borderColor: "var(--voux-card-border)" }}>
                       <div>
-                        <p className="text-[10px] uppercase font-semibold text-muted-foreground font-mono">Vendido no Mês</p>
+                        <p className="text-[10px] uppercase font-semibold text-muted-foreground font-mono">
+                          {isMultiMonth ? "Vendido no Período" : "Vendido no Mês"}
+                        </p>
                         <p className="font-mono font-bold text-[13px] text-emerald-600 dark:text-emerald-400 tabular-nums">
-                          {formatBRL(c.vendaMes)}
+                          {formatBRL(vendaMesValor)}
                         </p>
                         <p className="text-[10px] font-mono text-muted-foreground">
                           {c.quantidadeVendasMes} {c.quantidadeVendasMes === 1 ? "venda" : "vendas"}
