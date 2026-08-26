@@ -81,7 +81,7 @@ function growthBadge(crescimento: number | null | undefined) {
 }
 
 function hasOpenPipeline(row: EquipeDesempenhoLinha): boolean {
-  return [row.oportunidade, row.cotacao, row.proposta].some((value) => asNumber(value) !== 0);
+  return [row.oportunidade, row.cotacao, row.proposta].some((value) => asNumber(value) > 0);
 }
 
 function hasAnyActivity(row: EquipeDesempenhoLinha): boolean {
@@ -510,7 +510,7 @@ export const EquipeDesempenhoTable = memo(function EquipeDesempenhoTable({
       const teamRow = data.team.find((t) => t.competencia.startsWith(compPrefix));
 
       const sortedRows = rawRows
-        .filter((r) => r.consultor && r.consultor !== "Sem consultor")
+        .filter((r) => r.consultor && r.consultor !== "Sem consultor" && hasOpenPipeline(r))
         .sort((a, b) => (a.consultor ?? "").localeCompare(b.consultor ?? "", "pt-BR"));
 
       return {
@@ -528,7 +528,7 @@ export const EquipeDesempenhoTable = memo(function EquipeDesempenhoTable({
         (t) => t.competencia >= startComp && t.competencia <= endComp
       );
 
-      const aggregatedConsultors = aggregateConsultorRows(rowsInRange);
+      const aggregatedConsultors = aggregateConsultorRows(rowsInRange).filter(hasOpenPipeline);
       const aggregatedTeam = aggregateTeamRow(teamInRange);
 
       return {
@@ -541,7 +541,12 @@ export const EquipeDesempenhoTable = memo(function EquipeDesempenhoTable({
   const consultores = useMemo(
     () =>
       Array.from(
-        new Set(data.rows.map((row) => row.consultor).filter((name): name is string => !!name))
+        new Set(
+          data.rows
+            .filter(hasOpenPipeline)
+            .map((row) => row.consultor)
+            .filter((name): name is string => !!name)
+        )
       ).sort((a, b) => a.localeCompare(b, "pt-BR")),
     [data.rows]
   );
