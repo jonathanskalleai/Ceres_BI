@@ -531,7 +531,7 @@ export const DashboardConsultorDetail = ({
           </div>
         </div>
 
-        {/* Card 3: Eficiência & Médias de Esforço */}
+        {/* Card 3: Ticket Médio & Taxa de Conversão */}
         <div
           className="rounded-2xl border p-5 flex flex-col justify-between transition-all"
           style={{
@@ -540,36 +540,50 @@ export const DashboardConsultorDetail = ({
             boxShadow: "var(--voux-card-shadow)",
           }}
         >
-          <div>
-            <div className="flex items-center justify-between text-[11px] mb-1.5">
-              <span className="font-semibold text-muted-foreground flex items-center gap-1 font-mono">
-                <Compass className="h-3.5 w-3.5 text-emerald-500" />
-                Eficiência & Médias
-              </span>
-              <span className="text-[10px] font-mono text-muted-foreground font-bold">
-                {formatPct(consultorStats.taxaConversaoMes)} conv.
-              </span>
-            </div>
-
-            <p className="font-mono font-bold text-2xl text-foreground tabular-nums mb-3 truncate">
-              {formatBRL(consultorStats.ticketMedioMes ?? consultorStats.ticketMedioAno)}
-            </p>
+          {/* Header */}
+          <div className="flex items-center justify-between text-[11px] mb-2 pb-1.5 border-b" style={{ borderColor: "var(--voux-card-border)" }}>
+            <span className="font-semibold text-muted-foreground flex items-center gap-1 font-mono uppercase tracking-wider text-[10px]">
+              <Compass className="h-3.5 w-3.5 text-emerald-500" />
+              Eficiência Comercial
+            </span>
+            <span className="text-[10px] font-mono text-muted-foreground">
+              Médias do Consultor
+            </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 pt-2 border-t text-[11px]" style={{ borderColor: "var(--voux-card-border)" }}>
-            <div className="rounded-lg border p-1.5 bg-black/[0.01] dark:bg-white/[0.01]" style={{ borderColor: "var(--voux-card-border)" }}>
-              <p className="text-[9px] text-muted-foreground font-mono">Visitas / Oport.</p>
-              <p className="font-mono font-bold text-amber-600 dark:text-amber-400 tabular-nums text-[12px] truncate">
+          {/* Duas Metades com Números Grandes */}
+          <div className="grid grid-cols-2 gap-3 divide-x my-auto" style={{ borderColor: "var(--voux-card-border)" }}>
+            {/* Metade 1: Ticket Médio */}
+            <div className="pr-1">
+              <span className="text-[10px] font-mono font-semibold uppercase text-muted-foreground block mb-0.5">
+                Ticket Médio
+              </span>
+              <p className="font-mono font-bold text-lg xl:text-xl text-foreground tabular-nums truncate">
+                {formatBRL(consultorStats.ticketMedioMes ?? consultorStats.ticketMedioAno)}
+              </p>
+              <p className="text-[10px] font-mono text-amber-600 dark:text-amber-400 font-semibold mt-0.5 truncate">
                 {formatRatio(consultorStats.visitasPorOportunidade, "vis/oport.")}
               </p>
             </div>
 
-            <div className="rounded-lg border p-1.5 bg-black/[0.01] dark:bg-white/[0.01]" style={{ borderColor: "var(--voux-card-border)" }}>
-              <p className="text-[9px] text-muted-foreground font-mono">Clientes / Venda</p>
-              <p className="font-mono font-bold text-emerald-600 dark:text-emerald-400 tabular-nums text-[12px] truncate">
-                {formatRatio(consultorStats.clientesPorVenda, "cli/vda")}
+            {/* Metade 2: Taxa de Conversão */}
+            <div className="pl-3">
+              <span className="text-[10px] font-mono font-semibold uppercase text-muted-foreground block mb-0.5">
+                Taxa Conversão
+              </span>
+              <p className="font-mono font-bold text-lg xl:text-xl text-emerald-600 dark:text-emerald-400 tabular-nums truncate">
+                {formatPct(consultorStats.taxaConversaoMes)}
+              </p>
+              <p className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5 truncate">
+                {formatRatio(consultorStats.clientesPorVenda, "cli/venda")}
               </p>
             </div>
+          </div>
+
+          {/* Rodapé com Relação de Esforço */}
+          <div className="grid grid-cols-2 gap-1.5 pt-2 mt-2 border-t text-[9px] font-mono text-muted-foreground" style={{ borderColor: "var(--voux-card-border)" }}>
+            <span className="truncate">🎯 Esforço de Campo</span>
+            <span className="text-right truncate">⚡ Fechamento</span>
           </div>
         </div>
 
