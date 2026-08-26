@@ -59,7 +59,7 @@ export const DashboardConsultores = ({
 
     return vendedores.filter((v) => {
       const cRows = rowsPorConsultor.get(v.nome) ?? [];
-      const rAtual = cRows.find((r) => r.competencia === compAtual);
+      const rAtual = cRows.find((r) => r.competencia.startsWith(compAtual.slice(0, 7)) || r.competencia === compAtual);
       const op = Number(rAtual?.oportunidade ?? 0);
       const cot = Number(rAtual?.cotacao ?? 0);
       const prop = Number(rAtual?.proposta ?? 0);

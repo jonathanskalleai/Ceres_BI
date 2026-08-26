@@ -116,48 +116,65 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
   );
 
   // Determinar competência atual, mês anterior e se é período multi-mês (ex.: ano inteiro)
-  const { compAtual, compAnterior, isMultiMonth, startComp, endComp } = useMemo(() => {
-    let fromYm = "";
-    let toYm = "";
+  const { compAtual, compAnterior, isMultiMonth, fromYm, toYm, prevYm } = useMemo(() => {
+    let fYm = "";
+    let tYm = "";
     if (filters.dateRange?.from) {
-      fromYm = filters.dateRange.from.slice(0, 7);
-      toYm = (filters.dateRange.to || filters.dateRange.from).slice(0, 7);
+      fYm = filters.dateRange.from.slice(0, 7);
+      tYm = (filters.dateRange.to || filters.dateRange.from).slice(0, 7);
     } else {
-      const now = new Date();
-      fromYm = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-      toYm = fromYm;
+      const currentYear = new Date().getFullYear();
+      fYm = `${currentYear}-01`;
+      tYm = `${currentYear}-12`;
     }
-    const isMulti = fromYm !== toYm;
-    const start = `${fromYm}-01`;
-    const end = `${toYm}-31`;
-    const current = `${toYm}-01`;
+    const isMulti = fYm !== tYm;
+    const current = `${tYm}-01`;
 
-    const [yearStr, monthStr] = toYm.split("-");
+    const [yearStr, monthStr] = tYm.split("-");
     const y = parseInt(yearStr, 10);
     const m = parseInt(monthStr, 10);
     const prevDate = new Date(y, m - 2, 1);
-    const prevYm = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, "0")}`;
-    const previous = `${prevYm}-01`;
+    const pYm = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, "0")}`;
+    const previous = `${pYm}-01`;
 
-    return { compAtual: current, compAnterior: previous, isMultiMonth: isMulti, startComp: start, endComp: end };
+    return {
+      compAtual: current,
+      compAnterior: previous,
+      isMultiMonth: isMulti,
+      fromYm: fYm,
+      toYm: tYm,
+      prevYm: pYm,
+    };
   }, [filters.dateRange]);
 
   // Consolidar dados completos e acumulados de cada consultor
   const consultoresProcessados = useMemo(() => {
     const rowsPorConsultor = new Map<string, typeof desempenho.rows>();
     for (const r of desempenho.rows) {
-      if (!r.consultor) continue;
+      if (!r.consultor || r.consultor === "Sem consultor") continue;
       if (!rowsPorConsultor.has(r.consultor)) {
         rowsPorConsultor.set(r.consultor, []);
       }
       rowsPorConsultor.get(r.consultor)!.push(r);
     }
 
-    return vendedores.map((v) => {
-      const cRows = rowsPorConsultor.get(v.nome) ?? [];
-      const rAtual = cRows.find((r) => r.competencia === compAtual);
-      const rAnterior = cRows.find((r) => r.competencia === compAnterior);
-      const res = resumoPorConsultor.get(v.nome);
+    const consultorMap = new Map<string, Vendedor | undefined>();
+    for (const v of vendedores) {
+      if (v.nome && v.nome !== "Sem consultor") consultorMap.set(v.nome, v);
+    }
+    for (const [name] of rowsPorConsultor.entries()) {
+      if (!consultorMap.has(name)) {
+        consultorMap.set(name, undefined);
+      }
+    }
+
+    const result = [];
+
+    for (const [nome, v] of consultorMap.entries()) {
+      const cRows = rowsPorConsultor.get(nome) ?? [];
+      const rAtual = cRows.find((r) => r.competencia.startsWith(toYm) || r.competencia === compAtual);
+      const rAnterior = cRows.find((r) => r.competencia.startsWith(prevYm) || r.competencia === compAnterior);
+      const res = resumoPorConsultor.get(nome);
 
       // --- MÊS ATUAL ---
       const vendaMes = Number(rAtual?.total_venda ?? res?.valor_ganho ?? 0);
@@ -171,9 +188,10 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
       const saldoMetaMes = metaMes - vendaMes;
 
       // --- VENDAS DO PERÍODO SELECIONADO (MULTIMÊS OU ANO INTEIRO) ---
-      const rowsDoPeriodo = isMultiMonth
-        ? cRows.filter((r) => r.competencia >= startComp && r.competencia <= endComp)
-        : [];
+      const rowsDoPeriodo = cRows.filter((r) => {
+        const rYm = r.competencia.slice(0, 7);
+        return rYm >= fromYm && rYm <= toYm;
+      });
       const vendaPeriodo = isMultiMonth
         ? rowsDoPeriodo.reduce((sum, r) => sum + Number(r.total_venda ?? 0), 0)
         : vendaMes;
@@ -202,12 +220,12 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
           ? Number(rAtual?.total)
           : oportunidade + cotacao + proposta > 0
           ? oportunidade + cotacao + proposta
-          : Number(res?.carteira_ativa_trabalhada ?? 0);
+          : Number(res?.carteira_ativa_trabalhada ?? v?.pipeline ?? 0);
 
       // --- QUANTIDADES E MÉDIAS DO MÊS ---
       const quantidadeVendasMes = Number(rAtual?.quantidade_vendas ?? res?.ganhos ?? 0);
       const oportunidadesAbertas = Number(rAtual?.oportunidades_abertas ?? 0);
-      const negociosMes = Number(rAtual?.negocios ?? res?.oportunidades_geradas ?? 0);
+      const negociosMes = Number(rAtual?.negocios ?? res?.oportunidades_geradas ?? v?.negocios ?? 0);
 
       const ticketMedioMes =
         rAtual?.ticket_medio != null
@@ -221,14 +239,13 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
           ? Number(rAtual.taxa_conversao_negocios)
           : res?.taxa_ganho != null
           ? Number(res.taxa_ganho)
-          : null;
+          : v?.conversao ?? null;
 
       // --- AÇÕES E ESFORÇO DE CAMPO ---
-      const visitas = Number(res?.visitas ?? v.visitas ?? 0);
-      const clientes = Number(res?.clientes ?? rAtual?.clientes ?? v.clientes ?? 0);
+      const visitas = Number(res?.visitas ?? v?.visitas ?? 0);
+      const clientes = Number(res?.clientes ?? rAtual?.clientes ?? v?.clientes ?? 0);
       const prospeccaoMaquina = Number(rAtual?.prospeccao_maquina ?? 0);
 
-      // Médias precisas de esforço
       const visitasPorOportunidade =
         negociosMes > 0 && visitas > 0 ? visitas / negociosMes : null;
       const clientesPorVenda =
@@ -236,10 +253,24 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
       const visitasPorVenda =
         quantidadeVendasMes > 0 && visitas > 0 ? visitas / quantidadeVendasMes : null;
 
-      const crmQuality = res?.crm_quality ?? v.crmQuality ?? 0;
+      const crmQuality = res?.crm_quality ?? v?.crmQuality ?? 0;
+      const totalAcoes = v?.totalAcoes ?? Number(res?.acoes ?? 0);
 
-      return {
-        nome: v.nome,
+      const hasAnyActivity =
+        oportunidade > 0 ||
+        cotacao > 0 ||
+        proposta > 0 ||
+        totalPipeline > 0 ||
+        vendaPeriodo > 0 ||
+        vendaMes > 0 ||
+        vendaAno > 0 ||
+        visitas > 0 ||
+        clientes > 0;
+
+      if (!hasAnyActivity) continue;
+
+      result.push({
+        nome,
         // Período Selecionado
         vendaPeriodo,
         metaPeriodo,
@@ -277,11 +308,12 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
         clientesPorVenda,
         visitasPorVenda,
         crmQuality,
-        totalAcoes: v.totalAcoes,
-      };
-    })
-    .filter((c) => c.oportunidade > 0 || c.cotacao > 0 || c.proposta > 0 || c.totalPipeline > 0 || c.vendaPeriodo > 0 || c.vendaMes > 0 || c.vendaAno > 0);
-  }, [vendedores, desempenho.rows, resumoPorConsultor, compAtual, compAnterior, isMultiMonth, startComp, endComp]);
+        totalAcoes,
+      });
+    }
+
+    return result;
+  }, [vendedores, desempenho.rows, resumoPorConsultor, compAtual, compAnterior, isMultiMonth, fromYm, toYm, prevYm]);
 
   // Ordenação
   const consultoresOrdenados = useMemo(() => {
@@ -290,6 +322,7 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
         case "vendas_mes":
           return (
             (b.vendaPeriodo - a.vendaPeriodo) ||
+            (b.vendaAno - a.vendaAno) ||
             ((b.desempenhoMetaPeriodo ?? 0) - (a.desempenhoMetaPeriodo ?? 0)) ||
             (b.totalPipeline - a.totalPipeline) ||
             a.nome.localeCompare(b.nome, "pt-BR")
@@ -297,6 +330,7 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
         case "vendas_mes_menor":
           return (
             (a.vendaPeriodo - b.vendaPeriodo) ||
+            (a.vendaAno - b.vendaAno) ||
             ((a.desempenhoMetaPeriodo ?? 0) - (b.desempenhoMetaPeriodo ?? 0)) ||
             (a.totalPipeline - b.totalPipeline) ||
             a.nome.localeCompare(b.nome, "pt-BR")
@@ -304,6 +338,7 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
         case "vendas_ano":
           return (
             (b.vendaAno - a.vendaAno) ||
+            (b.vendaPeriodo - a.vendaPeriodo) ||
             ((b.desempenhoMetaAno ?? 0) - (a.desempenhoMetaAno ?? 0)) ||
             (b.totalPipeline - a.totalPipeline) ||
             a.nome.localeCompare(b.nome, "pt-BR")
@@ -400,7 +435,7 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
     return list;
   }, [consultoresOrdenados, busca, filtroStatus, ordenacao]);
 
-  const cardsVisiveis = expandido ? consultoresFiltrados : consultoresFiltrados.slice(0, 6);
+  const cardsVisiveis = expandido ? consultoresFiltrados : consultoresFiltrados.slice(0, 9);
 
   if (consultoresProcessados.length === 0) return null;
 
@@ -863,7 +898,7 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
       )}
 
       {/* Botão para Expandir / Mostrar Todos os Consultores */}
-      {consultoresFiltrados.length > 6 && (
+      {consultoresFiltrados.length > 9 && (
         <div className="flex justify-center pt-2">
           <Button
             type="button"
@@ -876,7 +911,7 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
             {expandido ? (
               <>
                 <ChevronUp className="h-3.5 w-3.5" />
-                Mostrar apenas os 6 primeiros
+                Mostrar apenas os 9 primeiros
               </>
             ) : (
               <>
