@@ -183,4 +183,47 @@ describe("DashboardConsultores", () => {
 
     expect(cardNames).toEqual(["CONSULTOR VENDA MES", "CONSULTOR TOP ANO", "CONSULTOR SEM VENDA NO ANO"]);
   });
+
+  it("ao filtrar o ano inteiro, exibe a quantidade acumulada de vendas no período e calcula o ticket médio correto nos cartões", () => {
+    const vendedoresMulti: Vendedor[] = [
+      { nome: "DIEGO JOSE DO AMARAL", totalAcoes: 100, visitas: 80, clientes: 50, pipeline: 500000, negocios: 10, conversao: null, crmQuality: 100, evolucao: [], topClientes: [], regioes: [], tiposAcao: {} },
+    ];
+
+    const desempenhoMock: EquipeDesempenhoData = {
+      rows: [
+        { consultor: "DIEGO JOSE DO AMARAL", competencia: "2026-03-01", total_venda: 1000000, quantidade_vendas: 10, meta: 500000, total: 500000, oportunidade: 200000, cotacao: 150000, proposta: 150000, negocios: 20 },
+        { consultor: "DIEGO JOSE DO AMARAL", competencia: "2026-06-01", total_venda: 2000000, quantidade_vendas: 15, meta: 500000, total: 500000, oportunidade: 200000, cotacao: 150000, proposta: 150000, negocios: 30 },
+        { consultor: "DIEGO JOSE DO AMARAL", competencia: "2026-08-01", total_venda: 0, quantidade_vendas: 0, meta: 250000, total: 500000, oportunidade: 200000, cotacao: 150000, proposta: 150000, negocios: 10 },
+      ],
+      team: [],
+    };
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <DashboardConsultores
+          vendedores={vendedoresMulti}
+          registros={[]}
+          resumo={[]}
+          filters={{
+            cidade: "",
+            tipoAcao: "",
+            categoria: "",
+            funil: "",
+            dateRange: { from: "2026-01-01", to: "2026-12-31" },
+          }}
+          onSelectConsultor={vi.fn()}
+          anoDesempenho={2026}
+          desempenho={desempenhoMock}
+          isAdmin={true}
+        />
+      </QueryClientProvider>
+    );
+
+    // Quando o filtro é o ano todo, o card deve mostrar:
+    // Vendido no Período: R$ 3.000.000,00
+    // 25 vendas (10 + 15), NÃO 0 vendas!
+    expect(screen.getByText("Vendido no Período")).toBeInTheDocument();
+    expect(screen.getByText("25 vendas")).toBeInTheDocument();
+    expect(screen.getByText("no período selecionado")).toBeInTheDocument();
+  });
 });

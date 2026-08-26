@@ -49,8 +49,16 @@ export const ResumoExecutivoCard = memo(function ResumoExecutivoCard({
     staleTime: 1000 * 60 * 5,
   });
 
-  // Competência do mês atual
+  const isMultiMonth = useMemo(() => {
+    if (!filters?.dateRange?.from || !filters?.dateRange?.to) return false;
+    return filters.dateRange.from.slice(0, 7) !== filters.dateRange.to.slice(0, 7);
+  }, [filters?.dateRange]);
+
+  // Competência do mês atual (ou mês final do período)
   const compAtual = useMemo(() => {
+    if (filters?.dateRange?.to) {
+      return `${filters.dateRange.to.slice(0, 7)}-01`;
+    }
     if (filters?.dateRange?.from) {
       return `${filters.dateRange.from.slice(0, 7)}-01`;
     }
@@ -84,9 +92,12 @@ export const ResumoExecutivoCard = memo(function ResumoExecutivoCard({
     const metaAnoCalculada = teamRows.reduce((sum, t) => sum + Number(t.meta || 0), 0);
     const metaAnualEmpresa = metaAnualDb != null && metaAnualDb > 0 ? metaAnualDb : metaAnoCalculada;
 
-    const rowMesAtualTeam = teamRows.find((t) => t.competencia === compAtual);
+    const rowMesAtualTeam = teamRows.find((t) => t.competencia.startsWith(compAtual.slice(0, 7)) || t.competencia === compAtual);
     const metaMesAtual = Number(rowMesAtualTeam?.meta || 0);
-    const vendidoMesAtual = Number(rowMesAtualTeam?.total_venda || totalVendidoPeriodo);
+    const vendidoMesAtual = Number(rowMesAtualTeam?.total_venda || (isMultiMonth ? 0 : totalVendidoPeriodo));
+
+    const totalVendidoPeriodoFinal = Math.max(totalVendidoPeriodo, isMultiMonth ? totalVendidoAno : 0);
+    const totalGanhosPeriodoFinal = Math.max(totalGanhosPeriodo, isMultiMonth ? totalGanhosAno : 0);
 
     const saldoMetaAno = Math.max(metaAnualEmpresa - totalVendidoAno, 0);
     const pctMetaAno = metaAnualEmpresa > 0 ? (totalVendidoAno / metaAnualEmpresa) * 100 : 0;
@@ -95,8 +106,8 @@ export const ResumoExecutivoCard = memo(function ResumoExecutivoCard({
     const pctMetaMes = metaMesAtual > 0 ? (vendidoMesAtual / metaMesAtual) * 100 : 0;
 
     return {
-      totalVendidoPeriodo,
-      totalGanhosPeriodo,
+      totalVendidoPeriodo: totalVendidoPeriodoFinal,
+      totalGanhosPeriodo: totalGanhosPeriodoFinal,
       totalAcoes,
       totalVisitas,
       totalClientes,
@@ -111,12 +122,12 @@ export const ResumoExecutivoCard = memo(function ResumoExecutivoCard({
       saldoMetaMes,
       pctMetaMes,
     };
-  }, [resumo, desempenho, metaAnualDb, compAtual]);
+  }, [resumo, desempenho, metaAnualDb, compAtual, isMultiMonth]);
 
   // Consultores com Pipeline Ativo (com oportunidade > 0 || cotacao > 0 || proposta > 0)
   const consultoresComPipeline = useMemo(() => {
     const rows = desempenho?.rows ?? [];
-    const rowsComp = rows.filter((r) => r.competencia === compAtual);
+    const rowsComp = rows.filter((r) => r.competencia.startsWith(compAtual.slice(0, 7)) || r.competencia === compAtual);
     if (rowsComp.length > 0) {
       const nomesAtivos = new Set(
         rowsComp
@@ -213,7 +224,7 @@ export const ResumoExecutivoCard = memo(function ResumoExecutivoCard({
             {formatBRL(totais.totalVendidoPeriodo)}
           </p>
 
-          {totais.metaMesAtual > 0 && (
+          {totais.metaMesAtual > 0 && !isMultiMonth && (
             <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground mt-1 pt-1.5 border-t" style={{ borderColor: "var(--voux-card-border)" }}>
               <span>Meta do Mês: <strong className="text-foreground">{formatBRL(totais.metaMesAtual)}</strong></span>
               <span>Falta no Mês: <strong className="text-rose-500">{formatBRL(totais.saldoMetaMes)}</strong> ({formatPct(totais.pctMetaMes)})</span>

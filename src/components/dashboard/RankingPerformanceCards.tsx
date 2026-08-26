@@ -1,6 +1,7 @@
 import { useState, useMemo, memo } from "react";
 import {
   Trophy,
+  Award,
   Search,
   ArrowUpRight,
   ArrowDownRight,
@@ -241,6 +242,35 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
           ? Number(res.taxa_ganho)
           : v?.conversao ?? null;
 
+      // --- QUANTIDADES E MÉDIAS DO PERÍODO SELECIONADO (MULTIMÊS OU ANO INTEIRO) ---
+      const quantidadeVendasPeriodo = isMultiMonth
+        ? Math.max(
+            rowsDoPeriodo.reduce((sum, r) => sum + Number(r.quantidade_vendas ?? 0), 0),
+            Number(res?.ganhos ?? 0)
+          )
+        : quantidadeVendasMes;
+
+      const negociosPeriodo = isMultiMonth
+        ? Math.max(
+            rowsDoPeriodo.reduce((sum, r) => sum + Number(r.negocios ?? 0), 0),
+            Number(res?.oportunidades_geradas ?? res?.negocios_abertos_tocados ?? v?.negocios ?? 0)
+          )
+        : negociosMes;
+
+      const ticketMedioPeriodo =
+        quantidadeVendasPeriodo > 0 && vendaPeriodo > 0
+          ? vendaPeriodo / quantidadeVendasPeriodo
+          : isMultiMonth
+          ? ticketMedioAno
+          : ticketMedioMes;
+
+      const taxaConversaoPeriodo =
+        negociosPeriodo > 0 && quantidadeVendasPeriodo > 0
+          ? (quantidadeVendasPeriodo / negociosPeriodo) * 100
+          : isMultiMonth
+          ? (negociosAno > 0 && quantidadeVendasAno > 0 ? (quantidadeVendasAno / negociosAno) * 100 : (res?.taxa_ganho != null ? Number(res.taxa_ganho) : null))
+          : taxaConversaoMes;
+
       // --- AÇÕES E ESFORÇO DE CAMPO ---
       const visitas = Number(res?.visitas ?? v?.visitas ?? 0);
       const clientes = Number(res?.clientes ?? rAtual?.clientes ?? v?.clientes ?? 0);
@@ -253,6 +283,16 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
       const visitasPorVenda =
         quantidadeVendasMes > 0 && visitas > 0 ? visitas / quantidadeVendasMes : null;
 
+      // Médias para o período selecionado
+      const visitasPeriodo = visitas;
+      const clientesPeriodo = clientes;
+      const visitasPorOportunidadePeriodo =
+        negociosPeriodo > 0 && visitasPeriodo > 0 ? visitasPeriodo / negociosPeriodo : null;
+      const clientesPorVendaPeriodo =
+        quantidadeVendasPeriodo > 0 && clientesPeriodo > 0 ? clientesPeriodo / quantidadeVendasPeriodo : null;
+      const visitasPorVendaPeriodo =
+        quantidadeVendasPeriodo > 0 && visitasPeriodo > 0 ? visitasPeriodo / quantidadeVendasPeriodo : null;
+
       const crmQuality = res?.crm_quality ?? v?.crmQuality ?? 0;
       const totalAcoes = v?.totalAcoes ?? Number(res?.acoes ?? 0);
 
@@ -264,6 +304,8 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
         vendaPeriodo > 0 ||
         vendaMes > 0 ||
         vendaAno > 0 ||
+        quantidadeVendasPeriodo > 0 ||
+        quantidadeVendasAno > 0 ||
         visitas > 0 ||
         clientes > 0;
 
@@ -275,6 +317,15 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
         vendaPeriodo,
         metaPeriodo,
         desempenhoMetaPeriodo,
+        quantidadeVendasPeriodo,
+        negociosPeriodo,
+        ticketMedioPeriodo,
+        taxaConversaoPeriodo,
+        visitasPeriodo,
+        clientesPeriodo,
+        visitasPorOportunidadePeriodo,
+        clientesPorVendaPeriodo,
+        visitasPorVendaPeriodo,
         // Mês
         vendaMes,
         vendaAnterior,
@@ -556,6 +607,15 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
             const saldoMetaValor = isMultiMonth ? c.metaPeriodo - c.vendaPeriodo : c.saldoMetaMes;
             const desempenhoMetaValor = isMultiMonth ? c.desempenhoMetaPeriodo : c.desempenhoMetaMes;
 
+            const quantidadeVendasValor = isMultiMonth ? c.quantidadeVendasPeriodo : c.quantidadeVendasMes;
+            const ticketMedioValor = isMultiMonth ? c.ticketMedioPeriodo : (c.ticketMedioMes ?? c.ticketMedioAno);
+            const taxaConversaoValor = isMultiMonth ? c.taxaConversaoPeriodo : c.taxaConversaoMes;
+            const negociosValor = isMultiMonth ? c.negociosPeriodo : c.negociosMes;
+            const visitasValor = isMultiMonth ? c.visitasPeriodo : c.visitas;
+            const clientesValor = isMultiMonth ? c.clientesPeriodo : c.clientes;
+            const visitasPorOportunidadeValor = isMultiMonth ? c.visitasPorOportunidadePeriodo : c.visitasPorOportunidade;
+            const clientesPorVendaValor = isMultiMonth ? c.clientesPorVendaPeriodo : c.clientesPorVenda;
+
             const percentMetaMes = desempenhoMetaValor != null ? Math.min(Math.max(desempenhoMetaValor, 0), 100) : 0;
             const percentMetaAno = c.desempenhoMetaAno != null ? Math.min(Math.max(c.desempenhoMetaAno, 0), 100) : 0;
             const isTop3 = index < 3 && (ordenacao === "vendas_mes" || ordenacao === "vendas_ano");
@@ -697,7 +757,7 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
                       </div>
                     )}
 
-                    {/* Grid Mês / Período: Vendido Atual vs Mês Passado */}
+                    {/* Grid Mês / Período: Vendido Atual vs Mês Passado / Vendido no Ano */}
                     <div className="grid grid-cols-2 gap-2 pt-1 border-t" style={{ borderColor: "var(--voux-card-border)" }}>
                       <div>
                         <p className="text-[10px] uppercase font-semibold text-muted-foreground font-mono">
@@ -707,17 +767,19 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
                           {formatBRL(vendaMesValor)}
                         </p>
                         <p className="text-[10px] font-mono text-muted-foreground">
-                          {c.quantidadeVendasMes} {c.quantidadeVendasMes === 1 ? "venda" : "vendas"}
+                          {quantidadeVendasValor} {quantidadeVendasValor === 1 ? "venda" : "vendas"}
                         </p>
                       </div>
 
                       <div className="border-l pl-2" style={{ borderColor: "var(--voux-card-border)" }}>
-                        <p className="text-[10px] uppercase font-semibold text-muted-foreground font-mono">Mês Passado</p>
+                        <p className="text-[10px] uppercase font-semibold text-muted-foreground font-mono">
+                          {isMultiMonth ? "Vendido no Ano (YTD)" : "Mês Passado"}
+                        </p>
                         <div className="flex items-center gap-1">
                           <p className="font-mono font-semibold text-[12px] text-foreground tabular-nums">
-                            {formatBRL(c.vendaAnterior)}
+                            {formatBRL(isMultiMonth ? c.vendaAno : c.vendaAnterior)}
                           </p>
-                          {c.deltaVenda != null && (
+                          {!isMultiMonth && c.deltaVenda != null && (
                             <span
                               className={cn(
                                 "flex items-center text-[10px] font-mono font-bold",
@@ -728,25 +790,29 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
                               {Math.abs(c.deltaVenda).toFixed(0)}%
                             </span>
                           )}
+                          {isMultiMonth && (
+                            <span className="text-[10px] font-mono text-muted-foreground">
+                              ({c.quantidadeVendasAno} ped.)
+                            </span>
+                          )}
                         </div>
-                        <p className="text-[10px] font-mono text-muted-foreground">
-                          {c.deltaVenda != null && c.deltaVenda >= 0 ? "em alta vs anterior" : "comparativo mensal"}
-                        </p>
                       </div>
                     </div>
                   </div>
 
-                  {/* BLOCO 2: META ANUAL & ACUMULADO DO ANO (YTD) */}
-                  <div className="mb-2.5 rounded-xl border p-3 bg-black/[0.02] dark:bg-white/[0.02]" style={{ borderColor: "var(--voux-card-border)" }}>
+                  {/* BLOCO 2: ACUMULADO DO ANO (YTD) */}
+                  <div className="mb-2.5 rounded-xl border p-3 bg-black/[0.01] dark:bg-white/[0.01]" style={{ borderColor: "var(--voux-card-border)" }}>
                     <div className="flex items-center justify-between text-[11px] mb-1.5">
                       <span className="font-semibold text-muted-foreground flex items-center gap-1">
-                        <Calendar className="h-3.5 w-3.5 text-blue-500" />
-                        Meta Anual: <strong className="font-mono text-foreground">{formatBRL(c.metaAno)}</strong>
+                        <Award className="h-3.5 w-3.5 text-amber-500" />
+                        Meta Anual (YTD): <strong className="font-mono text-foreground">{formatBRL(c.metaAno)}</strong>
                       </span>
-                      {c.desempenhoMetaAno != null && (
-                        <span className="text-[10px] font-mono font-bold text-blue-600 dark:text-blue-400">
-                          {formatPct(c.desempenhoMetaAno)} do ano
+                      {c.desempenhoMetaAno != null ? (
+                        <span className="text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400">
+                          {formatPct(c.desempenhoMetaAno)}
                         </span>
+                      ) : (
+                        <span className="text-[10px] font-mono text-muted-foreground">Sem meta</span>
                       )}
                     </div>
 
@@ -754,7 +820,7 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
                     {c.metaAno > 0 && (
                       <div className="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
                         <div
-                          className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-blue-500 to-emerald-500"
+                          className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-amber-500 via-amber-400 to-emerald-500"
                           style={{ width: `${percentMetaAno}%` }}
                         />
                       </div>
@@ -829,10 +895,10 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
                     <div className="rounded-lg border p-2 bg-black/[0.01] dark:bg-white/[0.01]" style={{ borderColor: "var(--voux-card-border)" }}>
                       <p className="text-[10px] text-muted-foreground font-mono">Ticket Médio</p>
                       <p className="font-mono font-bold text-foreground tabular-nums text-[12px] truncate">
-                        {formatBRL(c.ticketMedioMes ?? c.ticketMedioAno)}
+                        {formatBRL(ticketMedioValor)}
                       </p>
                       <p className="text-[9px] text-muted-foreground font-mono truncate">
-                        {c.ticketMedioMes != null ? "no mês atual" : "média no ano"}
+                        {isMultiMonth ? "no período selecionado" : (c.ticketMedioMes != null ? "no mês atual" : "média no ano")}
                       </p>
                     </div>
 
@@ -840,10 +906,10 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
                     <div className="rounded-lg border p-2 bg-black/[0.01] dark:bg-white/[0.01]" style={{ borderColor: "var(--voux-card-border)" }}>
                       <p className="text-[10px] text-muted-foreground font-mono">Tx. Conversão</p>
                       <p className="font-mono font-bold text-foreground tabular-nums text-[12px]">
-                        {formatPct(c.taxaConversaoMes)}
+                        {formatPct(taxaConversaoValor)}
                       </p>
                       <p className="text-[9px] text-muted-foreground font-mono truncate">
-                        {c.quantidadeVendasMes} vda / {c.negociosMes} neg
+                        {quantidadeVendasValor} vda / {negociosValor} neg
                       </p>
                     </div>
 
@@ -851,13 +917,13 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
                     <div className="rounded-lg border p-2 bg-black/[0.01] dark:bg-white/[0.01]" style={{ borderColor: "var(--voux-card-border)" }}>
                       <p className="text-[10px] text-muted-foreground font-mono flex items-center gap-1">
                         <Compass className="h-3 w-3 text-amber-500" />
-                        Visitas no Mês
+                        {isMultiMonth ? "Visitas no Período" : "Visitas no Mês"}
                       </p>
                       <p className="font-mono font-bold text-foreground tabular-nums text-[12px]">
-                        {c.visitas} <span className="text-[10px] font-normal text-muted-foreground">visitas</span>
+                        {visitasValor} <span className="text-[10px] font-normal text-muted-foreground">visitas</span>
                       </p>
                       <p className="text-[9px] text-amber-600 dark:text-amber-400 font-mono font-medium truncate">
-                        {formatRatio(c.visitasPorOportunidade, "vis/oport.")}
+                        {formatRatio(visitasPorOportunidadeValor, "vis/oport.")}
                       </p>
                     </div>
 
@@ -865,13 +931,13 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
                     <div className="rounded-lg border p-2 bg-black/[0.01] dark:bg-white/[0.01]" style={{ borderColor: "var(--voux-card-border)" }}>
                       <p className="text-[10px] text-muted-foreground font-mono flex items-center gap-1">
                         <Users className="h-3 w-3 text-emerald-500" />
-                        Clientes Únicos
+                        {isMultiMonth ? "Clientes no Período" : "Clientes Únicos"}
                       </p>
                       <p className="font-mono font-bold text-foreground tabular-nums text-[12px]">
-                        {c.clientes} <span className="text-[10px] font-normal text-muted-foreground">clientes</span>
+                        {clientesValor} <span className="text-[10px] font-normal text-muted-foreground">clientes</span>
                       </p>
                       <p className="text-[9px] text-emerald-600 dark:text-emerald-400 font-mono font-medium truncate">
-                        {formatRatio(c.clientesPorVenda, "cli/venda")}
+                        {formatRatio(clientesPorVendaValor, "cli/venda")}
                       </p>
                     </div>
                   </div>

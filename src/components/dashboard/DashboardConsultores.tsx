@@ -42,6 +42,9 @@ export const DashboardConsultores = ({
     : "Período selecionado";
 
   const compAtual = useMemo(() => {
+    if (filters.dateRange?.to) {
+      return `${filters.dateRange.to.slice(0, 7)}-01`;
+    }
     if (filters.dateRange?.from) {
       return `${filters.dateRange.from.slice(0, 7)}-01`;
     }
