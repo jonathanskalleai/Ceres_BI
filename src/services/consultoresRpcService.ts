@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { RpcConsultorResumoAcoes } from "@/types/consultoresRpc";
+import type { RpcConsultorResumoAcoes, RpcConsultorNegocioPipeline } from "@/types/consultoresRpc";
 
 export interface ConsultoresResumoParams {
   from: string;
@@ -33,6 +33,27 @@ export async function fetchConsultoresResumoAcoes({
   } catch (err) {
     throw new Error(
       `[consultoresRpcService.fetchConsultoresResumoAcoes] ${err instanceof Error ? err.message : "Unknown error"}`,
+    );
+  }
+}
+
+/**
+ * Busca os negócios ativos no pipeline do consultor com cliente, produto, observação e valor
+ */
+export async function fetchConsultorNegociosPipeline(
+  consultor: string,
+  limite: number = 100,
+): Promise<RpcConsultorNegocioPipeline[]> {
+  try {
+    const { data, error } = await supabase.rpc("rpc_consultor_negocios_pipeline", {
+      p_consultor: consultor,
+      p_limite: limite,
+    });
+    if (error) throw new Error(error.message);
+    return (data ?? []) as RpcConsultorNegocioPipeline[];
+  } catch (err) {
+    throw new Error(
+      `[consultoresRpcService.fetchConsultorNegociosPipeline] ${err instanceof Error ? err.message : "Unknown error"}`,
     );
   }
 }

@@ -21,3 +21,15 @@ export interface RpcConsultorResumoAcoes {
   /** NULL quando nao houve oportunidade gerada pelo consultor no periodo. */
   taxa_ganho: number | null;
 }
+
+export interface RpcConsultorNegocioPipeline {
+  numero: string;
+  cliente: string;
+  cidade: string;
+  etapa: string;
+  valor: number;
+  produto: string;
+  observacao: string;
+  data_cadastro: string | null;
+  data_atualizacao: string | null;
+}
