@@ -31,8 +31,27 @@ interface RankingPerformanceCardsProps {
   onSelectConsultor: (nome: string) => void;
 }
 
-type SortOption = "vendas_mes" | "vendas_ano" | "meta_mes" | "meta_ano" | "pipeline" | "visitas" | "conversao" | "nome";
-type FilterStatus = "todos" | "meta_mes_batida" | "meta_ano_alta" | "em_rota" | "abaixo" | "com_vendas";
+type SortOption =
+  | "vendas_mes"
+  | "vendas_mes_menor"
+  | "vendas_ano"
+  | "meta_mes"
+  | "meta_mes_menor"
+  | "meta_ano"
+  | "pipeline"
+  | "visitas"
+  | "conversao"
+  | "nome";
+
+type FilterStatus =
+  | "todos"
+  | "meta_mes_batida"
+  | "em_rota"
+  | "meta_ano_alta"
+  | "abaixo"
+  | "critico"
+  | "sem_vendas"
+  | "com_vendas";
 
 const BRL_EXACT = new Intl.NumberFormat("pt-BR", {
   style: "currency",
@@ -247,10 +266,14 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
       switch (ordenacao) {
         case "vendas_mes":
           return b.vendaMes - a.vendaMes || (b.desempenhoMetaMes ?? 0) - (a.desempenhoMetaMes ?? 0);
+        case "vendas_mes_menor":
+          return a.vendaMes - b.vendaMes || (a.desempenhoMetaMes ?? 0) - (b.desempenhoMetaMes ?? 0);
         case "vendas_ano":
           return b.vendaAno - a.vendaAno || (b.desempenhoMetaAno ?? 0) - (a.desempenhoMetaAno ?? 0);
         case "meta_mes":
           return (b.desempenhoMetaMes ?? -1) - (a.desempenhoMetaMes ?? -1) || b.vendaMes - a.vendaMes;
+        case "meta_mes_menor":
+          return (a.desempenhoMetaMes ?? 999) - (b.desempenhoMetaMes ?? 999) || a.vendaMes - b.vendaMes;
         case "meta_ano":
           return (b.desempenhoMetaAno ?? -1) - (a.desempenhoMetaAno ?? -1) || b.vendaAno - a.vendaAno;
         case "pipeline":
@@ -270,7 +293,7 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
   // Filtros de busca e status
   const consultoresFiltrados = useMemo(() => {
     const q = busca.trim().toLowerCase();
-    return consultoresOrdenados.filter((c) => {
+    const list = consultoresOrdenados.filter((c) => {
       if (q && !c.nome.toLowerCase().includes(q)) return false;
 
       switch (filtroStatus) {
@@ -282,13 +305,30 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
           return c.desempenhoMetaMes != null && c.desempenhoMetaMes >= 70 && c.desempenhoMetaMes < 100;
         case "abaixo":
           return c.desempenhoMetaMes != null && c.desempenhoMetaMes < 70 && c.metaMes > 0;
+        case "critico":
+          return (
+            (c.desempenhoMetaMes != null && c.desempenhoMetaMes < 30 && c.metaMes > 0) ||
+            (c.vendaMes === 0 && c.metaMes > 0)
+          );
+        case "sem_vendas":
+          return c.vendaMes === 0;
         case "com_vendas":
           return c.vendaMes > 0;
         default:
           return true;
       }
     });
-  }, [consultoresOrdenados, busca, filtroStatus]);
+
+    // Se estiver filtrando especificamente por críticos/muito abaixo e a ordenação for a padrão,
+    // ordena automaticamente do pior para o melhor (crescente) para evidenciar os mais distantes da meta
+    if (filtroStatus === "critico" && ordenacao === "vendas_mes") {
+      return [...list].sort(
+        (a, b) => (a.desempenhoMetaMes ?? 0) - (b.desempenhoMetaMes ?? 0) || a.vendaMes - b.vendaMes
+      );
+    }
+
+    return list;
+  }, [consultoresOrdenados, busca, filtroStatus, ordenacao]);
 
   const cardsVisiveis = expandido ? consultoresFiltrados : consultoresFiltrados.slice(0, 6);
 
@@ -343,8 +383,10 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
             style={{ borderColor: "var(--voux-card-border)" }}
           >
             <option value="vendas_mes">Maior Venda no Mês</option>
-            <option value="vendas_ano">Maior Venda no Ano (YTD)</option>
+            <option value="vendas_mes_menor">🚨 Menor Venda no Mês (Piores Resultados)</option>
             <option value="meta_mes">Maior % da Meta do Mês</option>
+            <option value="meta_mes_menor">⚠️ Menor % da Meta (Mais Distante)</option>
+            <option value="vendas_ano">Maior Venda no Ano (YTD)</option>
             <option value="meta_ano">Maior % da Meta do Ano</option>
             <option value="pipeline">Maior Pipeline Ativo</option>
             <option value="visitas">Mais Visitas no Mês</option>
@@ -358,10 +400,12 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
       <div className="flex flex-wrap items-center gap-1.5 pt-1">
         {[
           { id: "todos", label: "Todos" },
-          { id: "meta_mes_batida", label: "🏆 Meta do Mês Batida (≥100%)" },
-          { id: "em_rota", label: "⚡ Em Rota no Mês (70%–99%)" },
-          { id: "meta_ano_alta", label: "📅 Alta no Ano (≥50% do Ano)" },
+          { id: "meta_mes_batida", label: "🏆 Meta Batida (≥100%)" },
+          { id: "em_rota", label: "⚡ Em Rota (70%–99%)" },
+          { id: "meta_ano_alta", label: "📅 Alta no Ano (≥50%)" },
           { id: "abaixo", label: "⚠️ Abaixo no Mês (<70%)" },
+          { id: "critico", label: "🚨 Muito Abaixo / Crítico (<30%)" },
+          { id: "sem_vendas", label: "📉 Sem Vendas no Mês" },
           { id: "com_vendas", label: "💰 Com Vendas no Mês" },
         ].map((f) => (
           <button
@@ -371,7 +415,9 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
             className={cn(
               "rounded-full px-3 py-1 text-[11px] font-medium transition-all",
               filtroStatus === f.id
-                ? "bg-amber-500 text-amber-950 font-bold shadow-sm"
+                ? f.id === "critico"
+                  ? "bg-rose-500 text-white font-bold shadow-sm"
+                  : "bg-amber-500 text-amber-950 font-bold shadow-sm"
                 : "border bg-black/[0.02] dark:bg-white/[0.04] text-muted-foreground hover:text-foreground hover:bg-black/[0.05]"
             )}
             style={{
@@ -465,10 +511,23 @@ export const RankingPerformanceCards = memo(function RankingPerformanceCards({
                               ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
                               : emRotaMes
                               ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                              : c.desempenhoMetaMes < 30 || c.vendaMes === 0
+                              ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30"
                               : "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
                           )}
                         >
-                          {metaMesSuperada ? <CheckCircle2 className="h-3 w-3" /> : emRotaMes ? <Sparkles className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
+                          {metaMesSuperada ? (
+                            <CheckCircle2 className="h-3 w-3" />
+                          ) : emRotaMes ? (
+                            <Sparkles className="h-3 w-3" />
+                          ) : (
+                            <AlertCircle
+                              className={cn(
+                                "h-3 w-3",
+                                (c.desempenhoMetaMes < 30 || c.vendaMes === 0) && "text-rose-500 animate-pulse"
+                              )}
+                            />
+                          )}
                           {formatPct(c.desempenhoMetaMes)}
                         </span>
                       ) : (
