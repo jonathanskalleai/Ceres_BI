@@ -1,8 +1,15 @@
 import { memo, useMemo } from "react";
-import { Package, MapPin, Layers, DollarSign, TrendingUp } from "lucide-react";
+import { Package, MapPin } from "lucide-react";
 import { useConsultorNegociosPipeline } from "@/hooks/useConsultoresRpc";
 import { Skeleton } from "@/components/ui/skeleton";
-import { VouxBarH } from "@/components/charts/voux/VouxBarH";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -120,19 +127,9 @@ export const ConsultorPipelineDistribuicaoCard = memo(function ConsultorPipeline
     return null;
   }
 
-  const chartDataProdutos = porProduto.list.slice(0, 6).map((p) => ({
-    label: p.grupo,
-    value: p.valor,
-  }));
-
-  const chartDataCidades = porCidade.list.slice(0, 6).map((c) => ({
-    label: c.cidade,
-    value: c.valor,
-  }));
-
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
-      {/* Card 1: Pipeline por Grupo de Produto */}
+      {/* Card 1: Tabela de Pipeline por Grupo de Produto */}
       <div
         className="rounded-2xl border p-5 flex flex-col justify-between"
         style={{
@@ -143,7 +140,7 @@ export const ConsultorPipelineDistribuicaoCard = memo(function ConsultorPipeline
       >
         <div>
           {/* Header */}
-          <div className="flex items-center justify-between gap-2 mb-3.5 pb-2.5 border-b" style={{ borderColor: "var(--voux-card-border)" }}>
+          <div className="flex items-center justify-between gap-2 mb-3 pb-2.5 border-b" style={{ borderColor: "var(--voux-card-border)" }}>
             <div className="flex items-center gap-2">
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20">
                 <Package className="h-4 w-4" />
@@ -153,7 +150,7 @@ export const ConsultorPipelineDistribuicaoCard = memo(function ConsultorPipeline
                   Pipeline por Grupo de Produto
                 </h4>
                 <p className="text-[11px] text-muted-foreground">
-                  Concentração de valor e máquinas em aberto no funil
+                  Volume negociado e quantidade de oportunidades em aberto
                 </p>
               </div>
             </div>
@@ -162,54 +159,54 @@ export const ConsultorPipelineDistribuicaoCard = memo(function ConsultorPipeline
             </span>
           </div>
 
-          {/* Gráfico de Barras Voux */}
-          <div className="mb-4">
-            <VouxBarH
-              data={chartDataProdutos}
-              color="#f59e0b"
-              valueFormatter={formatBRL}
-            />
-          </div>
-
-          {/* Lista Detalhada das Principais Categorias */}
-          <div className="space-y-2 pt-2 border-t" style={{ borderColor: "var(--voux-card-border)" }}>
-            {porProduto.list.slice(0, 4).map((p) => (
-              <div
-                key={p.grupo}
-                className="flex items-center justify-between p-2 rounded-lg bg-black/[0.015] dark:bg-white/[0.015] border text-xs"
-                style={{ borderColor: "var(--voux-card-border)" }}
-              >
-                <div className="min-w-0 flex-1 pr-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-bold text-foreground truncate">{p.grupo}</span>
-                    <span className="text-[10px] font-mono text-muted-foreground">
-                      ({p.count} {p.count === 1 ? "negócio" : "negócios"})
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-[10px] font-mono text-muted-foreground mt-0.5">
-                    {p.etapas.oport > 0 && <span>Oport: {formatBRL(p.etapas.oport)}</span>}
-                    {p.etapas.cot > 0 && <span>· Cotaç: {formatBRL(p.etapas.cot)}</span>}
-                    {p.etapas.prop > 0 && <span className="text-purple-500">· Prop: {formatBRL(p.etapas.prop)}</span>}
-                  </div>
-                </div>
-
-                <div className="text-right shrink-0">
-                  <span className="font-mono font-bold text-foreground block">{formatBRL(p.valor)}</span>
-                  <span className="text-[10px] font-mono text-amber-500 font-semibold">{formatPct(p.pct)} do total</span>
-                </div>
-              </div>
-            ))}
+          {/* Tabela de Produtos */}
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-[var(--voux-card-border)] hover:bg-transparent">
+                  <TableHead className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider w-8 font-mono">#</TableHead>
+                  <TableHead className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider font-mono">Grupo de Produto</TableHead>
+                  <TableHead className="text-center text-[10px] font-semibold text-muted-foreground uppercase tracking-wider font-mono w-16">Qtd</TableHead>
+                  <TableHead className="text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-wider font-mono">Valor Total</TableHead>
+                  <TableHead className="text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-wider font-mono w-28">% Total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {porProduto.list.map((item, idx) => (
+                  <TableRow key={item.grupo} className="border-[var(--voux-card-border)] hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
+                    <TableCell className="text-[11px] font-mono font-bold text-amber-500 py-2.5">{idx + 1}</TableCell>
+                    <TableCell className="text-[12px] font-medium text-foreground py-2.5">
+                      <span className="font-bold block truncate max-w-[200px]" title={item.grupo}>{item.grupo}</span>
+                    </TableCell>
+                    <TableCell className="text-center tabular-nums text-[12px] font-mono text-foreground font-semibold py-2.5">
+                      {item.count}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-[12px] font-mono font-bold text-foreground py-2.5">
+                      {formatBRL(item.valor)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-[11px] font-mono text-muted-foreground py-2.5">
+                      <div className="flex items-center justify-end gap-2">
+                        <span className="font-bold text-foreground">{formatPct(item.pct)}</span>
+                        <div className="w-12 h-1.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden shrink-0">
+                          <div className="h-full rounded-full bg-amber-500" style={{ width: `${Math.min(item.pct, 100)}%` }} />
+                        </div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         </div>
 
-        {/* Totalizador */}
+        {/* Footer Totalizador */}
         <div className="pt-3 mt-3 border-t flex items-center justify-between text-[11px] font-mono" style={{ borderColor: "var(--voux-card-border)" }}>
           <span className="text-muted-foreground">Total Negociado por Produto:</span>
           <span className="font-bold text-foreground text-xs">{formatBRL(porProduto.totalValor)}</span>
         </div>
       </div>
 
-      {/* Card 2: Pipeline por Cidade / Região */}
+      {/* Card 2: Tabela de Pipeline por Cidade / Região */}
       <div
         className="rounded-2xl border p-5 flex flex-col justify-between"
         style={{
@@ -220,7 +217,7 @@ export const ConsultorPipelineDistribuicaoCard = memo(function ConsultorPipeline
       >
         <div>
           {/* Header */}
-          <div className="flex items-center justify-between gap-2 mb-3.5 pb-2.5 border-b" style={{ borderColor: "var(--voux-card-border)" }}>
+          <div className="flex items-center justify-between gap-2 mb-3 pb-2.5 border-b" style={{ borderColor: "var(--voux-card-border)" }}>
             <div className="flex items-center gap-2">
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-500/10 text-sky-500 border border-sky-500/20">
                 <MapPin className="h-4 w-4" />
@@ -230,7 +227,7 @@ export const ConsultorPipelineDistribuicaoCard = memo(function ConsultorPipeline
                   Pipeline por Cidade & Região
                 </h4>
                 <p className="text-[11px] text-muted-foreground">
-                  Distribuição geográfica das oportunidades abertas
+                  Concentração geográfica das oportunidades ativas
                 </p>
               </div>
             </div>
@@ -239,43 +236,50 @@ export const ConsultorPipelineDistribuicaoCard = memo(function ConsultorPipeline
             </span>
           </div>
 
-          {/* Gráfico de Barras Voux */}
-          <div className="mb-4">
-            <VouxBarH
-              data={chartDataCidades}
-              color="#0ea5e9"
-              valueFormatter={formatBRL}
-            />
-          </div>
-
-          {/* Lista Detalhada das Principais Cidades */}
-          <div className="space-y-2 pt-2 border-t" style={{ borderColor: "var(--voux-card-border)" }}>
-            {porCidade.list.slice(0, 4).map((c) => (
-              <div
-                key={c.cidade}
-                className="flex items-center justify-between p-2 rounded-lg bg-black/[0.015] dark:bg-white/[0.015] border text-xs"
-                style={{ borderColor: "var(--voux-card-border)" }}
-              >
-                <div className="min-w-0 flex-1 pr-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-bold text-foreground truncate">{c.cidade}</span>
-                    {c.uf && <span className="text-[10px] font-mono text-muted-foreground">({c.uf})</span>}
-                  </div>
-                  <span className="text-[10px] font-mono text-muted-foreground block">
-                    {c.count} {c.count === 1 ? "oportunidade ativa" : "oportunidades ativas"}
-                  </span>
-                </div>
-
-                <div className="text-right shrink-0">
-                  <span className="font-mono font-bold text-foreground block">{formatBRL(c.valor)}</span>
-                  <span className="text-[10px] font-mono text-sky-500 font-semibold">{formatPct(c.pct)} do total</span>
-                </div>
-              </div>
-            ))}
+          {/* Tabela de Cidades */}
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-[var(--voux-card-border)] hover:bg-transparent">
+                  <TableHead className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider w-8 font-mono">#</TableHead>
+                  <TableHead className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider font-mono">Cidade / Praça</TableHead>
+                  <TableHead className="text-center text-[10px] font-semibold text-muted-foreground uppercase tracking-wider font-mono w-16">Qtd</TableHead>
+                  <TableHead className="text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-wider font-mono">Valor Total</TableHead>
+                  <TableHead className="text-right text-[10px] font-semibold text-muted-foreground uppercase tracking-wider font-mono w-28">% Total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {porCidade.list.map((item, idx) => (
+                  <TableRow key={item.cidade} className="border-[var(--voux-card-border)] hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors">
+                    <TableCell className="text-[11px] font-mono font-bold text-sky-500 py-2.5">{idx + 1}</TableCell>
+                    <TableCell className="text-[12px] font-medium text-foreground py-2.5">
+                      <span className="font-bold block truncate max-w-[200px]" title={item.cidade}>{item.cidade}</span>
+                      {item.uf && (
+                        <span className="text-[10px] font-mono text-muted-foreground">Estado: {item.uf}</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center tabular-nums text-[12px] font-mono text-foreground font-semibold py-2.5">
+                      {item.count}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-[12px] font-mono font-bold text-foreground py-2.5">
+                      {formatBRL(item.valor)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-[11px] font-mono text-muted-foreground py-2.5">
+                      <div className="flex items-center justify-end gap-2">
+                        <span className="font-bold text-foreground">{formatPct(item.pct)}</span>
+                        <div className="w-12 h-1.5 rounded-full bg-black/10 dark:bg-white/10 overflow-hidden shrink-0">
+                          <div className="h-full rounded-full bg-sky-500" style={{ width: `${Math.min(item.pct, 100)}%` }} />
+                        </div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         </div>
 
-        {/* Totalizador */}
+        {/* Footer Totalizador */}
         <div className="pt-3 mt-3 border-t flex items-center justify-between text-[11px] font-mono" style={{ borderColor: "var(--voux-card-border)" }}>
           <span className="text-muted-foreground">Total Negociado por Cidade:</span>
           <span className="font-bold text-foreground text-xs">{formatBRL(porCidade.totalValor)}</span>

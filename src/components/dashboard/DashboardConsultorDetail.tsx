@@ -662,11 +662,6 @@ export const DashboardConsultorDetail = ({
         </div>
       </div>
 
-      {/* SEÇÃO 2.5: COMPOSIÇÃO DE PIPELINE POR PRODUTO E POR CIDADE */}
-      <div className="w-full">
-        <ConsultorPipelineDistribuicaoCard consultor={v.nome} />
-      </div>
-
       {/* SEÇÃO 3: GRÁFICOS DE EVOLUÇÃO NO ANO ATUAL (Janeiro a Dezembro de 2026) */}
       <div className="space-y-4">
         {/* Evolução Mensal — Janeiro a Dezembro de 2026 */}
@@ -706,7 +701,12 @@ export const DashboardConsultorDetail = ({
         </ChartCard>
       </div>
 
-      {/* SEÇÃO 4: DISTRIBUIÇÃO DE CAMPO & CLIENTES ATENDIDOS */}
+      {/* SEÇÃO 4: COMPOSIÇÃO DE PIPELINE POR PRODUTO E POR CIDADE (TABELAS EXECUTIVAS) */}
+      <div className="w-full">
+        <ConsultorPipelineDistribuicaoCard consultor={v.nome} />
+      </div>
+
+      {/* SEÇÃO 5: DISTRIBUIÇÃO DE CAMPO & CLIENTES ATENDIDOS */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* Distribuição de Ações de Campo (4 colunas) */}
         <div className="lg:col-span-4 h-full">
