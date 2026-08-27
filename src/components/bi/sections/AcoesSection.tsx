@@ -13,6 +13,8 @@ import { AcoesRankingTable } from "@/components/bi/AcoesRankingTable";
 import { AcoesClientesTable } from "@/components/bi/AcoesClientesTable";
 import { AcoesDetailWithFilter } from "@/components/bi/sections/AcoesDetailWithFilter";
 import { AcoesKpiGrid } from "@/components/bi/sections/AcoesKpiGrid";
+import { usePedidosEsteira } from "@/hooks/bi/usePedidosEsteira";
+import { PedidosEsteiraCard } from "@/components/bi/pedidos/PedidosEsteiraCard";
 import { AcoesFunilConversao } from "@/components/bi/sections/AcoesFunilConversao";
 import { AcoesRankingConsultores } from "@/components/bi/sections/AcoesRankingConsultores";
 import { AcoesEsforcoRetorno } from "@/components/bi/sections/AcoesEsforcoRetorno";
@@ -22,10 +24,13 @@ import { AcoesGestaoCarteira, type CarteiraDrill } from "@/components/bi/section
 import { AcoesMapaOportunidades } from "@/components/bi/sections/AcoesMapaOportunidades";
 import { AcoesClientesCriticos } from "@/components/bi/sections/AcoesClientesCriticos";
 import { AcoesSinaisSemanaIA } from "@/components/bi/sections/AcoesSinaisSemanaIA";
-import { HorizontalBarChart, VerticalBarChart, LineChart, PieChartWithLabels, type BarChartData } from "@/components/bi/charts";
-import { CHART_COLORS } from "@/lib/chartTheme";
+import { HorizontalBarChart, VerticalBarChart, type BarChartData } from "@/components/bi/charts/BarChart";
+import LineChart from "@/components/bi/charts/LineChart";
+import { PieChartWithLabels } from "@/components/bi/charts/PieChart";
+import { CHART_COLORS } from "@/lib/chartPalette";
 import { faixaToDiasRange } from "@/lib/bi/acoesGestaoUtils";
 import { toISODate, getPreviousPeriod, formatMonthYear } from "@/lib/dateUtils";
+import { useDelayedReady } from "@/hooks/useDelayedReady";
 import type { AcoesFunil, AcoesFunilMeta, RpcAcoesBI } from "@/types/biRpc";
 
 const EMPTY: RpcAcoesBI = {
@@ -109,20 +114,20 @@ export default function AcoesSection({ active, dateRange }: Props) {
   const to = useMemo(() => toISODate(dateRange?.to ?? dateRange?.from), [dateRange?.to, dateRange?.from]);
 
   // A abertura da tela disparava mapa, tabelas e análises abaixo da dobra ao
-  // mesmo tempo que os cards principais. Priorizamos resumo e funil; as
-  // consultas secundárias entram após o primeiro paint e são reprogramadas a
-  // cada troca de filtro.
-  const [carregarSecundarios, setCarregarSecundarios] = useState(false);
-  useEffect(() => {
-    if (!active) {
-      setCarregarSecundarios(false);
-      return;
-    }
-
-    setCarregarSecundarios(false);
-    const timer = window.setTimeout(() => setCarregarSecundarios(true), 250);
-    return () => window.clearTimeout(timer);
-  }, [active, from, to, vendedor, cidade, tipoAcao, statusNegocio]);
+  // mesmo tempo que os cards principais. Mantemos todos os blocos, mas
+  // liberamos as consultas em duas ondas: apoio visível após o primeiro paint
+  // e consultas pesadas (mapa, detalhe, IA e período anterior) depois que a
+  // interface já está utilizável. Filtros reiniciam as duas ondas.
+  const carregarApoio = useDelayedReady(
+    active,
+    250,
+    `${from}|${to}|${vendedor}|${cidade}|${tipoAcao}|${statusNegocio}`,
+  );
+  const carregarPesados = useDelayedReady(
+    active,
+    900,
+    `${from}|${to}|${vendedor}|${cidade}|${tipoAcao}|${statusNegocio}`,
+  );
 
   // Paginacao server-side da tabela de detalhe
   const [detalhePage, setDetalhePage] = useState(1);
@@ -147,7 +152,7 @@ export default function AcoesSection({ active, dateRange }: Props) {
     vendedor: vendedor || undefined,
     tipoAcao: tipoAcao || undefined,
     cidade: cidade || undefined,
-    enabled: active && carregarSecundarios,
+    enabled: active && carregarApoio,
   });
 
   // Tabela de detalhe em RPC separada: rpc_acoes_bi roda 4x no app (2x aqui,
@@ -160,7 +165,7 @@ export default function AcoesSection({ active, dateRange }: Props) {
     cidade: cidade || undefined,
     statusNegocio: statusNegocio || undefined,
     page: detalhePage,
-    enabled: active && carregarSecundarios,
+    enabled: active && carregarPesados,
   });
 
   const detalheTotal = detalhe?.total ?? 0;
@@ -170,17 +175,17 @@ export default function AcoesSection({ active, dateRange }: Props) {
   const { data: riscoData, isLoading: riscoLoading } = useClientesRiscoRpc({
     vendedor: vendedor || undefined,
     cidade: cidade || undefined,
-    enabled: active && carregarSecundarios,
+    enabled: active && carregarPesados,
   });
 
   const { data: clientesCriticos, isLoading: clientesCriticosLoading, error: clientesCriticosError } = useClientesCriticosRpc({
     vendedor: vendedor || undefined,
     cidade: cidade || undefined,
-    enabled: active && carregarSecundarios,
+    enabled: active && carregarApoio,
   });
 
   const { data: sinaisSemanaIA, isLoading: sinaisSemanaIALoading, error: sinaisSemanaIAError } = useAcoesSinaisSemanaIA(
-    active && carregarSecundarios,
+    active && carregarPesados,
   );
 
   // Oportunidades pela primeira entrada no funil VENDAS da janela, nao por
@@ -192,6 +197,13 @@ export default function AcoesSection({ active, dateRange }: Props) {
     vendedor: vendedor || undefined,
     cidade: cidade || undefined,
     enabled: active,
+  });
+
+  const { data: esteiraData, isLoading: esteiraLoading } = usePedidosEsteira({
+    from,
+    to,
+    vendedor: vendedor || undefined,
+    cidade: cidade || undefined,
   });
 
   // Drill-down: clicar uma faixa do chart "Clientes em Risco" abre a aba
@@ -216,7 +228,7 @@ export default function AcoesSection({ active, dateRange }: Props) {
     vendedor: vendedor || undefined,
     tipoAcao: tipoAcao || undefined,
     cidade: cidade || undefined,
-    enabled: active && carregarSecundarios && !!fromPrev,
+    enabled: active && carregarPesados && !!fromPrev,
   });
 
   // A taxa de ganho usa o MESMO agregado de entradas no funil VENDAS exibido no
@@ -226,7 +238,7 @@ export default function AcoesSection({ active, dateRange }: Props) {
     to: toPrev,
     vendedor: vendedor || undefined,
     cidade: cidade || undefined,
-    enabled: active && carregarSecundarios && !!fromPrev && !!toPrev,
+    enabled: active && carregarPesados && !!fromPrev && !!toPrev,
   });
 
   const { kpis, porVendedor, porCidade, porTipoAcao, porTipoContato, porVendedorCidade, clientesMaisAtendidos } = data ?? EMPTY;
@@ -246,15 +258,22 @@ export default function AcoesSection({ active, dateRange }: Props) {
         onOpenDiasSemAcao={() => setDiasSemAcaoAberto(true)}
       />
 
+      {/* ESTEIRA DE PEDIDOS EM FECHAMENTO (Aguardando Aprovação e Aguardando Assinatura) */}
+      <PedidosEsteiraCard
+        variant="strip"
+        data={esteiraData}
+        isLoading={esteiraLoading}
+      />
+
       <AcoesClientesCriticos
         data={clientesCriticos}
-        loading={clientesCriticosLoading}
+        loading={!carregarApoio || clientesCriticosLoading}
         error={clientesCriticosError}
       />
 
       <AcoesSinaisSemanaIA
         data={sinaisSemanaIA}
-        loading={sinaisSemanaIALoading}
+        loading={!carregarPesados || sinaisSemanaIALoading}
         error={sinaisSemanaIAError}
       />
 
@@ -296,7 +315,7 @@ export default function AcoesSection({ active, dateRange }: Props) {
             to={to}
             vendedor={vendedor || undefined}
             cidade={cidade || undefined}
-            active={active && carregarSecundarios}
+            active={active && carregarApoio}
           />
         </div>
       </div>
@@ -312,13 +331,13 @@ export default function AcoesSection({ active, dateRange }: Props) {
         />
         <AcoesEsforcoRetorno
           ranking={gestao?.rankingConsultores ?? []}
-          loading={gestaoLoading}
+          loading={!carregarApoio || gestaoLoading}
           error={gestaoError}
           from={from}
           to={to}
           vendedor={vendedor || undefined}
           cidade={cidade || undefined}
-          active={active && carregarSecundarios}
+          active={active && carregarApoio}
         />
       </div>
 
@@ -420,18 +439,19 @@ export default function AcoesSection({ active, dateRange }: Props) {
         to={to}
         vendedor={vendedor || undefined}
         cidade={cidade || undefined}
-        active={active && carregarSecundarios}
+        active={active && carregarPesados}
         drill={drill}
         onClearDrill={() => setDrill(null)}
       />
 
-      {/* Mapa de negocios abertos — inicia aberto e carrega junto da tela */}
+      {/* Mapa de negocios abertos — inicia aberto, mas a consulta entra na
+          segunda onda para nao bloquear os cards e graficos principais. */}
       <AcoesMapaOportunidades
         vendedor={vendedor || undefined}
         cidade={cidade || undefined}
         from={from}
         to={to}
-        active={active && carregarSecundarios}
+        active={active && carregarPesados}
       />
 
       {/* Artefato principal — tabela com filtro de status */}
@@ -442,7 +462,7 @@ export default function AcoesSection({ active, dateRange }: Props) {
         pageSize={ACOES_PAGE_SIZE}
         totalPages={detalheTotalPages}
         onPageChange={setDetalhePage}
-        loading={detalheLoading}
+        loading={!carregarPesados || detalheLoading}
         error={detalheError}
       />
     </div>

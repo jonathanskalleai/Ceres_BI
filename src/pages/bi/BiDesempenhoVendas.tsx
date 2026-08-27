@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { toISODate, formatBRL } from "@/lib/dateUtils";
 import { useDesempenhoVendas } from "@/hooks/bi/useDesempenhoVendas";
+import { usePedidosEsteira } from "@/hooks/bi/usePedidosEsteira";
+import { PedidosEsteiraCard } from "@/components/bi/pedidos/PedidosEsteiraCard";
 import { DesempenhoTableCard } from "@/components/bi/desempenho/DesempenhoTableCard";
 import { DesempenhoDonutCard } from "@/components/bi/desempenho/DesempenhoDonutCard";
 import { DesempenhoDualLineChart } from "@/components/bi/desempenho/DesempenhoDualLineChart";
@@ -82,6 +84,13 @@ export default function BiDesempenhoVendas() {
   }, [selectedAno, dateRange, selectedVendedor, selectedCidade, activeCrossFilter]);
 
   const { data, isLoading, refetch, isFetching } = useDesempenhoVendas(filterOptions);
+  const { data: esteiraData, isLoading: esteiraLoading } = usePedidosEsteira({
+    ano: selectedAno,
+    from: filterOptions.from,
+    to: filterOptions.to,
+    vendedor: filterOptions.vendedor,
+    cidade: filterOptions.cidade,
+  });
 
   // Lista de opções únicas para selects
   const vendedorOptions = useMemo(() => {
@@ -292,6 +301,14 @@ export default function BiDesempenhoVendas() {
               )}
             </div>
           </div>
+
+          {/* ESTEIRA DE PEDIDOS EM FECHAMENTO (Aguardando Aprovação e Aguardando Assinatura) */}
+          <PedidosEsteiraCard
+            variant="strip"
+            data={esteiraData}
+            isLoading={esteiraLoading}
+            ano={selectedAno}
+          />
 
           {/* Gráfico Comparativo Dual Line */}
           {data.serieMensal.length > 0 && (
