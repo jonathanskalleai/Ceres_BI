@@ -13,6 +13,10 @@ export interface PedidoEsteiraItem {
 }
 
 export interface PedidosEsteiraData {
+  aprovados: {
+    qtd: number;
+    valor: number;
+  };
   aguardandoAprovacao: {
     qtd: number;
     valor: number;
@@ -27,13 +31,24 @@ export interface PedidosEsteiraData {
     qtd: number;
     valor: number;
   };
+  totalConsolidado: {
+    qtd: number;
+    valor: number;
+  };
+  totalAlinhadoPlanilha: {
+    qtd: number;
+    valor: number;
+  };
   pedidos: PedidoEsteiraItem[];
 }
 
 export const EMPTY_PEDIDOS_ESTEIRA: PedidosEsteiraData = {
+  aprovados: { qtd: 0, valor: 0 },
   aguardandoAprovacao: { qtd: 0, valor: 0 },
   aguardandoAssinatura: { qtd: 0, valor: 0, qtdGanho: 0, valorGanho: 0 },
   totalEsteira: { qtd: 0, valor: 0 },
+  totalConsolidado: { qtd: 0, valor: 0 },
+  totalAlinhadoPlanilha: { qtd: 0, valor: 0 },
   pedidos: [],
 };
 

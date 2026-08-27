@@ -53,8 +53,6 @@ export const ResumoExecutivoCard = memo(function ResumoExecutivoCard({
 
   const { data: esteiraData, isLoading: esteiraLoading } = usePedidosEsteira({
     ano: anoDesempenho,
-    from: filters?.dateRange?.from,
-    to: filters?.dateRange?.to,
     vendedor: filters?.vendedor,
     cidade: filters?.cidade,
   });
@@ -202,7 +200,10 @@ export const ResumoExecutivoCard = memo(function ResumoExecutivoCard({
 
           <div className="flex items-center justify-between text-[11px] mt-1.5 mb-2" style={{ color: "var(--voux-text-faint)" }}>
             <span className="font-mono font-medium text-emerald-600 dark:text-emerald-400">
-              Faturado no Ano: <strong>{formatBRL(totais.totalVendidoAno)}</strong>
+              Faturado no Ano: <strong>{formatBRL(totais.totalVendidoAno)}</strong>{" "}
+              <strong className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300">
+                ({totais.totalGanhosAno} pedidos aprovados)
+              </strong>
             </span>
             <span className="font-mono text-rose-500">
               Falta: <strong>{formatBRL(totais.saldoMetaAno)}</strong>

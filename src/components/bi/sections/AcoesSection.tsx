@@ -199,9 +199,9 @@ export default function AcoesSection({ active, dateRange }: Props) {
     enabled: active,
   });
 
+  const anoCorrente = from ? new Date(from).getFullYear() : new Date().getFullYear();
   const { data: esteiraData, isLoading: esteiraLoading } = usePedidosEsteira({
-    from,
-    to,
+    ano: anoCorrente,
     vendedor: vendedor || undefined,
     cidade: cidade || undefined,
   });
