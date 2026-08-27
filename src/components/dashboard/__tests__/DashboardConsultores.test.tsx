@@ -85,14 +85,14 @@ describe("DashboardConsultores", () => {
     expect(screen.getAllByText("CARLOS AUGUSTO AUGUSTIN")).not.toHaveLength(0);
   });
 
-  it("ordena os cartões do Performance Ranking priorizando a quantidade de vendas", () => {
+  it("ordena os cartões do Performance Ranking estritamente pelo total de vendas", () => {
     const desempenhoMock: EquipeDesempenhoData = {
       rows: [
-        // CONSULTOR COM MAIS VENDAS (LUIZ CARLOS CUNICO: 2 vendas, 75.700)
+        // CONSULTOR COM MENOR VALOR MAS 2 VENDAS (LUIZ CARLOS CUNICO: 2 vendas, 75.700)
         { consultor: "LUIZ CARLOS CUNICO", competencia: "2026-08-01", total_venda: 75700, quantidade_vendas: 2, meta: 100000, total: 100000, oportunidade: 50000, cotacao: 30000, proposta: 20000 },
-        // CONSULTOR COM MAIOR VALOR MAS APENAS 1 VENDA (EDIOMAR: 1 venda, 145.000)
+        // CONSULTOR COM MAIOR VALOR E 1 VENDA (EDIOMAR: 1 venda, 145.000)
         { consultor: "EDIOMAR CARLOS ZILLI", competencia: "2026-08-01", total_venda: 145000, quantidade_vendas: 1, meta: 200000, total: 500000, oportunidade: 200000, cotacao: 150000, proposta: 150000 },
-        // CONSULTOR COM 1 VENDA E MENOR VALOR (DIEGO KNOPF: 1 venda, 107.500)
+        // CONSULTOR COM VALOR INTERMEDIÁRIO E 1 VENDA (DIEGO KNOPF: 1 venda, 107.500)
         { consultor: "DIEGO KNOPF", competencia: "2026-08-01", total_venda: 107500, quantidade_vendas: 1, meta: 150000, total: 200000, oportunidade: 100000, cotacao: 50000, proposta: 50000 },
       ],
       team: [],
@@ -125,8 +125,8 @@ describe("DashboardConsultores", () => {
       </QueryClientProvider>
     );
 
-    // O consultor com mais vendas (LUIZ CARLOS CUNICO: 2 vendas) deve ser o #1,
-    // seguido pelos de 1 venda desempatados pelo valor (EDIOMAR: 145k #2, DIEGO KNOPF: 107.5k #3)
+    // O ranking é ordenado pelo total de vendas (R$ do maior para o menor):
+    // EDIOMAR (145k) #1, DIEGO KNOPF (107.5k) #2, LUIZ CARLOS CUNICO (75.7k) #3
     expect(screen.getByText("Posição #1")).toBeInTheDocument();
     expect(screen.getByText("Posição #2")).toBeInTheDocument();
     expect(screen.getByText("Posição #3")).toBeInTheDocument();
@@ -134,7 +134,7 @@ describe("DashboardConsultores", () => {
     const cardHeadings = screen.getAllByRole("heading", { level: 4 });
     const cardNames = cardHeadings.map((h) => h.textContent);
 
-    expect(cardNames).toEqual(["LUIZ CARLOS CUNICO", "EDIOMAR CARLOS ZILLI", "DIEGO KNOPF"]);
+    expect(cardNames).toEqual(["EDIOMAR CARLOS ZILLI", "DIEGO KNOPF", "LUIZ CARLOS CUNICO"]);
   });
 
   it("desempata consultores sem vendas no mês pelo acumulado de vendas no ano", () => {

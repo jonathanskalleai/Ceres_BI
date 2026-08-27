@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 interface EquipeDesempenhoTableProps {
   ano: number;
   data: EquipeDesempenhoData;
+  loading?: boolean;
   isAdmin: boolean;
   filters?: Filters;
   onSelectConsultor?: (nome: string) => void;
@@ -174,13 +175,13 @@ function aggregateConsultorRows(rows: EquipeDesempenhoLinha[]): EquipeDesempenho
 }
 
 function sortByVendas(a: EquipeDesempenhoLinha, b: EquipeDesempenhoLinha): number {
-  const qA = asNumber(a.quantidade_vendas);
-  const qB = asNumber(b.quantidade_vendas);
-  if (qB !== qA) return qB - qA;
-
   const vA = asNumber(a.total_venda);
   const vB = asNumber(b.total_venda);
   if (vB !== vA) return vB - vA;
+
+  const qA = asNumber(a.quantidade_vendas);
+  const qB = asNumber(b.quantidade_vendas);
+  if (qB !== qA) return qB - qA;
 
   const mA = asNumber(a.desempenho_meta);
   const mB = asNumber(b.desempenho_meta);
@@ -191,6 +192,20 @@ function sortByVendas(a: EquipeDesempenhoLinha, b: EquipeDesempenhoLinha): numbe
   if (pipeB !== pipeA) return pipeB - pipeA;
 
   return (a.consultor ?? "").localeCompare(b.consultor ?? "", "pt-BR");
+}
+
+function LoadingRows() {
+  return (
+    <>
+      {Array.from({ length: 4 }).map((_, index) => (
+        <tr key={`desempenho-loading-${index}`}>
+          <td colSpan={HEADERS_COLUMNS.length + 1} className="px-4 py-3">
+            <div className="h-4 w-full animate-pulse rounded bg-black/10 dark:bg-white/10" />
+          </td>
+        </tr>
+      ))}
+    </>
+  );
 }
 
 function aggregateTeamRow(teamRows: EquipeDesempenhoLinha[]): EquipeDesempenhoLinha | null {
@@ -501,6 +516,7 @@ const MetricRow = memo(function MetricRow({
 export const EquipeDesempenhoTable = memo(function EquipeDesempenhoTable({
   ano,
   data,
+  loading = false,
   isAdmin,
   filters,
   onSelectConsultor,
@@ -742,29 +758,33 @@ export const EquipeDesempenhoTable = memo(function EquipeDesempenhoTable({
                   </tr>
                 </thead>
                 <tbody>
-                  {principalTeamRow && (
-                    <MetricRow
-                      row={principalTeamRow}
-                      label="TOTAL DA EQUIPE"
-                      isTeam
-                    />
-                  )}
-                  {principalRows.length > 0 ? (
-                    principalRows.map((consultorRow, index) => (
-                      <MetricRow
-                        key={`principal-${consultorRow.consultor}`}
-                        row={consultorRow}
-                        label={consultorRow.consultor ?? "Sem consultor"}
-                        position={index + 1}
-                        onSelectConsultor={onSelectConsultor}
-                      />
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={17} className="text-center py-10 text-muted-foreground font-mono text-[12px]">
-                        Nenhum registro de consultores encontrado para {targetPeriodInfo.label}.
-                      </td>
-                    </tr>
+                  {loading ? <LoadingRows /> : (
+                    <>
+                      {principalTeamRow && (
+                        <MetricRow
+                          row={principalTeamRow}
+                          label="TOTAL DA EQUIPE"
+                          isTeam
+                        />
+                      )}
+                      {principalRows.length > 0 ? (
+                        principalRows.map((consultorRow, index) => (
+                          <MetricRow
+                            key={`principal-${consultorRow.consultor}`}
+                            row={consultorRow}
+                            label={consultorRow.consultor ?? "Sem consultor"}
+                            position={index + 1}
+                            onSelectConsultor={onSelectConsultor}
+                          />
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={17} className="text-center py-10 text-muted-foreground font-mono text-[12px]">
+                            Nenhum registro de consultores encontrado para {targetPeriodInfo.label}.
+                          </td>
+                        </tr>
+                      )}
+                    </>
                   )}
                 </tbody>
               </table>
@@ -818,32 +838,32 @@ export const EquipeDesempenhoTable = memo(function EquipeDesempenhoTable({
                   </tr>
                 </thead>
                 <tbody>
-                  {data.team.map((teamRow) => {
-                    const isExpanded = expandedMonths.has(teamRow.competencia);
-                    const rowsDoMes = consultoresPorMes.get(teamRow.competencia) ?? [];
-                    return (
-                      <Fragment key={`team-${teamRow.competencia}`}>
-                        <MetricRow
-                          row={teamRow}
-                          label={formatMonthYear(teamRow.competencia.slice(0, 7))}
-                          stickyMonth
-                          expanded={isExpanded}
-                          onToggle={() => toggleMonth(teamRow.competencia)}
-                        />
-                        {isExpanded &&
-                          rowsDoMes.map((consultorRow, index) => (
-                            <MetricRow
-                              key={`${consultorRow.consultor}-${consultorRow.competencia}`}
-                              row={consultorRow}
-                              label={consultorRow.consultor ?? "Sem consultor"}
-                              position={index + 1}
-                              nested
-                              onSelectConsultor={onSelectConsultor}
-                            />
-                          ))}
-                      </Fragment>
-                    );
-                  })}
+                  {loading ? <LoadingRows /> : data.team.map((teamRow) => {
+                      const isExpanded = expandedMonths.has(teamRow.competencia);
+                      const rowsDoMes = consultoresPorMes.get(teamRow.competencia) ?? [];
+                      return (
+                        <Fragment key={`team-${teamRow.competencia}`}>
+                          <MetricRow
+                            row={teamRow}
+                            label={formatMonthYear(teamRow.competencia.slice(0, 7))}
+                            stickyMonth
+                            expanded={isExpanded}
+                            onToggle={() => toggleMonth(teamRow.competencia)}
+                          />
+                          {isExpanded &&
+                            rowsDoMes.map((consultorRow, index) => (
+                              <MetricRow
+                                key={`${consultorRow.consultor}-${consultorRow.competencia}`}
+                                row={consultorRow}
+                                label={consultorRow.consultor ?? "Sem consultor"}
+                                position={index + 1}
+                                nested
+                                onSelectConsultor={onSelectConsultor}
+                              />
+                            ))}
+                        </Fragment>
+                      );
+                    })}
                 </tbody>
               </table>
             </div>

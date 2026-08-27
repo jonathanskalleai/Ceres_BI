@@ -166,7 +166,7 @@ describe("EquipeDesempenhoTable", () => {
     expect(screen.getByText("ANA PAULA")).toBeInTheDocument();
   });
 
-  it("ordena os consultores na tabela priorizando a quantidade de vendas", () => {
+  it("ordena os consultores na tabela estritamente pelo total de vendas", () => {
     render(
       <QueryClientProvider client={queryClient}>
         <EquipeDesempenhoTable
@@ -184,14 +184,14 @@ describe("EquipeDesempenhoTable", () => {
       </QueryClientProvider>
     );
 
-    // ANA PAULA tem 5 vendas (115.000) e BRUNO SILVA tem 4 vendas (125.000).
-    // ANA PAULA deve ser ordenada primeiro por ter maior quantidade de vendas.
+    // BRUNO SILVA tem R$ 125.000 (4 vendas) e ANA PAULA tem R$ 115.000 (5 vendas).
+    // O ranking prioriza o total de vendas (R$ do maior para o menor): BRUNO SILVA deve vir antes de ANA PAULA.
     const rows = screen.getAllByRole("row");
     const consultorTexts = rows
       .map((r) => r.textContent ?? "")
       .filter((t) => t.includes("ANA PAULA") || t.includes("BRUNO SILVA"));
 
-    expect(consultorTexts[0]).toContain("ANA PAULA");
-    expect(consultorTexts[1]).toContain("BRUNO SILVA");
+    expect(consultorTexts[0]).toContain("BRUNO SILVA");
+    expect(consultorTexts[1]).toContain("ANA PAULA");
   });
 });
