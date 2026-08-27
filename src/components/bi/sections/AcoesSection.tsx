@@ -263,6 +263,7 @@ export default function AcoesSection({ active, dateRange }: Props) {
         variant="strip"
         data={esteiraData}
         isLoading={esteiraLoading}
+        periodoLabel={from && to ? `${formatDateBR(from)} a ${formatDateBR(to)}` : undefined}
       />
 
       <AcoesClientesCriticos

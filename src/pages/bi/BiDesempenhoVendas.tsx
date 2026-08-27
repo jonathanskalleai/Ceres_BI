@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { type DateRange } from "react-day-picker";
+import { startOfMonth, endOfMonth } from "date-fns";
 import {
   DollarSign,
   ShoppingCart,
@@ -12,7 +13,7 @@ import {
   Flame,
   PieChart,
 } from "lucide-react";
-import { toISODate, formatBRL } from "@/lib/dateUtils";
+import { toISODate, formatBRL, formatDateBR } from "@/lib/dateUtils";
 import { useDesempenhoVendas } from "@/hooks/bi/useDesempenhoVendas";
 import { usePedidosEsteira } from "@/hooks/bi/usePedidosEsteira";
 import { PedidosEsteiraCard } from "@/components/bi/pedidos/PedidosEsteiraCard";
@@ -45,10 +46,13 @@ export default function BiDesempenhoVendas() {
   // Aba ativa: padrão "ganhos" (Vendas), com opção "perdas" (Diagnóstico de Perdas)
   const [activeTab, setActiveTab] = useState<DesempenhoTab>("ganhos");
 
-  // Estado de filtros principais
+  // Estado de filtros principais: inicia no mês corrente (01 do mês até o fim do mês)
   const currentYear = new Date().getFullYear();
   const [selectedAno, setSelectedAno] = useState<number | null>(currentYear);
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(() => ({
+    from: startOfMonth(new Date()),
+    to: endOfMonth(new Date()),
+  }));
   const [selectedVendedor, setSelectedVendedor] = useState<string>("");
   const [selectedCidade, setSelectedCidade] = useState<string>("");
 
@@ -85,12 +89,16 @@ export default function BiDesempenhoVendas() {
 
   const { data, isLoading, refetch, isFetching } = useDesempenhoVendas(filterOptions);
   const { data: esteiraData, isLoading: esteiraLoading } = usePedidosEsteira({
-    ano: selectedAno,
+    ano: filterOptions.from ? null : selectedAno,
     from: filterOptions.from,
     to: filterOptions.to,
     vendedor: filterOptions.vendedor,
     cidade: filterOptions.cidade,
   });
+
+  const esteiraPeriodoLabel = filterOptions.from && filterOptions.to
+    ? `${formatDateBR(filterOptions.from)} a ${formatDateBR(filterOptions.to)}`
+    : `Ano ${selectedAno || currentYear}`;
 
   // Lista de opções únicas para selects
   const vendedorOptions = useMemo(() => {
@@ -120,7 +128,10 @@ export default function BiDesempenhoVendas() {
 
   const handleResetFilters = () => {
     setSelectedAno(currentYear);
-    setDateRange(undefined);
+    setDateRange({
+      from: startOfMonth(new Date()),
+      to: endOfMonth(new Date()),
+    });
     setSelectedVendedor("");
     setSelectedCidade("");
     setActiveCrossFilter(null);
@@ -147,9 +158,19 @@ export default function BiDesempenhoVendas() {
           setActiveCrossFilter(null); // Reseta filtro cruzado ao alternar de aba
         }}
         ano={selectedAno}
-        onAnoChange={setSelectedAno}
+        onAnoChange={(novoAno) => {
+          setSelectedAno(novoAno);
+          if (novoAno !== null) {
+            setDateRange(undefined);
+          }
+        }}
         dateRange={dateRange}
-        onDateRangeChange={setDateRange}
+        onDateRangeChange={(range) => {
+          setDateRange(range);
+          if (range?.from) {
+            setSelectedAno(range.from.getFullYear());
+          }
+        }}
         vendedor={selectedVendedor}
         onVendedorChange={setSelectedVendedor}
         vendedorOptions={vendedorOptions}
@@ -308,6 +329,7 @@ export default function BiDesempenhoVendas() {
             data={esteiraData}
             isLoading={esteiraLoading}
             ano={selectedAno}
+            periodoLabel={esteiraPeriodoLabel}
           />
 
           {/* Gráfico Comparativo Dual Line */}

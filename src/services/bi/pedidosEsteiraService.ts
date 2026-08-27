@@ -49,7 +49,8 @@ export async function fetchPedidosEsteira(
   const params: Record<string, unknown> = {};
   if (options.from) params.p_from = options.from;
   if (options.to) params.p_to = options.to;
-  if (options.ano) params.p_ano = options.ano;
+  // Só envia p_ano se não houver intervalo específico de datas
+  if (!options.from && options.ano) params.p_ano = options.ano;
   if (options.vendedor) params.p_vendedor = options.vendedor;
   if (options.cidade) params.p_cidade = options.cidade;
 

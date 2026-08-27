@@ -25,6 +25,7 @@ interface Props {
   variant?: "full" | "compact" | "strip";
   className?: string;
   ano?: number | null;
+  periodoLabel?: string;
 }
 
 export function PedidosEsteiraCard({
@@ -33,6 +34,7 @@ export function PedidosEsteiraCard({
   variant = "strip",
   className,
   ano,
+  periodoLabel,
 }: Props) {
   const [modalOpen, setModalOpen] = useState(false);
   const [filterSituacao, setFilterSituacao] = useState<string | null>(null);
@@ -68,7 +70,21 @@ export function PedidosEsteiraCard({
   // =========================================================================
   if (variant === "strip") {
     return (
-      <>
+      <div className="space-y-2">
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-2">
+            <Layers className="h-4 w-4 text-purple-500" />
+            <span className="text-[11px] font-bold uppercase tracking-wider font-mono text-muted-foreground">
+              Esteira de Fechamento de Pedidos
+            </span>
+          </div>
+          {periodoLabel && (
+            <span className="text-[10px] font-mono font-medium px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+              {periodoLabel}
+            </span>
+          )}
+        </div>
+
         <div className={cn("grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4", className)}>
           {/* Card 1: Aguardando Aprovação */}
           <div
@@ -168,8 +184,8 @@ export function PedidosEsteiraCard({
                   Total Esteira de Fechamento
                 </span>
               </div>
-              <span className="inline-flex items-center rounded-full bg-purple-500/10 px-2 py-0.5 text-[9px] font-mono font-medium text-purple-600 dark:text-purple-400">
-                Somatória
+              <span className="inline-flex items-center rounded-full bg-purple-500/10 px-2 py-0.5 text-[9px] font-mono font-bold text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                Soma dos 2
               </span>
             </div>
 
@@ -186,9 +202,9 @@ export function PedidosEsteiraCard({
                   {formatBRL(totalEsteira.valor)}
                 </p>
                 <div className="flex items-center justify-between text-[10px] text-muted-foreground mt-1.5 font-mono pt-1 border-t" style={{ borderColor: "var(--voux-card-border)" }}>
-                  <span>Aprovação + Assinatura</span>
+                  <span>Aprovação ({aguardandoAprovacao.qtd}) + Assinatura ({aguardandoAssinatura.qtd})</span>
                   <span className="text-purple-600 dark:text-purple-400 group-hover:underline inline-flex items-center">
-                    Listar todos <ChevronRight className="h-3 w-3 ml-0.5" />
+                    Ver todos <ChevronRight className="h-3 w-3 ml-0.5" />
                   </span>
                 </div>
               </div>
@@ -207,7 +223,7 @@ export function PedidosEsteiraCard({
           setSearchTerm={setSearchTerm}
           totalValor={filteredPedidos.reduce((acc, p) => acc + (Number(p.valor) || 0), 0)}
         />
-      </>
+      </div>
     );
   }
 

@@ -156,6 +156,7 @@ export const DashboardConsultores = ({
           data={esteiraData}
           isLoading={esteiraLoading}
           ano={anoDesempenho}
+          periodoLabel={periodoLabel}
         />
       </div>
 
