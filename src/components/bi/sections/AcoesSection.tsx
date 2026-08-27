@@ -29,7 +29,7 @@ import LineChart from "@/components/bi/charts/LineChart";
 import { PieChartWithLabels } from "@/components/bi/charts/PieChart";
 import { CHART_COLORS } from "@/lib/chartPalette";
 import { faixaToDiasRange } from "@/lib/bi/acoesGestaoUtils";
-import { toISODate, getPreviousPeriod, formatMonthYear } from "@/lib/dateUtils";
+import { toISODate, getPreviousPeriod, formatMonthYear, formatDateBR } from "@/lib/dateUtils";
 import { useDelayedReady } from "@/hooks/useDelayedReady";
 import type { AcoesFunil, AcoesFunilMeta, RpcAcoesBI } from "@/types/biRpc";
 
