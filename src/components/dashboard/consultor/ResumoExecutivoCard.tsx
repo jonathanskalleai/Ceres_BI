@@ -5,8 +5,6 @@ import type { RpcConsultorResumoAcoes } from "@/types/consultoresRpc";
 import type { EquipeDesempenhoData } from "@/types/equipeDesempenho";
 import type { Filters } from "@/types/comercial";
 import { fetchMetaAnual } from "@/services/metasService";
-import { usePedidosEsteira } from "@/hooks/bi/usePedidosEsteira";
-import { PedidosEsteiraCard } from "@/components/bi/pedidos/PedidosEsteiraCard";
 import { cn } from "@/lib/utils";
 
 interface ResumoExecutivoCardProps {
@@ -49,12 +47,6 @@ export const ResumoExecutivoCard = memo(function ResumoExecutivoCard({
     queryKey: ["meta_anual_empresa", anoDesempenho],
     queryFn: () => fetchMetaAnual(anoDesempenho),
     staleTime: 1000 * 60 * 5,
-  });
-
-  const { data: esteiraData, isLoading: esteiraLoading } = usePedidosEsteira({
-    ano: anoDesempenho,
-    vendedor: filters?.vendedor,
-    cidade: filters?.cidade,
   });
 
   const isMultiMonth = useMemo(() => {
@@ -241,16 +233,6 @@ export const ResumoExecutivoCard = memo(function ResumoExecutivoCard({
               <span>Falta no Mês: <strong className="text-rose-500">{formatBRL(totais.saldoMetaMes)}</strong> ({formatPct(totais.pctMetaMes)})</span>
             </div>
           )}
-        </div>
-
-        {/* ESTEIRA DE PEDIDOS EM FECHAMENTO (Aguardando Aprovação e Assinatura) */}
-        <div className="mb-4">
-          <PedidosEsteiraCard
-            variant="compact"
-            data={esteiraData}
-            isLoading={esteiraLoading}
-            ano={anoDesempenho}
-          />
         </div>
 
         {/* Sub-KPIs Strip with Mini Bars */}

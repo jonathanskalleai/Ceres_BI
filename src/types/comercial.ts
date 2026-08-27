@@ -82,6 +82,7 @@ export interface KPIs {
 export interface Filters {
   dateRange?: { from: string; to: string }; // ISO date strings (YYYY-MM-DD)
   cidade: string;
+  vendedor?: string;
   tipoAcao: string;
   categoria: string;
   funil: string;

@@ -12,6 +12,7 @@ import type { RpcConsultorResumoAcoes } from "@/types/consultoresRpc";
 import type { EquipeDesempenhoData } from "@/types/equipeDesempenho";
 import { Skeleton } from "@/components/ui/skeleton";
 import { mapRegistroRecente } from "@/lib/comercialMappers";
+import { useDelayedReady } from "@/hooks/useDelayedReady";
 
 const EMPTY_DESEMPENHO: EquipeDesempenhoData = { rows: [], team: [] };
 
@@ -47,13 +48,14 @@ export default function CrmConsultoresRpc() {
 
   const filters: Filters = {
     cidade,
+    vendedor,
     tipoAcao,
     categoria,
     funil,
     dateRange: from && to ? { from, to } : undefined,
   };
 
-  const { data: resumoRpc, isLoading: loadingResumo } = useConsultoresResumoAcoes({
+  const { data: resumoRpc, isLoading: loadingResumo, isFetching: fetchingResumo } = useConsultoresResumoAcoes({
     from,
     to,
     vendedor: vendedor || undefined,
@@ -71,10 +73,19 @@ export default function CrmConsultoresRpc() {
     enabled,
   });
 
-  const { data: desempenhoRpc } = useEquipeDesempenho({
+  // O desempenho anual e a maior resposta da tela. O resumo mensal acima
+  // libera a casca primeiro; só depois iniciamos esta consulta para evitar
+  // concorrer com o carregamento que define a primeira pintura.
+  const desempenhoReady = useDelayedReady(
+    enabled && !!resumoRpc && !fetchingResumo,
+    120,
+    `${from}|${to}|${anoDesempenho}|${vendedor}|${cidade}`,
+  );
+  const { data: desempenhoRpc, isLoading: loadingDesempenho } = useEquipeDesempenho({
     ano: anoDesempenho,
     consultor: vendedor || undefined,
     cidade: cidade || undefined,
+    enabled: enabled && desempenhoReady,
   });
 
   const vendedores = useMemo<Vendedor[]>(() => (resumoRpc ?? []).map(mapVendedor), [resumoRpc]);
@@ -108,6 +119,7 @@ export default function CrmConsultoresRpc() {
       onSelectConsultor={(nome) => navigate(`/crm/consultores/${encodeURIComponent(nome)}`)}
       anoDesempenho={anoDesempenho}
       desempenho={desempenhoRpc ?? EMPTY_DESEMPENHO}
+      desempenhoLoading={!!resumoRpc && (!desempenhoReady || loadingDesempenho)}
       isAdmin={isAdmin}
     />
   );

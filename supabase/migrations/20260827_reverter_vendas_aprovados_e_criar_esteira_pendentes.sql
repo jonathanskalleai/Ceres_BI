@@ -4,14 +4,12 @@
 -- 1. Restaura o critério oficial de Ganhos/Faturamento para estritamente pedidos
 --    com status 'Aprovado' (pdo_situacaopedido = 'Aprovado' e aprovação na janela).
 -- 2. Cria a nova RPC 'rpc_pedidos_pendentes_esteira' para dar visibilidade aos
---    pedidos em tramitação/esteira de fechamento:
---      - Aprovados (oficial: 126 pedidos · R$ 15.532.047,18)
---      - Aguardando Aprovação (2 pedidos · R$ 170.700,00)
---      - Aguardando Assinatura do Cliente (26 pedidos · R$ 3.358.275,01, dos quais 5 com ganho · R$ 921.000,00)
---      - Total Esteira em Tramitação (28 pedidos · R$ 3.528.975,01)
---      - Total Consolidado Projetado (154 pedidos · R$ 19.061.022,19)
---      - Total Alinhado com Planilha (131 pedidos · R$ 16.453.047,18)
---      - Lista nominal dos pedidos para drilldown interativo
+--    pedidos em tramitação/esteira de fechamento (respeitando rigorosamente o filtro
+--    de período aplicado na tela):
+--      - Aguardando Aprovação (qtd e valor R$)
+--      - Aguardando Assinatura do Cliente (qtd e valor R$)
+--      - Total Esteira de Fechamento (somatória de aprovação + assinatura)
+--      - Lista nominal dos pedidos em tramitação para o modal de detalhamento
 -- ============================================================================
 
 -- 1. Restaura rpc_equipe_desempenho_mensal para status estritamente Aprovado
@@ -235,14 +233,14 @@ pedidos_dedup AS (
     p.pdo_situacaopedido,
     p.cli_nome,
     COALESCE(p.pdo_vlrpedido, 0) AS pdo_vlrpedido,
-    COALESCE(p.pdo_dthaprovacao, p.pdo_dthpedido) AS dth_evento,
+    COALESCE(p.pdo_dthpedido, p.pdo_dthaprovacao, p.dthregistro) AS dth_evento,
     COALESCE(NULLIF(TRIM(p.pdo_vendedor), ''), 'Não Informado') AS pdo_vendedor,
     COALESCE(NULLIF(TRIM(p.pdo_cidadeufentrega), ''), NULLIF(TRIM(p.emp_cidade), ''), 'Não Informada') AS cidade_entrega,
     p.ngo_numero
   FROM mirror.crm_pedidos p
   CROSS JOIN params pr
-  WHERE p.pdo_situacaopedido IN ('Aprovado', 'Aguardando Aprovação', 'Aguardando Assinatura Cliente', 'Sem Situação')
-    AND COALESCE(p.pdo_dthaprovacao, p.pdo_dthpedido)::date BETWEEN pr.v_from AND pr.v_to
+  WHERE p.pdo_situacaopedido IN ('Aguardando Aprovação', 'Aguardando Assinatura Cliente', 'Sem Situação')
+    AND COALESCE(p.pdo_dthpedido, p.pdo_dthaprovacao, p.dthregistro)::date BETWEEN pr.v_from AND pr.v_to
   ORDER BY p.pdo_codigointerno, p.pdo_dthaprovacao DESC NULLS LAST
 ),
 negocios_dos_pedidos AS (
@@ -269,14 +267,6 @@ pedidos_filtrados AS (
     AND (p_vendedor IS NULL OR pd.pdo_vendedor ILIKE '%' || p_vendedor || '%' OR nc.consultor_negocio ILIKE '%' || p_vendedor || '%')
     AND (p_cidade IS NULL OR pd.cidade_entrega ILIKE '%' || p_cidade || '%' OR nc.cidade_negocio ILIKE '%' || p_cidade || '%')
 ),
-aprovados_oficial AS (
-  SELECT
-    COUNT(DISTINCT pdo_codigointerno)::int AS qtd,
-    COALESCE(SUM(pdo_vlrpedido), 0)::numeric AS valor
-  FROM pedidos_filtrados
-  WHERE pdo_situacaopedido = 'Aprovado'
-    AND ngo_conclusao = 'Ganho'
-),
 aguardando_aprovacao AS (
   SELECT
     COUNT(DISTINCT pdo_codigointerno)::int AS qtd,
@@ -291,14 +281,6 @@ aguardando_assinatura AS (
   FROM pedidos_filtrados
   WHERE pdo_situacaopedido IN ('Aguardando Assinatura Cliente', 'Sem Situação')
 ),
-aguardando_assinatura_ganhos AS (
-  SELECT
-    COUNT(DISTINCT pdo_codigointerno)::int AS qtd,
-    COALESCE(SUM(pdo_vlrpedido), 0)::numeric AS valor
-  FROM pedidos_filtrados
-  WHERE pdo_situacaopedido IN ('Aguardando Assinatura Cliente', 'Sem Situação')
-    AND ngo_conclusao = 'Ganho'
-),
 lista_pedidos AS (
   SELECT COALESCE(json_agg(row_to_json(sub) ORDER BY sub.data DESC, sub.valor DESC), '[]'::json) AS val
   FROM (
@@ -311,42 +293,25 @@ lista_pedidos AS (
       pdo_vlrpedido AS "valor",
       dth_evento AS "data",
       CASE 
-        WHEN pdo_situacaopedido = 'Aprovado' THEN 'Aprovado'
         WHEN pdo_situacaopedido = 'Aguardando Aprovação' THEN 'Aguardando Aprovação'
         ELSE 'Aguardando Assinatura Cliente'
       END AS "situacao",
       ngo_conclusao AS "conclusaoNegocio"
     FROM pedidos_filtrados
-    WHERE pdo_situacaopedido IN ('Aguardando Aprovação', 'Aguardando Assinatura Cliente', 'Sem Situação')
-       OR (pdo_situacaopedido = 'Aprovado' AND ngo_conclusao = 'Ganho')
   ) sub
 )
 SELECT json_build_object(
-  'aprovados', json_build_object(
-    'qtd', (SELECT qtd FROM aprovados_oficial),
-    'valor', (SELECT valor FROM aprovados_oficial)
-  ),
   'aguardandoAprovacao', json_build_object(
     'qtd', (SELECT qtd FROM aguardando_aprovacao),
     'valor', (SELECT valor FROM aguardando_aprovacao)
   ),
   'aguardandoAssinatura', json_build_object(
     'qtd', (SELECT qtd FROM aguardando_assinatura),
-    'valor', (SELECT valor FROM aguardando_assinatura),
-    'qtdGanho', (SELECT qtd FROM aguardando_assinatura_ganhos),
-    'valorGanho', (SELECT valor FROM aguardando_assinatura_ganhos)
+    'valor', (SELECT valor FROM aguardando_assinatura)
   ),
   'totalEsteira', json_build_object(
     'qtd', (SELECT qtd FROM aguardando_aprovacao) + (SELECT qtd FROM aguardando_assinatura),
     'valor', (SELECT valor FROM aguardando_aprovacao) + (SELECT valor FROM aguardando_assinatura)
-  ),
-  'totalConsolidado', json_build_object(
-    'qtd', (SELECT qtd FROM aprovados_oficial) + (SELECT qtd FROM aguardando_aprovacao) + (SELECT qtd FROM aguardando_assinatura),
-    'valor', (SELECT valor FROM aprovados_oficial) + (SELECT valor FROM aguardando_aprovacao) + (SELECT valor FROM aguardando_assinatura)
-  ),
-  'totalAlinhadoPlanilha', json_build_object(
-    'qtd', (SELECT qtd FROM aprovados_oficial) + (SELECT qtd FROM aguardando_assinatura_ganhos),
-    'valor', (SELECT valor FROM aprovados_oficial) + (SELECT valor FROM aguardando_assinatura_ganhos)
   ),
   'pedidos', (SELECT val FROM lista_pedidos)
 );

@@ -8,6 +8,8 @@ import { RankingClientesNovos } from "./RankingClientesNovos";
 import { RankingPerformanceCards } from "./RankingPerformanceCards";
 import { EquipeDesempenhoTable } from "./EquipeDesempenhoTable";
 import { ConsultoresValidationTable } from "./ConsultoresValidationTable";
+import { usePedidosEsteira } from "@/hooks/bi/usePedidosEsteira";
+import { PedidosEsteiraCard } from "@/components/bi/pedidos/PedidosEsteiraCard";
 import type { RpcConsultorResumoAcoes } from "@/types/consultoresRpc";
 import type { EquipeDesempenhoData } from "@/types/equipeDesempenho";
 import { formatDateBR } from "@/lib/dateUtils";
@@ -21,6 +23,7 @@ interface DashboardConsultoresProps {
   onSelectConsultor: (nome: string) => void;
   anoDesempenho: number;
   desempenho: EquipeDesempenhoData;
+  desempenhoLoading?: boolean;
   isAdmin: boolean;
 }
 
@@ -32,10 +35,18 @@ export const DashboardConsultores = ({
   onSelectConsultor,
   anoDesempenho,
   desempenho,
+  desempenhoLoading = false,
   isAdmin,
 }: DashboardConsultoresProps) => {
   const isFiltered = hasActiveFilters(filters);
   const [showAuditoria, setShowAuditoria] = useState(false);
+
+  const { data: esteiraData, isLoading: esteiraLoading } = usePedidosEsteira({
+    from: filters.dateRange?.from,
+    to: filters.dateRange?.to,
+    vendedor: filters.vendedor || undefined,
+    cidade: filters.cidade || undefined,
+  });
 
   const periodoLabel = filters.dateRange
     ? `${formatDateBR(filters.dateRange.from)} a ${formatDateBR(filters.dateRange.to)}`
@@ -138,6 +149,16 @@ export const DashboardConsultores = ({
         </div>
       </div>
 
+      {/* Faixa da Esteira de Fechamento (Abaixo do Resumo Executivo, largura total) */}
+      <div className="w-full">
+        <PedidosEsteiraCard
+          variant="strip"
+          data={esteiraData}
+          isLoading={esteiraLoading}
+          ano={anoDesempenho}
+        />
+      </div>
+
       {/* Performance Ranking Cards Deck (Dossiê 360° dos Consultores) */}
       <div className="w-full">
         <RankingPerformanceCards
@@ -154,6 +175,7 @@ export const DashboardConsultores = ({
         <EquipeDesempenhoTable
           ano={anoDesempenho}
           data={desempenho}
+          loading={desempenhoLoading}
           isAdmin={isAdmin}
           filters={filters}
           onSelectConsultor={onSelectConsultor}

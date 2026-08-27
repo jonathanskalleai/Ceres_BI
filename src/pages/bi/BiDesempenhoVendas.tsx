@@ -86,6 +86,8 @@ export default function BiDesempenhoVendas() {
   const { data, isLoading, refetch, isFetching } = useDesempenhoVendas(filterOptions);
   const { data: esteiraData, isLoading: esteiraLoading } = usePedidosEsteira({
     ano: selectedAno,
+    from: filterOptions.from,
+    to: filterOptions.to,
     vendedor: filterOptions.vendedor,
     cidade: filterOptions.cidade,
   });
