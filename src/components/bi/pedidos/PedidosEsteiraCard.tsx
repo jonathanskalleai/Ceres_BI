@@ -60,7 +60,8 @@ export function PedidosEsteiraCard({
         p.numeroPedido?.toLowerCase().includes(term) ||
         p.cliente?.toLowerCase().includes(term) ||
         p.consultor?.toLowerCase().includes(term) ||
-        p.cidade?.toLowerCase().includes(term)
+        p.cidade?.toLowerCase().includes(term) ||
+        p.produto?.toLowerCase().includes(term)
       );
     });
   }, [pedidos, filterSituacao, searchTerm]);
@@ -424,7 +425,7 @@ function EsteiraDetailModal({
 }: ModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden bg-background">
+      <DialogContent className="max-w-5xl max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden bg-background">
         <DialogHeader className="p-6 pb-4 border-b">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
@@ -451,7 +452,7 @@ function EsteiraDetailModal({
             <div className="relative w-full sm:flex-1">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar por cliente, pedido, consultor ou cidade..."
+                placeholder="Buscar por cliente, pedido, consultor, produto ou cidade..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-8 text-xs font-mono h-9"
@@ -515,6 +516,7 @@ function EsteiraDetailModal({
                     <th className="px-3 py-2.5">Cliente</th>
                     <th className="px-3 py-2.5">Consultor</th>
                     <th className="px-3 py-2.5">Cidade</th>
+                    <th className="px-3 py-2.5">Produto(s)</th>
                     <th className="px-3 py-2.5">Situação</th>
                     <th className="px-3 py-2.5 text-right">Valor</th>
                     <th className="px-3 py-2.5 text-right">Data</th>
@@ -531,14 +533,17 @@ function EsteiraDetailModal({
                         <td className="px-3 py-2 font-bold text-foreground whitespace-nowrap">
                           #{p.numeroPedido || p.codigoInterno.slice(-5)}
                         </td>
-                        <td className="px-3 py-2 font-medium max-w-[220px] truncate" title={p.cliente}>
+                        <td className="px-3 py-2 font-medium max-w-[180px] truncate" title={p.cliente}>
                           {p.cliente}
                         </td>
-                        <td className="px-3 py-2 text-muted-foreground max-w-[160px] truncate" title={p.consultor}>
+                        <td className="px-3 py-2 text-muted-foreground max-w-[140px] truncate" title={p.consultor}>
                           {p.consultor}
                         </td>
                         <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">
                           {p.cidade}
+                        </td>
+                        <td className="px-3 py-2 text-muted-foreground max-w-[180px] truncate" title={p.produto ?? undefined}>
+                          {p.produto || "Sem produto vinculado"}
                         </td>
                         <td className="px-3 py-2 whitespace-nowrap">
                           <span

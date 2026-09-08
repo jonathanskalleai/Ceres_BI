@@ -6,6 +6,7 @@ export interface PedidoEsteiraItem {
   cliente: string;
   consultor: string;
   cidade: string;
+  produto?: string | null;
   valor: number;
   data: string;
   situacao: "Aguardando Aprovação" | "Aguardando Assinatura Cliente";
