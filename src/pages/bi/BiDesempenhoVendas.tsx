@@ -20,6 +20,7 @@ import { PedidosEsteiraCard } from "@/components/bi/pedidos/PedidosEsteiraCard";
 import { DesempenhoTableCard } from "@/components/bi/desempenho/DesempenhoTableCard";
 import { DesempenhoDonutCard } from "@/components/bi/desempenho/DesempenhoDonutCard";
 import { DesempenhoDualLineChart } from "@/components/bi/desempenho/DesempenhoDualLineChart";
+import { DesempenhoDetalheListas } from "@/components/bi/desempenho/DesempenhoDetalheListas";
 import {
   DesempenhoFilterBar,
   type DesempenhoTab,
@@ -432,6 +433,15 @@ export default function BiDesempenhoVendas() {
             />
           </div>
 
+          {/* Detalhamento Drill-Down de Pedidos Ganhos e Negócios Perdidos */}
+          <DesempenhoDetalheListas
+            from={filterOptions.from}
+            to={filterOptions.to}
+            vendedor={filterOptions.vendedor}
+            cidade={filterOptions.cidade}
+            defaultTab="ganhos"
+          />
+
           {/* Resumo Histórico Anual */}
           {data.resumoAnual.length > 0 && (
             <div className="rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-5 md:p-6 shadow-sm">
@@ -724,6 +734,15 @@ export default function BiDesempenhoVendas() {
               loading={isLoading}
             />
           </div>
+
+          {/* Detalhamento Drill-Down de Pedidos Ganhos e Negócios Perdidos */}
+          <DesempenhoDetalheListas
+            from={filterOptions.from}
+            to={filterOptions.to}
+            vendedor={filterOptions.vendedor}
+            cidade={filterOptions.cidade}
+            defaultTab="perdidos"
+          />
         </div>
       )}
     </div>
