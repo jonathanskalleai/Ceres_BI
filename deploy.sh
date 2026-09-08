@@ -94,7 +94,7 @@ echo "==> Building AI image ${CERESBI_AI_IMAGE}..."
 docker build -t "${CERESBI_AI_IMAGE}" ai-service
 
 echo "==> Deploying stack ${STACK_NAME}..."
-docker stack deploy -c docker-stack.yml "${STACK_NAME}"
+docker stack deploy --detach=false -c docker-stack.yml "${STACK_NAME}"
 
 # Force both task sets after changing to the immutable tag. This protects an
 # explicit re-deploy of the same SHA as well as ordinary Swarm restarts.
