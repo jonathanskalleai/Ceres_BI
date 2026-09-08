@@ -5,8 +5,16 @@ export interface YaChatFilters {
   to?: string;
   categoria?: string;
   funil?: string;
+  funis?: string[];
   vendedor?: string;
   cidade?: string;
+  produto?: string;
+  condicao?: string;
+  origem?: string;
+  banco?: string;
+  motivoPerda?: string;
+  cliente?: string;
+  status?: string;
 }
 
 export interface YaChatRequest {
@@ -22,13 +30,67 @@ export interface YaChatSource {
   id: string;
   label: string;
   filters: YaChatFilters & { cliente?: string };
+  requested_filters?: YaChatFilters;
   refreshed_at?: string;
+  intent?: string;
+  metric_definitions?: YaMetricDefinition[];
+  applied_scope?: YaAppliedScope;
+  freshness?: YaFreshness;
+  lineage?: Record<string, unknown>;
+  warnings?: string[];
+  drilldown_ref?: string;
+  execution_metrics?: YaExecutionMetrics;
+  preview?: unknown;
+}
+
+export interface YaMetricDefinition {
+  id: string;
+  label: string;
+  domain: string;
+  definition: string;
+  unit: string;
+  entity: string;
+  grain: string;
+  competence: string;
+  deduplication: string;
+  executor: string;
+  dimensions: string[];
+  filters: string[];
+  dimension_paths?: Record<string, string[]>;
+  status: string;
+  drilldown?: string;
+  exclusions?: string;
+}
+
+export interface YaAppliedScope {
+  period?: { from: string; to: string };
+  filters?: YaChatFilters;
+  filter_origins?: Record<string, string>;
+  timezone?: string;
+}
+
+export interface YaFreshness {
+  refreshed_at?: string | null;
+  status?: string;
+  [key: string]: unknown;
+}
+
+export interface YaExecutionMetrics {
+  elapsed_ms?: number;
+  row_count?: number;
+  cache_hit?: boolean;
+  period_label?: string;
+  comparison?: unknown;
+  [key: string]: unknown;
 }
 
 export interface YaChatResponse {
   conversation_id: string;
+  assistant_message_id: string;
   answer: string;
   sources: YaChatSource[];
+  evidence: YaChatSource[];
+  query_spec: Record<string, unknown>;
   generated_at: string;
 }
 
@@ -45,6 +107,8 @@ export interface AIConversationMessage {
   role: "user" | "assistant";
   content: string;
   sources: YaChatSource[];
+  evidence: YaChatSource[];
+  query_spec: Record<string, unknown>;
   created_at: string;
 }
 
@@ -53,6 +117,7 @@ export interface AIConversationDetail {
   title: string;
   status: "active" | "closed";
   summary: string;
+  conversation_state: Record<string, unknown>;
   updated_at: string;
   messages: AIConversationMessage[];
 }
@@ -60,10 +125,21 @@ export interface AIConversationDetail {
 export interface AIChatStreamHandlers {
   onStatus?: (message: string) => void;
   onThread?: (conversationId: string) => void;
+  onPlan?: (querySpec: Record<string, unknown>) => void;
   onSources?: (sources: YaChatSource[], metrics: { dbMs: number; cacheHits: number }) => void;
   onDelta?: (text: string) => void;
-  onDone?: (payload: { conversationId: string; sources: YaChatSource[]; generatedAt: string }) => void;
+  onDone?: (payload: {
+    conversationId: string;
+    assistantMessageId: string;
+    sources: YaChatSource[];
+    evidence: YaChatSource[];
+    querySpec: Record<string, unknown>;
+    answer: string;
+    generatedAt: string;
+  }) => void;
 }
+
+export type YaFeedbackType = "useful" | "incorrect_number" | "insufficient_source";
 
 export async function sendYaChat(request: YaChatRequest): Promise<YaChatResponse> {
   const response = await fetchAI("/api/ai/chat", {
@@ -94,6 +170,15 @@ export async function getAIConversation(conversationId: string): Promise<AIConve
 export async function closeAIConversation(conversationId: string): Promise<void> {
   const response = await fetchAI(`/api/ai/conversations/${conversationId}/close`, { method: "POST" });
   if (!response.ok) throw new Error("Não foi possível encerrar esta conversa.");
+}
+
+export async function sendAIMessageFeedback(conversationId: string, messageId: string, feedbackType: YaFeedbackType): Promise<void> {
+  const response = await fetchAI(`/api/ai/conversations/${conversationId}/messages/${messageId}/feedback`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ feedback_type: feedbackType }),
+  });
+  if (!response.ok) throw new Error("Não foi possível registrar o feedback.");
 }
 
 function readEvent(block: string): { event: string; data: unknown } | null {
@@ -130,6 +215,9 @@ export async function streamAIChat(request: YaChatRequest, handlers: AIChatStrea
     const data = parsed.data as Record<string, unknown>;
     if (parsed.event === "status" && typeof data.message === "string") handlers.onStatus?.(data.message);
     if (parsed.event === "thread" && typeof data.conversation_id === "string") handlers.onThread?.(data.conversation_id);
+    if (parsed.event === "plan" && data.query_spec && typeof data.query_spec === "object") {
+      handlers.onPlan?.(data.query_spec as Record<string, unknown>);
+    }
     if (parsed.event === "sources" && Array.isArray(data.sources)) {
       handlers.onSources?.(data.sources as YaChatSource[], {
         dbMs: typeof data.db_ms === "number" ? data.db_ms : 0,
@@ -140,7 +228,13 @@ export async function streamAIChat(request: YaChatRequest, handlers: AIChatStrea
     if (parsed.event === "done" && typeof data.conversation_id === "string") {
       handlers.onDone?.({
         conversationId: data.conversation_id,
+        assistantMessageId: typeof data.assistant_message_id === "string" ? data.assistant_message_id : "",
         sources: Array.isArray(data.sources) ? data.sources as YaChatSource[] : [],
+        evidence: Array.isArray(data.evidence) ? data.evidence as YaChatSource[] : [],
+        querySpec: data.query_spec && typeof data.query_spec === "object"
+          ? data.query_spec as Record<string, unknown>
+          : {},
+        answer: typeof data.answer === "string" ? data.answer : "Não encontrei dados suficientes para responder com segurança.",
         generatedAt: typeof data.generated_at === "string" ? data.generated_at : new Date().toISOString(),
       });
     }
