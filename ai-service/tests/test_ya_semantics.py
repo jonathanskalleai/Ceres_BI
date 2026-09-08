@@ -118,6 +118,30 @@ class YaSemanticTests(unittest.TestCase):
         with self.assertRaises(QueryValidationError):
             build_query_spec("faturamento", planned={"metrics": ["metric.sql_injection"]})
 
+    def test_plural_loss_reasons_are_a_breakdown(self):
+        spec = build_query_spec(
+            "Quais motivos explicam as perdas?",
+            context_filters={"from": "2024-05-01", "to": "2024-05-31"},
+        )
+        self.assertEqual(spec.intent, "breakdown")
+        self.assertEqual(spec.metrics, ["vendas.negocios_perdidos"])
+        self.assertEqual(spec.dimensions, ["motivo_perda"])
+
+    def test_business_loss_phrase_prefers_loss_metric(self):
+        spec = build_query_spec(
+            "Quantos negócios foram perdidos?",
+            context_filters={"from": "2024-05-01", "to": "2024-05-31"},
+        )
+        self.assertEqual(spec.metrics, ["negocios.perdidos"])
+
+    def test_approved_orders_use_sales_order_metric(self):
+        spec = build_query_spec(
+            "Quantos pedidos aprovados tivemos?",
+            context_filters={"from": "2024-05-01", "to": "2024-05-31"},
+        )
+        self.assertEqual(spec.domain, "vendas")
+        self.assertEqual(spec.metrics, ["vendas.pedidos_aprovados"])
+
 
 if __name__ == "__main__":
     unittest.main()

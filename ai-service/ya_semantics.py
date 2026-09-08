@@ -82,7 +82,7 @@ def _intent(message: str, planned: dict[str, Any]) -> str:
         return "get_freshness"
     if any(token in text for token in ("compare", "comparar", "versus", " vs ", " contra ", "variacao", "variação", "comparado", "diferenca entre", "diferença entre")):
         return "compare"
-    if any(token in text for token in ("por vendedor", "por consultor", "por cidade", "por produto", "por banco", "por etapa", "por motivo")):
+    if any(token in text for token in ("por vendedor", "por consultor", "por cidade", "por produto", "por banco", "por etapa", "por status", "por motivo", "motivos", "razoes das perdas", "razões das perdas")):
         return "breakdown"
     if any(token in text for token in ("evolucao", "evolução", "ao longo", "mensal", "por mes", "por mês", "serie", "série")):
         return "timeseries"
@@ -97,9 +97,11 @@ def _domain(message: str, route: str, planned: dict[str, Any], state: dict[str, 
     text = normalize_text(message)
     route_text = normalize_text(route)
     combined = f"{text} {route_text}"
-    if any(_contains_term(combined, token) for token in ("ordem de servico", "ordens de servico", "pos-venda", "pos venda", "os abertas", "servico", "resolucao")):
+    if any(_contains_term(combined, token) for token in ("ordem de servico", "ordens de servico", "pos-venda", "pos venda", "os abertas", "os estao", "os por status", "servico", "resolucao")):
         return "servicos"
-    if any(_contains_term(combined, token) for token in ("pedido", "aprovacao", "aprovado", "financiamento")):
+    if any(_contains_term(combined, token) for token in ("pedido aprovado", "pedidos aprovados", "pedido ganho", "pedidos ganhos")):
+        return "vendas"
+    if any(_contains_term(combined, token) for token in ("pedido", "pedidos", "aprovacao", "aprovado", "financiamento")):
         return "pedidos"
     if any(_contains_term(combined, token) for token in ("acao", "acoes", "visita", "visitas", "oportunidade", "oportunidades")):
         return "acoes"
@@ -120,6 +122,12 @@ def _metric_ids(message: str, domain: str, planned: dict[str, Any], state: dict[
             raise QueryValidationError("A métrica proposta não existe no catálogo vigente.")
         return list(dict.fromkeys(proposed[:2]))
     text = normalize_text(message)
+    if domain == "negocios" and any(token in text for token in ("perdid", "perdas")):
+        return ["negocios.perdidos"]
+    if domain == "servicos" and any(token in text for token in ("os abertas", "os estao", "os estão")):
+        return ["servicos.os_abertas"]
+    if domain == "servicos" and "os por status" in text:
+        return ["servicos.total_os"]
     matches: list[tuple[int, str]] = []
     for metric in METRICS.values():
         if metric.domain != domain:
@@ -150,7 +158,7 @@ def _dimension(message: str, domain: str, planned: dict[str, Any]) -> list[str]:
         ("cidade", ("cidade", "regiao", "região", "uf")),
         ("produto", ("produto", "marca", "grupo")),
         ("banco", ("banco", "financiamento")),
-        ("motivo_perda", ("motivo de perda", "motivo perda", "por que perdemos", "perdemos por")),
+        ("motivo_perda", ("motivo de perda", "motivo perda", "motivos", "razões", "razoes", "por que perdemos", "perdemos por")),
         ("etapa", ("etapa", "estagio", "estágio")),
         ("status", ("status", "situacao", "situação")),
     )
