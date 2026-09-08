@@ -74,17 +74,19 @@ export const DesempenhoFunilMultiSelect: React.FC<DesempenhoFunilMultiSelectProp
 
   // Label do botão trigger
   const triggerLabel = () => {
-    if (selectedFunis.length === 0) {
+    if (isAllSelected || selectedFunis.length === ALL_FUNIS.length) {
       return "Todos os funis";
     }
-    if (isAllSelected) {
-      return `Todos os funis (${ALL_FUNIS.length})`;
+    if (selectedFunis.length === 0) {
+      return "Nenhum funil";
     }
     if (selectedFunis.length === 1) {
       return selectedFunis[0];
     }
     return `${selectedFunis.length} funis selecionados`;
   };
+
+  const isCustomFilter = selectedFunis.length > 0 && !isAllSelected;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -95,8 +97,10 @@ export const DesempenhoFunilMultiSelect: React.FC<DesempenhoFunilMultiSelectProp
           className={cn(
             "h-8 px-2.5 inline-flex items-center justify-between gap-1.5 rounded-md border text-xs transition-colors",
             "bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)] hover:border-[var(--voux-champagne-400)]/60",
-            selectedFunis.length > 0 &&
+            isCustomFilter &&
               "border-emerald-600/60 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 font-semibold",
+            selectedFunis.length === 0 &&
+              "border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-400 font-medium",
             className
           )}
         >
@@ -105,7 +109,7 @@ export const DesempenhoFunilMultiSelect: React.FC<DesempenhoFunilMultiSelectProp
             <span className="truncate">{triggerLabel()}</span>
           </div>
 
-          {selectedFunis.length > 1 && !isAllSelected && (
+          {isCustomFilter && selectedFunis.length > 1 && (
             <Badge
               variant="secondary"
               className="h-4 px-1 text-[10px] font-mono bg-emerald-600/20 text-emerald-700 dark:text-emerald-300 border-none ml-1"
@@ -129,11 +133,9 @@ export const DesempenhoFunilMultiSelect: React.FC<DesempenhoFunilMultiSelectProp
               <Filter className="h-3.5 w-3.5 text-primary" />
               Filtrar por Funil
             </span>
-            {selectedFunis.length > 0 && (
-              <span className="text-[10px] font-mono text-[var(--voux-text-muted)]">
-                {selectedFunis.length} de {ALL_FUNIS.length}
-              </span>
-            )}
+            <span className="text-[10px] font-mono text-[var(--voux-text-muted)]">
+              {selectedFunis.length} de {ALL_FUNIS.length}
+            </span>
           </div>
 
           <div className="flex items-center gap-1.5">
@@ -154,7 +156,7 @@ export const DesempenhoFunilMultiSelect: React.FC<DesempenhoFunilMultiSelectProp
               className="h-6 px-2 text-[11px] text-[var(--voux-text-muted)] hover:text-[var(--voux-text-primary)] ml-auto"
             >
               <RotateCcw className="h-3 w-3 mr-1" />
-              Padrão
+              Limpar
             </Button>
           </div>
         </div>
@@ -213,9 +215,11 @@ export const DesempenhoFunilMultiSelect: React.FC<DesempenhoFunilMultiSelectProp
         {/* Footer info */}
         <div className="p-2 border-t border-[var(--voux-card-border)]/60 bg-[var(--voux-surface)]/30 text-center">
           <p className="text-[10px] text-[var(--voux-text-muted)]">
-            {selectedFunis.length === 0
-              ? "Sem seleção = visualização padrão consolidada"
-              : `Filtrando por ${selectedFunis.length} funil(is)`}
+            {isAllSelected || selectedFunis.length === ALL_FUNIS.length
+              ? `Todos os ${ALL_FUNIS.length} funis selecionados`
+              : selectedFunis.length === 0
+              ? "Nenhum funil selecionado"
+              : `Filtrando por ${selectedFunis.length} de ${ALL_FUNIS.length} funis`}
           </p>
         </div>
       </PopoverContent>

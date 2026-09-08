@@ -29,6 +29,7 @@ import {
   type DesempenhoTab,
   type ActiveCrossFilter,
 } from "@/components/bi/desempenho/DesempenhoFilterBar";
+import { ALL_FUNIS } from "@/lib/categoriaFunil";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -58,7 +59,7 @@ export default function BiDesempenhoVendas() {
   }));
   const [selectedVendedor, setSelectedVendedor] = useState<string>("");
   const [selectedCidade, setSelectedCidade] = useState<string>("");
-  const [selectedFunis, setSelectedFunis] = useState<string[]>([]);
+  const [selectedFunis, setSelectedFunis] = useState<string[]>(() => [...ALL_FUNIS]);
 
   // O gráfico de desfechos de vendas sempre exibe o ano completo da seleção (ou corrente)
   const targetYear = dateRange?.from ? dateRange.from.getFullYear() : currentYear;
@@ -91,7 +92,7 @@ export default function BiDesempenhoVendas() {
       to: dateRange?.to ? toISODate(dateRange.to) : dateRange?.from ? toISODate(dateRange.from) : null,
       vendedor: activeCrossFilter?.type === "vendedor" ? activeCrossFilter.value : selectedVendedor || null,
       cidade: activeCrossFilter?.type === "cidade" ? activeCrossFilter.value : selectedCidade || null,
-      funis: selectedFunis.length > 0 ? selectedFunis : null,
+      funis: selectedFunis.length > 0 ? selectedFunis : ["__NONE__"],
       produto: activeCrossFilter?.type === "produto" ? activeCrossFilter.value : null,
       origem: activeCrossFilter?.type === "origem" ? activeCrossFilter.value : null,
       banco: activeCrossFilter?.type === "banco" ? activeCrossFilter.value : null,
@@ -141,11 +142,18 @@ export default function BiDesempenhoVendas() {
     );
   }, [dateRange]);
 
+  const isDefaultFunis = useMemo(() => {
+    return (
+      selectedFunis.length === ALL_FUNIS.length &&
+      ALL_FUNIS.every((f) => selectedFunis.includes(f))
+    );
+  }, [selectedFunis]);
+
   const hasActiveFilters = Boolean(
     !isDefaultDateRange ||
       selectedVendedor ||
       selectedCidade ||
-      selectedFunis.length > 0 ||
+      !isDefaultFunis ||
       activeCrossFilter
   );
 
@@ -156,7 +164,7 @@ export default function BiDesempenhoVendas() {
     });
     setSelectedVendedor("");
     setSelectedCidade("");
-    setSelectedFunis([]);
+    setSelectedFunis([...ALL_FUNIS]);
     setActiveCrossFilter(null);
   };
 

@@ -1,9 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { DesempenhoFilterBar } from "../DesempenhoFilterBar";
+import { ALL_FUNIS } from "@/lib/categoriaFunil";
 
 describe("DesempenhoFilterBar", () => {
-  it("renders tab buttons and allows switching between Vendas and Perdas", () => {
+  it("renders tab buttons and allows switching between Vendas and Perdas with all funis selected by default", () => {
     const onTabChange = vi.fn();
     const onDateRangeChange = vi.fn();
     const onVendedorChange = vi.fn();
@@ -16,7 +17,7 @@ describe("DesempenhoFilterBar", () => {
         onTabChange={onTabChange}
         dateRange={{ from: new Date(2026, 8, 1), to: new Date(2026, 8, 30) }}
         onDateRangeChange={onDateRangeChange}
-        funis={[]}
+        funis={ALL_FUNIS}
         onFunisChange={vi.fn()}
         vendedor=""
         onVendedorChange={onVendedorChange}
