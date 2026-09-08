@@ -23,8 +23,6 @@ export interface ActiveCrossFilter {
 interface DesempenhoFilterBarProps {
   activeTab: DesempenhoTab;
   onTabChange: (tab: DesempenhoTab) => void;
-  ano: number | null;
-  onAnoChange: (ano: number | null) => void;
   dateRange?: DateRange;
   onDateRangeChange: (range?: DateRange) => void;
   vendedor: string;
@@ -41,13 +39,9 @@ interface DesempenhoFilterBarProps {
   isRefreshing?: boolean;
 }
 
-const AVAILABLE_YEARS = [2026, 2025, 2024];
-
 export const DesempenhoFilterBar: React.FC<DesempenhoFilterBarProps> = ({
   activeTab,
   onTabChange,
-  ano,
-  onAnoChange,
   dateRange,
   onDateRangeChange,
   vendedor,
@@ -67,8 +61,8 @@ export const DesempenhoFilterBar: React.FC<DesempenhoFilterBarProps> = ({
 
   return (
     <div className="sticky top-2 z-20 flex flex-col gap-3 p-3 md:p-3.5 rounded-2xl border border-[var(--voux-card-border)]/80 bg-[var(--voux-card-from)]/90 backdrop-blur-xl backdrop-saturate-150 shadow-md transition-all">
-      {/* Linha Superior: Seletor de Abas + Anos Rápidos + Refresh */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      {/* Linha Superior: Seletor de Abas + Atualizar */}
+      <div className="flex items-center justify-between gap-3">
         {/* Toggle de Abas sem emojis, minimalista e refinado */}
         <div className="inline-flex items-center p-1 rounded-xl bg-[var(--voux-surface)]/80 border border-[var(--voux-card-border)] self-start">
           <button
@@ -98,59 +92,19 @@ export const DesempenhoFilterBar: React.FC<DesempenhoFilterBarProps> = ({
           </button>
         </div>
 
-        {/* Seletor Rápido de Anos */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--voux-text-muted)] mr-1 font-mono">
-            Ano:
-          </span>
-
-          {AVAILABLE_YEARS.map((y) => {
-            const isSelected = ano === y;
-            return (
-              <button
-                key={y}
-                onClick={() => onAnoChange(isSelected ? null : y)}
-                className={cn(
-                  "px-2.5 py-1 rounded-lg text-xs font-mono font-medium transition-all",
-                  isSelected
-                    ? isRed
-                      ? "bg-red-600 text-white shadow-sm"
-                      : "bg-emerald-700 text-white dark:bg-emerald-600 shadow-sm"
-                    : "bg-[var(--voux-card-border)]/40 text-[var(--voux-text-primary)] hover:bg-[var(--voux-card-border)]"
-                )}
-              >
-                {y}
-              </button>
-            );
-          })}
-
-          <button
-            onClick={() => onAnoChange(null)}
-            className={cn(
-              "px-2.5 py-1 rounded-lg text-xs font-mono font-medium transition-all",
-              ano === null
-                ? isRed
-                  ? "bg-red-600 text-white shadow-sm"
-                  : "bg-emerald-700 text-white dark:bg-emerald-600 shadow-sm"
-                : "bg-[var(--voux-card-border)]/40 text-[var(--voux-text-primary)] hover:bg-[var(--voux-card-border)]"
-            )}
+        {onRefresh && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            className="h-8 px-2.5 border-[var(--voux-card-border)] text-[var(--voux-text-muted)] hover:text-[var(--voux-text-primary)]"
+            title="Atualizar dados"
           >
-            Todos
-          </button>
-
-          {onRefresh && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onRefresh}
-              disabled={isRefreshing}
-              className="h-7 w-7 p-0 ml-1 border-[var(--voux-card-border)] text-[var(--voux-text-muted)] hover:text-[var(--voux-text-primary)]"
-              title="Atualizar dados"
-            >
-              <RefreshCw className={cn("h-3.5 w-3.5", isRefreshing && "animate-spin")} />
-            </Button>
-          )}
-        </div>
+            <RefreshCw className={cn("h-3.5 w-3.5 mr-1.5", isRefreshing && "animate-spin")} />
+            <span className="text-xs">Atualizar</span>
+          </Button>
+        )}
       </div>
 
       {/* Linha Inferior: Filtro de Data + Vendedor + Cidade + Chip de Filtro Cruzado */}

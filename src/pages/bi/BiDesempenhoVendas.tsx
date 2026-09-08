@@ -48,13 +48,15 @@ export default function BiDesempenhoVendas() {
 
   // Estado de filtros principais: inicia no mês corrente (01 do mês até o fim do mês)
   const currentYear = new Date().getFullYear();
-  const [selectedAno, setSelectedAno] = useState<number | null>(currentYear);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(() => ({
     from: startOfMonth(new Date()),
     to: endOfMonth(new Date()),
   }));
   const [selectedVendedor, setSelectedVendedor] = useState<string>("");
   const [selectedCidade, setSelectedCidade] = useState<string>("");
+
+  // O gráfico de desfechos de vendas sempre exibe o ano completo da seleção (ou corrente)
+  const targetYear = dateRange?.from ? dateRange.from.getFullYear() : currentYear;
 
   // Estado de Filtro Cruzado Interativo (PowerBI / Tableau Style)
   const [activeCrossFilter, setActiveCrossFilter] = useState<ActiveCrossFilter | null>(null);
@@ -75,7 +77,7 @@ export default function BiDesempenhoVendas() {
   // Monta opções de filtro para o hook (incluindo filtro cruzado)
   const filterOptions = useMemo(() => {
     return {
-      ano: selectedAno,
+      ano: targetYear,
       from: dateRange?.from ? toISODate(dateRange.from) : null,
       to: dateRange?.to ? toISODate(dateRange.to) : dateRange?.from ? toISODate(dateRange.from) : null,
       vendedor: activeCrossFilter?.type === "vendedor" ? activeCrossFilter.value : selectedVendedor || null,
@@ -85,11 +87,11 @@ export default function BiDesempenhoVendas() {
       banco: activeCrossFilter?.type === "banco" ? activeCrossFilter.value : null,
       motivoPerda: activeCrossFilter?.type === "motivo" ? activeCrossFilter.value : null,
     };
-  }, [selectedAno, dateRange, selectedVendedor, selectedCidade, activeCrossFilter]);
+  }, [targetYear, dateRange, selectedVendedor, selectedCidade, activeCrossFilter]);
 
   const { data, isLoading, refetch, isFetching } = useDesempenhoVendas(filterOptions);
   const { data: esteiraData, isLoading: esteiraLoading } = usePedidosEsteira({
-    ano: filterOptions.from ? null : selectedAno,
+    ano: targetYear,
     from: filterOptions.from,
     to: filterOptions.to,
     vendedor: filterOptions.vendedor,
@@ -98,7 +100,7 @@ export default function BiDesempenhoVendas() {
 
   const esteiraPeriodoLabel = filterOptions.from && filterOptions.to
     ? `${formatDateBR(filterOptions.from)} a ${formatDateBR(filterOptions.to)}`
-    : `Ano ${selectedAno || currentYear}`;
+    : `Ano ${targetYear}`;
 
   // Lista de opções únicas para selects
   const vendedorOptions = useMemo(() => {
@@ -117,17 +119,25 @@ export default function BiDesempenhoVendas() {
     return Array.from(set).filter(Boolean);
   }, [activeTab, data.perdas?.rankingCidades, data.rankingCidades]);
 
+  const isDefaultDateRange = useMemo(() => {
+    if (!dateRange?.from || !dateRange?.to) return false;
+    const now = new Date();
+    const defaultFrom = startOfMonth(now);
+    const defaultTo = endOfMonth(now);
+    return (
+      toISODate(dateRange.from) === toISODate(defaultFrom) &&
+      toISODate(dateRange.to) === toISODate(defaultTo)
+    );
+  }, [dateRange]);
+
   const hasActiveFilters = Boolean(
-    selectedAno !== currentYear ||
-      dateRange?.from ||
-      dateRange?.to ||
+    !isDefaultDateRange ||
       selectedVendedor ||
       selectedCidade ||
       activeCrossFilter
   );
 
   const handleResetFilters = () => {
-    setSelectedAno(currentYear);
     setDateRange({
       from: startOfMonth(new Date()),
       to: endOfMonth(new Date()),
@@ -157,20 +167,8 @@ export default function BiDesempenhoVendas() {
           setActiveTab(tab);
           setActiveCrossFilter(null); // Reseta filtro cruzado ao alternar de aba
         }}
-        ano={selectedAno}
-        onAnoChange={(novoAno) => {
-          setSelectedAno(novoAno);
-          if (novoAno !== null) {
-            setDateRange(undefined);
-          }
-        }}
         dateRange={dateRange}
-        onDateRangeChange={(range) => {
-          setDateRange(range);
-          if (range?.from) {
-            setSelectedAno(range.from.getFullYear());
-          }
-        }}
+        onDateRangeChange={setDateRange}
         vendedor={selectedVendedor}
         onVendedorChange={setSelectedVendedor}
         vendedorOptions={vendedorOptions}
@@ -328,7 +326,7 @@ export default function BiDesempenhoVendas() {
             variant="strip"
             data={esteiraData}
             isLoading={esteiraLoading}
-            ano={selectedAno}
+            ano={targetYear}
             periodoLabel={esteiraPeriodoLabel}
           />
 
@@ -336,7 +334,7 @@ export default function BiDesempenhoVendas() {
           {data.serieMensal.length > 0 && (
             <DesempenhoDualLineChart
               data={data.serieMensal}
-              ano={selectedAno || currentYear}
+              ano={targetYear}
               loading={isLoading}
             />
           )}
@@ -452,29 +450,46 @@ export default function BiDesempenhoVendas() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                {data.resumoAnual.map((res) => (
-                  <div
-                    key={res.ano}
-                    onClick={() => setSelectedAno(res.ano)}
-                    className={cn(
-                      "p-4 rounded-xl border transition-all cursor-pointer",
-                      selectedAno === res.ano
-                        ? "border-emerald-600 bg-emerald-500/10 shadow-sm ring-1 ring-emerald-600"
-                        : "border-[var(--voux-card-border)] bg-[var(--voux-surface)] hover:border-emerald-600/50"
-                    )}
-                  >
-                    <div className="flex items-center justify-between text-xs font-semibold text-[var(--voux-text-muted)]">
-                      <span className="font-mono text-[14px] text-[var(--voux-text-primary)] font-bold">{res.ano}</span>
-                      <span>{res.qtd} pedidos</span>
+                {data.resumoAnual.map((res) => {
+                  const isYearSelected =
+                    dateRange?.from &&
+                    dateRange?.to &&
+                    dateRange.from.getFullYear() === res.ano &&
+                    dateRange.to.getFullYear() === res.ano &&
+                    dateRange.from.getMonth() === 0 &&
+                    dateRange.from.getDate() === 1 &&
+                    dateRange.to.getMonth() === 11 &&
+                    dateRange.to.getDate() === 31;
+
+                  return (
+                    <div
+                      key={res.ano}
+                      onClick={() => {
+                        setDateRange({
+                          from: new Date(res.ano, 0, 1),
+                          to: new Date(res.ano, 11, 31),
+                        });
+                      }}
+                      className={cn(
+                        "p-4 rounded-xl border transition-all cursor-pointer",
+                        isYearSelected
+                          ? "border-emerald-600 bg-emerald-500/10 shadow-sm ring-1 ring-emerald-600"
+                          : "border-[var(--voux-card-border)] bg-[var(--voux-surface)] hover:border-emerald-600/50"
+                      )}
+                    >
+                      <div className="flex items-center justify-between text-xs font-semibold text-[var(--voux-text-muted)]">
+                        <span className="font-mono text-[14px] text-[var(--voux-text-primary)] font-bold">{res.ano}</span>
+                        <span>{res.qtd} pedidos</span>
+                      </div>
+                      <p className="text-[18px] font-bold text-emerald-700 dark:text-emerald-400 mt-2">
+                        <FormattedCurrency value={res.faturamento} />
+                      </p>
+                      <p className="text-[11px] text-[var(--voux-text-muted)] font-mono mt-0.5">
+                        Ticket Médio: {formatBRL(res.ticketMedio)}
+                      </p>
                     </div>
-                    <p className="text-[18px] font-bold text-emerald-700 dark:text-emerald-400 mt-2">
-                      <FormattedCurrency value={res.faturamento} />
-                    </p>
-                    <p className="text-[11px] text-[var(--voux-text-muted)] font-mono mt-0.5">
-                      Ticket Médio: {formatBRL(res.ticketMedio)}
-                    </p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -617,7 +632,7 @@ export default function BiDesempenhoVendas() {
           {data.serieMensal.length > 0 && (
             <DesempenhoDualLineChart
               data={data.serieMensal}
-              ano={selectedAno || currentYear}
+              ano={targetYear}
               loading={isLoading}
             />
           )}
