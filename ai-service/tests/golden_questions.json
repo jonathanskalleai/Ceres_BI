@@ -33,6 +33,13 @@
     {"id": "freshness", "question": "Os dados estão atualizados?", "intent": "get_freshness"},
     {"id": "filter-vendors", "question": "Quais vendedores estão disponíveis?", "intent": "list_filter_values", "dimensions": ["vendedor"]},
     {"id": "invalid-dimension", "question": "Faturamento por motivo de perda.", "intent": "breakdown", "domain": "vendas", "metrics": ["vendas.faturamento"], "dimensions": ["motivo_perda"], "clarification": true},
-    {"id": "unsupported-vague", "question": "Resuma a situação comercial.", "clarification": true}
+    {"id": "unsupported-vague", "question": "Resuma a situação comercial.", "clarification": true},
+    {"id": "metric-products-machines", "question": "Quantas máquinas estão instaladas no parque?", "intent": "metric", "domain": "produtos", "metrics": ["produtos.total_maquinas"]},
+    {"id": "breakdown-products-brand", "question": "Parque por marca.", "intent": "breakdown", "domain": "produtos", "metrics": ["produtos.total_maquinas"], "dimensions": ["marca"]},
+    {"id": "metric-admin-clients", "question": "Qual o total de clientes da carteira?", "intent": "metric", "domain": "admin", "metrics": ["admin.total_clientes"]},
+    {"id": "breakdown-admin-uf", "question": "Clientes por UF.", "intent": "breakdown", "domain": "admin", "metrics": ["admin.total_clientes"], "dimensions": ["uf"]},
+    {"id": "metric-operational-km", "question": "Qual a quilometragem total?", "intent": "metric", "domain": "operacional", "metrics": ["operacional.km_total"]},
+    {"id": "breakdown-operational-status", "question": "Eventos de agenda por status.", "intent": "breakdown", "domain": "operacional", "metrics": ["operacional.eventos_agenda"], "dimensions": ["status"]},
+    {"id": "snapshot-compare-blocked", "question": "Compare as máquinas instaladas.", "intent": "compare", "domain": "produtos", "metrics": ["produtos.total_maquinas"], "clarification": true}
   ]
 }

@@ -32,6 +32,7 @@ class MetricDefinition:
     series_path: tuple[str, ...] = ()
     exclusions: str = ""
     dimension_paths: dict[str, tuple[str, ...]] | None = None
+    period_required: bool = True
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -54,6 +55,7 @@ class MetricDefinition:
             "drilldown": self.drilldown_kind,
             "exclusions": self.exclusions,
             "dimension_paths": {key: list(value) for key, value in (self.dimension_paths or {}).items()},
+            "period_required": self.period_required,
         }
 
 
@@ -80,6 +82,7 @@ def _metric(
     series_path: tuple[str, ...] = (),
     exclusions: str = "",
     dimension_paths: dict[str, tuple[str, ...]] | None = None,
+    period_required: bool = True,
 ) -> MetricDefinition:
     return MetricDefinition(
         id=metric_id,
@@ -103,6 +106,7 @@ def _metric(
         series_path=series_path,
         exclusions=exclusions,
         dimension_paths=dimension_paths,
+        period_required=period_required,
     )
 
 
@@ -317,6 +321,14 @@ METRICS: dict[str, MetricDefinition] = {
 }
 
 
+# Phase 4 contracts are maintained in a separate module so the core catalog
+# stays reviewable. The extension is imported only after MetricDefinition and
+# the first-period contracts have been initialized.
+from ya_catalog_extensions import SNAPSHOT_METRICS  # noqa: E402
+
+METRICS.update(SNAPSHOT_METRICS)
+
+
 EXECUTOR_LABELS = {
     "sales_overview": "Vendas e resultados",
     "business_analysis": "Negócios e funil comercial",
@@ -325,6 +337,9 @@ EXECUTOR_LABELS = {
     "after_sales": "Pós-venda e serviços",
     "field_signals": "Sinais de campo",
     "client_360": "Cliente 360",
+    "products_snapshot": "Produtos e parque instalado",
+    "admin_snapshot": "Carteira e administração",
+    "operational_snapshot": "Operacional e agenda",
 }
 
 CAPABILITIES = {

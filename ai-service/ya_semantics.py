@@ -9,6 +9,7 @@ from typing import Any, Optional
 from ya_catalog import METRICS, MetricDefinition, get_metric
 from ya_periods import QueryValidationError, _period_from, comparison_for, previous_period
 from ya_query_models import QuerySpec
+from ya_semantic_filters import question_filters as extract_question_filters, safe_filter
 
 
 ALLOWED_FILTERS = {
@@ -29,13 +30,6 @@ def normalize_text(value: Any) -> str:
 def _contains_term(text: str, term: str) -> bool:
     normalized_term = normalize_text(term).strip()
     return bool(normalized_term) and re.search(rf"(?<!\w){re.escape(normalized_term)}(?!\w)", text) is not None
-
-
-def safe_filter(value: Any, max_length: int = 120) -> str | None:
-    if not isinstance(value, str):
-        return None
-    clean = " ".join(value.split())[:max_length]
-    return clean or None
 
 
 def _context_dict(context_filters: Any) -> dict[str, Any]:
@@ -82,7 +76,7 @@ def _intent(message: str, planned: dict[str, Any]) -> str:
         return "get_freshness"
     if any(token in text for token in ("compare", "comparar", "versus", " vs ", " contra ", "variacao", "variação", "comparado", "diferenca entre", "diferença entre")):
         return "compare"
-    if any(token in text for token in ("por vendedor", "por consultor", "por cidade", "por produto", "por banco", "por etapa", "por status", "por motivo", "motivos", "razoes das perdas", "razões das perdas")):
+    if any(token in text for token in ("por vendedor", "por consultor", "por cidade", "por produto", "por marca", "por grupo", "por modelo", "por banco", "por etapa", "por status", "por uf", "por tipo", "por motivo", "motivos", "razoes das perdas", "razões das perdas")):
         return "breakdown"
     if any(token in text for token in ("evolucao", "evolução", "ao longo", "mensal", "por mes", "por mês", "serie", "série")):
         return "timeseries"
@@ -91,7 +85,10 @@ def _intent(message: str, planned: dict[str, Any]) -> str:
 
 def _domain(message: str, route: str, planned: dict[str, Any], state: dict[str, Any]) -> str:
     proposed = planned.get("domain")
-    domains = {"vendas", "negocios", "acoes", "pedidos", "servicos", "cliente"}
+    domains = {
+        "vendas", "negocios", "acoes", "pedidos", "servicos", "cliente",
+        "produtos", "admin", "operacional",
+    }
     if isinstance(proposed, str) and proposed in domains:
         return proposed
     text = normalize_text(message)
@@ -99,6 +96,12 @@ def _domain(message: str, route: str, planned: dict[str, Any], state: dict[str, 
     combined = f"{text} {route_text}"
     if any(_contains_term(combined, token) for token in ("ordem de servico", "ordens de servico", "pos-venda", "pos venda", "os abertas", "os estao", "os por status", "servico", "resolucao")):
         return "servicos"
+    if any(_contains_term(combined, token) for token in ("parque", "maquina", "maquinas", "modelo instalado", "marcas instaladas")):
+        return "produtos"
+    if any(_contains_term(combined, token) for token in ("carteira de clientes", "clientes da carteira", "prospect", "base de clientes", "clientes por uf", "tipo de cliente")):
+        return "admin"
+    if any(_contains_term(combined, token) for token in ("operacional", "tecnico", "tecnicos", "km rodado", "quilometragem", "agenda", "utilizacao media", "tempo ocioso")):
+        return "operacional"
     if any(_contains_term(combined, token) for token in ("pedido aprovado", "pedidos aprovados", "pedido ganho", "pedidos ganhos")):
         return "vendas"
     if any(_contains_term(combined, token) for token in ("pedido", "pedidos", "aprovacao", "aprovado", "financiamento")):
@@ -128,6 +131,10 @@ def _metric_ids(message: str, domain: str, planned: dict[str, Any], state: dict[
         return ["servicos.os_abertas"]
     if domain == "servicos" and "os por status" in text:
         return ["servicos.total_os"]
+    if domain == "admin" and "cliente" in text:
+        return ["admin.total_clientes"]
+    if domain == "operacional" and "agenda" in text:
+        return ["operacional.eventos_agenda"]
     matches: list[tuple[int, str]] = []
     for metric in METRICS.values():
         if metric.domain != domain:
@@ -153,6 +160,27 @@ def _dimension(message: str, domain: str, planned: dict[str, Any]) -> list[str]:
     if isinstance(proposed, list) and proposed:
         return [item for item in proposed[:2] if isinstance(item, str)]
     text = normalize_text(message)
+    if domain == "produtos":
+        if any(term in text for term in ("modelo", "modelos")):
+            return ["modelo"]
+        if any(term in text for term in ("marca", "marcas")):
+            return ["marca"]
+        if any(term in text for term in ("grupo", "grupos")):
+            return ["grupo"]
+    if domain == "admin":
+        if any(term in text for term in ("tipo de cliente", "tipo cliente")):
+            return ["tipo_cliente"]
+        if any(term in text for term in ("uf", "estado", "estados")):
+            return ["uf"]
+        if any(term in text for term in ("consultor", "vendedor")):
+            return ["consultor"]
+    if domain == "operacional":
+        if any(term in text for term in ("tecnico", "técnico", "tecnicos", "técnicos")):
+            return ["tecnico"]
+        if "status" in text or "situacao" in text or "situação" in text:
+            return ["status"]
+        if "tipo" in text:
+            return ["tipo"]
     options = (
         ("consultor", ("consultor", "vendedor")),
         ("cidade", ("cidade", "regiao", "região", "uf")),
@@ -226,6 +254,17 @@ def _apply_validation(spec: QuerySpec) -> QuerySpec:
     if any(item is None for item in definitions):
         raise QueryValidationError("Uma das métricas solicitadas não existe no catálogo vigente.")
     assert all(isinstance(item, MetricDefinition) for item in definitions)
+    snapshot_definitions = [item for item in definitions if not item.period_required]
+    if snapshot_definitions:
+        if spec.intent in {"compare", "timeseries", "correlation", "drilldown"}:
+            spec.clarification = (
+                f"{snapshot_definitions[0].label} é um snapshot atual e não possui histórico temporal "
+                "no contrato vigente. Escolha uma consulta de estado atual."
+            )
+            return spec
+        spec.period = None
+        spec.comparison = None
+        spec.warnings.append("A métrica solicitada é um snapshot atual; o período da tela não foi aplicado.")
     if spec.intent == "correlation" and len(definitions) != 2:
         spec.clarification = "Para calcular uma associação, informe duas métricas compatíveis e o grão da comparação."
         return spec
@@ -292,6 +331,10 @@ def build_query_spec(
     period = _period_from(context, state, proposal, clean_message)
     intent = _intent(clean_message, proposal)
     domain = _domain(clean_message, route, proposal, state)
+    natural_filters = extract_question_filters(clean_message, domain)
+    for key, value in natural_filters.items():
+        requested_filters.setdefault(key, value)
+    filter_origins.update({key: "question" for key in natural_filters if key in requested_filters})
     if intent == "entity_360":
         domain = "cliente"
     metrics = [] if intent in {"get_freshness", "list_filter_values", "entity_360"} else _metric_ids(clean_message, domain, proposal, state, intent)

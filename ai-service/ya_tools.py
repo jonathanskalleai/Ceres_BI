@@ -28,6 +28,7 @@ from ya_tool_utils import (
     compare_data,
     pearson,
 )
+from ya_snapshot_tools import SNAPSHOT_EXECUTORS, execute_snapshot
 
 
 DATA_CACHE_TTL_SECONDS = int(os.getenv("AI_DATA_CACHE_TTL_SECONDS", "90"))
@@ -45,13 +46,16 @@ class ToolGateway:
             return []
         freshness = await self._freshness()
         if spec.intent == "get_freshness":
-            return [self._freshness_result(freshness)]
+            return [await self._freshness_result(freshness)]
         if spec.intent == "list_filter_values":
             return [await self._filter_values(spec, freshness)]
         if spec.intent == "entity_360":
             return [await self._entity_360(spec, freshness)]
         if spec.intent == "explain_metric":
             return [self._explanation(spec)]
+        metric = get_metric(spec.metrics[0]) if spec.metrics else None
+        if metric and metric.executor in SNAPSHOT_EXECUTORS:
+            return [await execute_snapshot(self._query, spec, freshness)]
         if spec.intent == "correlation":
             return [await self._correlation(spec, freshness)]
         if spec.intent == "compare" and spec.comparison:
@@ -82,17 +86,28 @@ class ToolGateway:
             log_event(logging.WARNING, "ai_freshness_unavailable", status_code=error.status_code)
             return {"refreshed_at": None, "status": "unavailable"}
 
-    def _freshness_result(self, freshness: dict[str, Any]) -> tuple[str, Any, YaSource, bool]:
+    async def _freshness_result(self, freshness: dict[str, Any]) -> tuple[str, Any, YaSource, bool]:
+        etl_status: Any = []
+        warnings = ["O estado de frescura não foi confirmado."] if freshness["status"] != "known" else []
+        try:
+            rows = await self._query("SELECT public.rpc_etl_status() AS payload", ())
+            etl_status = rows[0].get("payload") if rows else []
+        except HTTPException as error:
+            log_event(logging.WARNING, "ai_etl_status_unavailable", status_code=error.status_code)
+            warnings.append("O detalhamento do ETL não está disponível neste momento.")
+        except Exception as error:
+            log_exception("ai_etl_status_unexpected_failure", error)
+            warnings.append("O detalhamento do ETL não está disponível neste momento.")
         source = YaSource(
             id="mirror.sync_control",
             label="Atualização do mirror",
             intent="get_freshness",
             freshness=freshness,
-            lineage={"table": "mirror.sync_control", "catalog_version": "operational"},
-            warnings=["O estado de frescura não foi confirmado."] if freshness["status"] != "known" else [],
-            preview={"freshness": freshness},
+            lineage={"table": "mirror.sync_control", "executor": "rpc_etl_status", "catalog_version": "operational"},
+            warnings=warnings,
+            preview={"freshness": freshness, "etl": _compact(etl_status)},
         )
-        return "get_freshness", {"freshness": freshness}, source, False
+        return "get_freshness", {"freshness": freshness, "etl": _compact(etl_status)}, source, False
 
     async def _filter_values(self, spec: QuerySpec, freshness: dict[str, Any]) -> tuple[str, Any, YaSource, bool]:
         dimension = spec.dimensions[0] if spec.dimensions else ""

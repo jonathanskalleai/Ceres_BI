@@ -116,6 +116,26 @@ class YaToolTests(unittest.TestCase):
         self.assertEqual(result[1]["values"], ["Ana", "Bia"])
         self.assertIn("rpc_listas_filtros", calls[1])
 
+    def test_freshness_includes_etl_status_without_exposing_raw_sql(self):
+        calls = []
+
+        async def fake_query(sql, params):
+            calls.append((sql, params))
+            if "sync_control" in sql:
+                return [{"refreshed_at": datetime(2024, 5, 31, 12, 0)}]
+            return [{"payload": [{"table_name": "crm_pedidos", "status": "success", "rows_synced": 12}]}]
+
+        async def exercise():
+            from ya_tools import ToolGateway
+
+            spec = build_query_spec("Os dados estão atualizados?")
+            return await ToolGateway(fake_query).execute(spec, "user-freshness-test")
+
+        result = _run_async(exercise())[0]
+        self.assertEqual(result[1]["etl"][0]["status"], "success")
+        self.assertIn("rpc_etl_status", calls[1][0])
+        self.assertNotIn("SELECT *", calls[1][0])
+
     def test_business_breakdown_uses_the_named_business_rpc_block(self):
         async def fake_query(sql, params):
             if "sync_control" in sql:
