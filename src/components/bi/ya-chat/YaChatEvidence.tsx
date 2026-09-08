@@ -100,7 +100,11 @@ function metricDefinitions(source: YaChatSource): YaMetricDefinition[] {
 function sourceFilterSummary(source: YaChatSource): string {
   const period = source.applied_scope?.period;
   const filters = scopeFilters(source);
-  const periodLabel = period?.from && period.to ? `${period.from} a ${period.to}` : "período da consulta";
+  const periodLabel = source.applied_scope?.snapshot
+    ? "snapshot atual"
+    : period?.from && period.to
+      ? `${period.from} a ${period.to}`
+      : "período da consulta";
   const extra = [filters.vendedor, filters.cidade, filters.produto, filters.cliente].filter(Boolean).join(" · ");
   return extra ? `${periodLabel} · ${extra}` : periodLabel;
 }

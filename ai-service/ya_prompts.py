@@ -12,7 +12,7 @@ from ya_models import PreparedTurn, YaChatRequest
 def planner_messages(message: str, request: YaChatRequest, state: dict[str, Any]) -> list[dict[str, str]]:
     schema = {
         "intent": "metric|breakdown|timeseries|compare|drilldown|correlation|entity_360|explain_metric|get_freshness|list_filter_values",
-        "domain": "vendas|negocios|acoes|pedidos|servicos|cliente",
+        "domain": "vendas|negocios|acoes|pedidos|servicos|cliente|produtos|admin|operacional",
         "metrics": ["IDs do catálogo, no máximo 2"],
         "period": {"from": "YYYY-MM-DD", "to": "YYYY-MM-DD"},
         "filters": {"vendedor": "opcional", "cidade": "opcional", "produto": "opcional", "funis": ["opcional"]},

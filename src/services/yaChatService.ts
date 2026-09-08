@@ -64,6 +64,7 @@ export interface YaMetricDefinition {
 
 export interface YaAppliedScope {
   period?: { from: string; to: string };
+  snapshot?: boolean;
   filters?: YaChatFilters;
   filter_origins?: Record<string, string>;
   timezone?: string;

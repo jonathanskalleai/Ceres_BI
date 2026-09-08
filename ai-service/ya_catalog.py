@@ -324,9 +324,9 @@ METRICS: dict[str, MetricDefinition] = {
 # Phase 4 contracts are maintained in a separate module so the core catalog
 # stays reviewable. The extension is imported only after MetricDefinition and
 # the first-period contracts have been initialized.
-from ya_catalog_extensions import SNAPSHOT_METRICS  # noqa: E402
+from ya_catalog_extensions import SNAPSHOT_METRIC_SPECS  # noqa: E402
 
-METRICS.update(SNAPSHOT_METRICS)
+METRICS.update({key: MetricDefinition(**value) for key, value in SNAPSHOT_METRIC_SPECS.items()})
 
 
 EXECUTOR_LABELS = {

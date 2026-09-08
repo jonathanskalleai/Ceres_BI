@@ -8,7 +8,7 @@ from typing import Any, Awaitable, Callable
 from ya_catalog import EXECUTOR_LABELS, get_metric
 from ya_models import YaSource
 from ya_query_models import QuerySpec
-from ya_tool_utils import MAX_RESULT_ITEMS, _compact, _metric_row_measure, _path, _row_count, _row_label
+from ya_tool_utils import _compact, _metric_row_measure, _path, _row_count, _row_label
 
 
 SNAPSHOT_EXECUTORS = frozenset({"products_snapshot", "admin_snapshot", "operational_snapshot"})

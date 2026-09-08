@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ya_catalog import MetricDefinition
+from typing import Any
 
 
 def _snapshot_metric(
@@ -17,31 +17,31 @@ def _snapshot_metric(
     executor: str,
     *,
     dimension_paths: dict[str, tuple[str, ...]] | None = None,
-) -> MetricDefinition:
-    return MetricDefinition(
-        id=metric_id,
-        label=label,
-        domain=domain,
-        description=description,
-        unit=unit,
-        entity="snapshot",
-        grain="current snapshot",
-        competence="estado atual da fonte; sem janela temporal",
-        deduplication="deduplicação definida pela RPC instalada",
-        executor=executor,
-        value_path=value_path,
-        dimensions=dimensions,
-        filters=(),
-        aliases=aliases,
-        formula=description,
-        status="snapshot",
-        exclusions="não comparar com outro período sem uma fonte histórica dedicada",
-        dimension_paths=dimension_paths,
-        period_required=False,
-    )
+) -> dict[str, Any]:
+    return {
+        "id": metric_id,
+        "label": label,
+        "domain": domain,
+        "description": description,
+        "unit": unit,
+        "entity": "snapshot",
+        "grain": "current snapshot",
+        "competence": "estado atual da fonte; sem janela temporal",
+        "deduplication": "deduplicação definida pela RPC instalada",
+        "executor": executor,
+        "value_path": value_path,
+        "dimensions": dimensions,
+        "filters": (),
+        "aliases": aliases,
+        "formula": description,
+        "status": "snapshot",
+        "exclusions": "não comparar com outro período sem uma fonte histórica dedicada",
+        "dimension_paths": dimension_paths,
+        "period_required": False,
+    }
 
 
-SNAPSHOT_METRICS: dict[str, MetricDefinition] = {
+SNAPSHOT_METRIC_SPECS: dict[str, dict[str, Any]] = {
     "produtos.total_maquinas": _snapshot_metric(
         "produtos.total_maquinas",
         "Máquinas instaladas",
