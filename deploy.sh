@@ -96,11 +96,10 @@ docker build -t "${CERESBI_AI_IMAGE}" ai-service
 echo "==> Deploying stack ${STACK_NAME}..."
 docker stack deploy --detach=false -c docker-stack.yml "${STACK_NAME}"
 
-# Force both task sets after changing to the immutable tag. This protects an
-# explicit re-deploy of the same SHA as well as ordinary Swarm restarts.
-echo "==> Rolling web and AI services..."
-docker service update --image "${CERESBI_WEB_IMAGE}" --force --detach=false "${STACK_NAME}_web"
-docker service update --image "${CERESBI_AI_IMAGE}" --force --detach=false "${STACK_NAME}_ai"
+# `docker stack deploy --detach=false` converges both services to the immutable
+# tags. Avoid a second concurrent service update: on single-node Swarm that can
+# race the stack reconciliation and return `update out of sequence`.
+echo "==> Stack services converged; verifying immutable images..."
 
 for service in web ai; do
   actual_image="$(docker service inspect --format '{{.Spec.TaskTemplate.ContainerSpec.Image}}' "${STACK_NAME}_${service}")"
