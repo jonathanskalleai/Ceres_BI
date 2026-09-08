@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useNegociosFilter } from "@/contexts/NegociosFilterContext";
 import { useAuth } from "@/hooks/useAuth";
 import { usePermissions } from "@/hooks/usePermissions";
-import { toISODate } from "@/lib/dateUtils";
+import { formatDateBR, toISODate } from "@/lib/dateUtils";
 import {
   closeAIConversation,
   getAIConversation,
@@ -44,6 +44,8 @@ export function YaChat() {
   const [status, setStatus] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const loadedUserRef = useRef<string>();
+  const conversationIdRef = useRef<string>();
+  const sendingRef = useRef(false);
   const hasAccess = isAdmin || canAccess("bi.ya");
   const activeThreadKey = user ? `ceres-bi-ai-thread:${user.id}` : "";
 
@@ -65,10 +67,15 @@ export function YaChat() {
     else localStorage.removeItem(activeThreadKey);
   }, [activeThreadKey]);
 
+  const setActiveConversation = useCallback((id?: string) => {
+    conversationIdRef.current = id;
+    setConversationId(id);
+    persistActiveThread(id);
+  }, [persistActiveThread]);
+
   const loadThread = useCallback(async (id: string) => {
     const conversation = await getAIConversation(id);
-    setConversationId(conversation.id);
-    persistActiveThread(conversation.id);
+    setActiveConversation(conversation.id);
     setMessages(conversation.messages.map((message) => ({
       id: message.id,
       role: message.role,
@@ -76,7 +83,7 @@ export function YaChat() {
       sources: message.evidence.length > 0 ? message.evidence : message.sources,
       querySpec: message.query_spec,
     })));
-  }, [persistActiveThread]);
+  }, [setActiveConversation]);
 
   const refreshThreads = useCallback(async () => {
     const conversationList = await listAIConversations();
@@ -114,16 +121,16 @@ export function YaChat() {
   if (permissionsLoading || !hasAccess) return null;
 
   const startNewThread = () => {
-    setConversationId(undefined);
+    setActiveConversation();
     setMessages([]);
     setStatus("");
-    persistActiveThread();
   };
 
   const closeCurrentThread = async () => {
-    if (!conversationId || isSending) return;
+    const activeConversationId = conversationIdRef.current;
+    if (!activeConversationId || isSending) return;
     try {
-      await closeAIConversation(conversationId);
+      await closeAIConversation(activeConversationId);
       startNewThread();
       await refreshThreads();
     } catch (error) {
@@ -134,64 +141,48 @@ export function YaChat() {
 
   const send = async (message: string) => {
     const normalized = message.trim();
-    if (!normalized || isSending) return;
+    if (!normalized || sendingRef.current) return;
 
+    const activeConversationId = conversationIdRef.current;
     setInput("");
-    setStatus("Consultando os dados do BI…");
+    setStatus("");
     setMessages((current) => [...current, { role: "user", content: normalized }]);
+    sendingRef.current = true;
     setIsSending(true);
     let streamedSources: YaChatSource[] = [];
-    let assistantRendered = false;
+    let streamedAnswer = "";
+    let completed = false;
+    let requestSucceeded = false;
 
     try {
       await streamAIChat({
         message: normalized,
-        conversation_id: conversationId,
+        conversation_id: activeConversationId,
         context,
       }, {
-        onStatus: setStatus,
-        onPlan: () => setStatus("Recorte entendido; conferindo as fontes…"),
-        onThread: (id) => {
-          setConversationId(id);
-          persistActiveThread(id);
-        },
-        onSources: (sources, metrics) => {
+        onThread: setActiveConversation,
+        onSources: (sources) => {
           streamedSources = sources;
-          setStatus(metrics.cacheHits > 0 ? "Usando dados recentes da conversa…" : "Escrevendo a análise…");
         },
-        onDelta: (text) => {
-          assistantRendered = true;
-          setMessages((current) => {
-            const last = current[current.length - 1];
-            if (last?.role === "assistant" && last.streaming) {
-              return [...current.slice(0, -1), { ...last, content: last.content + text }];
-            }
-            return [...current, { role: "assistant", content: text, sources: streamedSources, streaming: true }];
-          });
-        },
+        onDelta: (text) => { streamedAnswer += text; },
         onDone: ({ conversationId: id, assistantMessageId, sources, evidence, querySpec, answer }) => {
-          assistantRendered = true;
+          completed = true;
           streamedSources = sources;
-          setConversationId(id);
-          persistActiveThread(id);
+          setActiveConversation(id);
+          const finalAnswer = answer.trim() || streamedAnswer.trim() || "Não encontrei dados suficientes para responder com segurança.";
           setMessages((current) => {
-            const last = current[current.length - 1];
-            if (last?.role === "assistant" && last.streaming) {
-              return [...current.slice(0, -1), { ...last, id: assistantMessageId || last.id, sources: evidence.length > 0 ? evidence : sources, querySpec, streaming: false }];
-            }
-            return [...current, { id: assistantMessageId || undefined, role: "assistant", content: answer, sources: evidence.length > 0 ? evidence : sources, querySpec }];
+            return [...current, { id: assistantMessageId || undefined, role: "assistant", content: finalAnswer, sources: evidence.length > 0 ? evidence : sources, querySpec }];
           });
         },
       });
-      if (!assistantRendered) {
+      requestSucceeded = true;
+      if (!completed) {
         setMessages((current) => [...current, {
           role: "assistant",
           content: "Não encontrei dados suficientes para responder com segurança.",
           sources: streamedSources,
         }]);
       }
-      setStatus("");
-      await refreshThreads();
     } catch (error) {
       console.error("[YaChat] Falha ao consultar o assistente.", error);
       setMessages((current) => [...current, {
@@ -200,15 +191,24 @@ export function YaChat() {
       }]);
       setStatus("");
     } finally {
+      sendingRef.current = false;
       setIsSending(false);
+    }
+    if (requestSucceeded) {
+      try {
+        await refreshThreads();
+      } catch (error) {
+        console.warn("[YaChat] Não foi possível atualizar a lista de conversas.", error);
+      }
     }
   };
 
   const handleFeedback = async (messageId: string, feedbackType: YaFeedbackType) => {
-    if (!conversationId || !messageId) return;
+    const activeConversationId = conversationIdRef.current;
+    if (!activeConversationId || !messageId) return;
     setMessages((current) => current.map((message) => message.id === messageId ? { ...message, feedbackPending: true } : message));
     try {
-      await sendAIMessageFeedback(conversationId, messageId, feedbackType);
+      await sendAIMessageFeedback(activeConversationId, messageId, feedbackType);
       setMessages((current) => current.map((message) => message.id === messageId ? { ...message, feedback: feedbackType, feedbackPending: false } : message));
     } catch (error) {
       console.warn("[YaChat] Não foi possível registrar o feedback.", error);
@@ -260,7 +260,7 @@ export function YaChat() {
 
           <div className="border-b bg-muted/30 px-5 py-2.5">
             <Badge variant="outline" className="max-w-full truncate font-normal">
-              Contexto: {context.filters.from && context.filters.to ? `${context.filters.from} a ${context.filters.to}` : "sem período"}
+              Contexto: {context.filters.from && context.filters.to ? `${formatDateBR(context.filters.from)} a ${formatDateBR(context.filters.to)}` : "sem período"}
               {context.filters.vendedor ? ` · ${context.filters.vendedor}` : ""}{context.filters.cidade ? ` · ${context.filters.cidade}` : ""}
             </Badge>
           </div>
@@ -277,9 +277,10 @@ export function YaChat() {
 
             {messages.map((message, index) => <YaChatMessage key={message.id ?? `${message.role}-${index}`} message={message} index={index} onFeedback={handleFeedback} />)}
 
-            {isSending && !messages.some((message) => message.streaming) && (
-              <div className="flex items-center gap-2 rounded-xl border bg-card px-4 py-3 text-sm text-muted-foreground" aria-live="polite"><LoaderCircle className="h-4 w-4 animate-spin" />{status || "A AI está consultando os dados…"}</div>
+            {isSending && (
+              <div className="flex items-center gap-2 rounded-xl border bg-card px-4 py-3 text-sm text-muted-foreground" role="status" aria-live="polite"><LoaderCircle className="h-4 w-4 animate-spin" />Pensando…</div>
             )}
+            {status && !isSending && <p className="text-xs text-destructive" role="alert">{status}</p>}
             <div ref={bottomRef} />
           </div>
 

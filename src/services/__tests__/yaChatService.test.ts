@@ -42,4 +42,28 @@ describe("streamAIChat", () => {
     expect(deltas).toEqual(["R$ 10"]);
     expect(done).toEqual(["conversation-1:message-1:R$ 10"]);
   });
+
+  it("forwards the active conversation and accepts CRLF SSE frames", async () => {
+    const events = [
+      'event: thread\r\ndata: {"conversation_id":"conversation-2"}\r\n\r\n',
+      'event: done\r\ndata: {"conversation_id":"conversation-2","assistant_message_id":"message-2","answer":"Resposta","sources":[],"evidence":[],"query_spec":{},"generated_at":"2026-09-08T10:00:00Z"}\r\n\r\n',
+    ].join("");
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode(events));
+        controller.close();
+      },
+    });
+    mockedFetchAI.mockResolvedValue(new Response(stream, { status: 200 }));
+
+    const threads: string[] = [];
+    await streamAIChat(
+      { message: "e no mês anterior?", conversation_id: "conversation-1", context: { route: "/bi", filters: {} } },
+      { onThread: (conversationId) => threads.push(conversationId) },
+    );
+
+    expect(threads).toEqual(["conversation-2"]);
+    const [, init] = mockedFetchAI.mock.calls[0];
+    expect(JSON.parse(String(init?.body))).toMatchObject({ conversation_id: "conversation-1" });
+  });
 });

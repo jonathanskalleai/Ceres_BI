@@ -50,10 +50,15 @@ def _check_rate_limit(user_id: str) -> None:
     window.append(now)
 
 
-async def _plan_query(request: YaChatRequest, state: dict[str, Any]) -> dict[str, Any]:
+async def _plan_query(
+    request: YaChatRequest,
+    state: dict[str, Any],
+    summary: str = "",
+    history: list[dict[str, str]] | None = None,
+) -> dict[str, Any]:
     try:
         response = await complete(
-            planner_messages(request.message, request, state),
+            planner_messages(request.message, request, state, summary=summary, history=history),
             temperature=0.0,
             max_tokens=650,
             json_mode=True,
@@ -83,7 +88,7 @@ async def _prepare_turn(request: YaChatRequest, user: CurrentUser) -> PreparedTu
         raise HTTPException(status_code=422, detail="Informe uma pergunta para a AI")
     conversation_id = await ensure_conversation(query_async, request.conversation_id, user.id, request.context, message)
     memory = await load_thread_memory(query_async, conversation_id, user.id)
-    proposed = await _plan_query(request, memory.state)
+    proposed = await _plan_query(request, memory.state, memory.summary, memory.history)
     try:
         spec = build_query_spec(
             message,

@@ -183,8 +183,8 @@ export async function sendAIMessageFeedback(conversationId: string, messageId: s
 }
 
 function readEvent(block: string): { event: string; data: unknown } | null {
-  const event = block.match(/^event:\s*(.+)$/m)?.[1]?.trim();
-  const rawData = block.match(/^data:\s*(.+)$/m)?.[1];
+  const event = block.match(/^event:\s*([^\r\n]+)$/m)?.[1]?.trim();
+  const rawData = block.match(/^data:\s*([^\r\n]+)$/m)?.[1];
   if (!event || !rawData) return null;
   try {
     return { event, data: JSON.parse(rawData) };
@@ -247,7 +247,7 @@ export async function streamAIChat(request: YaChatRequest, handlers: AIChatStrea
   while (true) {
     const { done, value } = await reader.read();
     buffer += decoder.decode(value ?? new Uint8Array(), { stream: !done });
-    const blocks = buffer.split("\n\n");
+    const blocks = buffer.split(/\r?\n\r?\n/);
     buffer = blocks.pop() ?? "";
     blocks.forEach(dispatch);
     if (done) break;

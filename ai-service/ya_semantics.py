@@ -17,6 +17,12 @@ ALLOWED_FILTERS = {
     "motivo_perda", "funis", "cliente",
 }
 NON_DATA_INTENTS = {"explain_metric", "get_freshness", "list_filter_values"}
+FOLLOW_UP_PREFIXES = ("e ", "agora ", "tambem ", "isso ", "esse ", "essa ", "estes ", "estas ")
+FOLLOW_UP_TERMS = (
+    "mes anterior", "periodo anterior", "por vendedor", "por cidade", "por produto",
+    "por marca", "por grupo", "por modelo", "por banco", "por etapa", "por status",
+    "por motivo", "mesmo periodo", "ano anterior", "ano passado",
+)
 
 
 def normalize_text(value: Any) -> str:
@@ -30,6 +36,11 @@ def normalize_text(value: Any) -> str:
 def _contains_term(text: str, term: str) -> bool:
     normalized_term = normalize_text(term).strip()
     return bool(normalized_term) and re.search(rf"(?<!\w){re.escape(normalized_term)}(?!\w)", text) is not None
+
+
+def _is_contextual_follow_up(text: str) -> bool:
+    normalized = normalize_text(text).strip()
+    return normalized.startswith(FOLLOW_UP_PREFIXES) or any(term in normalized for term in FOLLOW_UP_TERMS)
 
 
 def _context_dict(context_filters: Any) -> dict[str, Any]:
@@ -148,7 +159,7 @@ def _metric_ids(message: str, domain: str, planned: dict[str, Any], state: dict[
         unique = list(dict.fromkeys(ordered))
         return unique[:2] if intent == "correlation" else unique[:1]
     last = state.get("last_query_spec") if isinstance(state, dict) else None
-    if isinstance(last, dict) and isinstance(last.get("metrics"), list):
+    if _is_contextual_follow_up(text) and isinstance(last, dict) and isinstance(last.get("metrics"), list):
         previous = [item for item in last["metrics"] if isinstance(item, str) and item in METRICS]
         if previous:
             return previous[:2]

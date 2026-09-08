@@ -128,6 +128,8 @@ async def update_state(query: QueryFn, conversation_id: str, previous: str, mess
         "last_metrics": query_spec.get("metrics", []),
         "last_entity": query_spec.get("entity"),
         "last_drilldown_ref": next((item.drilldown_ref for item in evidence if item.drilldown_ref), None),
+        "last_question": message[:500],
+        "last_answer": answer[:800],
         "updated_at": datetime.utcnow().isoformat() + "Z",
     })
     await query(

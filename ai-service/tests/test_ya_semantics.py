@@ -67,6 +67,16 @@ class YaSemanticTests(unittest.TestCase):
         self.assertEqual(str(follow_up.period.from_date), "2024-05-01")
         self.assertEqual(str(follow_up.period.to_date), "2024-05-31")
 
+    def test_unrelated_question_does_not_reuse_previous_metric(self):
+        first = build_query_spec(
+            "faturamento",
+            context_filters={"from": "2024-05-01", "to": "2024-05-31"},
+        )
+        state = {"last_query_spec": first.model_dump(mode="json")}
+        unrelated = build_query_spec("Por que a meta não bateu?", memory_state=state)
+        self.assertEqual(unrelated.metrics, [])
+        self.assertIsNotNone(unrelated.clarification)
+
     def test_natural_recent_window_overrides_screen_period(self):
         spec = build_query_spec(
             "faturamento dos últimos 7 dias",

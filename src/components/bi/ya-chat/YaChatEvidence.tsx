@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, Copy, Database, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { formatChatDateTime, formatChatText, formatEvidenceValue } from "@/lib/yaChatFormatters";
 import type { YaChatFilters, YaChatSource, YaMetricDefinition } from "@/services/yaChatService";
 
 type JsonRecord = Record<string, unknown>;
@@ -12,11 +13,11 @@ function isRecord(value: unknown): value is JsonRecord {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function formatValue(value: unknown): string {
+function formatValue(value: unknown, unit?: string): string {
   if (value === null || value === undefined || value === "") return "—";
-  if (typeof value === "number") return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(value);
+  if (typeof value === "number") return formatEvidenceValue(value, unit);
   if (typeof value === "boolean") return value ? "sim" : "não";
-  if (typeof value === "string") return value;
+  if (typeof value === "string") return formatChatText(value);
   return "detalhe estruturado";
 }
 
@@ -78,7 +79,7 @@ function PreviewSummary({ preview }: { preview: unknown }) {
       <div className="grid grid-cols-2 gap-2">
         {comparison.map(({ key, value }) => {
           const item = value as JsonRecord;
-          return <div key={key} className="rounded-lg border bg-muted/20 px-3 py-2"><div className="text-[10px] uppercase text-muted-foreground">{key}</div><div className="font-medium">{formatValue(item.value)}</div><div className="text-[10px] text-muted-foreground">{formatValue(item.unit)}</div></div>;
+          return <div key={key} className="rounded-lg border bg-muted/20 px-3 py-2"><div className="text-[10px] uppercase text-muted-foreground">{key}</div><div className="font-medium">{formatValue(item.value, typeof item.unit === "string" ? item.unit : undefined)}</div><div className="text-[10px] text-muted-foreground">{formatValue(item.unit)}</div></div>;
         })}
       </div>
     );
@@ -103,7 +104,7 @@ function sourceFilterSummary(source: YaChatSource): string {
   const periodLabel = source.applied_scope?.snapshot
     ? "snapshot atual"
     : period?.from && period.to
-      ? `${period.from} a ${period.to}`
+      ? `${formatChatDateTime(period.from)} a ${formatChatDateTime(period.to)}`
       : "período da consulta";
   const extra = [filters.vendedor, filters.cidade, filters.produto, filters.cliente].filter(Boolean).join(" · ");
   return extra ? `${periodLabel} · ${extra}` : periodLabel;
@@ -130,26 +131,28 @@ export function YaChatEvidence({ sources }: { sources: YaChatSource[] }) {
 
   if (sources.length === 0) return null;
   return (
-    <div className="mt-3 space-y-2 border-t pt-2 text-xs text-muted-foreground">
-      <span className="font-medium text-foreground">Evidência e escopo</span>
-      {sources.map((source) => {
-        const metrics = metricDefinitions(source);
-        return (
-          <details key={source.id} className="rounded-lg border bg-muted/20 px-3 py-2">
-            <summary className="cursor-pointer list-none font-medium text-foreground">{source.label} · {sourceFilterSummary(source)}</summary>
-            <div className="mt-2 space-y-2">
-              {metrics.map((metric) => <div key={metric.id}><div><span className="font-medium text-foreground">{metric.label}:</span> {metric.definition} <span className="text-muted-foreground">({metric.unit})</span></div><div><span className="font-medium text-foreground">Competência:</span> {metric.competence}. <span className="font-medium text-foreground">Deduplicação:</span> {metric.deduplication}.</div></div>)}
-              {source.freshness?.status && <div className="flex items-center gap-1"><Database className="h-3.5 w-3.5" />Frescura: {source.freshness.status}{source.freshness.refreshed_at ? ` · ${source.freshness.refreshed_at}` : ""}</div>}
-              {source.warnings?.map((warning) => <div key={warning} className="flex items-start gap-1 text-amber-700 dark:text-amber-300"><TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />{warning}</div>)}
-              <PreviewSummary preview={source.preview} />
-              <div className="flex flex-wrap items-center gap-2 pt-1">
-                <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-[11px]" onClick={() => void copyScope(source)}><>{copiedId === source.id ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}</>{copiedId === source.id ? "Copiado" : "Copiar escopo"}</Button>
-                {source.drilldown_ref && <span className="text-[10px]">Detalhe: disponível nesta coorte</span>}
+    <details className="mt-3 rounded-lg border bg-muted/20 text-xs text-muted-foreground">
+      <summary className="cursor-pointer list-none px-3 py-2 font-medium text-foreground">Como foi calculado · {sources.length} {sources.length === 1 ? "fonte" : "fontes"}</summary>
+      <div className="space-y-2 border-t px-3 py-2">
+        {sources.map((source) => {
+          const metrics = metricDefinitions(source);
+          return (
+            <details key={source.id} className="rounded-lg border bg-background/50 px-3 py-2">
+              <summary className="cursor-pointer list-none font-medium text-foreground">{source.label} · {sourceFilterSummary(source)}</summary>
+              <div className="mt-2 space-y-2">
+                {metrics.map((metric) => <div key={metric.id}><div><span className="font-medium text-foreground">{metric.label}:</span> {metric.definition} <span className="text-muted-foreground">({metric.unit})</span></div><div><span className="font-medium text-foreground">Competência:</span> {metric.competence}. <span className="font-medium text-foreground">Deduplicação:</span> {metric.deduplication}.</div></div>)}
+                {source.freshness?.status && <div className="flex items-center gap-1"><Database className="h-3.5 w-3.5" />Atualização: {source.freshness.status}{source.freshness.refreshed_at ? ` · ${formatChatDateTime(source.freshness.refreshed_at)}` : ""}</div>}
+                {source.warnings?.map((warning) => <div key={warning} className="flex items-start gap-1 text-amber-700 dark:text-amber-300"><TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />{warning}</div>)}
+                <PreviewSummary preview={source.preview} />
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-[11px]" onClick={() => void copyScope(source)}><>{copiedId === source.id ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}</>{copiedId === source.id ? "Copiado" : "Copiar escopo"}</Button>
+                  {source.drilldown_ref && <span className="text-[10px]">Detalhe: disponível nesta coorte</span>}
+                </div>
               </div>
-            </div>
-          </details>
-        );
-      })}
-    </div>
+            </details>
+          );
+        })}
+      </div>
+    </details>
   );
 }
