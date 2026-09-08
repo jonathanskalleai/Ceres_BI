@@ -14,6 +14,9 @@ from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from auth import AuthenticatedUser
+from ya_chat import router as ya_router
+
 # --- Configuration ---
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
@@ -34,13 +37,24 @@ ADMIN_FILTER = [
 # --- App setup ---
 app = FastAPI(title="Ceres BI AI Service")
 
+cors_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ORIGINS",
+        "https://ceresbi.vouxconsultoria.com.br,http://localhost:5173",
+    ).split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(ya_router)
 
 executor = ThreadPoolExecutor(max_workers=4)
 
@@ -292,7 +306,7 @@ async def ai_health():
 
 
 @app.post("/ai/client-analysis")
-async def client_analysis(request: ClientAnalysisRequest):
+async def client_analysis(request: ClientAnalysisRequest, _user: AuthenticatedUser):
     """Analyze a client's commercial actions using AI."""
     acoes_text = ""
     for i, acao in enumerate(request.acoes, 1):
@@ -331,7 +345,10 @@ Responda de forma clara e objetiva em português."""
 
 
 @app.post("/ai/consultores-report")
-async def consultores_report(request: ConsultoresReportRequest = ConsultoresReportRequest()):
+async def consultores_report(
+    _user: AuthenticatedUser,
+    request: ConsultoresReportRequest = ConsultoresReportRequest(),
+):
     """Generate a consultants performance report using AI."""
     admin_filter_sql = ", ".join([f"'{name}'" for name in ADMIN_FILTER])
 
@@ -562,7 +579,7 @@ Responda APENAS com JSON válido no seguinte formato:
 
 
 @app.post("/ai/negocios-insights")
-async def negocios_insights():
+async def negocios_insights(_user: AuthenticatedUser):
     """Generate business insights using AI."""
     admin_filter_sql = ", ".join([f"'{name}'" for name in ADMIN_FILTER])
 
@@ -1397,7 +1414,7 @@ async def generate_field_signal_narrative(week: date) -> dict[str, Any] | None:
 
 
 @app.get("/ai/field-signals")
-async def get_field_signals(semana: Optional[str] = None):
+async def get_field_signals(_user: AuthenticatedUser, semana: Optional[str] = None):
     """Return the latest closed-week structured field signals for the BI card."""
     if semana:
         try:
@@ -1503,7 +1520,12 @@ async def generate_weekly_signals(
 # --- Weekly Insights Endpoints ---
 
 @app.get("/ai/insights")
-async def get_insights(tipo: Optional[str] = None, consultor: Optional[str] = None, all: Optional[str] = None):
+async def get_insights(
+    _user: AuthenticatedUser,
+    tipo: Optional[str] = None,
+    consultor: Optional[str] = None,
+    all: Optional[str] = None,
+):
     """Fetch AI weekly insights. Use all=true to get history."""
     if tipo == "individual" and consultor:
         if all == "true":
