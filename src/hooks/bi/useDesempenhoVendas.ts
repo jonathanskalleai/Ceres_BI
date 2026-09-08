@@ -16,6 +16,7 @@ export function useDesempenhoVendas(options: DesempenhoVendasFilterOptions = {})
       options.origem,
       options.banco,
       options.motivoPerda,
+      options.funis,
     ],
     queryFn: () => fetchDesempenhoVendas(options),
     staleTime: 5 * 60_000,

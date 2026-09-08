@@ -58,6 +58,7 @@ export default function BiDesempenhoVendas() {
   }));
   const [selectedVendedor, setSelectedVendedor] = useState<string>("");
   const [selectedCidade, setSelectedCidade] = useState<string>("");
+  const [selectedFunis, setSelectedFunis] = useState<string[]>([]);
 
   // O gráfico de desfechos de vendas sempre exibe o ano completo da seleção (ou corrente)
   const targetYear = dateRange?.from ? dateRange.from.getFullYear() : currentYear;
@@ -90,12 +91,13 @@ export default function BiDesempenhoVendas() {
       to: dateRange?.to ? toISODate(dateRange.to) : dateRange?.from ? toISODate(dateRange.from) : null,
       vendedor: activeCrossFilter?.type === "vendedor" ? activeCrossFilter.value : selectedVendedor || null,
       cidade: activeCrossFilter?.type === "cidade" ? activeCrossFilter.value : selectedCidade || null,
+      funis: selectedFunis.length > 0 ? selectedFunis : null,
       produto: activeCrossFilter?.type === "produto" ? activeCrossFilter.value : null,
       origem: activeCrossFilter?.type === "origem" ? activeCrossFilter.value : null,
       banco: activeCrossFilter?.type === "banco" ? activeCrossFilter.value : null,
       motivoPerda: activeCrossFilter?.type === "motivo" ? activeCrossFilter.value : null,
     };
-  }, [targetYear, dateRange, selectedVendedor, selectedCidade, activeCrossFilter]);
+  }, [targetYear, dateRange, selectedVendedor, selectedCidade, selectedFunis, activeCrossFilter]);
 
   const { data, isLoading, refetch, isFetching } = useDesempenhoVendas(filterOptions);
   const { data: esteiraData, isLoading: esteiraLoading } = usePedidosEsteira({
@@ -104,6 +106,7 @@ export default function BiDesempenhoVendas() {
     to: filterOptions.to,
     vendedor: filterOptions.vendedor,
     cidade: filterOptions.cidade,
+    funis: filterOptions.funis,
   });
 
   const esteiraPeriodoLabel = filterOptions.from && filterOptions.to
@@ -142,6 +145,7 @@ export default function BiDesempenhoVendas() {
     !isDefaultDateRange ||
       selectedVendedor ||
       selectedCidade ||
+      selectedFunis.length > 0 ||
       activeCrossFilter
   );
 
@@ -152,6 +156,7 @@ export default function BiDesempenhoVendas() {
     });
     setSelectedVendedor("");
     setSelectedCidade("");
+    setSelectedFunis([]);
     setActiveCrossFilter(null);
   };
 
@@ -177,6 +182,8 @@ export default function BiDesempenhoVendas() {
         }}
         dateRange={dateRange}
         onDateRangeChange={setDateRange}
+        funis={selectedFunis}
+        onFunisChange={setSelectedFunis}
         vendedor={selectedVendedor}
         onVendedorChange={setSelectedVendedor}
         vendedorOptions={vendedorOptions}
@@ -468,6 +475,7 @@ export default function BiDesempenhoVendas() {
             to={filterOptions.to}
             vendedor={filterOptions.vendedor}
             cidade={filterOptions.cidade}
+            funis={filterOptions.funis}
             defaultTab="ganhos"
           />
 
@@ -792,6 +800,7 @@ export default function BiDesempenhoVendas() {
             to={filterOptions.to}
             vendedor={filterOptions.vendedor}
             cidade={filterOptions.cidade}
+            funis={filterOptions.funis}
             defaultTab="perdidos"
           />
         </div>
@@ -805,6 +814,7 @@ export default function BiDesempenhoVendas() {
         to={filterOptions.to}
         vendedor={filterOptions.vendedor}
         cidade={filterOptions.cidade}
+        funis={filterOptions.funis}
         periodoLabel={esteiraPeriodoLabel}
       />
 
@@ -815,6 +825,7 @@ export default function BiDesempenhoVendas() {
         to={filterOptions.to}
         vendedor={filterOptions.vendedor}
         cidade={filterOptions.cidade}
+        funis={filterOptions.funis}
         periodoLabel={esteiraPeriodoLabel}
       />
     </div>

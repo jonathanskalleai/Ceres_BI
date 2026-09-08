@@ -37,6 +37,7 @@ export async function fetchAcoesNegociosPerdidos(params: {
   cidade?: string;
   limit?: number;
   offset?: number;
+  funis?: string[];
 }): Promise<RpcNegociosPerdidos> {
   try {
     const rpcParams: Record<string, unknown> = {};
@@ -46,6 +47,7 @@ export async function fetchAcoesNegociosPerdidos(params: {
     if (params.cidade) rpcParams.p_cidade = params.cidade;
     if (params.limit != null) rpcParams.p_limit = params.limit;
     if (params.offset != null) rpcParams.p_offset = params.offset;
+    if (params.funis && params.funis.length > 0) rpcParams.p_funis = params.funis;
 
     const { data, error } = await supabase.rpc("rpc_acoes_negocios_perdidos", rpcParams);
     if (error) throw new Error(error.message);

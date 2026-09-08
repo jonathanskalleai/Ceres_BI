@@ -16,6 +16,8 @@ describe("DesempenhoFilterBar", () => {
         onTabChange={onTabChange}
         dateRange={{ from: new Date(2026, 8, 1), to: new Date(2026, 8, 30) }}
         onDateRangeChange={onDateRangeChange}
+        funis={[]}
+        onFunisChange={vi.fn()}
         vendedor=""
         onVendedorChange={onVendedorChange}
         vendedorOptions={["CAROLINE CALIMAN"]}
@@ -29,6 +31,7 @@ describe("DesempenhoFilterBar", () => {
 
     expect(screen.getByText("Vendas & Ganhos")).toBeInTheDocument();
     expect(screen.getByText("Diagnóstico de Perdas")).toBeInTheDocument();
+    expect(screen.getByText("Todos os funis")).toBeInTheDocument();
 
     // Quick year buttons should NOT be present
     expect(screen.queryByText("Ano:")).not.toBeInTheDocument();
@@ -49,6 +52,8 @@ describe("DesempenhoFilterBar", () => {
         onTabChange={vi.fn()}
         dateRange={{ from: new Date(2026, 8, 1), to: new Date(2026, 8, 30) }}
         onDateRangeChange={vi.fn()}
+        funis={["VENDAS"]}
+        onFunisChange={vi.fn()}
         vendedor=""
         onVendedorChange={vi.fn()}
         vendedorOptions={[]}
@@ -68,9 +73,36 @@ describe("DesempenhoFilterBar", () => {
 
     expect(screen.getByText("Vendedor:")).toBeInTheDocument();
     expect(screen.getByText("CAROLINE CALIMAN")).toBeInTheDocument();
+    expect(screen.getByText("VENDAS")).toBeInTheDocument();
     expect(screen.getByText("Limpar Filtros")).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Limpar Filtros"));
     expect(onResetFilters).toHaveBeenCalled();
+  });
+
+  it("allows selecting and toggling funis via multi-select", () => {
+    const onFunisChange = vi.fn();
+
+    render(
+      <DesempenhoFilterBar
+        activeTab="ganhos"
+        onTabChange={vi.fn()}
+        dateRange={{ from: new Date(2026, 8, 1), to: new Date(2026, 8, 30) }}
+        onDateRangeChange={vi.fn()}
+        funis={["VENDAS", "Vendas AP"]}
+        onFunisChange={onFunisChange}
+        vendedor=""
+        onVendedorChange={vi.fn()}
+        vendedorOptions={[]}
+        cidade=""
+        onCidadeChange={vi.fn()}
+        cidadeOptions={[]}
+        onResetFilters={vi.fn()}
+        hasActiveFilters={true}
+      />
+    );
+
+    // Displays badge with 2 selected
+    expect(screen.getByText("2 funis selecionados")).toBeInTheDocument();
   });
 });

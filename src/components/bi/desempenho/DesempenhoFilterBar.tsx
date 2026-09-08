@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { DesempenhoFunilMultiSelect } from "./DesempenhoFunilMultiSelect";
 import { type DateRange } from "react-day-picker";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +26,8 @@ interface DesempenhoFilterBarProps {
   onTabChange: (tab: DesempenhoTab) => void;
   dateRange?: DateRange;
   onDateRangeChange: (range?: DateRange) => void;
+  funis: string[];
+  onFunisChange: (funis: string[]) => void;
   vendedor: string;
   onVendedorChange: (vendedor: string) => void;
   vendedorOptions: string[];
@@ -44,6 +47,8 @@ export const DesempenhoFilterBar: React.FC<DesempenhoFilterBarProps> = ({
   onTabChange,
   dateRange,
   onDateRangeChange,
+  funis,
+  onFunisChange,
   vendedor,
   onVendedorChange,
   vendedorOptions,
@@ -107,9 +112,15 @@ export const DesempenhoFilterBar: React.FC<DesempenhoFilterBarProps> = ({
         )}
       </div>
 
-      {/* Linha Inferior: Filtro de Data + Vendedor + Cidade + Chip de Filtro Cruzado */}
+      {/* Linha Inferior: Filtro de Data + Funil + Vendedor + Cidade + Chip de Filtro Cruzado */}
       <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-[var(--voux-card-border)]/60">
         <DateRangePicker value={dateRange} onChange={onDateRangeChange} />
+
+        {/* Funil / Pipeline (Multi-Seleção) */}
+        <DesempenhoFunilMultiSelect
+          selectedFunis={funis}
+          onChange={onFunisChange}
+        />
 
         {/* Vendedor */}
         <Select

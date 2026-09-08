@@ -21,6 +21,7 @@ interface PedidosGanhosModalProps {
   to?: string | null;
   vendedor?: string | null;
   cidade?: string | null;
+  funis?: string[] | null;
   periodoLabel?: string;
 }
 
@@ -31,6 +32,7 @@ export function PedidosGanhosModal({
   to,
   vendedor,
   cidade,
+  funis,
   periodoLabel,
 }: PedidosGanhosModalProps) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -40,6 +42,7 @@ export function PedidosGanhosModal({
     to: to ?? undefined,
     vendedor: vendedor ?? undefined,
     cidade: cidade ?? undefined,
+    funis: funis && funis.length > 0 ? funis : undefined,
     page: 1,
     enabled: open,
   });

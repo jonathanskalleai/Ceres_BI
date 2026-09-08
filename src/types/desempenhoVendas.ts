@@ -125,4 +125,5 @@ export interface DesempenhoVendasFilterOptions {
   origem?: string | null;
   banco?: string | null;
   motivoPerda?: string | null;
+  funis?: string[] | null;
 }

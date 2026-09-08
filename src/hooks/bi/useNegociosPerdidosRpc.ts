@@ -11,6 +11,7 @@ interface UseNegociosPerdidosRpcOptions {
   to?: string;
   vendedor?: string;
   cidade?: string;
+  funis?: string[];
   /** Pagina atual (1-based). Default 1. */
   page?: number;
   enabled?: boolean;
@@ -27,6 +28,7 @@ export function useNegociosPerdidosRpc({
   to,
   vendedor,
   cidade,
+  funis,
   page = 1,
   enabled = true,
 }: UseNegociosPerdidosRpcOptions) {
@@ -37,9 +39,10 @@ export function useNegociosPerdidosRpc({
     queryKey: [
       "rpc", "acoes-negocios-perdidos",
       from ?? null, to ?? null, vendedor ?? null, cidade ?? null,
+      funis ?? null,
       page,
     ],
-    queryFn: () => fetchAcoesNegociosPerdidos({ from, to, vendedor, cidade, limit, offset }),
+    queryFn: () => fetchAcoesNegociosPerdidos({ from, to, vendedor, cidade, limit, offset, funis }),
     staleTime: STALE_TIME,
     placeholderData: keepPreviousData,
     enabled,
