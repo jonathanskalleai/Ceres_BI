@@ -19,6 +19,7 @@ class YaPromptTests(unittest.TestCase):
         self.assertEqual(payload["estado_anterior"]["last_query_spec"]["metrics"], ["vendas.faturamento"])
         self.assertIn("faturamento", payload["resumo_conversa"])
         self.assertEqual(payload["ultimas_mensagens"][0]["role"], "user")
+        self.assertIn("metrics=[]", messages[0]["content"])
 
     def test_answer_prompt_requires_brazilian_format_and_conversational_style(self):
         prompt = answer_messages(request=YaChatRequest(message="faturamento", context={"route": "/bi", "filters": {}}), prepared=_prepared_turn())[0]["content"]
