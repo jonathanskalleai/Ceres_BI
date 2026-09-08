@@ -425,7 +425,7 @@ function EsteiraDetailModal({
 }: ModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden bg-background">
+      <DialogContent className="w-[95vw] max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden bg-background border border-[var(--voux-card-border)]">
         <DialogHeader className="p-6 pb-4 border-b">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
@@ -502,24 +502,24 @@ function EsteiraDetailModal({
         </DialogHeader>
 
         {/* Tabela de Pedidos da Esteira */}
-        <div className="flex-1 overflow-y-auto p-4 max-h-[55vh]">
+        <div className="flex-1 overflow-y-auto p-4 max-h-[65vh]">
           {pedidos.length === 0 ? (
             <div className="py-12 text-center text-muted-foreground font-mono text-xs">
               Nenhum pedido em tramitação encontrado com os filtros selecionados.
             </div>
           ) : (
-            <div className="rounded-lg border overflow-hidden" style={{ borderColor: "var(--voux-card-border)" }}>
+            <div className="rounded-lg border overflow-x-auto" style={{ borderColor: "var(--voux-card-border)" }}>
               <table className="w-full text-left text-xs font-mono">
-                <thead className="bg-muted/50 border-b text-[11px] uppercase tracking-wider text-muted-foreground">
+                <thead className="bg-muted/50 border-b text-[11px] uppercase tracking-wider text-muted-foreground sticky top-0 z-10">
                   <tr>
-                    <th className="px-3 py-2.5">Pedido</th>
+                    <th className="px-3 py-2.5 whitespace-nowrap">Pedido</th>
                     <th className="px-3 py-2.5">Cliente</th>
                     <th className="px-3 py-2.5">Consultor</th>
                     <th className="px-3 py-2.5">Cidade</th>
                     <th className="px-3 py-2.5">Produto(s)</th>
                     <th className="px-3 py-2.5">Situação</th>
-                    <th className="px-3 py-2.5 text-right">Valor</th>
-                    <th className="px-3 py-2.5 text-right">Data</th>
+                    <th className="px-3 py-2.5 text-right whitespace-nowrap">Valor</th>
+                    <th className="px-3 py-2.5 text-right whitespace-nowrap">Data</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y" style={{ borderColor: "var(--voux-card-border)" }}>
@@ -530,22 +530,22 @@ function EsteiraDetailModal({
                         key={`${p.codigoInterno}-${idx}`}
                         className="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
                       >
-                        <td className="px-3 py-2 font-bold text-foreground whitespace-nowrap">
+                        <td className="px-3 py-2.5 font-bold text-foreground whitespace-nowrap align-top">
                           #{p.numeroPedido || p.codigoInterno.slice(-5)}
                         </td>
-                        <td className="px-3 py-2 font-medium max-w-[180px] truncate" title={p.cliente}>
-                          {p.cliente}
+                        <td className="px-3 py-2.5 font-medium min-w-[160px] max-w-[240px] whitespace-normal break-words leading-snug text-foreground align-top">
+                          {p.cliente || "—"}
                         </td>
-                        <td className="px-3 py-2 text-muted-foreground max-w-[140px] truncate" title={p.consultor}>
-                          {p.consultor}
+                        <td className="px-3 py-2.5 text-muted-foreground min-w-[130px] whitespace-normal break-words leading-snug align-top">
+                          {p.consultor || "—"}
                         </td>
-                        <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">
-                          {p.cidade}
+                        <td className="px-3 py-2.5 text-muted-foreground min-w-[110px] whitespace-normal break-words align-top">
+                          {p.cidade || "—"}
                         </td>
-                        <td className="px-3 py-2 text-muted-foreground max-w-[180px] truncate" title={p.produto ?? undefined}>
+                        <td className="px-3 py-2.5 text-foreground/90 min-w-[220px] max-w-[380px] whitespace-normal break-words leading-relaxed align-top">
                           {p.produto || "Sem produto vinculado"}
                         </td>
-                        <td className="px-3 py-2 whitespace-nowrap">
+                        <td className="px-3 py-2.5 whitespace-nowrap align-top">
                           <span
                             className={cn(
                               "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border",
@@ -563,10 +563,10 @@ function EsteiraDetailModal({
                             {p.situacao}
                           </span>
                         </td>
-                        <td className="px-3 py-2 text-right font-bold text-foreground whitespace-nowrap tabular-nums">
+                        <td className="px-3 py-2.5 text-right font-bold text-foreground whitespace-nowrap tabular-nums align-top">
                           {formatBRL(p.valor)}
                         </td>
-                        <td className="px-3 py-2 text-right text-muted-foreground whitespace-nowrap">
+                        <td className="px-3 py-2.5 text-right text-muted-foreground whitespace-nowrap align-top">
                           {p.data ? formatDateBR(p.data.slice(0, 10)) : "—"}
                         </td>
                       </tr>

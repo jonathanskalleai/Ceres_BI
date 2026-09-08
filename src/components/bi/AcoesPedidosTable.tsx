@@ -105,15 +105,15 @@ export function AcoesPedidosTable({ rows, total, page, onPageChange, loading, er
           </thead>
           <tbody>
             {filtered.map((row, i) => (
-              <tr key={`${row.pedidoCodigo}-${i}`} className="border-t border-[var(--voux-card-border)]/30">
-                <td className={`${TD} tabular-nums font-mono`}>{row.pedidoCodigo}</td>
-                <td className={`${TD} max-w-[180px] truncate`}>{row.cliente ?? DASH}</td>
-                <td className={`${TD} text-[var(--voux-text-soft)] max-w-[120px] truncate`}>{row.cidade ?? DASH}</td>
-                <td className={`${TD} text-[var(--voux-text-soft)] max-w-[150px] truncate`}>{row.consultor ?? DASH}</td>
-                <td className={`${TD} max-w-[180px] truncate`} title={row.produto ?? undefined}>{row.produto ?? "Sem produto vinculado"}</td>
-                <td className={`${TD} text-[var(--voux-text-soft)] max-w-[240px] truncate`} title={row.observacaoNegocio ?? undefined}>{row.observacaoNegocio ?? DASH}</td>
-                <td className={`${TD} whitespace-nowrap tabular-nums`}>{formatDateTimeBR(row.dataAprovacao)}</td>
-                <td className={`${TD} text-right tabular-nums whitespace-nowrap`}>{brl(row.valorPedido)}</td>
+              <tr key={`${row.pedidoCodigo}-${i}`} className="border-t border-[var(--voux-card-border)]/30 hover:bg-foreground/[0.02] transition-colors">
+                <td className={`${TD} tabular-nums font-mono whitespace-nowrap align-top`}>#{row.pedidoCodigo}</td>
+                <td className={`${TD} min-w-[160px] max-w-[240px] whitespace-normal break-words leading-snug align-top`}>{row.cliente ?? DASH}</td>
+                <td className={`${TD} text-[var(--voux-text-soft)] min-w-[110px] whitespace-normal break-words align-top`}>{row.cidade ?? DASH}</td>
+                <td className={`${TD} text-[var(--voux-text-soft)] min-w-[130px] whitespace-normal break-words leading-snug align-top`}>{row.consultor ?? DASH}</td>
+                <td className={`${TD} min-w-[220px] max-w-[380px] whitespace-normal break-words leading-relaxed text-[var(--voux-text-soft)] align-top`} title={row.produto ?? undefined}>{row.produto ?? "Sem produto vinculado"}</td>
+                <td className={`${TD} text-[var(--voux-text-muted)] min-w-[200px] max-w-[340px] whitespace-normal break-words leading-relaxed align-top`} title={row.observacaoNegocio ?? undefined}>{row.observacaoNegocio ?? DASH}</td>
+                <td className={`${TD} whitespace-nowrap tabular-nums text-right align-top`}>{formatDateTimeBR(row.dataAprovacao)}</td>
+                <td className={`${TD} text-right tabular-nums whitespace-nowrap font-bold text-emerald-700 dark:text-emerald-400 align-top`}>{brl(row.valorPedido ?? 0)}</td>
               </tr>
             ))}
             {filtered.length === 0 && (

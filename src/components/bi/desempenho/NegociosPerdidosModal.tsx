@@ -66,7 +66,7 @@ export function NegociosPerdidosModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden bg-[var(--surface-raised)] border border-[var(--voux-card-border)]">
+      <DialogContent className="w-[95vw] max-w-7xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden bg-[var(--surface-raised)] border border-[var(--voux-card-border)]">
         <DialogHeader className="p-6 pb-4 border-b border-[var(--voux-card-border)]">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="space-y-1">
@@ -118,7 +118,7 @@ export function NegociosPerdidosModal({
         </DialogHeader>
 
         {/* Conteúdo da Tabela */}
-        <div className="flex-1 overflow-y-auto p-4 max-h-[55vh]">
+        <div className="flex-1 overflow-y-auto p-4 max-h-[65vh]">
           {isLoading ? (
             <div className="space-y-2 p-2">
               <Skeleton className="h-8 w-full bg-[var(--voux-skeleton)]" />
@@ -138,20 +138,20 @@ export function NegociosPerdidosModal({
             </div>
           ) : (
             <div
-              className="rounded-lg border overflow-hidden"
+              className="rounded-lg border overflow-x-auto"
               style={{ borderColor: "var(--voux-card-border)" }}
             >
               <table className="w-full text-left text-xs font-mono">
                 <thead className="bg-[var(--voux-card-from)] border-b border-[var(--voux-card-border)] text-[11px] uppercase tracking-wider text-[var(--voux-text-muted)] sticky top-0 z-10">
                   <tr>
-                    <th className="px-3 py-2.5">Nº Negócio</th>
+                    <th className="px-3 py-2.5 whitespace-nowrap">Nº Negócio</th>
                     <th className="px-3 py-2.5">Cliente</th>
                     <th className="px-3 py-2.5">Consultor</th>
                     <th className="px-3 py-2.5">Cidade</th>
                     <th className="px-3 py-2.5">Produto(s)</th>
                     <th className="px-3 py-2.5">Obs. Negócio</th>
-                    <th className="px-3 py-2.5 text-right">Data Fech.</th>
-                    <th className="px-3 py-2.5 text-right">Valor Negociado</th>
+                    <th className="px-3 py-2.5 text-right whitespace-nowrap">Data Fech.</th>
+                    <th className="px-3 py-2.5 text-right whitespace-nowrap">Valor Negociado</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--voux-card-border)]/40 bg-[var(--surface-raised)]">
@@ -160,40 +160,28 @@ export function NegociosPerdidosModal({
                       key={`${p.negocioNumero}-${idx}`}
                       className="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
                     >
-                      <td className="px-3 py-2 font-bold text-[var(--voux-text-primary)] whitespace-nowrap">
+                      <td className="px-3 py-2.5 font-bold text-[var(--voux-text-primary)] whitespace-nowrap align-top">
                         #{p.negocioNumero}
                       </td>
-                      <td
-                        className="px-3 py-2 font-medium max-w-[180px] truncate text-[var(--voux-text-primary)]"
-                        title={p.cliente}
-                      >
+                      <td className="px-3 py-2.5 font-medium min-w-[160px] max-w-[240px] whitespace-normal break-words leading-snug text-[var(--voux-text-primary)] align-top">
                         {p.cliente || "—"}
                       </td>
-                      <td
-                        className="px-3 py-2 text-[var(--voux-text-muted)] max-w-[140px] truncate"
-                        title={p.consultor}
-                      >
+                      <td className="px-3 py-2.5 text-[var(--voux-text-muted)] min-w-[130px] whitespace-normal break-words leading-snug align-top">
                         {p.consultor || "—"}
                       </td>
-                      <td className="px-3 py-2 text-[var(--voux-text-muted)] whitespace-nowrap">
+                      <td className="px-3 py-2.5 text-[var(--voux-text-muted)] min-w-[110px] whitespace-normal break-words align-top">
                         {p.cidade || "—"}
                       </td>
-                      <td
-                        className="px-3 py-2 max-w-[180px] truncate text-[var(--voux-text-soft)]"
-                        title={p.produto ?? undefined}
-                      >
+                      <td className="px-3 py-2.5 text-[var(--voux-text-soft)] min-w-[220px] max-w-[380px] whitespace-normal break-words leading-relaxed align-top">
                         {p.produto || "Sem produto vinculado"}
                       </td>
-                      <td
-                        className="px-3 py-2 text-[var(--voux-text-muted)] max-w-[200px] truncate"
-                        title={p.observacaoNegocio ?? undefined}
-                      >
+                      <td className="px-3 py-2.5 text-[var(--voux-text-muted)] min-w-[200px] max-w-[340px] whitespace-normal break-words leading-relaxed align-top">
                         {p.observacaoNegocio || "—"}
                       </td>
-                      <td className="px-3 py-2 text-right text-[var(--voux-text-muted)] whitespace-nowrap">
+                      <td className="px-3 py-2.5 text-right text-[var(--voux-text-muted)] whitespace-nowrap tabular-nums align-top">
                         {p.dataFechamento ? formatDateTimeBR(p.dataFechamento) : "—"}
                       </td>
-                      <td className="px-3 py-2 text-right font-bold text-red-600 dark:text-red-400 whitespace-nowrap tabular-nums">
+                      <td className="px-3 py-2.5 text-right font-bold text-red-600 dark:text-red-400 whitespace-nowrap tabular-nums align-top">
                         {formatBRL(p.valorPerdido ?? 0)}
                       </td>
                     </tr>

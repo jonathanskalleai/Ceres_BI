@@ -79,14 +79,14 @@ describe("DesempenhoDetalheListas", () => {
     expect(screen.getByText("5")).toBeInTheDocument();
 
     // Pedidos Ganhos content visible by default
-    expect(screen.getByText("PED-001")).toBeInTheDocument();
+    expect(screen.getByText("#PED-001")).toBeInTheDocument();
     expect(screen.getByText("FAZENDA MODELO")).toBeInTheDocument();
     expect(screen.getByText("TRATOR 5075E")).toBeInTheDocument();
 
     // Switch to Negócios Perdidos
     fireEvent.click(screen.getByText("Negócios Perdidos"));
 
-    expect(screen.getByText("NEG-200")).toBeInTheDocument();
+    expect(screen.getByText("#NEG-200")).toBeInTheDocument();
     expect(screen.getByText("AGRO SOUSA")).toBeInTheDocument();
     expect(screen.getByText("COLHEITADEIRA S700")).toBeInTheDocument();
   });

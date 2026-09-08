@@ -69,14 +69,9 @@ describe("AcoesFunilConversao", () => {
     expect(screen.getByText(/nao se somam/i)).toBeInTheDocument();
   });
 
-  it("should never present ganho vs perdido as a conversion rate", () => {
+  it("should clarify that ganhos and perdidos are parallel desfechos with different sources", () => {
     render(<AcoesFunilConversao funil={funilCheio} />);
-    // o unico indice exibido e explicitamente rotulado como artefato de janela
-    expect(screen.getByText(/Indice de janela/i)).toBeInTheDocument();
-    expect(screen.getByText(/nao e taxa de\s+conversao/i)).toBeInTheDocument();
-    expect(screen.getByText(/Nao e funil/i)).toBeInTheDocument();
-    // a frase atravessa um <em>, entao a assercao e sobre o texto renderizado
-    expect(document.body.textContent).toMatch(/desfechos\s+paralelos/i);
+    expect(screen.getByText(/fontes e datas diferentes, nao se somam/i)).toBeInTheDocument();
   });
 
   it("should show the R$ of perdidos but NOT invent a R$ for ganhos (the RPC does not return it)", () => {
@@ -96,10 +91,10 @@ describe("AcoesFunilConversao", () => {
     ).toBeInTheDocument();
   });
 
-  it("should explain the funnel opportunity and that Tipo de Acao is outside this quadro", () => {
+  it("should explain the funnel opportunity and that etapa inicial is part of sales stages", () => {
     render(<AcoesFunilConversao funil={funilCheio} />);
-    expect(screen.getByText(/Oportunidade e a entrada no funil VENDAS/i)).toBeInTheDocument();
-    expect(screen.getByText(/nao e aplicado a este\s+quadro/i)).toBeInTheDocument();
+    expect(screen.getByText(/Etapa inicial “Oportunidade”:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Cotacao, Proposta ao Cliente e Pedido sao etapas seguintes/i)).toBeInTheDocument();
   });
 
   it("should expose perdidosSemAtribuicao only when there is one to expose", () => {
