@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   Flame,
   PieChart,
+  ChevronRight,
 } from "lucide-react";
 import { toISODate, formatBRL, formatDateBR } from "@/lib/dateUtils";
 import { useDesempenhoVendas } from "@/hooks/bi/useDesempenhoVendas";
@@ -21,6 +22,8 @@ import { DesempenhoTableCard } from "@/components/bi/desempenho/DesempenhoTableC
 import { DesempenhoDonutCard } from "@/components/bi/desempenho/DesempenhoDonutCard";
 import { DesempenhoDualLineChart } from "@/components/bi/desempenho/DesempenhoDualLineChart";
 import { DesempenhoDetalheListas } from "@/components/bi/desempenho/DesempenhoDetalheListas";
+import { PedidosGanhosModal } from "@/components/bi/desempenho/PedidosGanhosModal";
+import { NegociosPerdidosModal } from "@/components/bi/desempenho/NegociosPerdidosModal";
 import {
   DesempenhoFilterBar,
   type DesempenhoTab,
@@ -61,6 +64,10 @@ export default function BiDesempenhoVendas() {
 
   // Estado de Filtro Cruzado Interativo (PowerBI / Tableau Style)
   const [activeCrossFilter, setActiveCrossFilter] = useState<ActiveCrossFilter | null>(null);
+
+  // Modais de drill-down de pedidos ganhos e negócios perdidos
+  const [pedidosGanhosModalOpen, setPedidosGanhosModalOpen] = useState(false);
+  const [negociosPerdidosModalOpen, setNegociosPerdidosModalOpen] = useState(false);
 
   const handleCrossFilterClick = (type: ActiveCrossFilter["type"], label: string, value: string) => {
     if (activeCrossFilter?.type === type && activeCrossFilter.value.toLowerCase() === value.toLowerCase()) {
@@ -192,12 +199,15 @@ export default function BiDesempenhoVendas() {
           {/* Ribbon de KPIs Resumo de Vendas */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
             {/* KPI 1: Faturamento Ganhos */}
-            <div className="rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4 shadow-sm">
+            <div
+              onClick={() => setPedidosGanhosModalOpen(true)}
+              className="group relative cursor-pointer rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4 shadow-sm transition-all duration-200 hover:border-emerald-500/50 hover:shadow-md"
+            >
               <div className="flex items-center justify-between text-[var(--voux-text-muted)] mb-1">
                 <span className="text-[10px] font-bold tracking-wider uppercase font-mono">
                   Faturamento Ganho
                 </span>
-                <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400 transition-transform group-hover:scale-110" />
               </div>
               {isLoading ? (
                 <Skeleton className="h-7 w-28 bg-[var(--voux-skeleton)]" />
@@ -206,18 +216,26 @@ export default function BiDesempenhoVendas() {
                   <p className="text-[18px] md:text-[20px] font-bold text-emerald-700 dark:text-emerald-400">
                     <FormattedCurrency value={data.kpis.faturamento} />
                   </p>
-                  <p className="text-[10px] text-[var(--voux-text-muted)] mt-0.5">100% pedidos aprovados</p>
+                  <div className="flex items-center justify-between text-[10px] text-[var(--voux-text-muted)] mt-0.5 pt-1 border-t border-[var(--voux-card-border)]/40 font-mono">
+                    <span>100% aprovados</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 group-hover:underline inline-flex items-center">
+                      Ver pedidos <ChevronRight className="h-3 w-3 ml-0.5" />
+                    </span>
+                  </div>
                 </div>
               )}
             </div>
 
             {/* KPI 2: Quantidade de Pedidos Ganhos */}
-            <div className="rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4 shadow-sm">
+            <div
+              onClick={() => setPedidosGanhosModalOpen(true)}
+              className="group relative cursor-pointer rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4 shadow-sm transition-all duration-200 hover:border-emerald-500/50 hover:shadow-md"
+            >
               <div className="flex items-center justify-between text-[var(--voux-text-muted)] mb-1">
                 <span className="text-[10px] font-bold tracking-wider uppercase font-mono">
                   Pedidos Ganhos
                 </span>
-                <ShoppingCart className="h-4 w-4 text-primary" />
+                <ShoppingCart className="h-4 w-4 text-primary transition-transform group-hover:scale-110" />
               </div>
               {isLoading ? (
                 <Skeleton className="h-7 w-20 bg-[var(--voux-skeleton)]" />
@@ -226,7 +244,12 @@ export default function BiDesempenhoVendas() {
                   <p className="text-[18px] md:text-[20px] font-bold font-mono text-[var(--voux-text-primary)]">
                     {data.kpis.totalPedidos.toLocaleString("pt-BR")} <span className="text-xs font-normal">pedidos</span>
                   </p>
-                  <p className="text-[10px] text-[var(--voux-text-muted)] mt-0.5">Ativações no período</p>
+                  <div className="flex items-center justify-between text-[10px] text-[var(--voux-text-muted)] mt-0.5 pt-1 border-t border-[var(--voux-card-border)]/40 font-mono">
+                    <span>Ativações no período</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 group-hover:underline inline-flex items-center">
+                      Ver pedidos <ChevronRight className="h-3 w-3 ml-0.5" />
+                    </span>
+                  </div>
                 </div>
               )}
             </div>
@@ -252,12 +275,15 @@ export default function BiDesempenhoVendas() {
             </div>
 
             {/* KPI 4: Perdas no Período */}
-            <div className="rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4 shadow-sm">
+            <div
+              onClick={() => setNegociosPerdidosModalOpen(true)}
+              className="group relative cursor-pointer rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4 shadow-sm transition-all duration-200 hover:border-red-500/50 hover:shadow-md"
+            >
               <div className="flex items-center justify-between text-[var(--voux-text-muted)] mb-1">
                 <span className="text-[10px] font-bold tracking-wider uppercase font-mono text-red-600 dark:text-red-400">
                   Negócios Perdidos
                 </span>
-                <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                <XCircle className="h-4 w-4 text-red-600 dark:text-red-400 transition-transform group-hover:scale-110" />
               </div>
               {isLoading ? (
                 <Skeleton className="h-7 w-20 bg-[var(--voux-skeleton)]" />
@@ -266,9 +292,12 @@ export default function BiDesempenhoVendas() {
                   <p className="text-[18px] md:text-[20px] font-bold text-red-600 dark:text-red-400">
                     <FormattedCurrency value={data.kpis.valorPerdido} />
                   </p>
-                  <p className="text-[10px] text-[var(--voux-text-muted)] mt-0.5">
-                    {totalPerdidoCount} desistências/perdas
-                  </p>
+                  <div className="flex items-center justify-between text-[10px] text-[var(--voux-text-muted)] mt-0.5 pt-1 border-t border-[var(--voux-card-border)]/40 font-mono">
+                    <span>{totalPerdidoCount} perdas</span>
+                    <span className="text-red-600 dark:text-red-400 group-hover:underline inline-flex items-center">
+                      Ver perdas <ChevronRight className="h-3 w-3 ml-0.5" />
+                    </span>
+                  </div>
                 </div>
               )}
             </div>
@@ -514,12 +543,15 @@ export default function BiDesempenhoVendas() {
           {/* Ribbon de KPIs Dedicado para Perdas */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
             {/* KPI 1: Volume Total Perdido */}
-            <div className="rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4 shadow-sm">
+            <div
+              onClick={() => setNegociosPerdidosModalOpen(true)}
+              className="group relative cursor-pointer rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4 shadow-sm transition-all duration-200 hover:border-red-500/50 hover:shadow-md"
+            >
               <div className="flex items-center justify-between text-[var(--voux-text-muted)] mb-1">
                 <span className="text-[10px] font-bold tracking-wider uppercase font-mono text-red-600 dark:text-red-400">
                   Total Perdido
                 </span>
-                <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                <XCircle className="h-4 w-4 text-red-600 dark:text-red-400 transition-transform group-hover:scale-110" />
               </div>
               {isLoading ? (
                 <Skeleton className="h-7 w-28 bg-[var(--voux-skeleton)]" />
@@ -528,18 +560,26 @@ export default function BiDesempenhoVendas() {
                   <p className="text-[18px] md:text-[20px] font-bold text-red-600 dark:text-red-400">
                     <FormattedCurrency value={data.kpis.valorPerdido} />
                   </p>
-                  <p className="text-[10px] text-[var(--voux-text-muted)] mt-0.5">Volume de propostas perdidas</p>
+                  <div className="flex items-center justify-between text-[10px] text-[var(--voux-text-muted)] mt-0.5 pt-1 border-t border-[var(--voux-card-border)]/40 font-mono">
+                    <span>Volume de propostas</span>
+                    <span className="text-red-600 dark:text-red-400 group-hover:underline inline-flex items-center">
+                      Ver perdas <ChevronRight className="h-3 w-3 ml-0.5" />
+                    </span>
+                  </div>
                 </div>
               )}
             </div>
 
             {/* KPI 2: Oportunidades Perdidas */}
-            <div className="rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4 shadow-sm">
+            <div
+              onClick={() => setNegociosPerdidosModalOpen(true)}
+              className="group relative cursor-pointer rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4 shadow-sm transition-all duration-200 hover:border-red-500/50 hover:shadow-md"
+            >
               <div className="flex items-center justify-between text-[var(--voux-text-muted)] mb-1">
                 <span className="text-[10px] font-bold tracking-wider uppercase font-mono">
                   Negócios Perdidos
                 </span>
-                <AlertTriangle className="h-4 w-4 text-red-500" />
+                <AlertTriangle className="h-4 w-4 text-red-500 transition-transform group-hover:scale-110" />
               </div>
               {isLoading ? (
                 <Skeleton className="h-7 w-20 bg-[var(--voux-skeleton)]" />
@@ -548,7 +588,12 @@ export default function BiDesempenhoVendas() {
                   <p className="text-[18px] md:text-[20px] font-bold font-mono text-[var(--voux-text-primary)]">
                     {totalPerdidoCount.toLocaleString("pt-BR")} <span className="text-xs font-normal">negócios</span>
                   </p>
-                  <p className="text-[10px] text-[var(--voux-text-muted)] mt-0.5">Desistências e recusas no CRM</p>
+                  <div className="flex items-center justify-between text-[10px] text-[var(--voux-text-muted)] mt-0.5 pt-1 border-t border-[var(--voux-card-border)]/40 font-mono">
+                    <span>Desistências no CRM</span>
+                    <span className="text-red-600 dark:text-red-400 group-hover:underline inline-flex items-center">
+                      Ver perdas <ChevronRight className="h-3 w-3 ml-0.5" />
+                    </span>
+                  </div>
                 </div>
               )}
             </div>
@@ -574,12 +619,15 @@ export default function BiDesempenhoVendas() {
             </div>
 
             {/* KPI 4: Vendas Ganhas (Comparativo) */}
-            <div className="rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4 shadow-sm">
+            <div
+              onClick={() => setPedidosGanhosModalOpen(true)}
+              className="group relative cursor-pointer rounded-2xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4 shadow-sm transition-all duration-200 hover:border-emerald-500/50 hover:shadow-md"
+            >
               <div className="flex items-center justify-between text-[var(--voux-text-muted)] mb-1">
                 <span className="text-[10px] font-bold tracking-wider uppercase font-mono">
                   Ganhos (Benchmark)
                 </span>
-                <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400 transition-transform group-hover:scale-110" />
               </div>
               {isLoading ? (
                 <Skeleton className="h-7 w-20 bg-[var(--voux-skeleton)]" />
@@ -588,9 +636,12 @@ export default function BiDesempenhoVendas() {
                   <p className="text-[18px] md:text-[20px] font-bold text-emerald-700 dark:text-emerald-400">
                     <FormattedCurrency value={data.kpis.faturamento} />
                   </p>
-                  <p className="text-[10px] text-[var(--voux-text-muted)] mt-0.5">
-                    {data.kpis.totalPedidos} vendas aprovadas
-                  </p>
+                  <div className="flex items-center justify-between text-[10px] text-[var(--voux-text-muted)] mt-0.5 pt-1 border-t border-[var(--voux-card-border)]/40 font-mono">
+                    <span>{data.kpis.totalPedidos} aprovados</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 group-hover:underline inline-flex items-center">
+                      Ver pedidos <ChevronRight className="h-3 w-3 ml-0.5" />
+                    </span>
+                  </div>
                 </div>
               )}
             </div>
@@ -745,6 +796,27 @@ export default function BiDesempenhoVendas() {
           />
         </div>
       )}
+
+      {/* Modais de Detalhamento Nominal */}
+      <PedidosGanhosModal
+        open={pedidosGanhosModalOpen}
+        onOpenChange={setPedidosGanhosModalOpen}
+        from={filterOptions.from}
+        to={filterOptions.to}
+        vendedor={filterOptions.vendedor}
+        cidade={filterOptions.cidade}
+        periodoLabel={esteiraPeriodoLabel}
+      />
+
+      <NegociosPerdidosModal
+        open={negociosPerdidosModalOpen}
+        onOpenChange={setNegociosPerdidosModalOpen}
+        from={filterOptions.from}
+        to={filterOptions.to}
+        vendedor={filterOptions.vendedor}
+        cidade={filterOptions.cidade}
+        periodoLabel={esteiraPeriodoLabel}
+      />
     </div>
   );
 }
