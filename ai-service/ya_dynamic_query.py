@@ -49,6 +49,47 @@ DEFAULT_MIRROR_TABLES = {
     "mirror.sync_metadata",
 }
 MAX_RESULT_CHARS = 60_000
+SAFE_FUNCTIONS = {
+    "abs",
+    "array_agg",
+    "avg",
+    "btrim",
+    "cast",
+    "ceil",
+    "ceiling",
+    "coalesce",
+    "count",
+    "date_part",
+    "date_trunc",
+    "extract",
+    "floor",
+    "greatest",
+    "json_agg",
+    "jsonb_agg",
+    "least",
+    "lower",
+    "ltrim",
+    "max",
+    "min",
+    "nullif",
+    "regexp_replace",
+    "round",
+    "rtrim",
+    "string_agg",
+    "sum",
+    "timestamp_trunc",
+    "to_char",
+    "trim",
+    "upper",
+}
+BLOCKED_CONTEXT_EXPRESSIONS = {
+    "CurrentCatalog",
+    "CurrentRole",
+    "CurrentSchema",
+    "CurrentUser",
+    "CurrentVersion",
+    "SessionUser",
+}
 SENSITIVE_KEY = re.compile(
     r"(?:cpf|cnpj|email|telefone|phone|senha|password|token|secret|authorization|api[_-]?key|documento|cliente[_-]?id|user[_-]?id|cli_idcliente|chassi|serie)",
     re.IGNORECASE,
@@ -268,6 +309,14 @@ def _validate_sql_ast(sql: str, known_tables: set[str] | None) -> None:
         raise DynamicQueryValidationError("Operações de conjunto não são permitidas na exploração.")
     if any(join.kind and join.kind.upper() == "CROSS" for join in tree.find_all(exp.Join)):
         raise DynamicQueryValidationError("CROSS JOIN não é permitido na exploração.")
+    for node in tree.walk():
+        node_type = type(node).__name__
+        if node_type in BLOCKED_CONTEXT_EXPRESSIONS:
+            raise DynamicQueryValidationError("A consulta não pode acessar o contexto interno do banco.")
+        if isinstance(node, exp.Func):
+            function_name = node.name if isinstance(node, exp.Anonymous) else node.sql_name()
+            if str(function_name or "").casefold() not in SAFE_FUNCTIONS:
+                raise DynamicQueryValidationError("A consulta contém uma função não permitida.")
 
     cte_names = {
         cte.alias_or_name.casefold()

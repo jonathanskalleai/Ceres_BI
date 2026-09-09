@@ -39,6 +39,8 @@ class YaDynamicQueryTests(unittest.TestCase):
             "SELECT pg_stat_file('x') FROM mirror.crm_negocios",
             "SELECT version() FROM mirror.crm_negocios",
             'SELECT "public"."version"() FROM mirror.crm_negocios',
+            "SELECT rpc_ya_cliente_360('a', CURRENT_DATE, CURRENT_DATE) AS cliente_data FROM mirror.sync_control",
+            "SELECT current_user AS db_role FROM mirror.sync_control",
             "WITH RECURSIVE tree AS (SELECT 1) SELECT 1 FROM mirror.crm_negocios",
             "SELECT COUNT(*) FROM mirror.crm_negocios; SELECT 1",
             "SELECT n.ngo_numero, p.pdo_codigointerno FROM mirror.crm_negocios n CROSS JOIN mirror.crm_pedidos p",
