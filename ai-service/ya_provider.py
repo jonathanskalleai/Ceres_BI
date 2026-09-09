@@ -16,6 +16,7 @@ from ai_logger import log_event, log_exception
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 YA_MODEL = os.getenv("YA_CHAT_MODEL", os.getenv("OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct"))
+PROVIDER_TIMEOUT = float(os.getenv("YA_PROVIDER_TIMEOUT", "120.0"))
 
 
 def _headers() -> dict[str, str]:
@@ -59,7 +60,7 @@ async def complete(
     if session_id:
         payload["session_id"] = session_id[:256]
     try:
-        async with httpx.AsyncClient(timeout=90.0) as client:
+        async with httpx.AsyncClient(timeout=PROVIDER_TIMEOUT) as client:
             response = await client.post(OPENROUTER_URL, json=payload, headers=_headers())
             response.raise_for_status()
             body = response.json()
@@ -91,7 +92,7 @@ async def complete_structured(
     if session_id:
         payload["session_id"] = session_id[:256]
     try:
-        async with httpx.AsyncClient(timeout=90.0) as client:
+        async with httpx.AsyncClient(timeout=PROVIDER_TIMEOUT) as client:
             response = await client.post(OPENROUTER_URL, json=payload, headers=_headers())
             response.raise_for_status()
             body = response.json()
@@ -131,7 +132,7 @@ async def complete_with_tools(
     if session_id:
         payload["session_id"] = session_id[:256]
     try:
-        async with httpx.AsyncClient(timeout=90.0) as client:
+        async with httpx.AsyncClient(timeout=PROVIDER_TIMEOUT) as client:
             response = await client.post(OPENROUTER_URL, json=payload, headers=_headers())
             response.raise_for_status()
             body = response.json()

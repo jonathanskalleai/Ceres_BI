@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import time
 import uuid
 from datetime import datetime, timezone
@@ -51,7 +52,7 @@ from ya_schema import load_schema
 MAX_MODEL_ROUNDS = 6
 MAX_TOOL_CALLS = 8
 MAX_EXPLORATORY_CALLS = 2
-MAX_TOTAL_SECONDS = 90
+MAX_TOTAL_SECONDS = int(os.getenv("YA_AGENT_MAX_TOTAL_SECONDS", "180"))
 MEMORY_WRITE_TOOLS = {"guardar_memoria_usuario", "esquecer_memoria_usuario"}
 EventCallback = Callable[[str, dict[str, Any]], Awaitable[None]]
 

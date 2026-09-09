@@ -70,6 +70,17 @@ async def resolve_turn(
             0,
             0,
         )
+    fast_raw = _deterministic_fast_match(request, state, last_sources)
+    if fast_raw is not None:
+        try:
+            fast_contract = replace(
+                _build_contract(fast_raw, request, state, last_sources, today),
+                classifier_status="fast_match",
+            )
+            log_event(logging.INFO, "ai_agent_intent_fast_match", intent=fast_contract.intent)
+            return ContractResolution(fast_contract, fast_raw, 0, 0)
+        except Exception as fast_error:
+            log_event(logging.WARNING, "ai_agent_intent_fast_match_failed", error_type=type(fast_error).__name__)
     try:
         response = await classifier(
             [
@@ -152,7 +163,7 @@ def _classifier_content(response: Any) -> tuple[str, dict[str, Any]]:
 def _deterministic_fast_match(request: YaChatRequest, state: dict[str, Any], sources: list[YaSource]) -> dict[str, Any] | None:
     """Instantly resolve unambiguous queries without waiting for classifier LLM latency."""
     message = request.message.casefold().strip()
-    if any(fragment in message for fragment in ("até agora", "ate agora", "até o momento", "ate o momento")):
+    if any(fragment in message for fragment in ("até agora", "ate agora", "até o momento", "ate o momento", "inteiro", "completo", "todo o", "todos os")):
         return None
 
     comparison = any(fragment in message for fragment in ("comparad", "compare", "comparar", "versus", " x ", "diferença entre", "diferenca entre"))
