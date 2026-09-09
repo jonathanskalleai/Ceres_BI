@@ -23,9 +23,9 @@ Escolha exatamente um intent:
 Para o recorte, escolha um period_request:
 current_to_date, current_full, previous_full, previous_to_date, same_elapsed,
 inherit, explicit ou none. Para comparação, escolha comparison_scope:
-full_previous, same_elapsed ou ask. Use ask quando o usuário comparar o mês
-atual já transcorrido com “mês passado” sem dizer se quer o mês anterior
-inteiro ou os mesmos dias transcorridos.
+same_elapsed (padrão ao comparar este mês com o mês passado),
+full_previous (quando pedir o mês passado inteiro) ou ask (somente quando
+o usuário usar explicitamente 'até agora' ou 'até o momento' com ambiguidade).
 
 Use metricas somente quando forem claras. Prefira estes IDs: vendas.faturamento,
 vendas.pedidos_aprovados, vendas.ticket_medio, vendas.valor_perdido,

@@ -405,10 +405,10 @@ def _comparison_scope(value: Any, message: str) -> str:
         return "full_previous"
     if any(fragment in message for fragment in ("mesmos dias", "mesmo período", "mesmo periodo", "primeiros dias")):
         return "same_elapsed"
-    if any(fragment in message for fragment in ("até agora", "ate agora", "até o momento", "ate o momento")) and mentions_previous(message):
-        return "ask"
-    if normalized in {"full_previous", "same_elapsed", "ask"}:
+    if normalized in {"full_previous", "same_elapsed"}:
         return normalized
+    if normalized == "ask" and any(fragment in message for fragment in ("até agora", "ate agora", "até o momento", "ate o momento")):
+        return "ask"
     return "same_elapsed"
 
 
