@@ -39,8 +39,8 @@ antes de deixar o modelo redigir.
 
 ## Checklist antes de declarar DONE
 
-- [x] suíte backend local verde;
-- [ ] Vitest, TypeScript, build e lint direcionado verdes no estado final;
+- [x] suíte backend local verde (100 testes no SHA `757a37d`);
+- [x] Vitest (200 testes), TypeScript, build e lint direcionado verdes no estado local;
 - [ ] reviewer PASS ancorado ao SHA final;
 - [ ] security PASS/SECURE ancorado ao SHA final;
 - [ ] QA PASS com regressão e smoke;
@@ -48,6 +48,15 @@ antes de deixar o modelo redigir.
 - [ ] push e SHA remoto verificados;
 - [ ] boot/health/serviços e smoke autenticado golden verificados;
 - [ ] documentação atualizada com SHA efetivamente publicado.
+
+O SHA local atual é `757a37d963bb7588e248c846181edde513f9ed7e`; o remoto ainda é
+`de774d52be7bedaa67b6621f82bee0c5c9c3a61d`. O veredito de reviewer disponível
+em `.aivoux/gates/reviewer-verdict.json` pertence a `7f53696`, e os vereditos de
+security/QA disponíveis pertencem a `2ce52bd`; nenhum pode ser reutilizado.
+
+As tentativas de reviewer e security expiraram duas vezes conforme F6. Não
+seguir para QA, push ou deploy sem novos vereditos ancorados ao SHA atual. O
+error tracking externo e o smoke autenticado também continuam obrigatórios.
 
 ## Regra de segurança operacional
 

@@ -4,6 +4,8 @@ status: PENDING_REVIEW
 mode: DEVELOPMENT
 category: FEATURE+DB
 base_sha: 411b64e870b6258469f7c4714935ec5a734f8cc7
+current_local_sha: 757a37d963bb7588e248c846181edde513f9ed7e
+current_remote_sha: de774d52be7bedaa67b6621f82bee0c5c9c3a61d
 plan: docs/plans/2026-09-08-agente-analitico-v2.md
 objective: Implementar o Agente Analítico Conversacional v2 com tool calling real, memória, evidência e UX responsiva para Equipe, Ações e Desempenho de Vendas.
 
@@ -58,12 +60,12 @@ files:
     - docs/architecture/ya-agent-v2-implementation.md
 
 validation:
-  backend_unit: "74 testes OK via unittest em ambiente temporário com as dependências do serviço"
+  backend_unit: "100 testes OK via unittest em ambiente temporário com as dependências do serviço"
   backend_compile: "python -m compileall OK"
-  frontend_unit: "23 arquivos / 198 testes OK"
+  frontend_unit: "23 arquivos / 200 testes OK"
   frontend_typescript: "tsc --noEmit OK"
   frontend_build: "npm run build OK; somente aviso de chunks grandes do Vite"
-  frontend_targeted_lint: "ESLint dos arquivos v2 OK"
+  frontend_targeted_lint: "ESLint dos arquivos v2 e reporter/client REST OK"
   repository_lint: "npm run lint continua falhando com baseline preexistente: 126 erros e 26 avisos fora do escopo v2"
   diff_check: "git diff --check OK nos arquivos rastreados alterados"
 
@@ -73,7 +75,7 @@ runtime_validation:
   preview_smoke: PENDENTE
   golden_factual_conciliation: PENDENTE
   migration_application: "APLICADA em 2026-09-09 03:32 UTC no ceres-prod/178.238.235.203; commit e pós-check do schema confirmados"
-  publish_or_deploy: "PUBLICADO em 2026-09-09 no ceres-prod; SHA final 2ce52bd4ee237c61c628f98cd9545f44998fac3f; web/AI 1/1; flags v2 ativas"
+  publish_or_deploy: "NÃO PUBLICADO para o SHA atual; o histórico abaixo registra somente o deploy anterior do SHA 2ce52bd4ee237c61c628f98cd9545f44998fac3f"
 
 known_pending:
   - "Validar em preview autenticado as assinaturas, permissões, frescor e números das RPCs vivas do BI."
@@ -82,12 +84,15 @@ known_pending:
   - "Validar os overrides padrão, todos os funis e somente REPASSE DE MAQUINA; neste checkout local as RPCs históricas não aceitam p_funis e o gateway falha fechado."
   - "Executar smoke autenticado com usuário e administrador: saudação, duas perguntas na mesma thread, tool calling real, SSE, memória e números conciliados com os dashboards."
   - "No momento, 2 contas têm bi.ya e ambas são admin; conceder bi.ya a um usuário comum antes do teste desse perfil."
-  - "Executar reviewer; os módulos ya_agent.py, ya_memory.py e official.py ainda exigem revisão de tamanho/estrutura no gate posterior."
-  - "Executar security condicional e QA conforme o blast radius antes de qualquer merge/release."
+  - "Reviewer do SHA 757a37d expirou na execução inicial e na única retentativa F6; o arquivo reviewer-verdict.json ainda está ancorado a 7f53696."
+  - "Security condicional expirou nas duas tentativas F6; o security-verdict.json existente é histórico e está ancorado a 2ce52bd."
+  - "QA não pode começar antes de reviewer/security atuais."
+  - "Smoke autenticado golden não foi possível nesta sessão porque não há navegador conectado/sessão autenticada."
+  - "Error tracking externo não está configurado nem recebeu evento de teste."
 
 safety:
   - "O código mantém YA_AGENT_V2_ENABLED=false por padrão; a produção está explicitamente com a flag true para teste autorizado."
   - "O chat legado foi preservado para rollback."
   - "A migration é aditiva/idempotente; foi aplicada somente no banco Supabase self-hosted do Ceres BI após autorização explícita do usuário."
-  - "O código foi publicado no SHA 2ce52bd4ee237c61c628f98cd9545f44998fac3f; o chat legado permanece disponível para rollback desligando as flags."
+  - "O deploy do SHA 2ce52bd4ee237c61c628f98cd9545f44998fac3f é histórico; o SHA local 757a37d ainda não foi enviado nem publicado. O chat legado permanece disponível para rollback desligando as flags."
   - "Procedimento canônico e diferença entre ceres-prod e ceres-vps estão documentados em docs/architecture/production-runtime.md e no handoff da migration."

@@ -2,11 +2,13 @@
 feature: ya-agent-v2
 updated_at: 2026-09-09T00:00:00-03:00
 updated_by: codex
-status: full-pipeline-pending-runtime-release
+status: full-pipeline-pending-gates-and-runtime-release
 plan: docs/plans/2026-09-08-agente-analitico-v2.md
 ---
 
 # Agente Analítico Conversacional v2
+
+Auditoria de conclusão atual: [`docs/handoff/2026-09-09-ya-agent-v2-completion-audit.md`](../handoff/2026-09-09-ya-agent-v2-completion-audit.md).
 
 Este é o documento operacional do agente descrito no Plano v2. Ele existe para
 que uma correção futura não volte ao fluxo antigo de resposta fixa, uma única
