@@ -8,8 +8,7 @@ function safeFields(fields?: LogFields): LogFields {
 }
 
 export function logClientError(event: string, error: unknown, fields?: LogFields): void {
-  const detail = error instanceof Error ? error.message : "unknown_error";
-  console.error(`[${event}]`, { error: detail.slice(0, 240), ...safeFields(fields) });
+  reportClientError(event, error, fields);
 }
 
 export function logClientWarning(event: string, error: unknown, fields?: LogFields): void {

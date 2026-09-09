@@ -179,7 +179,8 @@ export interface AIChatStreamHandlers {
 export type YaFeedbackType = "useful" | "incorrect_number" | "insufficient_source";
 
 export async function sendYaChat(request: YaChatRequest): Promise<YaChatResponse> {
-  const response = await fetchAI("/api/ai/chat", {
+  const v2Enabled = import.meta.env.VITE_YA_AGENT_V2_ENABLED === "true";
+  const response = await fetchAI(v2Enabled ? "/api/ai/v2/chat" : "/api/ai/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(request),

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fetchAI } from "@/lib/fetchAI";
-import { readEvent, streamAIChat } from "@/services/yaChatService";
+import { readEvent, sendYaChat, streamAIChat } from "@/services/yaChatService";
 
 vi.mock("@/lib/fetchAI", () => ({ fetchAI: vi.fn() }));
 
@@ -107,5 +107,31 @@ describe("streamAIChat", () => {
   it("rejects malformed event JSON without breaking the parser", () => {
     expect(readEvent("event: status\ndata: {not-json}\n\n")).toBeNull();
     expect(readEvent("event: status\ndata: {\"message\":\"ok\"}\n\n")).toEqual({ event: "status", data: { message: "ok" } });
+  });
+});
+
+describe("sendYaChat", () => {
+  beforeEach(() => {
+    mockedFetchAI.mockReset();
+  });
+
+  it("uses the v2 REST endpoint when the feature flag is enabled", async () => {
+    vi.stubEnv("VITE_YA_AGENT_V2_ENABLED", "true");
+    mockedFetchAI.mockResolvedValue(new Response(JSON.stringify({ answer: "ok" }), { status: 200 }));
+
+    await sendYaChat({ message: "resultado", context: { route: "/bi", filters: {} } });
+
+    expect(mockedFetchAI.mock.calls[0]?.[0]).toBe("/api/ai/v2/chat");
+    vi.unstubAllEnvs();
+  });
+
+  it("keeps the legacy REST endpoint available when v2 is disabled", async () => {
+    vi.stubEnv("VITE_YA_AGENT_V2_ENABLED", "false");
+    mockedFetchAI.mockResolvedValue(new Response(JSON.stringify({ answer: "ok" }), { status: 200 }));
+
+    await sendYaChat({ message: "resultado", context: { route: "/bi", filters: {} } });
+
+    expect(mockedFetchAI.mock.calls[0]?.[0]).toBe("/api/ai/chat");
+    vi.unstubAllEnvs();
   });
 });
