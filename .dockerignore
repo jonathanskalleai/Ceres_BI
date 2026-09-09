@@ -27,8 +27,10 @@ docs
 
 # Local-only artifacts
 *.local
+.env
+.env.*
 coverage
 playwright-report
 test-results
 
-# NOTE: .env is intentionally NOT ignored — VITE_* vars are inlined at build time.
+# Public VITE_* values are passed explicitly as Docker build arguments by deploy.sh.

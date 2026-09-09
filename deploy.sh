@@ -62,6 +62,9 @@ CERESBI_AI_YA_AGENT_V2_ENABLED="$(read_env_value CERESBI_AI_YA_AGENT_V2_ENABLED)
 CERESBI_AI_YA_AGENT_V2_ENABLED="${CERESBI_AI_YA_AGENT_V2_ENABLED:-false}"
 VITE_YA_AGENT_V2_ENABLED="$(read_env_value VITE_YA_AGENT_V2_ENABLED)"
 VITE_ERROR_TRACKING_ENDPOINT="$(read_env_value VITE_ERROR_TRACKING_ENDPOINT)"
+VITE_SUPABASE_URL="$(read_env_value VITE_SUPABASE_URL)"
+VITE_SUPABASE_PUBLISHABLE_KEY="$(read_env_value VITE_SUPABASE_PUBLISHABLE_KEY)"
+VITE_SUPABASE_SERVICE_ROLE_KEY="$(read_env_value VITE_SUPABASE_SERVICE_ROLE_KEY)"
 SUPABASE_JWT_SECRET="${SUPABASE_JWT_SECRET:-$(read_env_value SUPABASE_JWT_SECRET)}"
 export CERESBI_AI_OPENROUTER_API_KEY CERESBI_AI_DATABASE_URL CERESBI_AI_JOB_TOKEN CERESBI_AI_YA_AGENT_V2_ENABLED SUPABASE_JWT_SECRET
 
@@ -71,6 +74,18 @@ for required in CERESBI_AI_OPENROUTER_API_KEY CERESBI_AI_DATABASE_URL CERESBI_AI
     exit 1
   fi
 done
+
+for required in VITE_SUPABASE_URL VITE_SUPABASE_PUBLISHABLE_KEY; do
+  if [ -z "${!required:-}" ]; then
+    echo "ERROR: ${required} is missing from .env" >&2
+    exit 1
+  fi
+done
+
+if [ -n "${VITE_SUPABASE_SERVICE_ROLE_KEY}" ]; then
+  echo "ERROR: VITE_SUPABASE_SERVICE_ROLE_KEY must never be configured for the web build" >&2
+  exit 1
+fi
 
 if [ "${CERESBI_AI_YA_AGENT_V2_ENABLED}" = "true" ]; then
   if [ "${VITE_YA_AGENT_V2_ENABLED}" != "true" ]; then
@@ -103,7 +118,12 @@ CERESBI_AI_IMAGE="ceresbi-ai:${GIT_SHA}"
 export CERESBI_WEB_IMAGE CERESBI_AI_IMAGE
 
 echo "==> Building web image ${CERESBI_WEB_IMAGE}..."
-docker build -t "${CERESBI_WEB_IMAGE}" .
+docker build \
+  --build-arg "VITE_SUPABASE_URL=${VITE_SUPABASE_URL}" \
+  --build-arg "VITE_SUPABASE_PUBLISHABLE_KEY=${VITE_SUPABASE_PUBLISHABLE_KEY}" \
+  --build-arg "VITE_YA_AGENT_V2_ENABLED=${VITE_YA_AGENT_V2_ENABLED}" \
+  --build-arg "VITE_ERROR_TRACKING_ENDPOINT=${VITE_ERROR_TRACKING_ENDPOINT}" \
+  -t "${CERESBI_WEB_IMAGE}" .
 
 if [ "${CERESBI_AI_YA_AGENT_V2_ENABLED}" = "true" ] && ! docker run --rm --entrypoint sh "${CERESBI_WEB_IMAGE}" -c 'grep -R -F -q "/api/ai/v2/chat/stream" /usr/share/nginx/html'; then
   echo "ERROR: the web bundle does not contain the v2 streaming route" >&2

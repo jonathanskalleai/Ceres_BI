@@ -4,6 +4,17 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 
+# Only public browser configuration enters this stage. Server secrets stay in
+# the AI service environment and are never copied into the web build context.
+ARG VITE_SUPABASE_URL=""
+ARG VITE_SUPABASE_PUBLISHABLE_KEY=""
+ARG VITE_YA_AGENT_V2_ENABLED="false"
+ARG VITE_ERROR_TRACKING_ENDPOINT=""
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL \
+    VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY \
+    VITE_YA_AGENT_V2_ENABLED=$VITE_YA_AGENT_V2_ENABLED \
+    VITE_ERROR_TRACKING_ENDPOINT=$VITE_ERROR_TRACKING_ENDPOINT
+
 # Install deps first for better layer caching (only re-runs if lock changes)
 COPY package.json package-lock.json ./
 RUN npm ci
