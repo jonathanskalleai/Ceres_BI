@@ -94,6 +94,20 @@ async def execute_compare(context: ToolContext, input_data: CompareToolInput, ca
             blocos=["kpis"],
             apresentacao="kpi_group",
         ), f"{call_id}-base")
+        baseline_full = None
+        import calendar
+        _, last_day_prev = calendar.monthrange(input_data.periodo_base_inicio.year, input_data.periodo_base_inicio.month)
+        full_month_end = input_data.periodo_base_inicio.replace(day=last_day_prev)
+        if full_month_end > input_data.periodo_base_fim:
+            baseline_full = await execute_sales(context, SalesToolInput(
+                periodo_inicio=input_data.periodo_base_inicio.replace(day=1),
+                periodo_fim=full_month_end,
+                filtros=input_data.filtros,
+                modo_funil=input_data.modo_funil,
+                funis_selecionados=input_data.funis_selecionados,
+                blocos=["kpis"],
+                apresentacao="kpi_group",
+            ), f"{call_id}-base-full")
     elif input_data.dominio == "acoes":
         current = await execute_actions(context, ActionsToolInput(
             periodo_inicio=input_data.periodo_atual_inicio,
@@ -146,6 +160,14 @@ async def execute_compare(context: ToolContext, input_data: CompareToolInput, ca
         })
     current_days = _period_days(input_data.periodo_atual_inicio, input_data.periodo_atual_fim)
     baseline_days = _period_days(input_data.periodo_base_inicio, input_data.periodo_base_fim)
+    month_full_info = None
+    if "baseline_full" in locals() and baseline_full:
+        month_full_info = {
+            "inicio": input_data.periodo_base_inicio.replace(day=1).isoformat(),
+            "fim": full_month_end.isoformat(),
+            "dias": last_day_prev,
+            "metricas": {m: _metric_value(baseline_full.data, m) for m in input_data.metricas},
+        }
     data = compact_result({
         "status": "computed",
         "dominio": input_data.dominio,
@@ -153,9 +175,14 @@ async def execute_compare(context: ToolContext, input_data: CompareToolInput, ca
         "periodo_atual": {"inicio": input_data.periodo_atual_inicio.isoformat(), "fim": input_data.periodo_atual_fim.isoformat(), "dias": current_days},
         "periodo_base": {"inicio": input_data.periodo_base_inicio.isoformat(), "fim": input_data.periodo_base_fim.isoformat(), "dias": baseline_days},
         "duracoes_diferentes": current_days != baseline_days,
+        "mes_anterior_fechado": month_full_info,
         "conceito": "Os dois períodos usam os mesmos filtros e o mesmo contrato oficial.",
     })
     source_id = f"comparacao:{context.conversation_id}:{call_id}"
+    warnings = ["As janelas têm durações diferentes; a comparação deve ser interpretada com essa cobertura."] if current_days != baseline_days else []
+    if month_full_info:
+        import json as _json
+        warnings.append(f"Mês anterior fechado completo ({month_full_info['inicio']} a {month_full_info['fim']}): {_json.dumps(month_full_info['metricas'])}")
     source = source_for(
         source_id=source_id,
         label="Comparação de períodos",
@@ -170,7 +197,7 @@ async def execute_compare(context: ToolContext, input_data: CompareToolInput, ca
             "modo_funil": input_data.modo_funil,
             "funis_selecionados": input_data.funis_selecionados,
         },
-        warnings=["As janelas têm durações diferentes; a comparação deve ser interpretada com essa cobertura." ] if current_days != baseline_days else [],
+        warnings=warnings,
         elapsed_ms=round((__import__("time").monotonic() - started) * 1000),
         row_count=len(comparisons),
         competence=["aprovação do pedido", "fechamento do negócio"] if input_data.dominio == "vendas" else None,

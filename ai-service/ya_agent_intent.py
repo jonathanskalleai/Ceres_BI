@@ -44,6 +44,27 @@ async def resolve_turn(
         # test. Production always supplies ``complete_structured``.
         return ContractResolution(_compatibility_contract())
     today = datetime.now(BUSINESS_TIMEZONE).date()
+    lower_msg = request.message.strip().lower()
+    GREETING_WORDS = {
+        "ola", "olá", "oi", "bom dia", "boa tarde", "boa noite", "opa",
+        "ola!", "olá!", "oi!", "tudo bem", "tudo bem?", "como vai", "como vai?", "ola.", "olá.", "oi."
+    }
+    if lower_msg in GREETING_WORDS or (len(lower_msg) <= 20 and any(lower_msg.startswith(w) for w in ("olá", "ola", "oi ", "bom dia", "boa tarde", "boa noite", "opa "))):
+        return ContractResolution(
+            TurnContract(
+                intent="casual",
+                domain="conversation",
+                choices=(),
+                requires_evidence=False,
+                required_tool=None,
+                clarification_text=None,
+                resolution_status="resolved",
+                classifier_status="fast_match",
+            ),
+            {"intent": "casual", "domain": "conversation"},
+            0,
+            0,
+        )
     try:
         response = await classifier(
             [

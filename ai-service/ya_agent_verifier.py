@@ -58,7 +58,14 @@ def _numeric_forms(text: str) -> set[str]:
             try:
                 forms.add(str(round(val)))
                 forms.add(str(int(val)))
-            except (ValueError, OverflowError):
+                for r in (1, 2):
+                    rounded = round(val, r)
+                    d = Decimal(str(rounded)).normalize()
+                    formatted = format(d, "f")
+                    if "." in formatted:
+                        formatted = formatted.rstrip("0").rstrip(".")
+                    forms.add(formatted or "0")
+            except (ValueError, OverflowError, InvalidOperation):
                 pass
     return forms
 

@@ -13,7 +13,7 @@ const ISO_DATE_TOKEN = /\b(20\d{2})-(\d{2})-(\d{2})\b/g;
 const US_DATE_TOKEN = /\b(\d{1,2})\/(\d{1,2})\/(20\d{2})\b/g;
 
 function parseNumber(value: string): number | null {
-  const clean = value.replace(/\s/g, "");
+  const clean = value.replace(/\s/g, "").replace(/[.,;:!?]+$/, "");
   if (!clean) return null;
   const lastComma = clean.lastIndexOf(",");
   const lastDot = clean.lastIndexOf(".");
@@ -48,8 +48,9 @@ function parseNumber(value: string): number | null {
 }
 
 function formatCurrencyToken(_match: string, _prefix: string, rawValue: string): string {
+  const trailing = rawValue.match(/[.,;:!?]+$/)?.[0] ?? "";
   const value = parseNumber(rawValue);
-  return value === null ? _match : BRL_FORMATTER.format(value).replace(/\u00a0/g, " ");
+  return value === null ? _match : `${BRL_FORMATTER.format(value).replace(/\u00a0/g, " ")}${trailing}`;
 }
 
 function formatIsoDateTime(_match: string, year: string, month: string, day: string, hour: string, minute: string): string {

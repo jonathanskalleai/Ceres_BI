@@ -5,6 +5,8 @@ describe("ya chat formatters", () => {
   it("formats model currency, dates and percentages for Brazil", () => {
     expect(formatChatText("Faturamento: $ 1,234.56 em 2026-09-08; conversão 12.5%."))
       .toBe("Faturamento: R$ 1.234,56 em 08/09/2026; conversão 12,5%.");
+    expect(formatChatText("O faturamento foi de R$ 225.300,00, enquanto em agosto foi de R$ 52.700,00."))
+      .toBe("O faturamento foi de R$ 225.300,00, enquanto em agosto foi de R$ 52.700,00.");
   });
 
   it("normalizes an unambiguous US date without changing an ambiguous date", () => {

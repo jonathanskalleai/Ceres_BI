@@ -118,6 +118,9 @@ class AgentRunner:
                 final_answer = contract.clarification_text or "Pode esclarecer qual recorte você quer comparar?"
                 choices_result = choices(list(contract.choices))
                 break
+            if contract.intent == "casual":
+                final_answer = "Olá! Seja bem-vindo ao Ceres BI. Estou aqui para ajudar com análises de vendas, faturamento, pedidos aprovados, perdas, rankings e comparações de períodos. Como posso ajudar você hoje?"
+                break
             if time.monotonic() - started >= MAX_TOTAL_SECONDS:
                 limit_reached = True
                 break

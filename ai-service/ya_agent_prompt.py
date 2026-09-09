@@ -15,7 +15,7 @@ from ya_memory import ThreadMemory, json_default
 from ya_models import YaChatRequest
 
 
-PROMPT_VERSION = "ya-agent-v2.3"
+PROMPT_VERSION = "ya-agent-v2.4"
 MAX_HISTORY_MESSAGES = int(os.getenv("YA_AGENT_HISTORY_MESSAGES", "18"))
 MAX_MEMORY_CHARS = int(os.getenv("YA_AGENT_MEMORY_CONTEXT_CHARS", "10_000"))
 BUSINESS_TIMEZONE = ZoneInfo("America/Sao_Paulo")
@@ -61,7 +61,13 @@ BUSINESS_RULES_BLOCK = """REGRAS DE NEGÓCIO ESSENCIAIS DO CERES BI:
    - Especifique sempre as colunas explicitamente (NUNCA utilize `SELECT *`).
    - Utilize JOINs explícitos (`JOIN ... ON ...`). Não utilize vírgula no FROM.
    - Não use comentários SQL (`--` ou `/* */`).
-   - Não utilize `UNION` / `INTERSECT`. Se precisar de dados de dois períodos, faça duas consultas ou use agregação condicional `CASE WHEN`."""
+   - Não utilize `UNION` / `INTERSECT`. Se precisar de dados de dois períodos, faça duas consultas ou use agregação condicional `CASE WHEN`.
+
+6. COMPARAÇÃO COM MÊS ANTERIOR (MÊS PARCIAL vs MÊS CHEIO):
+   - Quando comparar um mês parcial em andamento com o mês anterior (ex: primeiros N dias deste mês):
+     * Apresente a comparação proporcional dos mesmos dias decorridos (MTD: ex. 01 a 09 deste mês vs 01 a 09 do mês passado), calculando as variações percentuais.
+     * Além disso, forneça SEMPRE o contexto do total fechado do mês anterior completo (ex: "No mês de agosto inteiro foram X pedidos aprovados somando R$ Y"), para que o gestor tenha clareza de que o mês anterior fechou com mais pedidos, mas na mesma janela proporcional o comparativo foi o indicado.
+   - Formatação monetária: declare valores em reais no formato exato da ferramenta (ex: R$ 225.300,00). Nunca multiplique por 100 ou altere grandezas."""
 
 _LANGUAGE_BLOCK = """Linguagem e apresentação:
 - Nunca exponha senhas, tokens ou credenciais.
