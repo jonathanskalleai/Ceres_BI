@@ -137,13 +137,14 @@ class AgentRunner:
             else:
                 tool_choice_mode = "auto"
 
+            round_max_tokens = 280 if tool_choice_mode != "none" else 1_200
             try:
                 response = await asyncio.wait_for(
                     self.provider(
                         messages,
                         TOOL_DEFINITIONS,
                         temperature=0.1,
-                        max_tokens=1_400,
+                        max_tokens=round_max_tokens,
                         session_id=conversation_id,
                         tool_choice=tool_choice_mode,
                     ),

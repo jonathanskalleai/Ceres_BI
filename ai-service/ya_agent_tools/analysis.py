@@ -168,14 +168,41 @@ async def execute_compare(context: ToolContext, input_data: CompareToolInput, ca
             "dias": last_day_prev,
             "metricas": {m: _metric_value(baseline_full.data, m) for m in input_data.metricas},
         }
+    MONTH_NAMES_PT = {
+        1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril",
+        5: "Maio", 6: "Junho", 7: "Julho", 8: "Agosto",
+        9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro",
+    }
+    cur_m = MONTH_NAMES_PT.get(input_data.periodo_atual_inicio.month, "")
+    base_m = MONTH_NAMES_PT.get(input_data.periodo_base_inicio.month, "")
+    cur_name = f"{cur_m}/{input_data.periodo_atual_inicio.year}"
+    base_name = f"{base_m}/{input_data.periodo_base_inicio.year}"
+
+    for comp in comparisons:
+        m_id = comp.get("metrica", "")
+        comp["indicador"] = {
+            "vendas.faturamento": "Faturamento Aprovado",
+            "vendas.pedidos_aprovados": "Pedidos Aprovados",
+            "vendas.ticket_medio": "Ticket Médio",
+            "vendas.valor_perdido": "Valor Perdido",
+            "vendas.negocios_perdidos": "Negócios Perdidos",
+        }.get(m_id, m_id)
+        comp["mes_atual"] = cur_name
+        comp["mes_anterior"] = base_name
+
     data = compact_result({
         "status": "computed",
         "dominio": input_data.dominio,
+        "mes_atual_nome": cur_name,
+        "mes_anterior_nome": base_name,
+        "periodo_atual_descricao": f"01 a {input_data.periodo_atual_fim.day:02d} de {cur_m} ({cur_name} em andamento)",
+        "periodo_base_descricao": f"01 a {input_data.periodo_base_fim.day:02d} de {base_m} ({base_name} proporcional)",
         "comparacoes": comparisons,
-        "periodo_atual": {"inicio": input_data.periodo_atual_inicio.isoformat(), "fim": input_data.periodo_atual_fim.isoformat(), "dias": current_days},
-        "periodo_base": {"inicio": input_data.periodo_base_inicio.isoformat(), "fim": input_data.periodo_base_fim.isoformat(), "dias": baseline_days},
+        "periodo_atual": {"inicio": input_data.periodo_atual_inicio.isoformat(), "fim": input_data.periodo_atual_fim.isoformat(), "dias": current_days, "mes": cur_name},
+        "periodo_base": {"inicio": input_data.periodo_base_inicio.isoformat(), "fim": input_data.periodo_base_fim.isoformat(), "dias": baseline_days, "mes": base_name},
         "duracoes_diferentes": current_days != baseline_days,
         "mes_anterior_fechado": month_full_info,
+        "aviso_ao_modelo": f"ATENÇÃO: {cur_name} é o mês ATUAL. {base_name} é o mês ANTERIOR. Nunca inverta os meses nem os valores na resposta.",
         "conceito": "Os dois períodos usam os mesmos filtros e o mesmo contrato oficial.",
     })
     source_id = f"comparacao:{context.conversation_id}:{call_id}"

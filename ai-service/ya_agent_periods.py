@@ -52,19 +52,32 @@ def resolve_comparison(
     explicit_base = _parse_period(
         raw.get("base_period_start"), raw.get("base_period_end"), today=today, clamp_to_today=False
     )
+    # When scope is same_elapsed, enforce same elapsed days so that an in-progress month
+    # (e.g. Sep 01-09) is never compared against a full 31-day month as its primary baseline.
+    if scope == "same_elapsed" or (scope != "full_previous" and period_request in {"same_elapsed", "previous_to_date", "current_to_date"}):
+        current = explicit_current or month_period(today, to_date=True)
+        curr_start = date.fromisoformat(current["from"])
+        curr_end = date.fromisoformat(current["to"])
+        elapsed_days = (curr_end - curr_start).days
+        target = shift_month(curr_start, -1)
+        base_start = target.replace(day=1)
+        base_end = min(base_start + timedelta(days=elapsed_days), shift_month(base_start, 1) - timedelta(days=1))
+        return {
+            "atual": current,
+            "base": {"from": base_start.isoformat(), "to": base_end.isoformat()},
+            "scope": "same_elapsed",
+        }
+
     if explicit_current and explicit_base:
         return {"atual": explicit_current, "base": explicit_base, "scope": "explicit"}
 
     current = explicit_current or month_period(today, to_date=period_request != "current_full")
-    if scope == "same_elapsed" or period_request in {"same_elapsed", "previous_to_date"}:
-        base = same_elapsed_period(today, -1)
-        scope_label = "same_elapsed"
-    elif scope == "full_previous" or period_request == "previous_full":
+    if scope == "full_previous" or period_request == "previous_full":
         base = month_period(shift_month(today, -1))
         scope_label = "full_previous"
     else:
-        base = month_period(shift_month(today, -1))
-        scope_label = "full_previous"
+        base = same_elapsed_period(today, -1)
+        scope_label = "same_elapsed"
     return {"atual": current, "base": base, "scope": scope_label}
 
 

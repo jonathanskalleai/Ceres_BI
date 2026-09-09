@@ -52,6 +52,7 @@ export function YaChat() {
   const [memories, setMemories] = useState<YaUserMemory[]>([]);
   const [showMemories, setShowMemories] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const lastAssistantMessageRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const wasOpenRef = useRef(false);
@@ -107,7 +108,16 @@ export function YaChat() {
   }, []);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (isSending) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    } else if (messages.length > 0) {
+      const last = messages[messages.length - 1];
+      if (last?.role === "assistant") {
+        lastAssistantMessageRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      }
+    }
   }, [messages, isSending]);
 
   useEffect(() => {
@@ -346,10 +356,17 @@ export function YaChat() {
               </div>
             )}
 
-            {messages.map((message, index) => <YaChatMessage key={message.id ?? `${message.role}-${index}`} message={message} index={index} onFeedback={handleFeedback} onChoice={handleChoice} />)}
+            {messages.map((message, index) => {
+              const isLastAssistant = message.role === "assistant" && index === messages.length - 1;
+              return (
+                <div key={message.id ?? `${message.role}-${index}`} ref={isLastAssistant ? lastAssistantMessageRef : undefined}>
+                  <YaChatMessage message={message} index={index} onFeedback={handleFeedback} onChoice={handleChoice} />
+                </div>
+              );
+            })}
 
             {isSending && (
-              <div className="flex items-center gap-2 rounded-xl border bg-card px-4 py-3 text-sm text-muted-foreground" role="status" aria-live="polite"><LoaderCircle className="h-4 w-4 animate-spin" /><span>{toolStatus || progress || "Pensando…"}</span></div>
+              <div className="flex items-center gap-2 rounded-xl border bg-card px-4 py-3 text-sm text-muted-foreground" role="status" aria-live="polite"><LoaderCircle className="h-4 w-4 animate-spin" /><span>Pensando…</span></div>
             )}
             {status && !isSending && <p className="text-xs text-destructive" role="alert">{status}</p>}
             <div ref={bottomRef} />

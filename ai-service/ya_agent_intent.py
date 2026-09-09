@@ -71,7 +71,7 @@ async def resolve_turn(
                 {"role": "user", "content": _classifier_context(request, state, last_sources, today)},
             ],
             temperature=0.0,
-            max_tokens=420,
+            max_tokens=150,
             json_mode=True,
             session_id=session_id,
         )
@@ -141,6 +141,52 @@ def _classifier_content(response: Any) -> tuple[str, dict[str, Any]]:
             usage = response.get("usage") if isinstance(response.get("usage"), dict) else {}
             return message["content"], usage
     raise ValueError("resposta do classificador inválida")
+
+
+def _deterministic_fast_match(request: YaChatRequest, state: dict[str, Any], sources: list[YaSource]) -> dict[str, Any] | None:
+    """Instantly resolve unambiguous queries without waiting for classifier LLM latency."""
+    message = request.message.casefold().strip()
+    if any(fragment in message for fragment in ("até agora", "ate agora", "até o momento", "ate o momento")):
+        return None
+
+    comparison = any(fragment in message for fragment in ("comparad", "compare", "comparar", "versus", " x ", "diferença entre", "diferenca entre"))
+    previous = mentions_previous(message)
+    if comparison and previous:
+        return {
+            "intent": "sales_comparison",
+            "domain": "vendas",
+            "period_request": "current_to_date",
+            "comparison_scope": "same_elapsed",
+            "metricas": [],
+            "presentation": "tabela" if any(w in message for w in ("tabela", "planilha", "grade", "colunas", "grafico", "card")) else "texto",
+        }
+
+    has_loss_word = any(fragment in message for fragment in ("perdas", "percas", "negócios perdidos", "negocios perdidos", "perda", "perca"))
+    has_reason_word = any(fragment in message for fragment in ("motivo", "motivos", "por que", "porque", "detalh", "mais sobre", "explic"))
+    if has_loss_word and has_reason_word:
+        period_request = "inherit" if _has_sales_context(state, sources) else "current_to_date"
+        return {
+            "intent": "loss_details",
+            "domain": "vendas",
+            "period_request": period_request,
+            "comparison_scope": "none",
+            "metricas": ["vendas.negocios_perdidos", "vendas.valor_perdido"],
+            "presentation": "tabela" if any(w in message for w in ("tabela", "planilha", "grade", "colunas", "grafico", "card")) else "texto",
+        }
+
+    has_sales_word = any(fragment in message for fragment in ("resultado", "faturamento", "vendas", "pedidos aprovados", "pedidos"))
+    has_current_month = any(fragment in message for fragment in ("deste mês", "desse mês", "deste mes", "desse mes", "este mês", "esse mês", "este mes", "esse mes", "mês atual", "mes atual"))
+    if has_sales_word and has_current_month and not comparison and not has_reason_word:
+        return {
+            "intent": "sales_summary",
+            "domain": "vendas",
+            "period_request": "current_to_date",
+            "comparison_scope": "none",
+            "metricas": [],
+            "presentation": "tabela" if any(w in message for w in ("tabela", "planilha", "grade", "colunas", "grafico", "card")) else "texto",
+        }
+
+    return None
 
 
 def _deterministic_fallback(request: YaChatRequest, state: dict[str, Any], sources: list[YaSource]) -> dict[str, Any] | None:

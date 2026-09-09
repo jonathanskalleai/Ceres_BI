@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
@@ -15,7 +16,7 @@ from ya_memory import ThreadMemory, json_default
 from ya_models import YaChatRequest
 
 
-PROMPT_VERSION = "ya-agent-v2.6"
+PROMPT_VERSION = "ya-agent-v2.7"
 MAX_HISTORY_MESSAGES = int(os.getenv("YA_AGENT_HISTORY_MESSAGES", "18"))
 MAX_MEMORY_CHARS = int(os.getenv("YA_AGENT_MEMORY_CONTEXT_CHARS", "10_000"))
 BUSINESS_TIMEZONE = ZoneInfo("America/Sao_Paulo")
@@ -71,40 +72,63 @@ BUSINESS_RULES_BLOCK = """REGRAS DE NEGÓCIO ESSENCIAIS DO CERES BI:
    - Formatação monetária: declare valores em reais no formato exato da ferramenta (ex: R$ 225.300,00). Nunca multiplique por 100 ou altere grandezas."""
 
 _LANGUAGE_BLOCK = """ESTILO DE FORMATAÇÃO E APRESENTAÇÃO (MUITO IMPORTANTE):
-- Responda SEMPRE em texto corrido limpo, profissional, humanizado e muito bem estruturado em Markdown para o chat.
+- Responda SEMPRE em texto limpo, profissional, humanizado e muito bem estruturado em Markdown para o chat executivo.
 - NÃO utilize cards ou tabelas brutas: você deve explicar e estruturar tudo no corpo da mensagem em tópicos e negritos.
-- NUNCA use chaves de código ou identificadores técnicos como `vendas.faturamento` ou `vendas.pedidos_aprovados`. Use sempre os termos oficiais em português comercial (ex: Faturamento, Pedidos Aprovados, Ticket Médio, Perdas).
+- NUNCA use chaves de código ou identificadores técnicos como `vendas.faturamento` ou `vendas.pedidos_aprovados`. Use sempre os termos oficiais em português comercial (ex: Faturamento, Pedidos Aprovados, Ticket Médio, Perdas, Motivos de Perda).
+- NUNCA assuma que o usuário sabe a qual mês os números se referem: declare SEMPRE o NOME DO MÊS por extenso (ex: Setembro/2026, Agosto/2026) em cada linha e seção.
 - Formatação monetária: declare valores em reais no formato brasileiro (ex: R$ 225.300,00). NUNCA altere grandezas.
 
-ESTRUTURA PARA CONSULTAS DE COMPARAÇÃO (ex: "resultado deste mês comparado ao anterior"):
-### Resumo Executivo
-Uma síntese direta com a conclusão principal do comparativo.
+ESTRUTURA PARA CONSULTAS DE COMPARAÇÃO ENTRE MESES:
+### Resumo
+Explique o resultado do mês atual pelo nome:
+"No mês atual (**Setembro/2026**, até o dia 09), tivemos **X pedidos aprovados** somando **R$ X**, com ticket médio de **R$ Y** e **Z negócios perdidos** (R$ W)."
 
-### Comparativo Proporcional (Mesmos dias decorridos - MTD)
-Apresente cada indicador de forma legível:
-* **Faturamento**: R$ X vs R$ Y (**+Z%**)
-* **Pedidos Aprovados**: X vs Y (**+Z%**)
-* **Ticket Médio**: R$ X vs R$ Y (**Z%**)
-* **Perdas**: X negócios perdidos (R$ Y) vs A negócios perdidos (R$ B) (**+Z%**)
+### Comparativo com o Mês Anterior (Mesmos dias decorridos - MTD)
+Compare explicitamente com o mesmo período proporcional do mês passado:
+* **Faturamento**: R$ X (Setembro) vs R$ Y (Agosto proporcional) -> **+Z%**
+* **Pedidos Aprovados**: X pedidos vs Y pedidos -> **+Z%**
+* **Ticket Médio**: R$ X vs R$ Y -> **Z%**
+* **Perdas**: X negócios (R$ Y) vs A negócios (R$ B) -> **+Z%**
 
-### Mês Anterior Fechado (Contexto completo)
-(Quando for comparação de mês em andamento com mês fechado, detalhe o mês anterior completo para contextualizar o gestor):
+### Mês Anterior Fechado Completo (Contexto)
+Para referência e meta, apresente o mês anterior completo:
 * **Faturamento Fechado**: R$ X (com N pedidos aprovados)
 * **Ticket Médio Fechado**: R$ Y
 * **Perdas Fechadas**: R$ Z (N negócios perdidos)
 
 ### Destaques e Tendências
-1 a 2 parágrafos curtos com a leitura de negócio sobre o ritmo de fechamento, perdas e ticket médio.
+1 a 2 parágrafos curtos com a leitura executiva: explique de forma direta se o ritmo de vendas diário está mais acelerado ou mais lento, e aponte alertas se houver aumento de perdas ou queda de ticket.
 
-ESTRUTURA PARA CONSULTAS PONTUAIS OU ESPECÍFICAS (ex: "quantos pedidos foram aprovados", "qual o faturamento hoje"):
+ESTRUTURA PARA MOTIVOS OU DETALHES DE PERDAS:
+### Resumo de Perdas
+Informe o total de negócios perdidos e o valor perdido no período pesquisado.
+
+### Principais Motivos de Perda
+Liste os motivos retornados pela ferramenta em ordem de relevância:
+* **[Nome do Motivo]**: N negócios (R$ X,XX)
+(Se houver detalhe de produtos ou vendedores com maior perda, cite os principais em seguida).
+
+### Conclusão e Alertas
+Breve comentário executivo sobre o principal gargalo nas negociações perdidas.
+
+ESTRUTURA PARA CONSULTAS PONTUAIS OU DÚVIDAS ESPECÍFICAS:
 ### Resumo
-Resposta direta e objetiva ao que foi perguntado em 1 ou 2 linhas.
+Resposta direta e objetiva ao que foi perguntado em 1 ou 2 linhas (se o usuário perguntar se vendeu mais ou menos, esclareça diretamente na primeira frase).
 
 ### Indicadores e Detalhamento
-Tópicos organizados com os números chave e valores formatados em reais/unidades.
+Tópicos organizados com os números chave e valores formatados.
 
 ### Observações
 Breve comentário analítico se agregar valor à tomada de decisão."""
+
+
+def _mask_assistant_history(content: str) -> str:
+    # Preserve conversational flow and topic explanations while masking
+    # exact old numbers/currency so the model bases all new metrics on fresh tool runs.
+    masked = re.sub(r"R\$\s*[\d\.,]+", "[valor]", content)
+    masked = re.sub(r"\b\d+[\.,]\d+%", "[%]", masked)
+    masked = re.sub(r"\b\d{4,}\b", "[número]", masked)
+    return masked[:2_500]
 
 
 @dataclass(frozen=True)
@@ -140,7 +164,10 @@ def build_context(request: YaChatRequest, memory: ThreadMemory, schema_text: str
     for item in memory.history[-MAX_HISTORY_MESSAGES:]:
         if item.get("role") not in {"user", "assistant"} or not item.get("content"):
             continue
-        content = item["content"][:6_000] if item["role"] == "user" else "Resposta anterior registrada; não use seus números como evidência."
+        if item["role"] == "user":
+            content = item["content"][:6_000]
+        else:
+            content = _mask_assistant_history(item["content"])
         history.append({"role": item["role"], "content": content})
     system = {"role": "system", "content": build_system_prompt(request, memory, schema_text, contract)}
     current = {"role": "user", "content": request.message.strip()}
