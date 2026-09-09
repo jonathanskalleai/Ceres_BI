@@ -60,6 +60,8 @@ CERESBI_AI_DATABASE_URL="$(read_env_value CERESBI_AI_DATABASE_URL)"
 CERESBI_AI_JOB_TOKEN="$(read_env_value CERESBI_AI_JOB_TOKEN)"
 CERESBI_AI_YA_AGENT_V2_ENABLED="$(read_env_value CERESBI_AI_YA_AGENT_V2_ENABLED)"
 CERESBI_AI_YA_AGENT_V2_ENABLED="${CERESBI_AI_YA_AGENT_V2_ENABLED:-false}"
+VITE_YA_AGENT_V2_ENABLED="$(read_env_value VITE_YA_AGENT_V2_ENABLED)"
+VITE_ERROR_TRACKING_ENDPOINT="$(read_env_value VITE_ERROR_TRACKING_ENDPOINT)"
 SUPABASE_JWT_SECRET="${SUPABASE_JWT_SECRET:-$(read_env_value SUPABASE_JWT_SECRET)}"
 export CERESBI_AI_OPENROUTER_API_KEY CERESBI_AI_DATABASE_URL CERESBI_AI_JOB_TOKEN CERESBI_AI_YA_AGENT_V2_ENABLED SUPABASE_JWT_SECRET
 
@@ -69,6 +71,17 @@ for required in CERESBI_AI_OPENROUTER_API_KEY CERESBI_AI_DATABASE_URL CERESBI_AI
     exit 1
   fi
 done
+
+if [ "${CERESBI_AI_YA_AGENT_V2_ENABLED}" = "true" ]; then
+  if [ "${VITE_YA_AGENT_V2_ENABLED}" != "true" ]; then
+    echo "ERROR: VITE_YA_AGENT_V2_ENABLED must be true when the AI v2 service is enabled" >&2
+    exit 1
+  fi
+  if [ -z "${VITE_ERROR_TRACKING_ENDPOINT}" ]; then
+    echo "ERROR: VITE_ERROR_TRACKING_ENDPOINT is required for a v2 production release" >&2
+    exit 1
+  fi
+fi
 
 if [ ! -d .git ]; then
   echo "ERROR: $(pwd) is not a Git checkout. Restore it with the documented VPS bootstrap first." >&2
@@ -91,6 +104,11 @@ export CERESBI_WEB_IMAGE CERESBI_AI_IMAGE
 
 echo "==> Building web image ${CERESBI_WEB_IMAGE}..."
 docker build -t "${CERESBI_WEB_IMAGE}" .
+
+if [ "${CERESBI_AI_YA_AGENT_V2_ENABLED}" = "true" ] && ! docker run --rm --entrypoint sh "${CERESBI_WEB_IMAGE}" -c 'grep -R -F -q "/api/ai/v2/chat/stream" /usr/share/nginx/html'; then
+  echo "ERROR: the web bundle does not contain the v2 streaming route" >&2
+  exit 1
+fi
 
 echo "==> Building AI image ${CERESBI_AI_IMAGE}..."
 docker build -t "${CERESBI_AI_IMAGE}" ai-service
@@ -122,5 +140,21 @@ fi
 echo "==> Smoke checks..."
 smoke_check https://ceresbi.vouxconsultoria.com.br/ "Web"
 smoke_check https://ceresbi.vouxconsultoria.com.br/api/ai/health "AI"
+
+if [ "${CERESBI_AI_YA_AGENT_V2_ENABLED}" = "true" ]; then
+  v2_health="$(curl --fail --silent --show-error --max-time 20 https://ceresbi.vouxconsultoria.com.br/api/ai/v2/health)"
+  if ! printf '%s' "${v2_health}" | grep -Eq '"enabled"[[:space:]]*:[[:space:]]*true'; then
+    echo "ERROR: v2 health did not report enabled=true" >&2
+    exit 1
+  fi
+  if ! printf '%s' "${v2_health}" | grep -Eq '"supports_tools"[[:space:]]*:[[:space:]]*true'; then
+    echo "ERROR: v2 health did not report provider tool support" >&2
+    exit 1
+  fi
+  if ! printf '%s' "${v2_health}" | grep -Eq '"tool_count"[[:space:]]*:[[:space:]]*10'; then
+    echo "ERROR: v2 health did not report the complete tool catalog" >&2
+    exit 1
+  fi
+fi
 
 echo "==> Done: ${GIT_SHA} is running in web and AI."

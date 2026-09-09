@@ -1,7 +1,8 @@
 # Serviço de IA — Agente Analítico Conversacional v2
 
 O chat mantém `POST /ai/chat/stream` para compatibilidade e, quando
-`YA_AGENT_V2_ENABLED=true`, usa `POST /ai/v2/chat/stream`. O v2 recebe o JWT do
+`YA_AGENT_V2_ENABLED=true`, usa `POST /ai/v2/chat/stream` (o REST
+`POST /ai/v2/chat` segue a mesma seleção no frontend). O v2 recebe o JWT do
 Supabase, mantém uma thread por conversa, conversa livre e consultas vivas do BI
 com tool calling real. A resposta factual só é liberada depois de uma fonte
 oficial retornar evidência no turno.
@@ -72,9 +73,9 @@ obrigatório antes da publicação.
 - `YA_AGENT_INPUT_USD_PER_1K=0` e `YA_AGENT_OUTPUT_USD_PER_1K=0` para custo
   estimado opcional nas métricas.
 - `CORS_ORIGINS=https://ceresbi.vouxconsultoria.com.br,http://localhost:5173`
-- `VITE_ERROR_TRACKING_ENDPOINT` — endpoint externo opcional para eventos de
-  erro do frontend; se ausente, o ErrorBoundary ainda registra localmente, mas
-  a release com usuários reais fica bloqueada pelo gate F5.
+- `VITE_ERROR_TRACKING_ENDPOINT` — endpoint externo para eventos de erro do
+  frontend; é obrigatório quando `YA_AGENT_V2_ENABLED=true`, pois a release
+  com usuários reais fica bloqueada pelo gate F5 sem canal e evento de teste.
 
 ## Ordem de publicação
 
