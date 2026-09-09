@@ -93,7 +93,8 @@ REGRAS OBRIGATÓRIAS DE SELEÇÃO DE ESTRUTURA:
    * **Ticket Médio**: R$ Y
    * **Perdas Registradas**: Z negócios perdidos (totalizando R$ W)
 
-   ### Motivos de Perda (inclua se houver perdas nos dados da ferramenta)
+   ### Motivos de Perda
+   (Inclua apenas se houver perdas nos dados retornados pela ferramenta)
    Liste os principais motivos retornados (ex: Preço: X negócios, Desistência: Y negócios, etc.).
 
    ### Observações
