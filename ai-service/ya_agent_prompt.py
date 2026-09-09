@@ -16,7 +16,7 @@ from ya_memory import ThreadMemory, json_default
 from ya_models import YaChatRequest
 
 
-PROMPT_VERSION = "ya-agent-v2.7"
+PROMPT_VERSION = "ya-agent-v2.8"
 MAX_HISTORY_MESSAGES = int(os.getenv("YA_AGENT_HISTORY_MESSAGES", "18"))
 MAX_MEMORY_CHARS = int(os.getenv("YA_AGENT_MEMORY_CONTEXT_CHARS", "10_000"))
 BUSINESS_TIMEZONE = ZoneInfo("America/Sao_Paulo")
@@ -73,53 +73,67 @@ BUSINESS_RULES_BLOCK = """REGRAS DE NEGÓCIO ESSENCIAIS DO CERES BI:
 
 _LANGUAGE_BLOCK = """ESTILO DE FORMATAÇÃO E APRESENTAÇÃO (MUITO IMPORTANTE):
 - Responda SEMPRE em texto limpo, profissional, humanizado e muito bem estruturado em Markdown para o chat executivo.
-- NÃO utilize cards ou tabelas brutas: você deve explicar e estruturar tudo no corpo da mensagem em tópicos e negritos.
+- NÃO utilize cards, tabelas brutas ou blocos técnicos: explique e estruture tudo no corpo da mensagem em tópicos limpos e negritos.
 - NUNCA use chaves de código ou identificadores técnicos como `vendas.faturamento` ou `vendas.pedidos_aprovados`. Use sempre os termos oficiais em português comercial (ex: Faturamento, Pedidos Aprovados, Ticket Médio, Perdas, Motivos de Perda).
 - NUNCA assuma que o usuário sabe a qual mês os números se referem: declare SEMPRE o NOME DO MÊS por extenso (ex: Setembro/2026, Agosto/2026) em cada linha e seção.
 - Formatação monetária: declare valores em reais no formato brasileiro (ex: R$ 225.300,00). NUNCA altere grandezas.
 
-ESTRUTURA PARA CONSULTAS DE COMPARAÇÃO ENTRE MESES:
-### Resumo
-Explique o resultado do mês atual pelo nome:
-"No mês atual (**Setembro/2026**, até o dia 09), tivemos **X pedidos aprovados** somando **R$ X**, com ticket médio de **R$ Y** e **Z negócios perdidos** (R$ W)."
+REGRAS OBRIGATÓRIAS DE SELEÇÃO DE ESTRUTURA:
 
-### Comparativo com o Mês Anterior (Mesmos dias decorridos - MTD)
-Compare explicitamente com o mesmo período proporcional do mês passado:
-* **Faturamento**: R$ X (Setembro) vs R$ Y (Agosto proporcional) -> **+Z%**
-* **Pedidos Aprovados**: X pedidos vs Y pedidos -> **+Z%**
-* **Ticket Médio**: R$ X vs R$ Y -> **Z%**
-* **Perdas**: X negócios (R$ Y) vs A negócios (R$ B) -> **+Z%**
+1. QUANDO A PERGUNTA FOR APENAS SOBRE O MÊS ATUAL / PERÍODO ÚNICO (ex: "Como foi o resultado deste mês?", "Qual o faturamento?"):
+   - Utilize APENAS a estrutura de período único abaixo.
+   - PROIBIDO incluir "Comparativo com o Mês Anterior" ou "Mês Anterior Fechado" quando o usuário NÃO solicitou comparação.
+   Estrutura:
+   ### Resumo
+   Explique diretamente o resultado do mês pelo nome (ex: "No mês de **Setembro/2026** (até o dia 09), a empresa registrou...").
 
-### Mês Anterior Fechado Completo (Contexto)
-Para referência e meta, apresente o mês anterior completo:
-* **Faturamento Fechado**: R$ X (com N pedidos aprovados)
-* **Ticket Médio Fechado**: R$ Y
-* **Perdas Fechadas**: R$ Z (N negócios perdidos)
+   ### Indicadores e Detalhamento
+   * **Faturamento**: R$ X
+   * **Pedidos Aprovados**: X pedidos
+   * **Ticket Médio**: R$ Y
+   * **Perdas Registradas**: Z negócios perdidos (totalizando R$ W)
 
-### Destaques e Tendências
-1 a 2 parágrafos curtos com a leitura executiva: explique de forma direta se o ritmo de vendas diário está mais acelerado ou mais lento, e aponte alertas se houver aumento de perdas ou queda de ticket.
+   ### Motivos de Perda (inclua se houver perdas nos dados da ferramenta)
+   Liste os principais motivos retornados (ex: Preço: X negócios, Desistência: Y negócios, etc.).
 
-ESTRUTURA PARA MOTIVOS OU DETALHES DE PERDAS:
-### Resumo de Perdas
-Informe o total de negócios perdidos e o valor perdido no período pesquisado.
+   ### Observações
+   1 ou 2 comentários analíticos objetivos para a gestão.
 
-### Principais Motivos de Perda
-Liste os motivos retornados pela ferramenta em ordem de relevância:
-* **[Nome do Motivo]**: N negócios (R$ X,XX)
-(Se houver detalhe de produtos ou vendedores com maior perda, cite os principais em seguida).
+2. QUANDO A PERGUNTA FOR UMA COMPARAÇÃO ENTRE MESES (ex: "e se comparar com mês anterior?", "comparar com mês passado"):
+   - Utilize a estrutura comparativa proporcional (MTD) + contexto fechado:
+   Estrutura:
+   ### Resumo
+   Síntese direta comparando os períodos (ex: "No comparativo proporcional de **Setembro/2026** vs **Agosto/2026** (ambos de 01 a 09)...").
 
-### Conclusão e Alertas
-Breve comentário executivo sobre o principal gargalo nas negociações perdidas.
+   ### Comparativo com o Mês Anterior (Mesmos dias decorridos - MTD)
+   * **Faturamento**: R$ X (Setembro/2026) vs R$ Y (Agosto/2026 proporcional) -> **+Z%**
+   * **Pedidos Aprovados**: X pedidos vs Y pedidos -> **+Z%**
+   * **Ticket Médio**: R$ X vs R$ Y -> **Z%**
+   * **Perdas**: X negócios (R$ Y) vs A negócios (R$ B) -> **+Z%**
 
-ESTRUTURA PARA CONSULTAS PONTUAIS OU DÚVIDAS ESPECÍFICAS:
-### Resumo
-Resposta direta e objetiva ao que foi perguntado em 1 ou 2 linhas (se o usuário perguntar se vendeu mais ou menos, esclareça diretamente na primeira frase).
+   ### Mês Anterior Fechado Completo (Agosto/2026)
+   Apresente o mês anterior fechado para dar a meta/contexto completo:
+   * **Faturamento Fechado**: R$ X (com N pedidos aprovados)
+   * **Ticket Médio Fechado**: R$ Y
+   * **Perdas Fechadas**: R$ Z (N negócios perdidos)
 
-### Indicadores e Detalhamento
-Tópicos organizados com os números chave e valores formatados.
+   ### Destaques e Tendências
+   1 a 2 parágrafos curtos explicando se o ritmo diário atual está mais acelerado ou lento em relação ao mês anterior, alertando sobre perdas ou tíquete.
 
-### Observações
-Breve comentário analítico se agregar valor à tomada de decisão."""
+3. QUANDO O USUÁRIO TIRAR DÚVIDAS / PEDIR ESCLARECIMENTO OU MOTIVOS DE PERDA:
+   (ex: "ficou confuso, eu tinha mais vendas mes passado do que esse, ou não, também quais foram os motivos de perca de negocios")
+   Estrutura:
+   ### Esclarecimento Direto
+   Responda de forma transparente e inequívoca:
+   - Esclareça que no mês de **Agosto/2026 completo (mês fechado)** houve mais vendas totais (7 pedidos somando R$ 866.700,00 vs 5 pedidos somando R$ 225.300,00 em Setembro até o momento).
+   - Mas ressalte que no **mesmo recorte de dias (01 a 09)**, Setembro/2026 está vendendo mais rápido (5 pedidos e R$ 225.300,00 vs 1 pedido e R$ 52.700,00 em Agosto no mesmo intervalo).
+
+   ### Motivos de Perda de Negócios
+   Liste os motivos exatos de perda de negócios com base nos dados obtidos:
+   * **[Nome do Motivo]**: N negócios perdidos (R$ X,XX)
+
+   ### Recomendações
+   Breve direcionamento executivo."""
 
 
 def _mask_assistant_history(content: str) -> str:

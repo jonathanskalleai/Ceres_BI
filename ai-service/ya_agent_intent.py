@@ -11,14 +11,20 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import replace
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Any, Awaitable, Callable
 from zoneinfo import ZoneInfo
 
 from ai_logger import log_event
 from ya_agent_classifier_prompt import CLASSIFIER_SYSTEM
 from ya_agent_contract import ContractResolution, TurnContract
-from ya_agent_periods import comparison_choices, mentions_previous, resolve_comparison, resolve_period
+from ya_agent_periods import (
+    comparison_choices,
+    mentions_previous,
+    resolve_comparison,
+    resolve_period,
+    shift_month,
+)
 from ya_models import YaChatRequest, YaSource
 
 
