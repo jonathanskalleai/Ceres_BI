@@ -113,6 +113,12 @@ for service in web ai; do
   fi
 done
 
+actual_v2_flag="$(docker service inspect --format '{{range .Spec.TaskTemplate.ContainerSpec.Env}}{{println .}}{{end}}' "${STACK_NAME}_ai" | sed -n 's/^YA_AGENT_V2_ENABLED=//p' | tail -n 1)"
+if [ "${actual_v2_flag}" != "${CERESBI_AI_YA_AGENT_V2_ENABLED}" ]; then
+  echo "ERROR: ${STACK_NAME}_ai has YA_AGENT_V2_ENABLED=${actual_v2_flag:-<unset>}, expected ${CERESBI_AI_YA_AGENT_V2_ENABLED}" >&2
+  exit 1
+fi
+
 echo "==> Smoke checks..."
 smoke_check https://ceresbi.vouxconsultoria.com.br/ "Web"
 smoke_check https://ceresbi.vouxconsultoria.com.br/api/ai/health "AI"
