@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Check, Copy, Database, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatChatDateTime, formatChatText, formatEvidenceValue } from "@/lib/yaChatFormatters";
+import { logClientWarning } from "@/lib/logger";
 import type { YaChatFilters, YaChatSource, YaMetricDefinition } from "@/services/yaChatService";
 
 type JsonRecord = Record<string, unknown>;
@@ -100,7 +101,13 @@ function metricDefinitions(source: YaChatSource): YaMetricDefinition[] {
 
 function sourceFilterSummary(source: YaChatSource): string {
   const period = source.applied_scope?.period;
+  const comparison = source.applied_scope?.comparacao;
   const filters = scopeFilters(source);
+  if (comparison?.atual?.from && comparison.atual.to && comparison.base?.from && comparison.base.to) {
+    const compareLabel = `${formatChatDateTime(comparison.atual.from)} a ${formatChatDateTime(comparison.atual.to)} versus ${formatChatDateTime(comparison.base.from)} a ${formatChatDateTime(comparison.base.to)}`;
+    const extra = [filters.vendedor, filters.cidade, filters.produto, filters.cliente].filter(Boolean).join(" · ");
+    return extra ? `${compareLabel} · ${extra}` : compareLabel;
+  }
   const periodLabel = source.applied_scope?.snapshot
     ? "snapshot atual"
     : period?.from && period.to
@@ -108,15 +115,6 @@ function sourceFilterSummary(source: YaChatSource): string {
       : "período da consulta";
   const extra = [filters.vendedor, filters.cidade, filters.produto, filters.cliente].filter(Boolean).join(" · ");
   return extra ? `${periodLabel} · ${extra}` : periodLabel;
-}
-
-function lineageSummary(source: YaChatSource): string | null {
-  const lineage = source.lineage;
-  if (!lineage) return null;
-  const tables = Array.isArray(lineage.tables) ? lineage.tables.filter((item): item is string => typeof item === "string") : [];
-  if (tables.length > 0) return `Fonte consultada: ${tables.join(", ")}.`;
-  if (typeof lineage.executor === "string") return `Contrato: ${lineage.executor}.`;
-  return null;
 }
 
 export function YaChatEvidence({ sources }: { sources: YaChatSource[] }) {
@@ -134,7 +132,7 @@ export function YaChatEvidence({ sources }: { sources: YaChatSource[] }) {
       if (timerRef.current) window.clearTimeout(timerRef.current);
       timerRef.current = window.setTimeout(() => setCopiedId(undefined), 2_000);
     } catch (error) {
-      console.warn("[YaChat] Não foi possível copiar o escopo da evidência.", error);
+      logClientWarning("YaChat.copy_scope_failed", error);
     }
   };
 
@@ -145,13 +143,11 @@ export function YaChatEvidence({ sources }: { sources: YaChatSource[] }) {
       <div className="space-y-2 border-t px-3 py-2">
         {sources.map((source) => {
           const metrics = metricDefinitions(source);
-          const lineage = lineageSummary(source);
           return (
             <details key={source.id} className="rounded-lg border bg-background/50 px-3 py-2">
               <summary className="cursor-pointer list-none font-medium text-foreground">{source.label} · {sourceFilterSummary(source)}</summary>
               <div className="mt-2 space-y-2">
                 {metrics.map((metric) => <div key={metric.id}><div><span className="font-medium text-foreground">{metric.label}:</span> {metric.definition} <span className="text-muted-foreground">({metric.unit})</span></div><div><span className="font-medium text-foreground">Competência:</span> {metric.competence}. <span className="font-medium text-foreground">Deduplicação:</span> {metric.deduplication}.</div></div>)}
-                {lineage && <div><span className="font-medium text-foreground">Linhagem:</span> {lineage}</div>}
                 {source.freshness?.status && <div className="flex items-center gap-1"><Database className="h-3.5 w-3.5" />Atualização: {source.freshness.status}{source.freshness.refreshed_at ? ` · ${formatChatDateTime(source.freshness.refreshed_at)}` : ""}</div>}
                 {source.warnings?.map((warning) => <div key={warning} className="flex items-start gap-1 text-amber-700 dark:text-amber-300"><TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />{warning}</div>)}
                 <PreviewSummary preview={source.preview} />

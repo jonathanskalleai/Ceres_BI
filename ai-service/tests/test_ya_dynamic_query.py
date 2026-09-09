@@ -41,6 +41,8 @@ class YaDynamicQueryTests(unittest.TestCase):
             'SELECT "public"."version"() FROM mirror.crm_negocios',
             "WITH RECURSIVE tree AS (SELECT 1) SELECT 1 FROM mirror.crm_negocios",
             "SELECT COUNT(*) FROM mirror.crm_negocios; SELECT 1",
+            "SELECT n.ngo_numero, p.pdo_codigointerno FROM mirror.crm_negocios n CROSS JOIN mirror.crm_pedidos p",
+            "SELECT n.ngo_numero FROM mirror.crm_negocios n WHERE (n.ngo_conclusao = 'Ganho'",
         )
         for sql in invalid:
             with self.subTest(sql=sql):

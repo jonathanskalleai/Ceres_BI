@@ -53,7 +53,7 @@ export interface YaMetricDefinition {
   grain: string;
   competence: string;
   deduplication: string;
-  executor: string;
+  executor?: string;
   dimensions: string[];
   filters: string[];
   dimension_paths?: Record<string, string[]>;
@@ -68,6 +68,7 @@ export interface YaAppliedScope {
   filters?: YaChatFilters;
   filter_origins?: Record<string, string>;
   timezone?: string;
+  comparacao?: { atual?: { from?: string; to?: string }; base?: { from?: string; to?: string } };
 }
 
 export interface YaFreshness {
@@ -85,6 +86,32 @@ export interface YaExecutionMetrics {
   [key: string]: unknown;
 }
 
+export interface YaArtifactColumn {
+  key: string;
+  label: string;
+}
+
+export interface YaArtifact {
+  type: "table" | "bar" | "line" | "kpi_group" | "choices";
+  title: string;
+  columns?: YaArtifactColumn[];
+  rows?: Record<string, unknown>[];
+  x_key?: string | null;
+  series?: { key: string; label: string }[];
+  source_ids?: string[];
+}
+
+export interface YaChoice {
+  label: string;
+  value: string;
+}
+
+export interface YaUserMemory {
+  key: string;
+  category: string;
+  content: string;
+}
+
 export interface YaChatResponse {
   conversation_id: string;
   assistant_message_id: string;
@@ -92,6 +119,9 @@ export interface YaChatResponse {
   sources: YaChatSource[];
   evidence: YaChatSource[];
   query_spec: Record<string, unknown>;
+  artifacts?: YaArtifact[];
+  choices?: YaChoice[];
+  stats?: Record<string, unknown>;
   generated_at: string;
 }
 
@@ -110,6 +140,8 @@ export interface AIConversationMessage {
   sources: YaChatSource[];
   evidence: YaChatSource[];
   query_spec: Record<string, unknown>;
+  artifacts?: YaArtifact[];
+  choices?: YaChoice[];
   created_at: string;
 }
 
@@ -129,6 +161,8 @@ export interface AIChatStreamHandlers {
   onPlan?: (querySpec: Record<string, unknown>) => void;
   onSources?: (sources: YaChatSource[], metrics: { dbMs: number; cacheHits: number }) => void;
   onDelta?: (text: string) => void;
+  onToolStart?: (payload: { label: string; position: number }) => void;
+  onToolResult?: (payload: { label: string; status: string; source?: YaChatSource; artifacts: YaArtifact[]; warnings: string[] }) => void;
   onDone?: (payload: {
     conversationId: string;
     assistantMessageId: string;
@@ -136,6 +170,8 @@ export interface AIChatStreamHandlers {
     evidence: YaChatSource[];
     querySpec: Record<string, unknown>;
     answer: string;
+    artifacts: YaArtifact[];
+    choices: YaChoice[];
     generatedAt: string;
   }) => void;
 }
@@ -182,7 +218,18 @@ export async function sendAIMessageFeedback(conversationId: string, messageId: s
   if (!response.ok) throw new Error("Não foi possível registrar o feedback.");
 }
 
-function readEvent(block: string): { event: string; data: unknown } | null {
+export async function listAIUserMemories(): Promise<YaUserMemory[]> {
+  const response = await fetchAI("/api/ai/v2/memories");
+  if (!response.ok) throw new Error("Não foi possível carregar as memórias.");
+  return response.json() as Promise<YaUserMemory[]>;
+}
+
+export async function forgetAIUserMemory(key: string): Promise<void> {
+  const response = await fetchAI(`/api/ai/v2/memories/${encodeURIComponent(key)}`, { method: "DELETE" });
+  if (!response.ok) throw new Error("Não foi possível esquecer essa memória.");
+}
+
+export function readEvent(block: string): { event: string; data: unknown } | null {
   const event = block.match(/^event:\s*([^\r\n]+)$/m)?.[1]?.trim();
   const rawData = block.match(/^data:\s*([^\r\n]+)$/m)?.[1];
   if (!event || !rawData) return null;
@@ -193,11 +240,13 @@ function readEvent(block: string): { event: string; data: unknown } | null {
   }
 }
 
-export async function streamAIChat(request: YaChatRequest, handlers: AIChatStreamHandlers): Promise<void> {
-  const response = await fetchAI("/api/ai/chat/stream", {
+export async function streamAIChat(request: YaChatRequest, handlers: AIChatStreamHandlers, signal?: AbortSignal): Promise<void> {
+  const v2Enabled = import.meta.env.VITE_YA_AGENT_V2_ENABLED === "true";
+  const response = await fetchAI(v2Enabled ? "/api/ai/v2/chat/stream" : "/api/ai/chat/stream", {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
     body: JSON.stringify(request),
+    signal,
   });
 
   if (!response.ok || !response.body) {
@@ -226,6 +275,18 @@ export async function streamAIChat(request: YaChatRequest, handlers: AIChatStrea
       });
     }
     if (parsed.event === "delta" && typeof data.text === "string") handlers.onDelta?.(data.text);
+    if (parsed.event === "tool_start" && typeof data.label === "string") {
+      handlers.onToolStart?.({ label: data.label, position: typeof data.position === "number" ? data.position : 0 });
+    }
+    if (parsed.event === "tool_result" && typeof data.label === "string") {
+      handlers.onToolResult?.({
+        label: data.label,
+        status: typeof data.status === "string" ? data.status : "ok",
+        source: data.source && typeof data.source === "object" ? data.source as YaChatSource : undefined,
+        artifacts: Array.isArray(data.artifacts) ? data.artifacts as YaArtifact[] : [],
+        warnings: Array.isArray(data.warnings) ? data.warnings.filter((item): item is string => typeof item === "string") : [],
+      });
+    }
     if (parsed.event === "done" && typeof data.conversation_id === "string") {
       handlers.onDone?.({
         conversationId: data.conversation_id,
@@ -236,6 +297,8 @@ export async function streamAIChat(request: YaChatRequest, handlers: AIChatStrea
           ? data.query_spec as Record<string, unknown>
           : {},
         answer: typeof data.answer === "string" ? data.answer : "Não encontrei dados suficientes para responder com segurança.",
+        artifacts: Array.isArray(data.artifacts) ? data.artifacts as YaArtifact[] : [],
+        choices: Array.isArray(data.choices) ? data.choices as YaChoice[] : [],
         generatedAt: typeof data.generated_at === "string" ? data.generated_at : new Date().toISOString(),
       });
     }

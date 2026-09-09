@@ -1,0 +1,91 @@
+id: ya-agent-v2
+created_at: 2026-09-09
+status: PENDING_REVIEW
+mode: DEVELOPMENT
+category: FEATURE+DB
+base_sha: 411b64e870b6258469f7c4714935ec5a734f8cc7
+plan: docs/plans/2026-09-08-agente-analitico-v2.md
+objective: Implementar o Agente Analítico Conversacional v2 com tool calling real, memória, evidência e UX responsiva para Equipe, Ações e Desempenho de Vendas.
+
+pipeline:
+  completed:
+    - architect
+    - data-engineer
+    - dev
+  skipped_by_development_mode:
+    - reviewer
+    - security
+    - qa
+  next_required: /aivoux/audit pending antes de merge, release ou produção
+
+files:
+  backend:
+    - ai-service/ya_agent.py
+    - ai-service/ya_agent_catalog.py
+    - ai-service/ya_agent_models.py
+    - ai-service/ya_agent_prompt.py
+    - ai-service/ya_agent_runtime.py
+    - ai-service/ya_agent_tools/
+    - ai-service/ya_agent_verifier.py
+    - ai-service/ya_db.py
+    - ai-service/ya_dynamic_query.py
+    - ai-service/ya_memory.py
+    - ai-service/ya_models.py
+    - ai-service/ya_provider.py
+    - ai-service/ya_tool_utils.py
+    - ai-service/requirements.txt
+    - ai-service/tests/test_ya_agent.py
+    - ai-service/tests/test_ya_agent_tools.py
+    - ai-service/tests/test_ya_agent_v2_analysis.py
+    - ai-service/tests/test_ya_agent_verifier.py
+    - ai-service/tests/test_ya_agent_golden_questions.py
+    - ai-service/tests/test_ya_agent_provider.py
+    - ai-service/tests/test_ya_memory.py
+    - ai-service/tests/agent_golden_questions.json
+  database:
+    - supabase/migrations/20260908_ya_agent_memory_and_tool_trace.sql
+  frontend:
+    - src/services/yaChatService.ts
+    - src/components/bi/YaChat.tsx
+    - src/components/bi/ya-chat/YaChatArtifacts.tsx
+    - src/components/bi/ya-chat/YaChatArtifacts.test.tsx
+    - src/components/bi/ya-chat/YaChatEvidence.tsx
+    - src/components/bi/ya-chat/YaChatMessage.tsx
+    - src/lib/logger.ts
+  operations_and_docs:
+    - docker-stack.yml
+    - ai-service/README.md
+    - docs/architecture/ya-agent-v2-implementation.md
+
+validation:
+  backend_unit: "74 testes OK via unittest em ambiente temporário com as dependências do serviço"
+  backend_compile: "python -m compileall OK"
+  frontend_unit: "23 arquivos / 198 testes OK"
+  frontend_typescript: "tsc --noEmit OK"
+  frontend_build: "npm run build OK; somente aviso de chunks grandes do Vite"
+  frontend_targeted_lint: "ESLint dos arquivos v2 OK"
+  repository_lint: "npm run lint continua falhando com baseline preexistente: 126 erros e 26 avisos fora do escopo v2"
+  diff_check: "git diff --check OK nos arquivos rastreados alterados"
+
+runtime_validation:
+  local_database: "Postgres local consultado em backend-postgres-1/vouxbi_ixc; sem RPCs do BI, mirror ou tabelas ya_agent"
+  provider_configuration: "OPENROUTER_API_KEY e SUPABASE_JWT_SECRET ausentes nesta sessão"
+  preview_smoke: PENDENTE
+  golden_factual_conciliation: PENDENTE
+  migration_application: "APLICADA em 2026-09-09 03:32 UTC no ceres-prod/178.238.235.203; commit e pós-check do schema confirmados"
+  publish_or_deploy: "não realizado"
+
+known_pending:
+  - "Validar em preview autenticado as assinaturas, permissões, frescor e números das RPCs vivas do BI."
+  - "Validar tool calling real do modelo configurado no OpenRouter e o fluxo SSE completo."
+  - "Executar os smokes F1-F10, perguntas douradas e conciliação com as três dashboards."
+  - "Validar os overrides padrão, todos os funis e somente REPASSE DE MAQUINA; neste checkout local as RPCs históricas não aceitam p_funis e o gateway falha fechado."
+  - "Executar reviewer; os módulos ya_agent.py, ya_memory.py e official.py ainda exigem revisão de tamanho/estrutura no gate posterior."
+  - "Executar security condicional e QA conforme o blast radius antes de qualquer merge/release."
+
+safety:
+  - "O endpoint v2 permanece atrás de YA_AGENT_V2_ENABLED=false por padrão."
+  - "O chat legado foi preservado para rollback."
+  - "A migration é aditiva/idempotente; foi aplicada somente no banco Supabase self-hosted do Ceres BI após autorização explícita do usuário."
+  - "Não houve push/deploy de código nesta operação; o endpoint v2 permanece atrás de YA_AGENT_V2_ENABLED=false."
+  - "Procedimento canônico e diferença entre ceres-prod e ceres-vps estão documentados em docs/architecture/production-runtime.md e no handoff da migration."

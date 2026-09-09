@@ -18,7 +18,7 @@ Postgres mirror no Supabase self-hosted (VPS / Docker Swarm)
         +--> RPCs publicas --> frontend React servido por ceresbi_web
 ```
 
-- VPS: `178.238.235.203`, Docker Swarm single-node, rede `redeinterna`.
+- VPS: `178.238.235.203`, SSH porta **2222** (`ssh -p 2222 root@178.238.235.203`), Docker Swarm single-node, rede `redeinterna`.
 - Stacks observadas: `ceresbi`, `supabase`, `etl`, `traefik` e `portainer`.
 - Banco do BI: Postgres do stack `supabase`, schema `mirror`. Nao e o Supabase
   Cloud identificado por `supabase/config.toml`.
@@ -83,7 +83,7 @@ Codex. Na VPS, o proxy `supabase-mcp-ssh-proxy` fica deliberadamente privado em
 **Antes de abrir uma nova sessao do Codex**, execute no terminal local:
 
 ```bash
-ssh -o BatchMode=yes -o ExitOnForwardFailure=yes -i ~/.ssh/id_ed25519 -fN \
+ssh -p 2222 -o BatchMode=yes -o ExitOnForwardFailure=yes -i ~/.ssh/id_ed25519 -fN \
   -L 127.0.0.1:18080:127.0.0.1:18000 root@178.238.235.203
 ```
 
@@ -113,3 +113,50 @@ negocio `Ganho` e exclusao de `REPASSE DE MAQUINA`. As migrations mais recentes
 que espelham essa funcao ainda aparecem como arquivos locais nao rastreados no
 checkout analisado. Elas precisam entrar no controle de versao antes de uma
 proxima mudanca de regra; caso contrario, producao e repositorio podem divergir.
+
+## Playbook canônico de migrations do Ceres BI
+
+Registrado em 2026-09-09 após a aplicação da migration do Agente Analítico v2.
+
+- **VPS correta do Ceres BI:** `178.238.235.203`, alias local `ceres-prod`, SSH
+  na porta `2222`, checkout `/home/jonathan/ceresbi`.
+- **Não usar como alvo do Ceres BI:** `147.93.182.245` (`ceres-vps`); esse host
+  não possui as tabelas-base `ya_chat_*`.
+- **Banco correto:** container Swarm descoberto dinamicamente por
+  `docker ps -q -f name=supabase_supabase_db`, database `postgres`, role
+  administrativa `postgres`. O `backend-postgres-1/vouxbi_ixc` local é somente
+  o banco analítico e não substitui esse banco de estado.
+- **Não usar:** `supabase db push` ou `supabase/config.toml` para este alvo; o
+  ambiente de produção é Supabase self-hosted na VPS.
+
+### Aplicação segura
+
+Antes de escrever, confirme `auth.users`, `ya_chat_conversations`,
+`ya_chat_messages`, `ya_chat_tool_runs` e `ai_chat_turn_metrics` no container
+descoberto. Aplique somente o arquivo autorizado, via stdin, com
+`ON_ERROR_STOP=1`; a própria migration contém `BEGIN`/`COMMIT`:
+
+```bash
+ssh -o BatchMode=yes -o ConnectTimeout=10 ceres-prod \
+  'db=$(docker ps -q -f name=supabase_supabase_db | head -n 1); \
+   test -n "$db"; \
+   docker exec -i "$db" psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres -f -' \
+  < supabase/migrations/20260908_ya_agent_memory_and_tool_trace.sql
+```
+
+Depois, execute `SELECT pg_notify('pgrst', 'reload schema');` e valide:
+
+1. `public.ya_user_memories` e as colunas novas existem;
+2. RLS está ativo em `ya_user_memories`, `ya_chat_messages`,
+   `ya_chat_tool_runs` e `ai_chat_turn_metrics`;
+3. a policy de memória usa `user_id = auth.uid()` e uma tentativa de escrita
+   com a role `authenticated` é rejeitada;
+4. `ceresbi_ai` e `ceresbi_web` estão `1/1`, a aplicação responde `200` e
+   `/api/ai/health` responde `200`.
+
+O histórico `supabase_migrations.schema_migrations` não é prova suficiente
+quando a migration é aplicada diretamente por SSH: neste ambiente há migrations
+históricas aplicadas sem registro. A prova é o preflight + `COMMIT` + validação
+do schema acima. A migration v2 é aditiva/idempotente; não remover tabelas ou
+colunas para rollback. Para rollback operacional, manter `YA_AGENT_V2_ENABLED`
+desligado e preservar o chat legado.

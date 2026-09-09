@@ -1,8 +1,9 @@
 import { CircleAlert, LoaderCircle, ThumbsDown, ThumbsUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { YaChatSource, YaFeedbackType } from "@/services/yaChatService";
+import type { YaArtifact, YaChatSource, YaChoice, YaFeedbackType } from "@/services/yaChatService";
 import { YaChatAnswer } from "./YaChatAnswer";
+import { YaChatArtifacts } from "./YaChatArtifacts";
 import { YaChatEvidence } from "./YaChatEvidence";
 
 export interface ChatMessageData {
@@ -11,6 +12,8 @@ export interface ChatMessageData {
   content: string;
   sources?: YaChatSource[];
   querySpec?: Record<string, unknown>;
+  artifacts?: YaArtifact[];
+  choices?: YaChoice[];
   feedback?: YaFeedbackType;
   feedbackPending?: boolean;
 }
@@ -19,14 +22,16 @@ interface YaChatMessageProps {
   message: ChatMessageData;
   index: number;
   onFeedback?: (messageId: string, feedbackType: YaFeedbackType) => void;
+  onChoice?: (value: string) => void;
 }
 
-export function YaChatMessage({ message, index, onFeedback }: YaChatMessageProps) {
+export function YaChatMessage({ message, index, onFeedback, onChoice }: YaChatMessageProps) {
   const isAssistant = message.role === "assistant";
   const canRate = isAssistant && Boolean(message.id) && Boolean(onFeedback);
   return (
     <article key={message.id ?? `${message.role}-${index}`} className={cn("max-w-[92%] rounded-xl px-4 py-3 text-sm leading-6", message.role === "user" ? "ml-auto bg-primary text-primary-foreground" : "border bg-card text-card-foreground")}>
       <YaChatAnswer content={message.content} />
+      {isAssistant && <YaChatArtifacts artifacts={message.artifacts} choices={message.choices} onChoice={onChoice} />}
       {isAssistant && message.sources && <YaChatEvidence sources={message.sources} />}
       {canRate && (
         <div className="mt-3 flex items-center gap-2 border-t pt-2 text-xs text-muted-foreground">

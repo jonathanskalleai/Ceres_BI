@@ -10,6 +10,10 @@ services:
     image: ${CERESBI_WEB_IMAGE:?CERESBI_WEB_IMAGE is required}
     networks:
       - redeinterna
+    volumes:
+      # Hashed Vite assets are retained across rolling image replacements so
+      # open tabs can finish importing chunks from the previous release.
+      - ceresbi_web_assets:/usr/share/nginx/html/assets
     deploy:
       replicas: 1
       restart_policy:
@@ -31,6 +35,10 @@ services:
       DATABASE_URL: ${CERESBI_AI_DATABASE_URL:?CERESBI_AI_DATABASE_URL is required}
       AI_JOB_TOKEN: ${CERESBI_AI_JOB_TOKEN:?CERESBI_AI_JOB_TOKEN is required}
       SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:?SUPABASE_JWT_SECRET is required}
+      STATE_DATABASE_URL: ${CERESBI_AI_STATE_DATABASE_URL:-}
+      ANALYTICAL_DATABASE_URL: ${CERESBI_AI_ANALYTICAL_DATABASE_URL:-}
+      YA_AGENT_V2_ENABLED: ${CERESBI_AI_YA_AGENT_V2_ENABLED:-false}
+      YA_CHAT_MODEL: ${CERESBI_AI_YA_CHAT_MODEL:-meta-llama/llama-3.3-70b-instruct}
     deploy:
       replicas: 1
       restart_policy:
@@ -48,3 +56,7 @@ services:
 networks:
   redeinterna:
     external: true
+
+volumes:
+  ceresbi_web_assets:
+    driver: local

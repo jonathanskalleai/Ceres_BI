@@ -8,8 +8,12 @@ from typing import Any
 
 
 MAX_RESULT_ITEMS = 50
-SENSITIVE_KEY = re.compile(r"(?:cpf|cnpj|email|telefone|phone|documento|clienteid|userid|user_id|cli_idcliente)", re.IGNORECASE)
-SENSITIVE_TEXT = re.compile(r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}|(?:\+?55\s*)?(?:\(?\d{2}\)?\s*)?\d{4,5}[-.\s]?\d{4}")
+SENSITIVE_KEY = re.compile(r"(?:cpf|cnpj|email|telefone|phone|documento|clienteid|userid|user_id|cli_idcliente|chassi|serie|id_interno|codigo_interno)", re.IGNORECASE)
+SENSITIVE_TEXT = re.compile(
+    r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}|"
+    r"(?:\+?55\s*)?(?:\(?\d{2}\)?\s*)?\d{4,5}[-.\s]?\d{4}|"
+    r"\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b|\b\d{2}\.?\d{3}\.?\d{3}/?\d{4}-?\d{2}\b"
+)
 
 
 def _path(value: Any, parts: tuple[str, ...]) -> Any:

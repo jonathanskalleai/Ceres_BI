@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class YaFilters(BaseModel):
@@ -35,6 +35,13 @@ class YaChatRequest(BaseModel):
     conversation_id: Optional[str] = None
     context: YaContext = Field(default_factory=YaContext)
 
+    @field_validator("message")
+    @classmethod
+    def message_must_contain_text(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("message must contain non-whitespace text")
+        return value
+
 
 class YaSource(BaseModel):
     id: str
@@ -60,6 +67,8 @@ class YaChatResponse(BaseModel):
     sources: list[YaSource]
     evidence: list[YaSource] = Field(default_factory=list)
     query_spec: dict[str, Any] = Field(default_factory=dict)
+    artifacts: list[dict[str, Any]] = Field(default_factory=list)
+    choices: list[dict[str, Any]] = Field(default_factory=list)
     generated_at: str
 
 
@@ -82,6 +91,8 @@ class ConversationMessage(BaseModel):
     sources: list[YaSource] = Field(default_factory=list)
     query_spec: dict[str, Any] = Field(default_factory=dict)
     evidence: list[YaSource] = Field(default_factory=list)
+    artifacts: list[dict[str, Any]] = Field(default_factory=list)
+    choices: list[dict[str, Any]] = Field(default_factory=list)
     created_at: str
 
 

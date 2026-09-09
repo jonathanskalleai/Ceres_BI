@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { fetchAI } from "@/lib/fetchAI";
-import { streamAIChat } from "@/services/yaChatService";
+import { readEvent, streamAIChat } from "@/services/yaChatService";
 
 vi.mock("@/lib/fetchAI", () => ({ fetchAI: vi.fn() }));
 
@@ -65,5 +65,47 @@ describe("streamAIChat", () => {
     expect(threads).toEqual(["conversation-2"]);
     const [, init] = mockedFetchAI.mock.calls[0];
     expect(JSON.parse(String(init?.body))).toMatchObject({ conversation_id: "conversation-1" });
+  });
+
+  it("parses tool progress and structured artifacts when frames arrive split", async () => {
+    const events = [
+      'event: tool_start\ndata: {"label":"desempenho de vendas","position":1}\n\n',
+      'event: tool_result\ndata: {"label":"desempenho de vendas","status":"ok","artifacts":[{"type":"kpi_group","title":"Indicadores","rows":[{"label":"Vendas","value":3}]}],"warnings":[]}\n\n',
+      'event: done\ndata: {"conversation_id":"conversation-3","assistant_message_id":"message-3","answer":"Foram 3 vendas.","sources":[],"evidence":[],"artifacts":[{"type":"kpi_group","title":"Indicadores","rows":[{"label":"Vendas","value":3}]}],"choices":[{"label":"Ver por vendedor","value":"Mostre por vendedor"}],"query_spec":{},"generated_at":"2026-09-08T10:00:00Z"}\n\n',
+    ].join("");
+    const bytes = new TextEncoder().encode(events);
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(bytes.slice(0, 17));
+        controller.enqueue(bytes.slice(17, 93));
+        controller.enqueue(bytes.slice(93));
+        controller.close();
+      },
+    });
+    mockedFetchAI.mockResolvedValue(new Response(stream, { status: 200 }));
+
+    const started: string[] = [];
+    const artifacts: number[] = [];
+    const choices: string[] = [];
+    await streamAIChat(
+      { message: "resultado", context: { route: "/bi", filters: {} } },
+      {
+        onToolStart: ({ label }) => started.push(label),
+        onToolResult: ({ artifacts: resultArtifacts }) => artifacts.push(resultArtifacts.length),
+        onDone: ({ artifacts: resultArtifacts, choices: resultChoices }) => {
+          artifacts.push(resultArtifacts.length);
+          choices.push(resultChoices[0]?.value ?? "");
+        },
+      },
+    );
+
+    expect(started).toEqual(["desempenho de vendas"]);
+    expect(artifacts).toEqual([1, 1]);
+    expect(choices).toEqual(["Mostre por vendedor"]);
+  });
+
+  it("rejects malformed event JSON without breaking the parser", () => {
+    expect(readEvent("event: status\ndata: {not-json}\n\n")).toBeNull();
+    expect(readEvent("event: status\ndata: {\"message\":\"ok\"}\n\n")).toEqual({ event: "status", data: { message: "ok" } });
   });
 });

@@ -17,7 +17,7 @@ import psycopg2
 from fastapi import Depends, Header, HTTPException, status
 
 
-DATABASE_URL = os.getenv("DATABASE_URL", "")
+DATABASE_URL = os.getenv("STATE_DATABASE_URL") or os.getenv("DATABASE_URL", "")
 SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "")
 SUPABASE_JWT_AUDIENCE = os.getenv("SUPABASE_JWT_AUDIENCE", "authenticated")
 

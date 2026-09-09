@@ -64,9 +64,87 @@ async def complete(
             response.raise_for_status()
             body = response.json()
             return str(body["choices"][0]["message"]["content"])
-    except (httpx.HTTPError, KeyError, IndexError, TypeError) as error:
+    except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as error:
         log_exception("ai_provider_completion_failed", error, model=YA_MODEL)
         raise HTTPException(status_code=502, detail="A AI não conseguiu concluir a análise agora") from error
+
+
+async def complete_with_tools(
+    messages: list[dict[str, Any]],
+    tools: list[dict[str, Any]],
+    *,
+    temperature: float = 0.1,
+    max_tokens: int = 1_200,
+    session_id: Optional[str] = None,
+) -> dict[str, Any]:
+    """Return one normalized provider turn, including tools and usage."""
+    if not OPENROUTER_API_KEY:
+        raise HTTPException(status_code=503, detail="OpenRouter não configurado")
+    payload: dict[str, Any] = {
+        "model": YA_MODEL,
+        "messages": messages,
+        "tools": tools,
+        "tool_choice": "auto",
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    }
+    if session_id:
+        payload["session_id"] = session_id[:256]
+    try:
+        async with httpx.AsyncClient(timeout=90.0) as client:
+            response = await client.post(OPENROUTER_URL, json=payload, headers=_headers())
+            response.raise_for_status()
+            body = response.json()
+            choice = body["choices"][0]
+            message = choice["message"]
+            if not isinstance(message, dict):
+                raise TypeError("provider message is not an object")
+            return {
+                "message": message,
+                "usage": body.get("usage") if isinstance(body.get("usage"), dict) else {},
+                "model": str(body.get("model") or YA_MODEL),
+                "finish_reason": choice.get("finish_reason"),
+            }
+    except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as error:
+        log_exception("ai_provider_tool_completion_failed", error, model=YA_MODEL)
+        raise HTTPException(status_code=502, detail="A AI não conseguiu concluir a análise agora") from error
+
+
+def normalize_tool_calls(message: dict[str, Any]) -> list[dict[str, Any]]:
+    """Normalize OpenAI-compatible tool calls without interpreting arguments."""
+    calls = message.get("tool_calls") if isinstance(message, dict) else None
+    normalized: list[dict[str, Any]] = []
+    if not isinstance(calls, list):
+        return normalized
+    for index, call in enumerate(calls[:12]):
+        if not isinstance(call, dict):
+            continue
+        function = call.get("function") if isinstance(call.get("function"), dict) else {}
+        name = function.get("name")
+        arguments = function.get("arguments", {})
+        if not isinstance(name, str) or not name.strip():
+            continue
+        if isinstance(arguments, str):
+            try:
+                parsed = json.loads(arguments)
+            except json.JSONDecodeError as error:
+                log_event(logging.DEBUG, "ai_provider_tool_arguments_invalid_json", error_type=type(error).__name__, call_position=index)
+                parsed = arguments
+            arguments = parsed
+        normalized.append({
+            "id": str(call.get("id") or f"provider-call-{index}"),
+            "name": name.strip(),
+            "arguments": arguments,
+        })
+    return normalized
+
+
+def provider_health() -> dict[str, Any]:
+    return {
+        "configured": bool(OPENROUTER_API_KEY),
+        "supports_tools": bool(OPENROUTER_API_KEY),
+        "model_configured": bool(YA_MODEL),
+    }
 
 
 async def stream(

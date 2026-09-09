@@ -17,9 +17,17 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Any, Awaitable, Callable
 
+from ai_logger import log_event
 from fastapi import HTTPException
 
-from ai_logger import log_event
+try:
+    import sqlglot
+    from sqlglot import exp
+except ImportError as error:  # pragma: no cover - deployment dependency is pinned above
+    sqlglot = None
+    exp = None
+    log_event(logging.ERROR, "ai_dynamic_query_parser_unavailable", error_type=type(error).__name__)
+
 from ya_models import YaSource
 from ya_query_models import QuerySpec
 
@@ -53,6 +61,8 @@ FORBIDDEN_SQL = re.compile(
     re.IGNORECASE,
 )
 RESOURCE_HEAVY_SQL = re.compile(r"\b(?:generate_series|unnest|pg_advisory|txid_current)\b", re.IGNORECASE)
+COMPLEX_SET_OPERATION = re.compile(r"\b(?:union|intersect|except)\b", re.IGNORECASE)
+CROSS_JOIN = re.compile(r"\bcross\s+join\b", re.IGNORECASE)
 FORBIDDEN_FUNCTION = re.compile(
     r'\b"?(?:pg_[a-z_]+|lo_[a-z_]+|dblink[a-z_]*|query_to_xml|table_to_xml|database_to_xml|'
     r'has_(?:table|schema|database|sequence|any_column)_privilege|version|inet_(?:server|client)_addr)"?\s*\(',
@@ -182,14 +192,20 @@ def validate_read_only_sql(sql: Any, known_tables: set[str] | None = None) -> Va
         raise DynamicQueryValidationError("A consulta contém um caractere inválido.")
     if not re.match(r"^\s*(?:select|with)\b", masked, re.IGNORECASE):
         raise DynamicQueryValidationError("A consulta precisa ser um SELECT ou WITH somente leitura.")
+    if not _balanced_parentheses(masked):
+        raise DynamicQueryValidationError("A consulta contém parênteses desequilibrados.")
     if FORBIDDEN_SQL.search(masked):
         raise DynamicQueryValidationError("A consulta contém uma operação não permitida.")
     if RESOURCE_HEAVY_SQL.search(masked):
         raise DynamicQueryValidationError("A consulta contém uma operação de alto custo não permitida.")
+    if CROSS_JOIN.search(masked):
+        raise DynamicQueryValidationError("CROSS JOIN não é permitido na exploração; informe uma chave de associação explícita.")
     if FORBIDDEN_FUNCTION.search(masked):
         raise DynamicQueryValidationError("A consulta contém uma função de sistema não permitida.")
     if re.search(r"\bwith\s+recursive\b", masked, re.IGNORECASE):
         raise DynamicQueryValidationError("Consultas recursivas não são permitidas na exploração.")
+    if COMPLEX_SET_OPERATION.search(masked):
+        raise DynamicQueryValidationError("Operações UNION/INTERSECT/EXCEPT não são permitidas na exploração.")
     if re.search(r"\b(?:pg_catalog|information_schema|auth|storage)\b", masked, re.IGNORECASE):
         raise DynamicQueryValidationError("A consulta só pode usar fontes de negócio do BI.")
     if QUALIFIED_FUNCTION.search(masked):
@@ -200,6 +216,8 @@ def validate_read_only_sql(sql: Any, known_tables: set[str] | None = None) -> Va
         raise DynamicQueryValidationError("Selecione colunas explícitas; SELECT * não é permitido.")
     if re.search(r"\bfor\s+(?:update|share|no\s+key)\b", masked, re.IGNORECASE):
         raise DynamicQueryValidationError("Bloqueios de linha não são permitidos.")
+
+    _validate_sql_ast(clean, known_tables)
 
     ctes = {_identifier(match.group("name")) for match in CTE_REFERENCE.finditer(masked)}
     references = [_identifier(match.group("reference")) for match in TABLE_REFERENCE.finditer(masked)]
@@ -225,6 +243,69 @@ def validate_read_only_sql(sql: Any, known_tables: set[str] | None = None) -> Va
         tables=tuple(dict.fromkeys(tables)),
         query_hash=hashlib.sha256(normalized.encode("utf-8")).hexdigest(),
     )
+
+
+def _validate_sql_ast(sql: str, known_tables: set[str] | None) -> None:
+    """Apply a structural PostgreSQL parse after the lexical guardrails.
+
+    The regex checks remain useful for hostile text and cheap rejection, but
+    they are not a SQL parser. sqlglot gives the gateway a statement tree so
+    nested CTEs, table references, projections and join kinds are checked by
+    structure rather than by text position alone. Missing parser support is a
+    closed failure instead of silently downgrading the safety contract.
+    """
+    if sqlglot is None or exp is None:
+        raise DynamicQueryValidationError("O validador estrutural da consulta não está disponível.")
+    try:
+        statements = sqlglot.parse(sql, read="postgres")
+    except Exception as error:
+        log_event(logging.WARNING, "ai_dynamic_query_ast_rejected", error_type=type(error).__name__)
+        raise DynamicQueryValidationError("A consulta não pôde ser validada como PostgreSQL somente leitura.") from error
+    if len(statements) != 1 or not isinstance(statements[0], exp.Select):
+        raise DynamicQueryValidationError("A consulta precisa ser um SELECT único.")
+    tree = statements[0]
+    if any(isinstance(tree_node, (exp.Union, exp.Intersect, exp.Except)) for tree_node in tree.walk()):
+        raise DynamicQueryValidationError("Operações de conjunto não são permitidas na exploração.")
+    if any(join.kind and join.kind.upper() == "CROSS" for join in tree.find_all(exp.Join)):
+        raise DynamicQueryValidationError("CROSS JOIN não é permitido na exploração.")
+
+    cte_names = {
+        cte.alias_or_name.casefold()
+        for cte in tree.find_all(exp.CTE)
+        if cte.alias_or_name
+    }
+    allowed_tables = _allowed_tables(known_tables)
+    references: list[str] = []
+    for table in tree.find_all(exp.Table):
+        table_name = table.name.casefold()
+        schema_name = table.db.casefold()
+        if not schema_name and table_name in cte_names:
+            continue
+        reference = f"{schema_name}.{table_name}" if schema_name else table_name
+        if schema_name != "mirror" or reference not in allowed_tables:
+            raise DynamicQueryValidationError("A consulta só pode ler tabelas mirror autorizadas.")
+        references.append(reference)
+    if not references:
+        raise DynamicQueryValidationError("A consulta precisa ler pelo menos uma tabela mirror.")
+
+    for select in tree.find_all(exp.Select):
+        for projection in select.expressions:
+            if isinstance(projection, exp.Star) or (
+                isinstance(projection, exp.Column) and isinstance(projection.this, exp.Star)
+            ):
+                raise DynamicQueryValidationError("Selecione colunas explícitas; SELECT * não é permitido.")
+
+
+def _balanced_parentheses(value: str) -> bool:
+    depth = 0
+    for char in value:
+        if char == "(":
+            depth += 1
+        elif char == ")":
+            depth -= 1
+            if depth < 0:
+                return False
+    return depth == 0
 
 
 def _safe_value(value: Any, depth: int = 0) -> Any:
@@ -267,10 +348,7 @@ class DynamicQueryExecutor:
         freshness: dict[str, Any],
         known_tables: set[str] | None = None,
     ) -> tuple[str, Any, YaSource, bool]:
-        try:
-            validated = validate_read_only_sql(sql, known_tables)
-        except DynamicQueryValidationError:
-            raise
+        validated = validate_read_only_sql(sql, known_tables)
         started = time.monotonic()
         try:
             wrapped = f"SELECT * FROM ({validated.sql}) AS ya_agent_result LIMIT {MAX_ROWS + 1}"
@@ -338,7 +416,7 @@ class DynamicQueryExecutor:
         log_event(
             logging.INFO,
             "ai_dynamic_query_completed",
-            user_id=user_id,
+            user_hash=hashlib.sha256(user_id.encode("utf-8")).hexdigest()[:16],
             query_hash=validated.query_hash[:16],
             table_count=len(validated.tables),
             row_count=len(safe_rows),

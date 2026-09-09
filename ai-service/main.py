@@ -16,6 +16,11 @@ from pydantic import BaseModel
 
 from auth import AuthenticatedUser
 from ya_chat import router as ya_router
+from ya_agent import router as ya_agent_router
+from ya_agent_prompt import PROMPT_VERSION
+from ya_catalog import CATALOG_VERSION
+from ya_db import database_health
+from ya_provider import provider_health
 
 # --- Configuration ---
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
@@ -55,6 +60,7 @@ app.add_middleware(
 )
 
 app.include_router(ya_router)
+app.include_router(ya_agent_router)
 
 executor = ThreadPoolExecutor(max_workers=4)
 
@@ -292,7 +298,14 @@ def last_closed_week(today: Optional[date] = None) -> tuple[date, date]:
 
 @app.get("/health")
 async def health():
-    return {"status": "ok"}
+    return {
+        "status": "ok",
+        "process": "ok",
+        "database": database_health(),
+        "provider": provider_health(),
+        "catalog_version": CATALOG_VERSION,
+        "prompt_version": PROMPT_VERSION,
+    }
 
 
 @app.get("/ai/health")
