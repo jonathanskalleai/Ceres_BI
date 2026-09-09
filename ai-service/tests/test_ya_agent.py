@@ -98,6 +98,37 @@ class YaAgentRunnerTests(unittest.TestCase):
             {"status": "error", "error": {"category": "duplicate_call", "message": "Essa consulta idêntica já foi executada nesta rodada."}},
         )
 
+    def test_memory_write_is_blocked_when_the_user_did_not_request_memory(self):
+        async def provider(messages, tools, **kwargs):
+            return {
+                "message": {
+                    "tool_calls": [{
+                        "id": "memory-call",
+                        "type": "function",
+                        "function": {
+                            "name": "guardar_memoria_usuario",
+                            "arguments": '{"chave":"nome","categoria":"identity","conteudo":"João","confirmado":true}',
+                        },
+                    }],
+                },
+                "usage": {},
+            }
+
+        registry = FakeRegistry()
+        runner = AgentRunner(registry=registry, provider=provider)
+        patches = patch_runner_dependencies()
+        for item in patches:
+            item.start()
+        try:
+            result = asyncio.run(runner.run(YaChatRequest(message="Como foi o resultado?"), USER))
+        finally:
+            for item in reversed(patches):
+                item.stop()
+
+        self.assertEqual(registry.calls, [])
+        self.assertEqual(result.stats["tool_call_count"], 6)
+        self.assertEqual(result.query_spec["contract_status"], "not_required")
+
     def test_whitespace_only_messages_are_rejected(self):
         with self.assertRaises(ValueError):
             YaChatRequest(message="   \n\t")

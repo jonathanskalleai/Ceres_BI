@@ -52,6 +52,7 @@ MAX_MODEL_ROUNDS = 6
 MAX_TOOL_CALLS = 8
 MAX_EXPLORATORY_CALLS = 2
 MAX_TOTAL_SECONDS = 90
+MEMORY_WRITE_TOOLS = {"guardar_memoria_usuario", "esquecer_memoria_usuario"}
 EventCallback = Callable[[str, dict[str, Any]], Awaitable[None]]
 
 
@@ -158,7 +159,15 @@ class AgentRunner:
                     name = str(raw_call.get("name") or "")
                     arguments = raw_call.get("arguments")
                     call_key_value = call_key(name, arguments)
-                    if required_tool and name != required_tool:
+                    if name in MEMORY_WRITE_TOOLS and name not in contract.tool_names:
+                        execution = error_tool_execution(
+                            name,
+                            call_id,
+                            category="contract_forbidden",
+                            message="A memória só pode ser alterada quando isso for pedido explicitamente.",
+                            warning="Alteração de memória fora do pedido explícito bloqueada.",
+                        )
+                    elif required_tool and name != required_tool:
                         execution = error_tool_execution(
                             name,
                             call_id,

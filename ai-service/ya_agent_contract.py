@@ -78,6 +78,13 @@ class TurnContract:
     def tool_arguments(self, name: str, arguments: Any) -> dict[str, Any]:
         """Patch dates, blocks and filters with server-authoritative values."""
         candidate = dict(arguments) if isinstance(arguments, dict) else {}
+        if name == "guardar_memoria_usuario" and self.intent == "memory":
+            output = dict(candidate)
+            # The classifier only creates this contract for an explicit user
+            # request to remember something; the model must not downgrade that
+            # request to a silent confirmation prompt.
+            output["confirmado"] = True
+            return output
         if name == "consultar_desempenho_vendas" and self.domain == "vendas":
             output = dict(candidate)
             if self.period:

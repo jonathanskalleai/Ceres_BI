@@ -98,6 +98,12 @@ class YaAgentIntentTests(unittest.TestCase):
         self.assertEqual(save.tool_names, ("guardar_memoria_usuario",))
         self.assertEqual(forget.tool_names, ("esquecer_memoria_usuario",))
 
+        save_arguments = save.tool_arguments(
+            "guardar_memoria_usuario",
+            {"chave": "nome", "categoria": "identity", "conteudo": "João", "confirmado": False},
+        )
+        self.assertTrue(save_arguments["confirmado"])
+
     def test_concept_metric_is_fixed_by_the_server_contract(self):
         contract = _build_contract(
             {"intent": "concept", "domain": "vendas", "metricas": ["vendas.faturamento"]},
