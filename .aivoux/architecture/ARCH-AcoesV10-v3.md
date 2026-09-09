@@ -387,13 +387,14 @@ Substitui o `psql -f` simples do v2 por uma cadeia explícita com transações, 
 #!/usr/bin/env bash
 # deploy-migration.sh — aplicar uma migration SQL em produção
 # Uso: ./deploy-migration.sh <arquivo.sql> <nome_da_funcao>
-# Requer: SSH configurado para root@178.238.235.203
+# Requer: SSH configurado para root@178.238.235.203 porta 2222
 
 set -euo pipefail   # abort em qualquer falha
 
 MIGRATION="$1"
 FN="$2"
 HOST="root@178.238.235.203"
+SSH_OPTS="-p 2222"
 CONTAINER_CMD="docker exec -i \$(docker ps --filter name=supabase_db --format '{{.Names}}' | head -1) psql -U postgres -d postgres"
 
 # 1. Backup definitions + ACLs previas (para rollback manual se necessário)

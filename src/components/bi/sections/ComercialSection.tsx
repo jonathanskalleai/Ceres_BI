@@ -6,7 +6,7 @@ import { useNegociosBIRpc } from "@/hooks/bi/useNegociosBIRpc";
 import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { HorizontalBarChart, VerticalBarChart, LineChart } from "@/components/bi/charts";
-import { CHART_COLORS, POSITIVE_COLOR, NEGATIVE_COLOR } from "@/lib/chartTheme";
+import { CHART_COLORS, POSITIVE_COLOR, NEGATIVE_COLOR } from "@/lib/chartPalette";
 import { formatBRL, formatDias, formatMonthYear, toISODate, getPreviousPeriod, calcTrend } from "@/lib/dateUtils";
 import { fmtBRLKpi } from "@/lib/formatters";
 

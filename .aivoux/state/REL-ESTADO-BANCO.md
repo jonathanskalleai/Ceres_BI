@@ -315,14 +315,14 @@ Testado com sucesso (retornou "NOTIFY").
 
 ```bash
 # 1. SSH para VPS
-ssh -i ~/.ssh/id_ed25519 root@178.238.235.203
+ssh -p 2222 -i ~/.ssh/id_ed25519 root@178.238.235.203
 
 # 2. Descobrir container
 docker ps --filter name=supabase_db --format "{{.Names}}" | head -1
 # Resultado atual: supabase_supabase_db.1.n0afaiypr7f7luy817d6lr2do
 
 # 3. Criar SQL file localmente (repo) e copiar
-scp -i ~/.ssh/id_ed25519 migration.sql root@178.238.235.203:/tmp/migration.sql
+scp -P 2222 -i ~/.ssh/id_ed25519 migration.sql root@178.238.235.203:/tmp/migration.sql
 
 # 4. Aplicar via docker exec + psql
 docker exec -i supabase_supabase_db.1.n0afaiypr7f7luy817d6lr2do \
@@ -339,7 +339,7 @@ docker exec -i supabase_supabase_db.1.n0afaiypr7f7luy817d6lr2do \
 
 **Alternativa via stdin (sem arquivo temporario):**
 ```bash
-cat migration.sql | ssh -i ~/.ssh/id_ed25519 root@178.238.235.203 \
+cat migration.sql | ssh -p 2222 -i ~/.ssh/id_ed25519 root@178.238.235.203 \
   "docker exec -i supabase_supabase_db.1.n0afaiypr7f7luy817d6lr2do psql -U postgres -d postgres"
 ```
 

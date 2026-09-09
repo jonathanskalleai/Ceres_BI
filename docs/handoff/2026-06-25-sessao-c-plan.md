@@ -117,7 +117,7 @@ Quando NENHUMA página importar `useComercialDataContext()`:
 - **Repo:** `git@github.com:jonathanskalleai/Ceres_BI.git`
 - **Branch:** `perf/bi-quick-wins`
 - **PR:** #2 (open) — https://github.com/jonathanskalleai/Ceres_BI/pull/2
-- **VPS:** 178.238.235.203 (root, senha em sessão anterior)
+- **VPS:** 178.238.235.203 (SSH porta 2222, key auth)
 - **Container DB:** supabase_supabase_db.1.m8y6f3d5q3r31f060kq74ncfm
 - **PostgREST containers:** supabase_supabase_rest.1.kuvg41zpen5rewr3arjlbr62b, supabase_supabase_rest.1.0909dxxfjhu8jh1m4irowptxv
 - **Schema reload:** `docker kill --signal=SIGUSR1 <container>`

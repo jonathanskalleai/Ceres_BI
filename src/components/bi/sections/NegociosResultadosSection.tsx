@@ -5,7 +5,7 @@ import { ChartCard } from "@/components/bi/ChartCard";
 import { KPICard } from "@/components/bi/KPICard";
 import { LineChart } from "@/components/bi/charts";
 import { useResultadosNegociosBIRpc } from "@/hooks/bi/useResultadosNegociosBIRpc";
-import { CHART_COLORS, NEGATIVE_COLOR, POSITIVE_COLOR } from "@/lib/chartTheme";
+import { CHART_COLORS, NEGATIVE_COLOR, POSITIVE_COLOR } from "@/lib/chartPalette";
 import { formatBRL, formatDateBR, formatMonthYear, toISODate } from "@/lib/dateUtils";
 import { fmtBRLKpi } from "@/lib/formatters";
 import type { ResultadosNegociosSaudeCarteira, ResultadosNegociosValorItem, RpcResultadosNegociosBI } from "@/types/biRpc";

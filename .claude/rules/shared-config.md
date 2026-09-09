@@ -18,7 +18,9 @@ Operacoes bloqueadas devem ser delegadas ao @devops.
 
 ## Quality Gates
 
-Antes de marcar qualquer trabalho como completo:
+No modo DEVELOPMENT, @dev roda os checks locais que forem proporcionais à
+mudança e registra a pendência; a validação bloqueante abaixo é consolidada pelo
+@qa no modo FULL/auditoria:
 1. `npm run lint` - deve passar sem erros
 2. `npm run typecheck` - deve passar sem erros
 3. `npm test` - todos os testes devem passar
@@ -55,16 +57,17 @@ Aplicaveis conforme escopo (ver matrix em `security-standards.md`):
 
 ## Pipeline Integrity Gates (F6 — MECANICOS, via hook)
 
-18. **Deploy hard gate** - push/PR/deploy BLOQUEADO (hook `deploy-gate.sh`, exit 2) sem `.aivoux/gates/qa-verdict.json` PASS ancorado ao SHA atual + spawn REAL de `aivoux-qa` registrado (`agents-run.log`) + `## Smoke` em todo critical_path. Override so com autorizacao explicita do usuario, uso unico, auditado (ver `pipeline-integrity.md`)
+18. **Deploy hard gate (FULL/produção)** - merge/release/deploy e push de produção BLOQUEADOS (hook `deploy-gate.sh`, exit 2) sem `.aivoux/gates/qa-verdict.json` PASS ancorado ao SHA atual + spawn REAL de `aivoux-qa` registrado (`agents-run.log`) + `## Smoke` em todo critical_path. DEVELOPMENT permite apenas branch/PR/preview não produtivo e registra a pendência. Override so com autorizacao explicita do usuario, uso unico, auditado (ver `pipeline-integrity.md`)
 20. **Subagente falhou ≠ pular etapa** - retry 1x, depois PARAR e perguntar ao usuario; inline so com autorizacao = `INLINE_DEGRADED` (nunca PASS)
 21. **Feature-Docs Lookup gate** - projeto com `docs/features/index.md`: spawn de aivoux-* BLOQUEADO (hook `docs-gate.sh`) ate o index ser lido na janela atual; ler o arquivo destrava automaticamente (`docs-lookup-trace.sh`). Em divergencia entre resumo do CLAUDE.md e router.md/rules, o router/rules VENCEM (ver `pipeline-integrity.md` Regra 8)
-22. **Security hard gate (CONDICIONAL)** - push/PR/deploy cujo diff toca superficie sensivel (auth/authz/RLS/entrada externa/dados sensiveis/upload/infra exposta) BLOQUEADO (hook `security-gate.sh`, exit 2) sem `.aivoux/gates/security-verdict.json` SECURE ancorado ao SHA atual + spawn REAL de `aivoux-security` (`agents-run.log`). Diff nao-sensivel passa em silencio (deteccao heuristica por path+conteudo). VULNERABLE bloqueia; falso positivo → override `skip-security-authorized`, uso unico, auditado (ver `security-standards.md` + `pipeline-integrity.md`)
-23. **Review hard gate (SEMPRE)** - @reviewer e obrigatorio em TODO pipeline que toca codigo, inclusive SIMPLE. Hook `review-gate.sh` BLOQUEIA spawn de `aivoux-qa` sem spawn de `aivoux-reviewer` apos o ultimo agente de codigo; `deploy-gate.sh` exige `.aivoux/gates/reviewer-verdict.json` PASS ancorado ao SHA. Complexidade NUNCA remove gate de qualidade. Override `skip-review-authorized`, uso unico, auditado (ver `pipeline-integrity.md` Regra 9)
+22. **Security hard gate (CONDICIONAL no FULL)** - no modo FULL, push/PR/deploy cujo diff toca superficie sensivel (auth/authz/RLS/entrada externa/dados sensiveis/upload/infra exposta) BLOQUEADO (hook `security-gate.sh`, exit 2) sem `.aivoux/gates/security-verdict.json` SECURE ancorado ao SHA atual + spawn REAL de `aivoux-security` (`agents-run.log`). No DEVELOPMENT o gate é adiado; diff nao-sensivel passa em silencio. VULNERABLE bloqueia; falso positivo → override `skip-security-authorized`, uso unico, auditado (ver `security-standards.md` + `pipeline-integrity.md`)
+23. **Review hard gate (FULL apenas)** - @reviewer e obrigatorio em TODO pipeline FULL que toca codigo, inclusive SIMPLE. Hook `review-gate.sh` BLOQUEIA spawn de `aivoux-qa` sem spawn de `aivoux-reviewer` apos o ultimo agente de codigo; `deploy-gate.sh` exige `.aivoux/gates/reviewer-verdict.json` PASS ancorado ao SHA. DEVELOPMENT registra a pendência para auditoria posterior. Override `skip-review-authorized`, uso unico, auditado (ver `pipeline-integrity.md` Regra 9)
 24. **Plan hard gate (SEMPRE — F7)** - nenhuma implementacao sem plano da solucao. Hook `plan-gate.sh` BLOQUEIA spawn de `aivoux-dev`/`aivoux-data-engineer` sem `.aivoux/gates/plan.md` valido (ancorado ao HEAD, fresco < 90min, secoes `## Abordagem`/`## Arquivos`/`## Validar` preenchidas). O router escreve o plano no PASSO 2.5; peso escala com a complexidade (SIMPLE = 4 linhas, MEDIUM+ consolida Discussion/@architect). Diagnosticar o problema NAO e planejar a solucao. Override `skip-plan-authorized`, uso unico, auditado (ver `plan-first.md`)
 
 ## 12 Best Practices
 
-Quando `coding_standards.enforce: true` (default), @dev aplica e @qa valida:
+Quando `coding_standards.enforce: true` (default), @dev aplica; @qa valida no
+FULL/auditoria:
 
 1. **DRY** - Evitar duplicacao
 2. **Dead Code** - Remover codigo nao usado
@@ -87,8 +90,9 @@ Detalhes completos em `.claude/rules/coding-standards.md`.
 - Smart Router executa pipeline end-to-end automaticamente
 - Confirmacao apenas no inicio (apresentacao do plano)
 - Loop de QA automatico (max 3 iteracoes)
-- **yolo_mode ≠ skip_pipeline:** significa apenas "nao pausar entre etapas".
-  TODOS os agentes do pipeline rodam do mesmo jeito (ver `pipeline-integrity.md` Regra 4)
+- **yolo_mode ≠ mode_selection:** significa apenas "nao pausar entre etapas".
+  O modo DEVELOPMENT/FULL continua sendo escolhido por `pipeline_mode` (ver
+  `pipeline-integrity.md` Regra 4)
 
 ### Plan Mode (`plan_mode.enabled: true`, default)
 - Agentes de planejamento (@pm, @architect, @analyst, @ux) usam Opus

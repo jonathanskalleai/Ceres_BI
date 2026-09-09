@@ -60,7 +60,7 @@ No gate de pipeline, apos o verdict, gravar `.aivoux/gates/security-verdict.json
  "agent": "aivoux-security", "timestamp": "<ISO-8601 UTC>", "scope": "<1 linha>"}
 ```
 
-Sem este arquivo o `security-gate.sh` bloqueia push/deploy quando o diff toca
+Sem este arquivo o `security-gate.sh` bloqueia merge/release/producao no modo FULL quando o diff toca
 superficie sensivel. O `sha` e o HEAD no momento do verdict. NUNCA inclua o
 valor de um segredo — so a superficie no `scope`.
 

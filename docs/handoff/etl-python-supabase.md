@@ -182,7 +182,7 @@ rm /etc/cron.d/ceres-etl
 
 ### Preparar VPS
 ```bash
-ssh root@178.238.235.203
+ssh -p 2222 root@178.238.235.203
 
 # Criar estrutura
 mkdir -p /opt/etl/{connectors,transformers,config,logs}

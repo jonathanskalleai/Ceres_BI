@@ -106,7 +106,7 @@ postgres:
 ## Como Continuar
 
 ```bash
-ssh root@178.238.235.203
+ssh -p 2222 root@178.238.235.203
 docker run --rm --network container:supabase_supabase_db.1.m8y6f3d5q3r31f060kq74ncfm \
   -v /var/log/etl:/var/log/etl ceres-etl:latest --all --once
 ```

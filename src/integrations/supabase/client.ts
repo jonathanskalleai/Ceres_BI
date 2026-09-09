@@ -4,13 +4,22 @@ import type { Database } from './types';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-const AUTH_LOGIN_ATTEMPTS = 4;
-const AUTH_LOGIN_ATTEMPT_TIMEOUT_MS = 4_000;
-const AUTH_LOGIN_RETRY_DELAY_MS = 250;
+// A password login used to retry four 4s client-aborted requests. When the
+// gateway was congested, the button remained in "Entrando..." for ~17s and
+// could send multiple concurrent credential requests. One request with a
+// realistic deadline gives a definitive result without this retry cascade.
+const AUTH_LOGIN_ATTEMPTS = 1;
+const AUTH_LOGIN_ATTEMPT_TIMEOUT_MS = 15_000;
+const AUTH_LOGIN_RETRY_DELAY_MS = 0;
 
-const GENERAL_ATTEMPTS = 3;
-const GENERAL_TIMEOUT_MS = 15_000;
-const GENERAL_RETRY_DELAY_MS = 300;
+// Analytical RPCs can legitimately take longer than a regular REST request.
+// Retrying an aborted request here used to multiply the same expensive query
+// against PostgREST while the first execution was still being cancelled. Let
+// the gateway return its own definitive response instead; retries for these
+// requests are owned by the individual query only when they are safe.
+const GENERAL_ATTEMPTS = 1;
+const GENERAL_TIMEOUT_MS = 35_000;
+const GENERAL_RETRY_DELAY_MS = 0;
 
 export const AUTH_STORAGE_KEY = `sb-${new URL(SUPABASE_URL).hostname.split('.')[0]}-auth-token`;
 

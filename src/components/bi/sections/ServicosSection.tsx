@@ -5,7 +5,7 @@ import { useServicosBIRpc } from "@/hooks/bi/useServicosBIRpc";
 import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { HorizontalBarChart, VerticalBarChart, PieChartWithLabels } from "@/components/bi/charts";
-import { CHART_COLORS } from "@/lib/chartTheme";
+import { CHART_COLORS } from "@/lib/chartPalette";
 import { formatDias, formatMonthYear, toISODate, getPreviousPeriod, calcTrend } from "@/lib/dateUtils";
 import type { RpcServicosBI } from "@/types/biRpc";
 

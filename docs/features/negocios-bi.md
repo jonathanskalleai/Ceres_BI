@@ -39,7 +39,7 @@ status: active
 4. Testar com filtro de funis + vendedor (combinacoes nulas devem retornar JSON valido, nunca null)
 
 ## Smoke
-- `ssh -i ~/.ssh/id_ed25519 root@178.238.235.203 "docker exec \$(docker ps -q -f name=supabase_db) psql -U postgres -d postgres -c \"SELECT (r->>'kpis')::json->>'ganhos' as ganhos FROM rpc_negocios_bi('2026-07-01'::date, '2026-07-31'::date, ARRAY['VENDAS','ADM','BANCOS','OFICINA','MARKETING']) r;\""` → ganhos >= 20
+- `ssh -p 2222 -i ~/.ssh/id_ed25519 root@178.238.235.203 "docker exec \$(docker ps -q -f name=supabase_db) psql -U postgres -d postgres -c \"SELECT (r->>'kpis')::json->>'ganhos' as ganhos FROM rpc_negocios_bi('2026-07-01'::date, '2026-07-31'::date, ARRAY['VENDAS','ADM','BANCOS','OFICINA','MARKETING']) r;\""` → ganhos >= 20
 - `curl -s https://ceresbi.vouxconsultoria.com.br` → HTTP 200
 
 ## Riscos / Acoplamentos

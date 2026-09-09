@@ -127,7 +127,7 @@ RPCs comerciais já existem (`rpc_kpis_comercial`, `rpc_ranking_vendedores`, `rp
 
 ## Referência rápida
 
-- **VPS:** 178.238.235.203
+- **VPS:** 178.238.235.203 (SSH porta 2222)
 - **Supabase:** https://ceressupabasebi.vouxconsultoria.com.br
 - **Repo:** git@github.com:jonathanskalleai/Ceres_BI.git
 - **RPCs existentes:** rpc_kpis_comercial, rpc_ranking_vendedores, rpc_evolucao_mensal, rpc_ranking_regioes, rpc_clientes_por_vendedor

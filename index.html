@@ -1,11 +1,15 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR" translate="no" class="notranslate">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Ceres BI · Painel Comercial</title>
     <meta name="description" content="Ceres Equipamentos — Business Intelligence">
     <meta name="author" content="Ceres Equipamentos">
+    <!-- Browser translators mutate DOM nodes that React owns, which can
+         desynchronise handlers and produce phantom clicks/menus. The BI is
+         intentionally presented in Portuguese; do not translate it. -->
+    <meta name="google" content="notranslate" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,7 +20,7 @@
 </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root" translate="no" class="notranslate"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

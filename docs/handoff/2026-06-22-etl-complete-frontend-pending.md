@@ -8,7 +8,7 @@
 
 ### ETL Python → Supabase (100% funcional)
 
-- **VPS:** 178.238.235.203
+- **VPS:** 178.238.235.203 (SSH porta 2222)
 - **ETL:** `/opt/etl/` (Python 3 + pymssql + psycopg2)
 - **Cron ativo:** `/etc/cron.d/ceres-etl` — 4 blocos a cada 15 min
 - **11 views sincronizadas** do SQL Server (CamposDealer_BI) para Supabase (schema `mirror`)

@@ -111,9 +111,9 @@ mata o negocio) → prioriza o backlog e alimenta `security_gate.sensitive_paths
 
 ---
 
-## FASE 4 — Escrita (via aivoux-scribe, achados validados no prompt)
+## FASE 4 — Escrita
 
-Spawnar `aivoux-scribe` para gravar:
+Gravar diretamente:
 
 1. **`docs/security/report.md`** — postura de seguranca: resumo executivo
    (quantos CRITICAL/HIGH/MEDIUM/LOW), superficie de ataque mapeada, o modelo de

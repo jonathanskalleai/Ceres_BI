@@ -120,9 +120,18 @@ export function MetasEquipeDialog({ open, onOpenChange, ano, consultores }: Meta
   }, [ano, consultores, open]);
 
   const todosConsultores = useMemo(() => {
-    if (listaConsultores.length > 0) return listaConsultores;
-    return consultores;
-  }, [listaConsultores, consultores]);
+    const nomes = listaConsultores.length > 0 ? listaConsultores : consultores;
+
+    return [...nomes].sort((a, b) => {
+      const metaA = toNumber(metasConsultores[a] ?? "");
+      const metaB = toNumber(metasConsultores[b] ?? "");
+      const possuiMetaA = metaA > 0;
+      const possuiMetaB = metaB > 0;
+
+      if (possuiMetaA !== possuiMetaB) return possuiMetaB ? 1 : -1;
+      return a.localeCompare(b, "pt-BR");
+    });
+  }, [listaConsultores, consultores, metasConsultores]);
 
   const metaAnualValue = toNumber(metaAnual);
   const percentuaisValue = useMemo(() => percentuais.map(toNumber), [percentuais]);

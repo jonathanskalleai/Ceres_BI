@@ -176,7 +176,7 @@ npm run build      → OK, built in 6.40s
 
 **Como aplicar SQL no banco vivo** (self-hosted, **NAO** o Cloud do `config.toml`):
 ```bash
-ssh -o BatchMode=yes -i ~/.ssh/id_ed25519 root@178.238.235.203 \
+ssh -p 2222 -o BatchMode=yes -i ~/.ssh/id_ed25519 root@178.238.235.203 \
   "docker exec \$(docker ps -q -f name=supabase_db | head -1) psql -U postgres -d postgres -c \"...\""
 ```
 

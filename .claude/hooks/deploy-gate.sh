@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # AIVOUX deploy-gate — PreToolUse (Bash + MCP deploy tools), BLOQUEANTE
 #
-# Hard gate mecanico do pipeline (F6): nenhum push/PR/deploy sai sem QA PASS
-# registrado PARA O SHA ATUAL, com evidencia de que o @qa RODOU DE FATO como
-# subagent. Resposta direta ao incidente real: Fase 2 foi do codigo direto
-# pro deploy sem @reviewer/@qa/@scribe, e o bug (retry de midia sem base64)
+# Hard gate mecanico do pipeline (F6): nenhuma publicacao produtiva sai sem QA
+# PASS registrado PARA O SHA ATUAL, com evidencia de que o @qa RODOU DE FATO
+# como subagent. Em DEVELOPMENT, branch/PR/preview nao produtivo sao a excecao.
+# Resposta direta ao incidente real: Fase 2 foi do codigo direto pro deploy sem
+# @reviewer/@qa, e o bug (retry de midia sem base64)
 # so foi descoberto em producao.
 #
 # Contrato (igual delete-guard): exit 2 + stderr => Claude ve o feedback e
@@ -14,12 +15,15 @@
 #   0. Override autorizado pelo usuario (.aivoux/gates/skip-pipeline-authorized)
 #      — consumido no uso e logado. So pode ser criado com autorizacao EXPLICITA
 #      do usuario no prompt (vide pipeline-integrity.md).
-#   1. Range docs-only e isento (typo/docs nao exigem pipeline).
-#   2. .aivoux/gates/qa-verdict.json existe, verdict PASS|WAIVED, sha do
-#      verdict == HEAD (ou commits pos-verdict sao docs-only — ex: @scribe).
-#   3. agents-run.log comprova spawn real de aivoux-qa apos o commit validado
-#      — verdict "inline" escrito sem spawnar @qa NAO vale (INLINE_DEGRADED).
-#   4. critical_paths (config.yaml) tem secao '## Smoke' em docs/features/
+#   1. DEVELOPMENT permite branch/PR/preview; merge, release e producao
+#      continuam exigindo o ciclo FULL.
+#   2. Range docs-only e isento (typo/docs nao exigem pipeline).
+#   3. .aivoux/gates/qa-verdict.json existe, verdict PASS|WAIVED, sha do
+#      verdict == HEAD (ou commits pos-verdict sao docs-only).
+#   4. agents-run.log comprova spawn real de aivoux-qa apos o commit validado
+#      — verdict "inline" escrito sem spawnar @qa NAO vale (INLINE_DEGRADED)
+#      quando o modo FULL estiver exigindo a evidência.
+#   5. critical_paths (config.yaml) tem secao '## Smoke' em docs/features/
 #      — sem smoke o regression gate e teatro (roda mas nunca falha).
 set +e
 
@@ -66,7 +70,7 @@ block() {
   {
     printf '⛔ AIVOUX deploy-gate: push/deploy BLOQUEADO (pipeline-integrity F6).\n'
     printf '   Motivo: %s\n\n' "$1"
-    printf 'Regra: NENHUM push/PR/deploy sem QA PASS registrado para o SHA atual.\n'
+    printf 'Regra: fora da excecao DEVELOPMENT, nenhuma publicacao sem QA PASS registrado para o SHA atual.\n'
     printf 'yolo_mode NAO significa pular etapas. Falha de subagente (529) NAO e\n'
     printf 'desculpa — retry, ou pare e pergunte ao usuario. Verdict inline sem\n'
     printf 'spawn real de aivoux-qa e INLINE_DEGRADED e NAO passa neste gate.\n\n'
@@ -100,15 +104,35 @@ HEAD_SHA=$(git rev-parse HEAD 2>/dev/null)
 
 DOCS_ONLY_RE='^(docs/|\.aivoux/|\.claude/|.*\.(md|txt)$)'
 
-# ===== 1) TIER FAST: permitir deploy sem QA verdict, mas avisar =====
-TIER_FAST_MARKER="$GATES/tier-fast-used"
-if [ ! -f "$VFILE" ] && [ -f "$TIER_FAST_MARKER" ]; then
-  {
-    printf '⚠ AIVOUX deploy-gate: TIER FAST detectado — deploy permitido mas RECOMENDADO rodar @reviewer + @qa antes de producao.\n'
-    printf '   Codigo feito em TIER FAST nao passou por gates de qualidade.\n'
-    printf '   Para revisar tudo de uma vez: /aivoux/audit\n'
-  } >&2
-  exit 0
+# ===== 1) DEVELOPMENT: branch/PR/preview sem QA; producao continua FULL =====
+MODE=$(cat "$GATES/pipeline-mode" 2>/dev/null | head -1)
+if [ "$MODE" != "development" ] && [ "$MODE" != "full" ]; then
+  MODE=""
+  if [ -f "$CONFIG" ]; then
+    MODE=$(awk '/^pipeline_mode:/{f=1;next} f && /^[^[:space:]]/{exit} f && /^[[:space:]]*default:/{print $2; exit}' "$CONFIG" 2>/dev/null)
+  fi
+fi
+[ "$MODE" != "development" ] && [ -f "$GATES/tier-fast-used" ] && MODE="development"
+[ "$MODE" != "development" ] && [ "$MODE" != "full" ] && MODE="development"
+
+if [ "$MODE" = "development" ]; then
+  BRANCH=$(git branch --show-current 2>/dev/null)
+  if printf '%s' "$CMD" | grep -qE "${CMDPOS}gh[[:space:]]+pr[[:space:]]+create" \
+    && [ "$BRANCH" != "main" ] && [ "$BRANCH" != "master" ]; then
+    printf '⚠ AIVOUX deploy-gate: DEVELOPMENT — PR permitido sem QA; audite as pendencias antes do merge.\n' >&2
+    exit 0
+  fi
+  if printf '%s' "$CMD" | grep -qE "${CMDPOS}git[[:space:]]+push" && [ "$BRANCH" != "main" ] && [ "$BRANCH" != "master" ]; then
+    printf '⚠ AIVOUX deploy-gate: DEVELOPMENT — push de branch permitido sem QA; use /aivoux/audit pending antes do merge.\n' >&2
+    exit 0
+  fi
+  if [ "$BRANCH" != "main" ] && [ "$BRANCH" != "master" ] \
+    && printf '%s' "$CMD" | grep -qE "${CMDPOS}(vercel([[:space:]]+deploy)?|netlify[[:space:]]+deploy)" \
+    && ! printf '%s' "$CMD" | grep -qE '(^|[[:space:]])--prod([[:space:]]|$)'; then
+    printf '⚠ AIVOUX deploy-gate: DEVELOPMENT — preview não produtivo permitido sem QA; audite antes de promover.\n' >&2
+    exit 0
+  fi
+  block "modo DEVELOPMENT permite branch/PR/preview não produtivo, mas esta operacao parece merge, release ou producao; rode /aivoux/audit pending ou use *full."
 fi
 
 # ===== 2) git push: range docs-only e isento =====

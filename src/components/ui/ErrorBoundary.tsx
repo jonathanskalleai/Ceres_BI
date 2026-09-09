@@ -10,6 +10,27 @@ interface ErrorBoundaryState {
   hasError: boolean;
 }
 
+const CHUNK_RELOAD_KEY = "ceresbi:chunk-reload-url";
+
+function isDynamicImportFailure(error: Error): boolean {
+  return /failed to fetch dynamically imported module|importing a module script failed|loading chunk/i.test(
+    error.message,
+  );
+}
+
+function reloadOnceForNewBuild(): boolean {
+  const currentUrl = window.location.href;
+  const markerPrefix = `${currentUrl}|`;
+  const previous = window.sessionStorage.getItem(CHUNK_RELOAD_KEY);
+  const previousAt = previous?.startsWith(markerPrefix)
+    ? Number(previous.slice(markerPrefix.length))
+    : Number.NaN;
+  if (Number.isFinite(previousAt) && Date.now() - previousAt < 30_000) return false;
+  window.sessionStorage.setItem(CHUNK_RELOAD_KEY, `${currentUrl}|${Date.now()}`);
+  window.location.reload();
+  return true;
+}
+
 /**
  * Generic React Error Boundary.
  * Catches render errors in children and shows a friendly fallback UI.
@@ -25,6 +46,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    // A deployment replaces Vite's hashed asset names. A tab that still has
+    // the old app shell can request a chunk which no longer exists and used to
+    // make users click "Tentar novamente" repeatedly. Reload once to acquire
+    // the current index/chunk set; the guard prevents an infinite loop for a
+    // real network failure.
+    if (isDynamicImportFailure(error) && reloadOnceForNewBuild()) return;
     this.props.onError?.(error, errorInfo);
   }
 

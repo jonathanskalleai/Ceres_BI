@@ -56,7 +56,11 @@ const queryClient = new QueryClient({
       staleTime: 5 * 60_000, // 5 min "fresco" — não refetch ao trocar de aba
       gcTime: 30 * 60_000,
       refetchOnWindowFocus: false,
-      retry: 1,
+      // BI RPCs are expensive analytical reads. A generic second attempt can
+      // duplicate a query that is still running upstream after a client-side
+      // timeout, worsening contention for every user. Opt in to retries only
+      // for specific lightweight/idempotent queries.
+      retry: false,
     },
   },
 });

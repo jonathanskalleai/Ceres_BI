@@ -277,7 +277,7 @@ GRANT EXECUTE ON FUNCTION public.rpc_acoes_em_andamento(date, date, text, text, 
 ```bash
 # 1. Criar migration local
 # 2. Copiar para VPS
-scp -i ~/.ssh/id_ed25519 migration.sql root@178.238.235.203:/tmp/migration.sql
+scp -P 2222 -i ~/.ssh/id_ed25519 migration.sql root@178.238.235.203:/tmp/migration.sql
 
 # 3. Aplicar via docker exec + psql
 docker exec -i supabase_supabase_db.1.n0afaiypr7f7luy817d6lr2do \

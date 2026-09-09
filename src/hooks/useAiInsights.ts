@@ -20,7 +20,7 @@ export interface InsightEquipe {
 const STALE_TIME = 15 * 60_000; // 15 min cache
 const GC_TIME = 60 * 60_000;    // 1h memory cache
 
-export function useAiInsightsEquipe() {
+export function useAiInsightsEquipe(enabled = true) {
   return useQuery<InsightEquipe | null, Error>({
     queryKey: ["ai-insights", "equipe"],
     queryFn: async () => {
@@ -36,5 +36,6 @@ export function useAiInsightsEquipe() {
     },
     staleTime: STALE_TIME,
     gcTime: GC_TIME,
+    enabled,
   });
 }

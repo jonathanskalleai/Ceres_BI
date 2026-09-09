@@ -1,26 +1,11 @@
 import type { EChartsOption } from "echarts";
+export { CHART_COLORS, ACCENT_COLOR, POSITIVE_COLOR, NEGATIVE_COLOR } from "./chartPalette";
 
 /**
  * Tema central dos graficos do BI (ECharts). Define a paleta, os gradientes
  * (estetica glass/transparencia), o tooltip "vidro" e helpers de formatacao.
  * Suporta dark/light mode via getChartThemeVars().
  */
-
-// VOUX palette — tons terrosos sóbrios (referência: coral → âmbar → sage → verde)
-export const CHART_COLORS = [
-  "#4caf7a", // verde sóbrio (sucesso)
-  "#d4a05a", // âmbar (warning)
-  "#c97565", // terracotta (danger)
-  "#8ea3b8", // slate-blue (info)
-  "#7a9b6f", // sage green
-  "#6e542f", // marrom muted
-  "#d4b896", // champagne
-  "#e06060", // vermelho sóbrio
-] as const;
-
-export const ACCENT_COLOR = "#d4a05a";
-export const POSITIVE_COLOR = "#4caf7a";
-export const NEGATIVE_COLOR = "#c97565";
 
 // ----- Dark/Light theme vars for charts -----
 

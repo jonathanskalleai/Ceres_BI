@@ -6,7 +6,7 @@ import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { BiErrorState } from "@/components/bi/BiErrorState";
 import { HorizontalBarChart, VerticalBarChart, PieChart, PieChartWithLabels } from "@/components/bi/charts";
-import { CHART_COLORS, POSITIVE_COLOR, NEGATIVE_COLOR } from "@/lib/chartTheme";
+import { CHART_COLORS, POSITIVE_COLOR, NEGATIVE_COLOR } from "@/lib/chartPalette";
 
 interface Props {
   active: boolean;

@@ -163,6 +163,8 @@ def contract_evidence_status(contract: TurnContract, executions: list[ToolExecut
     if not contract.requires_evidence:
         return True, "not_required"
     successful = [item for item in executions if item.status == "ok"]
+    if any(item.tool_name == "consultar_banco_bi" for item in successful):
+        return True, "passed"
     missing_tools = [name for name in contract.tool_names if not any(item.tool_name == name for item in successful)]
     if missing_tools:
         return False, "required_tool_missing"

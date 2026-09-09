@@ -6,8 +6,18 @@ o worker; SQL quebrado zerou os dashboards). Um deploy so e "DONE" quando provou
 em runtime, que o servico sobe e processa um caso real — nao quando o `git push`
 retornou 0.
 
-Owner: **@devops**. Validator: **@qa** (runtime). Aplica-se a TODO deploy/release/push
+Owner: **@devops**. Validator: **@qa** (runtime). Aplica-se a toda publicacao
 que altera codigo ou schema em ambiente vivo.
+
+## Escopo por modo
+
+- **DEVELOPMENT:** @devops pode publicar a branch, abrir PR ou criar preview
+  nao produtivo. Essa publicacao nao e release de producao: faz as validacoes
+  locais proporcionais, registra a demanda em `docs/development/pending/` e nao
+  chama @reviewer/@security/@qa.
+- **FULL:** o gate abaixo e obrigatorio antes de merge, release ou producao.
+- Qualquer operacao produtiva exige `FULL` ou `/aivoux/audit pending`, mesmo
+  que a demanda tenha sido implementada em DEVELOPMENT.
 
 ---
 
@@ -81,7 +91,9 @@ conforme `QA Runtime Verification`.
 - Quality Gates de `shared-config.md`: este gate roda DEPOIS dos 4 checks, antes do push final
 - Pipeline DEPLOY do router termina com este gate; sem ele → `BLOCKED`
 - `@devops` e dono; em deploy, **read-only no codigo** (vide CLAUDE.md "Deploy Tasks = Read-Only")
-- **Pipeline Integrity (F6):** ANTES deste gate, o hook `deploy-gate.sh` ja bloqueia
-  fisicamente o push/deploy sem QA PASS ancorado ao SHA atual (vide
-  `pipeline-integrity.md`). F6 impede o push sair sem pipeline; F1 valida o que
-  saiu (boot + smoke no ambiente vivo). Um nao substitui o outro.
+- **Pipeline Integrity (F6):** em `FULL`, ANTES deste gate, o hook
+  `deploy-gate.sh` ja bloqueia fisicamente o push/deploy sem QA PASS ancorado ao
+  SHA atual (vide `pipeline-integrity.md`). Em `DEVELOPMENT`, a excecao fica
+  limitada a branch/PR/preview nao produtivo. F6 impede a publicacao produtiva
+  sair sem pipeline; F1 valida o que saiu (boot + smoke no ambiente vivo). Um
+  nao substitui o outro.

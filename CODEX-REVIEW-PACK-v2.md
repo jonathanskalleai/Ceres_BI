@@ -48,7 +48,7 @@
 3. **GRANT anon EXECUTE em 4/6 RPCs** (bi, funil_gestao, mapa, detalhe). 2 já são `authenticated, service_role` apenas (precedente).
 4. **Sem histórico de `ngo_conclusao`**. Único trigger em crm_negocios é `trg_auto_sync_metadata_crm_negocios` (sync metadata, não auditoria). Sem `crm_negocios_historico`. Distribuição atual: Em Andamento 2928, Ganho 827, Perdido 808.
 5. **PostgREST reload via `NOTIFY pgrst, 'reload schema'` funciona** (testado no container).
-6. **Deploy end-to-end**: SSH → `docker ps --filter name=supabase_db` → `scp migration.sql root@178.238.235.203:/tmp/` → `docker exec <container> psql -U postgres -d postgres -f /tmp/migration.sql` → `pg_get_functiondef` para verificar → `NOTIFY pgrst, 'reload schema'` para PostgREST enxergar.
+6. **Deploy end-to-end**: SSH → `docker ps --filter name=supabase_db` → `scp -P 2222 migration.sql root@178.238.235.203:/tmp/` → `docker exec <container> psql -U postgres -d postgres -f /tmp/migration.sql` → `pg_get_functiondef` para verificar → `NOTIFY pgrst, 'reload schema'` para PostgREST enxergar.
 7. **Bug do acento** `REPASSE DE MÁQUINA` vs `REPASSE DE MAQUINA` na CTE `parados` do funil v6 — FORA do escopo v2, mereceria migration própria.
 8. **`diasParados` usa dedup diferente** das outras CTEs (`ngo_datacadastro` vs `ngo_dataatualizacao`). Unificar mudaria 112 → 111 em julho. Fora do escopo v2.
 

@@ -2,10 +2,11 @@
 # Referencia para o Smart Router e execucao direta de workflows
 
 workflows:
-  # 1. Development Cycle (padrao para features)
-  - id: dev-cycle
+  # 1. Development Cycle (modo development — iteracao)
+  - id: development-cycle
     name: Development Cycle
-    description: Fluxo padrao para implementacao de features
+    mode: development
+    description: Fluxo curto para iteracao; registra codigo pendente de auditoria
     chain:
       - agent: "@architect"
         action: Design de arquitetura e plano de implementacao
@@ -18,16 +19,61 @@ workflows:
       - agent: "@dev"
         action: Implementacao de codigo + testes
         output: Codigo implementado e testado
-      - agent: "@qa"
-        action: Review de qualidade e gate decision
-        output: PASS/CONCERNS/FAIL verdict
-        skip_if: complexidade SIMPLE
       - agent: "@devops"
-        action: Push + PR creation
-        output: Codigo no remote + PR
+        action: Push de branch/PR ou preview não produtivo quando solicitado
+        output: Codigo publicado no fluxo de desenvolvimento
         skip_if: usuario nao solicitar
 
-  # 2. QA Loop (review iterativo)
+  # 2. Full Cycle (modo full — aprovacao/release)
+  - id: full-cycle
+    name: Full Cycle
+    mode: full
+    description: Fluxo completo com reviewer, security condicional, QA e DevOps gated
+    chain:
+      - agent: "@architect"
+        action: Design de arquitetura e plano de implementacao
+        output: Arquitetura + plano com tasks
+        skip_if: complexidade SIMPLE
+      - agent: "@data-engineer"
+        action: Schema design e migrations
+        output: Schema DDL + migration files
+        skip_if: sem componente de banco de dados
+      - agent: "@dev"
+        action: Implementacao de codigo + testes
+        output: Codigo implementado e testado
+      - agent: "@reviewer"
+        action: Gate estrutural do diff
+        output: PASS/FAIL reviewer verdict
+      - agent: "@security"
+        action: Threat model e security review quando a superficie for sensivel
+        output: SECURE/CONCERNS/VULNERABLE verdict
+        skip_if: diff nao sensivel
+      - agent: "@qa"
+        action: Validacao funcional, runtime e regressao
+        output: PASS/CONCERNS/FAIL verdict
+      - agent: "@devops"
+        action: Push, PR, release ou deploy apos os gates
+        output: Codigo no remote + PR/release
+        skip_if: usuario nao solicitar
+
+  # 3. Audit de pendencias do modo development
+  - id: development-audit
+    name: Development Audit
+    mode: full
+    description: Revisa registros pendentes sem repetir planejamento ou implementacao
+    chain:
+      - agent: "@reviewer"
+        action: Auditar os arquivos dos registros PENDING_REVIEW
+        output: PASS/FAIL reviewer verdict
+      - agent: "@security"
+        action: Auditar superficie sensivel quando aplicavel
+        output: SECURE/CONCERNS/VULNERABLE verdict
+        skip_if: diff nao sensivel
+      - agent: "@qa"
+        action: Executar testes, runtime e smokes; atualizar status dos registros
+        output: PASS/CONCERNS/FAIL e APPROVED/NEEDS_FIX
+
+  # 4. QA Loop (review iterativo)
   - id: qa-loop
     name: QA Loop
     description: Ciclo review-fix ate aprovacao
@@ -44,7 +90,7 @@ workflows:
         action: Re-review apos fixes
         output: Verdict final
 
-  # 3. Spec Pipeline (pre-implementacao)
+  # 5. Spec Pipeline (pre-implementacao)
   - id: spec-pipeline
     name: Spec Pipeline
     description: Transformar requisitos informais em spec executavel
@@ -66,7 +112,7 @@ workflows:
         action: Critique da spec
         output: APPROVED/NEEDS_REVISION
 
-  # 4. Brownfield Discovery (projetos existentes)
+  # 6. Brownfield Discovery (projetos existentes)
   - id: brownfield
     name: Brownfield Discovery
     description: Assessment de projeto existente

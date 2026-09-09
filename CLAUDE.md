@@ -156,7 +156,7 @@ procure, copie ou registre em arquivos do repositorio.
 
 Este projeto usa o **AIVOUX** — framework AI-Orchestrated para Claude Code
 com YOLO mode (auto-orquestracao), Plan Mode (todos os agentes em Opus via
-Task tool; scribe em Haiku), e Discussion Mode (deliberacao multi-agente).
+Task tool), e Discussion Mode (deliberacao multi-agente).
 
 > ⚠ **Precedencia:** este bloco e um RESUMO de orientacao. A fonte CANONICA do
 > fluxo de orquestracao e `.claude/commands/aivoux/router.md` + `.claude/rules/*`.
@@ -172,14 +172,16 @@ Use o Smart Router para qualquer demanda:
 /aivoux/router Corrigir bug de login
 /aivoux/router Criar sistema de notificacoes em tempo real
 /aivoux/router Auditar tech debt do projeto
+/aivoux/audit pending Revisar demandas do modo development
 ```
 
 O router analisa, delibera entre agentes quando apropriado, e executa o
 squad inteiro automaticamente ate a entrega.
 
-## Squad de Agentes (12)
+## Squad de Agentes (11)
 
-> Todos os agentes rodam **Opus** (scribe em Haiku). Sem tiers, sem modo economy.
+> Todos os agentes rodam **Opus**. O custo do fluxo e escolhido por modo:
+> `*dev`/`*development` (iteracao) ou `*full` (aprovacao/release).
 
 ### Planning Agents (Opus)
 - `/aivoux/agents/analyst` — Analise de negocio, pesquisa, PRD
@@ -190,15 +192,11 @@ squad inteiro automaticamente ate a entrega.
 ### Development Agents (Opus)
 - `/aivoux/agents/dev` — Implementacao + 12 best practices
 - `/aivoux/agents/data-engineer` — Schemas, RLS, migrations
-- `/aivoux/agents/reviewer` — Code-quality gate: DRY, monolitos (aviso 300 / gate 400), dead code, estrutura. **SEMPRE no pipeline** (inclusive SIMPLE — enforcement mecanico via `review-gate.sh`)
+- `/aivoux/agents/reviewer` — Code-quality gate no modo FULL: DRY, monolitos (aviso 300 / gate 400), dead code, estrutura. **SEMPRE no FULL** (inclusive SIMPLE — enforcement mecanico via `review-gate.sh`)
 - `/aivoux/agents/security` — Security gate CONDICIONAL: 10 security standards + threat model (auth/API/dados sensiveis/upload/secrets/deploy); verdict VULNERABLE volta ao @dev
 - `/aivoux/agents/qa` — Quality assurance + audit das 12 praticas + runtime + seguranca (check raso)
 - `/aivoux/agents/devops` — Git push, PRs, CI/CD (EXCLUSIVO)
 
-### Scan/Docs (Haiku automatico — barato)
-- `/aivoux/agents/scribe` — Context scan (cache) + feature docs
-
-### Meta
 - `/aivoux/agents/squad-creator` — Criar squads customizadas
 
 Comandos de agente usam prefixo `*` (ex: `*develop`, `*review`, `*push`).
@@ -289,20 +287,22 @@ deploy com usuarios reais: error tracking (Sentry/GlitchTip/webhook) com
 o bug. @qa testa HOSTIL (vazio, gigante, unicode, duplo submit), nao so happy
 path. Detalhes em `.claude/rules/observability-standards.md`.
 
-### Pipeline Integrity (F6) — o pipeline e INQUEBRAVEL
-O pipeline (dev → reviewer → qa → scribe → devops) so pode ser pulado pelo
-USUARIO, com autorizacao explicita nesta conversa. Falha de API (529), contexto
-longo, "e continuacao da fase anterior", yolo_mode — nada disso autoriza pular.
+### Pipeline Integrity (F6) — o modo FULL e INQUEBRAVEL
+O modo FULL (dev → reviewer → security condicional → qa → devops) so pode ser
+alterado pelo USUARIO, com autorizacao explicita nesta conversa. O modo
+DEVELOPMENT (`*dev`, `*development` ou legado `*fast`) e uma politica escolhida
+para iteracao: nao chama reviewer/security/qa e registra codigo/schema em
+`docs/development/pending/`. Falha de API (529), contexto longo, "e continuacao
+da fase anterior" e yolo_mode nao mudam o modo nem autorizam mascarar etapa.
 **Subagente falhou:** retry 1x → PARAR e perguntar; inline so com autorizacao
 = `INLINE_DEGRADED` (nunca PASS). **Enforcement mecanico** (funciona mesmo sem
-router na sessao): `deploy-gate.sh` BLOQUEIA push/PR/deploy sem QA PASS ancorado
-ao SHA atual + spawn real de `aivoux-qa` (`agents-run.log` via `agent-trace.sh`)
-+ reviewer PASS ancorado + `## Smoke` nos critical_paths; `review-gate.sh`
-BLOQUEIA spawn do @qa sem @reviewer antes (@reviewer e SEMPRE obrigatorio,
-inclusive SIMPLE — complexidade nao remove gate); `scribe-gate.sh` bloqueia o
-fechamento se @qa PASS sem @scribe depois; `docs-gate.sh` bloqueia spawn de
-aivoux-* sem o Feature-Docs Lookup quando o projeto tem `docs/features/index.md`. Cada deploy =
-pipeline nova (commit de codigo pos-verdict invalida o PASS). Detalhes em
+router na sessao): no FULL, `deploy-gate.sh` BLOQUEIA merge/release/producao sem
+QA PASS ancorado ao SHA atual + spawn real de `aivoux-qa` (`agents-run.log` via
+`agent-trace.sh`) + reviewer PASS + `## Smoke` nos critical_paths;
+`review-gate.sh` BLOQUEIA spawn do @qa sem @reviewer antes; `docs-gate.sh`
+bloqueia spawn de aivoux-* sem o Feature-Docs Lookup quando o projeto tem
+`docs/features/index.md`. Cada release FULL e uma pipeline nova (commit de
+codigo pos-verdict invalida o PASS). Detalhes em
 `.claude/rules/pipeline-integrity.md`.
 
 ### Plan-First (F7) — nenhuma implementacao sem plano da solucao
@@ -364,7 +364,7 @@ ANTES de qualquer acao e retome sem perguntar ao usuario.
 
 ### VPS de producao
 - **IP:** `178.238.235.203` (user `root`, Ubuntu 24.04, sudo via senha).
-- **SSH:** `ssh -i ~/.ssh/id_ed25519 root@178.238.235.203` (chave ~`aivoux-deploy`, public-key, sem senha).
+- **SSH:** `ssh -p 2222 -i ~/.ssh/id_ed25519 root@178.238.235.203` (porta **2222**, chave ~`aivoux-deploy`, public-key, sem senha). Porta 22 está FECHADA.
 - **Arquitetura:** Docker Swarm single-node + Traefik v3.5 + Portainer + Supabase self-hosted, tudo na mesma VPS.
 - **Stack ceresbi:** service `web` (nginx:alpine servindo dist estatico, imagem `ceresbi:latest` local). URL publica: `https://ceresbi.vouxconsultoria.com.br`.
 - **Rede overlay:** `redeinterna` (todos os services compartilham essa rede).
@@ -420,11 +420,13 @@ password hashing, backup & recovery, dependency security, HTTPS + headers.
 **Aplicacao situacional** — matrix por escopo (backend / frontend / infra / auth).
 Detalhes em `.claude/rules/security-standards.md`.
 
-**Enforcement em 2 niveis:** (1) raso e sempre — @qa check #4 nos standards
-aplicaveis; (2) profundo e condicional — o **@security** entra no pipeline (apos
-@reviewer, antes do @qa) quando a mudanca toca superficie sensivel (auth, authz,
-entrada externa, dados pessoais, upload, secrets, deploy) e faz threat model +
-auditoria, com verdict SECURE/CONCERNS/VULNERABLE. VULNERABLE volta ao @dev.
+**Enforcement em 2 niveis:** (1) construcao proporcional — @dev aplica os
+standards pertinentes em DEVELOPMENT e FULL; no FULL/auditoria, @qa tambem
+verifica os aplicaveis; (2) profundo e condicional — o **@security** entra no
+pipeline FULL/auditoria (apos @reviewer, antes do @qa) quando a mudanca toca
+superficie sensivel (auth, authz, entrada externa, dados pessoais, upload,
+secrets, deploy) e faz threat model + auditoria, com verdict
+SECURE/CONCERNS/VULNERABLE. VULNERABLE volta ao @dev.
 
 **Auditar um sistema existente:** `/aivoux/audit-security` — auditoria read-only
 (espelha o `/aivoux/discover`), produz `docs/security/report.md` + backlog
@@ -442,10 +444,11 @@ Detalhes em `.claude/rules/observability-standards.md`.
 ## Modos de Operacao
 
 - **YOLO Mode** (default on) — Pipeline end-to-end automatico
-- **Plan Mode** (default on) — Opus para TODOS os agentes (exceto scribe/Haiku). Sem tiers, sem modo economy.
+- **Pipeline Mode** — `*dev`/`*development` (iteracao curta) ou `*full` (gates completos); estado em `.aivoux/gates/pipeline-mode`
+- **Pending Registry** — registros de DEVELOPMENT em `docs/development/pending/`; audite com `/aivoux/audit pending`
+- **Plan Mode** (default on) — Opus para TODOS os agentes. Sem tiers de modelo.
 - **Discussion Mode** (default on) — Agentes deliberam em paralelo antes de features MEDIUM/COMPLEX
-- **Context Scan** (default on) — @scribe cacheia snapshot do projeto, re-scan so se stale
-- **Documentation Mode** (default on) — memoria do projeto: router le `docs/features/index.md` no inicio de toda demanda e injeta docs relacionadas; @scribe atualiza/cria doc + indice apos @qa PASS (antes do @devops — doc vai no mesmo push)
+- **Documentation Mode** (default on) — memoria do projeto: router le `docs/features/index.md` no inicio de toda demanda e injeta docs relacionadas
 - **Telemetry Mode** (default on) — Hooks coletam eventos em `.aivoux/telemetry/` (local, gitignored). Rode `/aivoux/insights` para relatorio
 - **Context Watch** (default on) — Avisa quando sessao tem muitos turnos e sugere `/clear` para reduzir custo e melhorar foco. Threshold configuravel em `.aivoux/config.yaml`
 - **Context Rehydration** (default on) — Salva estado cognitivo a cada N turnos e re-injeta automaticamente apos compactacao/clear. Status line mostra T:N e CTX:Xk/Yk. Config em `.aivoux/config.yaml`
@@ -462,7 +465,7 @@ Config: `.aivoux/config.yaml`
 - `.claude/rules/change-safety.md` — preflight de alvo (F3) + confirmacao de modelo (F2)
 - `.claude/rules/regression-gate.md` — blast radius + smoke das features vizinhas (F4)
 - `.claude/rules/observability-standards.md` — logs + error tracking + health (F5)
-- `.claude/rules/pipeline-integrity.md` — pipeline inquebravel: gates mecanicos de deploy/scribe/review/plan + protocolo de falha de subagente (F6)
+- `.claude/rules/pipeline-integrity.md` — pipeline inquebravel: gates mecanicos de deploy/review/plan + protocolo de falha de subagente (F6)
 - `.claude/rules/plan-first.md` — nenhuma implementacao sem plano da solucao; gate mecanico `plan-gate.sh` (F7)
 - `.claude/rules/discussion-protocol.md` — Protocolo de deliberacao
 - `.claude/rules/shared-config.md` — Config compartilhada
@@ -471,15 +474,14 @@ Config: `.aivoux/config.yaml`
 - `.claude/commands/aivoux/router.md` — Smart Router
 - `.claude/commands/aivoux/discover.md` — Deep scan brownfield (semeia memoria + tech debt)
 - `.claude/commands/aivoux/audit-security.md` — Auditoria de seguranca read-only (relatorio + backlog)
-- `.claude/commands/aivoux/agents/*.md` — 12 agentes (inclui @reviewer e @security)
+- `.claude/commands/aivoux/agents/*.md` — 11 agentes (inclui @reviewer e @security)
 - `.claude/hooks/quality-guard.sh` — enforcement do gate de tamanho (aviso 300 / hard 400) + `any` + catch silencioso
 - `.claude/hooks/blast-radius.sh` — raio de impacto deterministico do diff (regression gate F4)
 - `.claude/hooks/agent-trace.sh` — registro deterministico de todo subagent spawnado (F6)
-- `.claude/hooks/deploy-gate.sh` — BLOQUEIA push/PR/deploy sem QA PASS ancorado ao SHA + spawn real de @qa + reviewer PASS ancorado + smoke dos critical_paths (F6, PreToolUse)
-- `.claude/hooks/review-gate.sh` — BLOQUEIA spawn do @qa sem spawn do @reviewer apos o ultimo agente de codigo (@reviewer SEMPRE obrigatorio, F6 Regra 9, PreToolUse)
+- `.claude/hooks/deploy-gate.sh` — no FULL, BLOQUEIA merge/release/producao sem QA PASS ancorado ao SHA + spawn real de @qa + reviewer PASS + smoke dos critical_paths; DEVELOPMENT libera apenas branch/PR (F6, PreToolUse)
+- `.claude/hooks/review-gate.sh` — no FULL, BLOQUEIA spawn do @qa sem spawn do @reviewer apos o ultimo agente de codigo (F6 Regra 9, PreToolUse)
 - `.claude/hooks/plan-gate.sh` — BLOQUEIA spawn de @dev/@data-engineer sem plano da solucao (`.aivoux/gates/plan.md`) ancorado ao HEAD (Plan-First F7, PreToolUse)
-- `.claude/hooks/security-gate.sh` — BLOQUEIA push/PR/deploy CONDICIONALMENTE (so se o diff toca superficie sensivel) sem verdict SECURE do @security ancorado ao SHA + spawn real de aivoux-security (PreToolUse)
-- `.claude/hooks/scribe-gate.sh` — BLOQUEIA fechamento da sessao se @qa PASS sem @scribe depois (F6, Stop)
+- `.claude/hooks/security-gate.sh` — no FULL, BLOQUEIA publicacao sensivel sem verdict SECURE do @security ancorado ao SHA + spawn real de aivoux-security; DEVELOPMENT adia o gate ate merge/release/producao (PreToolUse)
 - `.claude/hooks/docs-gate.sh` — BLOQUEIA spawn de aivoux-* sem Feature-Docs Lookup quando ha docs/features/index.md (F6, PreToolUse)
 - `.claude/hooks/docs-lookup-trace.sh` — registra a leitura do index e destrava o docs-gate (PostToolUse)
 - `.claude/hooks/delete-guard.sh` — BLOQUEIA delecao/sobrescrita de .env, chaves, segredos, .git e rm -rf perigoso (PreToolUse)
@@ -487,7 +489,9 @@ Config: `.aivoux/config.yaml`
 
 ## Git Flow
 
-`@dev` commita local → `@qa` revisa → `@devops` faz push + cria PR.
+DEVELOPMENT: `@dev` commita local → registra pendencia → `@devops` publica branch/PR.
+FULL/auditoria: `@dev` commita local → `@reviewer` → `@security` condicional →
+`@qa` → `@devops` faz push/merge/release.
 APENAS `@devops` pode fazer push/PR.
 
 ## Brownfield Discovery

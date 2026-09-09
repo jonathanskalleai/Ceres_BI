@@ -2,10 +2,11 @@
 # AIVOUX agent-trace — PostToolUse (Task|Agent)
 #
 # Registro DETERMINISTICO de cada subagent spawnado na sessao. E a fonte de
-# verdade que o deploy-gate.sh usa para saber se @qa RODOU DE FATO —
-# nao se o orquestrador "disse" que rodou. Resposta direta ao incidente F6:
-# subagente falhou com 529 e o orquestrador assumiu o papel inline sem
-# avisar (INLINE_DEGRADED invisivel).
+# verdade que os gates mecanicos (deploy-gate.sh, review-gate.sh,
+# security-gate.sh) usam para saber se @qa / @reviewer / @security RODARAM DE
+# FATO — nao se o orquestrador "disse" que
+# rodaram. Resposta direta ao incidente F6: subagente falhou com 529 e o
+# orquestrador assumiu o papel inline sem avisar (INLINE_DEGRADED invisivel).
 #
 # Formato do log (.aivoux/gates/agents-run.log):
 #   <epoch> <subagent_type>

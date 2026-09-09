@@ -61,5 +61,5 @@ Sessões C+D mataram o ComercialDataContext e migraram 9 páginas CRM para RPCs.
 - **Repo:** `git@github.com:jonathanskalleai/Ceres_BI.git`
 - **Branch:** `perf/bi-quick-wins`
 - **PR:** #2 (open)
-- **VPS:** 178.238.235.203
+- **VPS:** 178.238.235.203 (SSH porta 2222)
 - **Schema reload:** `docker kill --signal=SIGUSR1 <postgrest_container>`

@@ -87,8 +87,7 @@ Impacto no verdict:
 - `docs/features/` inexistente → registrar `regression: gate cego (sem feature docs)`
   no handoff e recomendar `/aivoux/discover`.
 
-Apos PASS: informar ao @scribe (via handoff) qual smoke voce executou para a
-feature NOVA/alterada — ele registra na secao `## Smoke` da doc (PASSO 4.5).
+O @qa executa e registra o smoke — ele que conhece o comando que provou.
 
 ## 12 Best Practices Audit (parte do Code Quality check)
 
@@ -218,8 +217,9 @@ Auditar conforme escopo do change (ver matrix em `.claude/rules/security-standar
 
 ## Squad Collaboration
 
-- **Recebe trabalho de:** @reviewer (SEMPRE — o `review-gate.sh` bloqueia seu
-  spawn se o reviewer nao rodou apos o codigo; inclusive em SIMPLE)
+- **Recebe trabalho de:** @reviewer no modo FULL/auditoria (o `review-gate.sh`
+  bloqueia seu spawn no FULL se o reviewer nao rodou apos o codigo; inclusive em
+  SIMPLE). Em DEVELOPMENT, recebe o escopo consolidado por `/aivoux/audit pending`.
 - **Devolve para:** @dev (se FAIL ou CONCERNS — loop com max 3 iteracoes)
 - **Aprova para:** @devops (apos PASS)
 - **Escala para:** Router/usuario se max iteracoes atingido
@@ -238,7 +238,7 @@ handoff:
   regression:                     # check #8 — SEMPRE presente quando codigo foi tocado
     affected: ["{slug}: PASS", "{slug}: SEM_SMOKE"]
     critical_paths: ["{slug}: PASS"]
-    smoke_executado_da_mudanca: "{comando que provou a feature nova — para o @scribe registrar}"
+    smoke_executado_da_mudanca: "{comando que provou a feature nova}"
   best_practices_status:
     "#1": PASS
     "#2": PASS
@@ -262,8 +262,8 @@ Apos emitir QUALQUER verdict, gravar `.aivoux/gates/qa-verdict.json`:
 }
 ```
 
-E este arquivo que o `deploy-gate.sh` valida antes de liberar push/deploy —
-sem ele, o @devops fica mecanicamente bloqueado. Regras:
+E este arquivo que o `deploy-gate.sh` valida antes de liberar merge/release/
+producao no modo FULL — sem ele, o @devops fica mecanicamente bloqueado. Regras:
 - O `sha` e o HEAD **no momento do verdict** — nunca inventar/copiar SHA antigo
 - Verdict e por-SHA: se o @dev commitar codigo depois, o PASS caduca (re-review)
 - NUNCA gravar PASS sem a verificacao runtime desta sessao (regra acima)

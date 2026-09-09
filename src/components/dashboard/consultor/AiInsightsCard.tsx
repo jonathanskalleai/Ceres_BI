@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { InsightConsultorCard } from "./InsightConsultorCard";
 import { useAiInsightsEquipe, type InsightEquipe } from "@/hooks/useAiInsights";
+import { useDelayedReady } from "@/hooks/useDelayedReady";
 
 interface AiInsightsCardProps {
   consultores?: string[];
@@ -31,7 +32,12 @@ function formatDateShort(dateStr?: string) {
 }
 
 export const AiInsightsCard = memo(function AiInsightsCard({ consultores = [] }: AiInsightsCardProps) {
-  const { data: currentAi, isLoading: loading } = useAiInsightsEquipe();
+  // IA e uma informacao complementar e pode levar mais tempo que os dados do
+  // CRM. Mantemos o card e o skeleton, mas deixamos a primeira pintura livre
+  // para nao concorrer com o resumo e o desempenho da equipe.
+  const aiReady = useDelayedReady(true, 650);
+  const { data: currentAi, isLoading: aiLoading } = useAiInsightsEquipe(aiReady);
+  const loading = !aiReady || aiLoading;
   const [historico, setHistorico] = useState<InsightEquipe[]>([]);
   const [showHistorico, setShowHistorico] = useState(false);
   const [showResumoModal, setShowResumoModal] = useState(false);

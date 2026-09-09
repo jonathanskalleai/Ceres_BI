@@ -5,20 +5,23 @@ import {
 } from "@/services/equipeDesempenhoService";
 import type { EquipeDesempenhoData } from "@/types/equipeDesempenho";
 
-export function useEquipeDesempenho(params: EquipeDesempenhoParams) {
+export function useEquipeDesempenho(params: EquipeDesempenhoParams & { enabled?: boolean }) {
+  const { enabled = true, ...rpcParams } = params;
+
   return useQuery<EquipeDesempenhoData, Error>({
     queryKey: [
       "rpc",
       "equipe-desempenho-mensal",
-      params.ano,
-      params.consultor ?? null,
-      params.cidade ?? null,
+      rpcParams.ano,
+      rpcParams.consultor ?? null,
+      rpcParams.cidade ?? null,
     ],
-    queryFn: () => fetchEquipeDesempenho(params),
+    queryFn: () => fetchEquipeDesempenho(rpcParams),
     // A origem é sincronizada pelo ETL; manter o dado evita nova carga em
     // toda navegação de volta para Equipe.
     staleTime: 15 * 60_000,
     gcTime: 60 * 60_000,
     placeholderData: keepPreviousData,
+    enabled,
   });
 }

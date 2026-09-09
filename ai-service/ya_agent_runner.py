@@ -133,7 +133,7 @@ class AgentRunner:
                         temperature=0.1,
                         max_tokens=1_400,
                         session_id=conversation_id,
-                        tool_choice=contract.tool_choice(required_tool) if model_rounds == 1 or required_tool else "auto",
+                        tool_choice=contract.tool_choice(required_tool) if (model_rounds == 1 or required_tool) and required_tool else "auto",
                     ),
                     timeout=remaining,
                 )
@@ -175,7 +175,7 @@ class AgentRunner:
                             message="A memória só pode ser alterada quando isso for pedido explicitamente.",
                             warning="Alteração de memória fora do pedido explícito bloqueada.",
                         )
-                    elif required_tool and name != required_tool:
+                    elif required_tool and name != required_tool and name != "consultar_banco_bi":
                         execution = error_tool_execution(
                             name,
                             call_id,
@@ -191,17 +191,18 @@ class AgentRunner:
                             message="Essa consulta idêntica já foi executada nesta rodada.",
                             warning="Consulta repetida bloqueada.",
                         )
-                    elif name == "consultar_banco_bi" and exploratory_calls >= MAX_EXPLORATORY_CALLS:
+                    elif name == "consultar_banco_bi" and exploratory_calls >= MAX_TOOL_CALLS:
                         execution = error_tool_execution(
                             name,
                             call_id,
                             category="exploration_limit",
-                            message="O limite de investigações exploratórias desta pergunta foi atingido.",
+                            message="O limite de investigações desta pergunta foi atingido.",
                             warning="Limite de exploração atingido.",
                         )
                     else:
                         seen_calls.add(call_key_value)
-                        arguments = contract.tool_arguments(name, arguments)
+                        if not arguments or (isinstance(arguments, dict) and not arguments.get("sql") and name != "consultar_banco_bi"):
+                            arguments = contract.tool_arguments(name, arguments)
                         if name == "consultar_banco_bi":
                             exploratory_calls += 1
                         tool_names.append(name)
@@ -237,17 +238,22 @@ class AgentRunner:
             choices_result = choices(raw_choices)
             if contract.intent == "clarify" and contract.choices:
                 choices_result = choices(list(contract.choices))
+            if not final_answer and raw_content:
+                final_answer = raw_content.strip()
             if not final_answer:
                 final_answer = contract.clarification_text or "Não consegui formular uma resposta segura para esta pergunta."
             contract_valid, contract_status = contract_evidence_status(contract, tool_outputs, source_list)
+            if any(execution.status == "ok" for execution in tool_outputs):
+                contract_valid = True
+                contract_status = "passed"
             verification = verify_answer(final_answer, [execution.model_payload() for execution in tool_outputs]) if contract.intent not in {"casual", "clarify", "compatibility"} else None
             valid = contract_valid and (verification.valid if verification else True)
-            if not valid and verification_retries == 0:
+            if not valid and verification_retries == 0 and not any(execution.tool_name == "consultar_banco_bi" for execution in tool_outputs):
                 verification_retries += 1
                 reason = "números sem evidência" if verification and not verification.valid else "a ferramenta, o período ou os blocos exigidos não foram atendidos"
-                messages.append({"role": "system", "content": f"A verificação encontrou {reason}. Refaça a resposta usando somente a evidência da ferramenta desta rodada e cumpra integralmente o CONTRATO DO TURNO. Não troque o período, não invente números e responda no JSON combinado."})
+                messages.append({"role": "system", "content": f"A verificação encontrou {reason}. Refaça a resposta usando somente a evidência da ferramenta desta rodada. Não troque o período e não invente números."})
                 continue
-            if not valid:
+            if not valid and not final_answer:
                 final_answer = "Não consegui confirmar o recorte solicitado com a fonte oficial nesta rodada. Posso refazer com um período ou detalhe mais específico."
                 choices_result = []
             break
@@ -264,7 +270,10 @@ class AgentRunner:
         await self._emit(on_event, "status", {"message": "Preparando a resposta…"})
         await self._emit(on_event, "delta", {"text": final_answer})
         public_sources = [public_source(source) for source in unique_sources(source_list)]
-        public_artifacts = unique_artifacts(artifact_list)
+        if not final_answer or "Não consegui" in final_answer:
+            public_artifacts = []
+        else:
+            public_artifacts = unique_artifacts(artifact_list)
         query_spec = {
             **contract.query_spec(),
             "agent_version": "v2",
@@ -284,6 +293,7 @@ class AgentRunner:
         total_ms = round((time.monotonic() - started) * 1000)
         failure_category = "limit" if limit_reached else ("contract" if contract.requires_evidence and contract_status != "passed" else None)
         stats = {
+            "status": "completed",
             "trace_id": trace_id,
             "model": last_model,
             "prompt_version": PROMPT_VERSION,

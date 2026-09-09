@@ -51,16 +51,16 @@ Antes de qualquer push, verificar:
 4. `npm run build` — build completa
 5. CodeRabbit sem CRITICAL (quando habilitado)
 6. Branch esta atualizada com main/master
-7. **Feature docs incluidas** — se o pipeline teve @scribe, `docs/features/*.md`
-   (doc + index.md) DEVEM estar no commit que sobe. Doc fora do push = memoria
-   do projeto dessincronizada do codigo. Se o scribe ainda nao rodou em pipeline
-   MEDIUM+ que tocou codigo, reportar ao router antes do push (nao pular).
+7. **Feature docs atualizadas** — `docs/features/*.md` (doc + index.md) DEVEM estar
+   no commit que sobe. Doc fora do push = memoria do projeto dessincronizada.
 
 Se QUALQUER check falhar: BLOQUEAR push e reportar.
 
-**Gate mecanico (F6):** o hook `deploy-gate.sh` BLOQUEIA fisicamente `git push`/
-`gh pr`/deploy sem `.aivoux/gates/qa-verdict.json` PASS ancorado ao SHA atual +
-spawn real de `aivoux-qa` registrado. Se o hook bloquear: NAO tentar contornar
+**Gate mecanico (F6):** no modo FULL, o hook `deploy-gate.sh` BLOQUEIA fisicamente
+merge/release/producao sem `.aivoux/gates/qa-verdict.json` PASS ancorado ao SHA
+atual + spawn real de `aivoux-qa` + reviewer PASS registrado. No DEVELOPMENT,
+branch/PR/preview nao produtivo podem sair com aviso e pendencia registrada; merge,
+release e producao exigem FULL. Se o hook bloquear: NAO tentar contornar
 (amend de SHA, deletar gates/, reescrever o verdict) — voltar ao router/usuario.
 O unico bypass legitimo e o override autorizado EXPLICITAMENTE pelo usuario
 (`.aivoux/gates/skip-pipeline-authorized`, uso unico, auditado). Vide

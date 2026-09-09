@@ -226,7 +226,10 @@ def _build_contract(raw: dict[str, Any], request: YaChatRequest, state: dict[str
         )
     if intent == "sales_comparison":
         comparison = resolve_comparison(period_request, scope, today, raw)
-        comparison_metrics = metrics or _default_comparison_metrics(domain)
+        if "resultado" in message or not metrics:
+            comparison_metrics = _default_comparison_metrics(domain)
+        else:
+            comparison_metrics = metrics
         required_tools = ("comparar_periodos",)
         period = None
         required_blocks = ()
@@ -386,7 +389,7 @@ def _comparison_scope(value: Any, message: str) -> str:
         return "ask"
     if normalized in {"full_previous", "same_elapsed", "ask"}:
         return normalized
-    return "ask"
+    return "same_elapsed"
 
 
 def _compatibility_contract() -> TurnContract:

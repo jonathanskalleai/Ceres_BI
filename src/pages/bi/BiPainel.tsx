@@ -20,14 +20,19 @@ import { useEvolucaoGPO } from "@/hooks/useEvolucaoGPO";
 
 export default function BiPainel() {
   const { dateRange, categoria, funil, vendedor, cidade } = useNegociosFilter();
-  const { kpis, isLoading } = usePainelKPIsRpc(dateRange, categoria, funil, vendedor || undefined, cidade || undefined);
+  const { kpis, loading: painelLoading } = usePainelKPIsRpc(dateRange, categoria, funil, vendedor || undefined, cidade || undefined);
   const { kpis: pedKpis, isLoading: pedLoading } = usePedidosKPIsRpc(dateRange, categoria, funil, vendedor || undefined, cidade || undefined);
   const { kpis: cliKpis, isLoading: cliLoading } = useClientesKPIsRpc(dateRange, cidade || undefined);
   const { kpis: svcKpis, isLoading: svcLoading } = useServicosKPIsRpc(dateRange, cidade || undefined);
   const { kpis: crossKpis, isLoading: crossLoading } = useCrossKPIsRpc(dateRange, categoria, funil, vendedor || undefined, cidade || undefined);
   const { data: gpoData, isLoading: gpoLoading } = useEvolucaoGPO({ enabled: true });
 
-  const anyLoading = isLoading || pedLoading || cliLoading || svcLoading || crossLoading;
+  // Preserve every card and chart, but let a finished domain render while an
+  // unrelated analytical RPC is still running. Previously one slow endpoint
+  // kept the entire screen in skeleton state and looked like a frozen page.
+  const negociosLoading = painelLoading.negocios || painelLoading.acoes;
+  const valoresLoading = painelLoading.acoes || painelLoading.funil;
+  const acoesLoading = painelLoading.acoes || painelLoading.funil || painelLoading.operacional;
 
   return (
     <section className="p-8 space-y-2" style={{ background: "var(--voux-bg)" }}>
@@ -39,14 +44,14 @@ export default function BiPainel() {
         <TabsContent value="cards" className="space-y-2">
           <StatusDesconhecidoAlert count={kpis.negociosOutrosStatus} />
           <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
-            <PainelNegociosSection kpis={kpis} loading={anyLoading} />
-            <PainelCrossSection crossKpis={crossKpis} loading={anyLoading} />
-            <PainelValoresSection kpis={kpis} loading={anyLoading} />
-            <PainelPedidosSection pedKpis={pedKpis} loading={anyLoading} />
-            <PainelClientesSection cliKpis={cliKpis} loading={anyLoading} />
-            <PainelServicosSection svcKpis={svcKpis} loading={anyLoading} />
+            <PainelNegociosSection kpis={kpis} loading={negociosLoading} />
+            <PainelCrossSection crossKpis={crossKpis} loading={crossLoading} />
+            <PainelValoresSection kpis={kpis} loading={valoresLoading} />
+            <PainelPedidosSection pedKpis={pedKpis} loading={pedLoading} />
+            <PainelClientesSection cliKpis={cliKpis} loading={cliLoading} />
+            <PainelServicosSection svcKpis={svcKpis} loading={svcLoading} />
           </div>
-          <PainelAcoesSection kpis={kpis} loading={anyLoading} />
+          <PainelAcoesSection kpis={kpis} loading={acoesLoading} />
           <ChartCard
             title="Desempenho Comercial"
             description="Vendas, perdas e novas oportunidades — últimos 12 meses"

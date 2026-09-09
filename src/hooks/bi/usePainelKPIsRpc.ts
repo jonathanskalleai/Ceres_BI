@@ -47,6 +47,12 @@ export interface PainelKPIs {
 export interface UsePainelResult {
   kpis: PainelKPIs;
   isLoading: boolean;
+  loading: {
+    negocios: boolean;
+    acoes: boolean;
+    funil: boolean;
+    operacional: boolean;
+  };
 }
 
 /**
@@ -247,5 +253,14 @@ export function usePainelKPIsRpc(
 
   const isLoading = negLoad1 || negLoad2 || acoesLoad1 || acoesLoad2 || funilLoad1 || funilLoad2 || opLoad;
 
-  return { kpis, isLoading };
+  return {
+    kpis,
+    isLoading,
+    loading: {
+      negocios: negLoad1 || negLoad2,
+      acoes: acoesLoad1 || acoesLoad2,
+      funil: funilLoad1 || funilLoad2,
+      operacional: opLoad,
+    },
+  };
 }

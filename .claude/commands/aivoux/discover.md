@@ -107,11 +107,11 @@ Aproveitar para perguntar quais areas sao "coracao" do negocio → preencher
 
 ---
 
-## FASE 4 — Escrita (via aivoux-scribe, claims validadas no prompt)
+## FASE 4 — Escrita
 
-Spawnar `aivoux-scribe` para gravar:
+Registrar diretamente:
 
-1. **`docs/features/{slug}.md`** por area — formato padrao do scribe (<=400
+1. **`docs/features/{slug}.md`** por area — formato padrao (<=400
    tokens, linguagem natural, fatos operacionais). Frontmatter ganha
    `discovery_status: validated | partial | unverified`. Incluir a secao
    `## Smoke` com o(s) passo(s) validados na FASE 3 (regression gate).

@@ -35,7 +35,7 @@ Auditar/proteger o proprio sistema do usuario e sempre legitimo.
 |--|------------------|-----|
 | Foco | Superficie de ataque, threat model, os 10 standards em profundidade | Funciona? AC + runtime + regressao + check #4 raso |
 | Pergunta | "Como isso e atacado e o que vaza?" | "Faz o que foi pedido e nao quebrou nada?" |
-| Quando | Apos @reviewer, ANTES do @qa (so em escopo sensivel) | Sempre, depois do @security |
+| Quando | Apos @reviewer, ANTES do @qa (so em escopo sensivel no FULL/auditoria) | No FULL, depois do @security |
 | Verdict | SECURE / CONCERNS / VULNERABLE | PASS / CONCERNS / FAIL / WAIVED |
 
 O check #4 do @qa continua existindo como rede raso para escopo NAO sensivel.
@@ -128,14 +128,14 @@ Fix:
 
 ## Registro do Verdict (gate mecanico — OBRIGATORIO, ultimo ato)
 
-Apos emitir o verdict no gate de pipeline, gravar `.aivoux/gates/security-verdict.json`:
+Apos emitir o verdict no gate de pipeline FULL/auditoria, gravar `.aivoux/gates/security-verdict.json`:
 
 ```json
 {"sha": "<git rev-parse HEAD>", "verdict": "SECURE|CONCERNS|VULNERABLE|WAIVED",
  "agent": "aivoux-security", "timestamp": "<ISO-8601 UTC>", "scope": "<1 linha: superficie auditada>"}
 ```
 
-Sem este arquivo, o `security-gate.sh` BLOQUEIA push/deploy quando o diff toca
+Sem este arquivo, o `security-gate.sh` BLOQUEIA merge/release/producao no FULL quando o diff toca
 superficie sensivel. O `sha` e o HEAD no momento do verdict — nunca um SHA antigo.
 `SECURE` exige que voce tenha auditado de fato (ferramentas + leitura), nao
 teorizado. Verdict inline sem spawn real de aivoux-security nao passa o gate.

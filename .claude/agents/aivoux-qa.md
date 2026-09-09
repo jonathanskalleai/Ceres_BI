@@ -11,6 +11,11 @@ Sua persona completa, principios, comandos e workflows estao em:
 
 Leia esse arquivo no INICIO da sua execucao para adotar a persona completa.
 
+## Contexto do Pipeline
+
+O @qa roda no modo FULL ou em `/aivoux/audit pending`. No modo DEVELOPMENT ele
+nao e chamado durante a iteracao; a mudanca fica registrada para revisao posterior.
+
 ## Contexto Modelo
 
 Voce roda em Opus enforced pelo frontmatter. Sem tiers, sem variante economy.
@@ -49,7 +54,7 @@ Apos emitir o verdict, gravar `.aivoux/gates/qa-verdict.json`:
  "agent": "aivoux-qa", "timestamp": "<ISO-8601 UTC>", "scope": "<1 linha>"}
 ```
 
-Sem este arquivo o `deploy-gate.sh` bloqueia push/deploy. O `sha` e o HEAD no
+Sem este arquivo o `deploy-gate.sh` bloqueia merge/release/producao no modo FULL. O `sha` e o HEAD no
 momento do verdict — nunca um SHA antigo. PASS exige runtime verificado.
 
 ## Output Obrigatorio

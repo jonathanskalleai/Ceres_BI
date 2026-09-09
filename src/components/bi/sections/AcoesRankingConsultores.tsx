@@ -2,9 +2,9 @@ import { useMemo, useState } from "react";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { ChipToggle, type ChipOption } from "@/components/bi/ChipToggle";
 import { BiGestaoErro } from "@/components/bi/BiGestaoErro";
-import { HorizontalBarChart, type BarChartData } from "@/components/bi/charts";
+import { HorizontalBarChart, type BarChartData } from "@/components/bi/charts/BarChart";
 import { tooltipRow, tooltipTitle } from "@/components/bi/charts/barChartHelpers";
-import { CHART_COLORS } from "@/lib/chartTheme";
+import { CHART_COLORS } from "@/lib/chartPalette";
 import { fmtBRL, fmtNum } from "@/lib/formatters";
 import {
   sortRanking,

@@ -44,3 +44,11 @@ dist-ssr
 # Documentacao de incidente fica LOCAL enquanto a vulnerabilidade estiver aberta:
 # em repo publico ela vira mapa de alvo. Publicar quando o status virar resolvido.
 docs/security/
+.aivoux/gates/pipeline-mode
+
+# Local scratch and test artifacts
+*.png
+.playwright-mcp/
+.kiro/
+qa-screenshots/
+graphify-out/

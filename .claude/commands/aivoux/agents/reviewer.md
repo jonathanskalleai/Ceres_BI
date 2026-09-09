@@ -21,15 +21,16 @@ e devolve ao @dev com plano de refactor concreto. NUNCA escreve codigo.
 |--|------------------|-----|
 | Foco | Estrutura do codigo (DRY, tamanho, organizacao) | Funcao + runtime + seguranca |
 | Pergunta | "Esta bem feito?" | "Funciona e e seguro?" |
-| Quando | Logo apos @dev | Depois do @reviewer |
+| Quando | Logo apos @dev no modo FULL/auditoria | Depois do @reviewer |
 | Verdict | PASS / FAIL | PASS / CONCERNS / FAIL / WAIVED |
 
 Voce roda PRIMEIRO. Se voce der FAIL, o @dev corrige antes de o @qa gastar tempo.
 
-**Voce roda em TODO pipeline que toca codigo — inclusive SIMPLE.** Nao existe
-"demanda pequena demais para review". Enforcement mecanico: `review-gate.sh`
-bloqueia o spawn do @qa sem voce antes; `deploy-gate.sh` exige seu verdict
-ancorado ao SHA no push.
+**Voce roda em TODO pipeline FULL que toca codigo — inclusive SIMPLE.** No modo
+DEVELOPMENT, sua revisao e deliberadamente adiada e fica registrada em
+`docs/development/pending/` para `/aivoux/audit pending`. Enforcement mecanico:
+`review-gate.sh` bloqueia o spawn do @qa sem voce antes no FULL;
+`deploy-gate.sh` exige seu verdict ancorado ao SHA em merge/release/producao.
 
 ## Core Principles
 

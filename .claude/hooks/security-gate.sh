@@ -66,6 +66,27 @@ LOG="$GATES/agents-run.log"
 # Fora de repo git => nao ha como ancorar verdict a SHA; nao bloquear.
 git rev-parse --git-dir >/dev/null 2>&1 || exit 0
 
+# DEVELOPMENT is intentionally lighter, but only for non-production publication.
+# Merge, release and platform deploys continue through the security gate.
+MODE=$(cat "$GATES/pipeline-mode" 2>/dev/null | head -1)
+if [ "$MODE" != "development" ] && [ "$MODE" != "full" ]; then
+  MODE=""
+  if [ -f "$CONFIG" ]; then
+    MODE=$(awk '/^pipeline_mode:/{f=1;next} f && /^[^[:space:]]/{exit} f && /^[[:space:]]*default:/{print $2; exit}' "$CONFIG" 2>/dev/null)
+  fi
+fi
+[ "$MODE" != "development" ] && [ -f "$GATES/tier-fast-used" ] && MODE="development"
+[ "$MODE" != "development" ] && [ "$MODE" != "full" ] && MODE="development"
+BRANCH=$(git branch --show-current 2>/dev/null)
+if [ "$MODE" = "development" ] && [ "$BRANCH" != "main" ] && [ "$BRANCH" != "master" ]; then
+  if printf '%s' "$CMD" | grep -qE "${CMDPOS}(git[[:space:]]+push|gh[[:space:]]+pr[[:space:]]+create)" \
+    || (printf '%s' "$CMD" | grep -qE "${CMDPOS}(vercel([[:space:]]+deploy)?|netlify[[:space:]]+deploy)" \
+      && ! printf '%s' "$CMD" | grep -qE '(^|[[:space:]])--prod([[:space:]]|$)'); then
+    printf '⚠ AIVOUX security-gate: DEVELOPMENT — branch/PR/preview permitido sem security review; audite antes do merge.\n' >&2
+    exit 0
+  fi
+fi
+
 # ===== 0) Gate desligado no config? =====
 if [ -f "$CONFIG" ]; then
   # procura 'enabled: false' DENTRO do bloco security_gate:

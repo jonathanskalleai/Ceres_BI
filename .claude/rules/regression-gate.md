@@ -11,7 +11,6 @@ DO QUE FOI TOCADO. Ninguem re-verifica os **vizinhos** — e em projeto
 vibe-coded `npm test` passa vazio porque quase nao ha testes.
 
 Owner: **router** (computa o raio) + **@qa** (executa smokes, veredicto).
-Suporte: **@scribe** (mantem `## Smoke` nas docs), **@devops** (re-smoke pos-deploy).
 
 ---
 
@@ -36,8 +35,7 @@ Suporte: **@scribe** (mantem `## Smoke` nas docs), **@devops** (re-smoke pos-dep
 - marca cada afetada com `SMOKE_OK` ou `SEM_SMOKE`
 - lista `critical_paths` do config (smoke roda SEMPRE, mesmo fora do raio)
 
-READ-ONLY, custo ~zero. O router PODE rodar direto (PASSO 4). Output vai
-integralmente no prompt do @qa.
+READ-ONLY, custo ~zero. integralmente no prompt do @qa.
 
 ### 2. Secao `## Smoke` nas feature docs (memoria executavel)
 
@@ -52,8 +50,7 @@ executaveis** que provam que a feature ainda funciona:
 
 Regras: cada linha e um comando/passo OBSERVAVEL com resultado esperado —
 curl, teste, SELECT com valor esperado, fluxo Playwright. Nada de "verificar
-se funciona". Quem escreve: @scribe (apos @qa PASS, com o smoke que o @qa
-executou) e `/aivoux/discover` (semeia validando com o usuario).
+se funciona". Quem registra: o @qa que executou + `/aivoux/discover`.
 
 ### 3. Gate no @qa (check #8 — bloqueante)
 
@@ -68,7 +65,7 @@ Verdicts:
   default) — a regressao foi INTRODUZIDA por este diff; devolver ao @dev
 - Afetada **SEM_SMOKE** → no maximo **CONCERNS**, com a linha explicita no
   handoff: `"regression: {slug} afetada e NAO verificavel (sem smoke)"` —
-  **nunca silencio**. Sugerir registro do smoke ao usuario/@scribe.
+  **nunca silencio**. Sugerir registro do smoke ao usuario.
 - Tudo PASS → seguir para verdict normal
 
 ---
@@ -126,7 +123,7 @@ Anti-padroes:
 
 - Router PASSO 4: roda blast-radius ANTES de spawnar @qa e injeta o output
 - @qa: check #8 (Regression) — vide `agents/qa.md`
-- @scribe: secao `## Smoke` no template de feature doc
+
 - `/aivoux/discover`: semeia smokes na FASE 3/4 (validados com o usuario)
 - `deploy-safety.md`: re-smoke dos afetados no ambiente vivo
 - Quality gate #14 em `shared-config.md`

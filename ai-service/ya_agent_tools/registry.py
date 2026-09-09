@@ -32,11 +32,11 @@ from ya_agent_tools.semantic import execute_explain, execute_freshness
 
 
 TOOL_LABELS = {
+    "consultar_banco_bi": "consulta ao banco de dados do BI",
     "consultar_desempenho_vendas": "desempenho de vendas",
     "consultar_acoes_comerciais": "ações comerciais",
     "consultar_desempenho_equipe": "desempenho da equipe",
     "comparar_periodos": "comparação entre períodos",
-    "consultar_banco_bi": "análise exploratória",
     "correlacionar_metricas": "associação entre métricas",
     "explicar_conceito": "conceito do indicador",
     "consultar_atualizacao": "atualização das fontes",
@@ -45,11 +45,11 @@ TOOL_LABELS = {
 }
 
 TOOL_MODELS: dict[str, Type[BaseModel]] = {
+    "consultar_banco_bi": ExploratoryToolInput,
     "consultar_desempenho_vendas": SalesToolInput,
     "consultar_acoes_comerciais": ActionsToolInput,
     "consultar_desempenho_equipe": TeamToolInput,
     "comparar_periodos": CompareToolInput,
-    "consultar_banco_bi": ExploratoryToolInput,
     "correlacionar_metricas": CorrelationToolInput,
     "explicar_conceito": ExplainToolInput,
     "consultar_atualizacao": FreshnessToolInput,
@@ -58,14 +58,14 @@ TOOL_MODELS: dict[str, Type[BaseModel]] = {
 }
 
 TOOL_DESCRIPTIONS = {
-    "consultar_desempenho_vendas": "Fonte oficial obrigatória para vendas e perdas. Use blocos kpis, serie, rankings, perdas, produtos ou resumo conforme o contrato; perdas detalhadas exigem blocos perdas e rankings.",
-    "consultar_acoes_comerciais": "Consulte ações, visitas, oportunidades, funil e ganhos/perdas ligados à área de Ações.",
-    "consultar_desempenho_equipe": "Consulte vendas, faturamento, metas, ticket e conversão por consultor e mês.",
-    "comparar_periodos": "Fonte oficial obrigatória para qualquer comparação. Consulta os dois períodos com os mesmos filtros e calcula deltas no backend; não substitua por dois resumos narrativos.",
-    "consultar_banco_bi": "Faça uma investigação read-only quando nenhum contrato oficial responder à pergunta.",
-    "correlacionar_metricas": "Calcule uma associação observada entre duas métricas pareáveis; nunca causalidade.",
-    "explicar_conceito": "Explique a definição, competência, fórmula, deduplicação e exclusões de um indicador.",
-    "consultar_atualizacao": "Consulte a atualização da carga sem confundi-la com a competência do indicador.",
+    "consultar_banco_bi": "Ferramenta principal para consultar o banco de dados Postgres do BI. Executa consultas SQL SELECT somente leitura nas tabelas mirror (ex: mirror.crm_negocios, mirror.crm_pedidos, mirror.crm_acoes, mirror.usuarios). Use para qualquer agregação, comparação, correlação ou investigação analítica.",
+    "consultar_desempenho_vendas": "Atalho para consultar KPIs consolidados de vendas e perdas das dashboards principais.",
+    "consultar_acoes_comerciais": "Atalho para consultar resumo de ações, visitas, oportunidades e funil de gestão.",
+    "consultar_desempenho_equipe": "Atalho para consultar vendas, faturamento, metas e conversão por consultor e mês.",
+    "comparar_periodos": "Atalho para comparar dois períodos nas métricas padrão de dashboard.",
+    "correlacionar_metricas": "Calcula associação observada entre métricas pareáveis.",
+    "explicar_conceito": "Explica a definição, competência e fórmula de um indicador.",
+    "consultar_atualizacao": "Consulta a data/hora da última atualização da carga de dados.",
     "guardar_memoria_usuario": "Guarde somente uma preferência ou fato pessoal explicitamente confirmado pelo usuário.",
     "esquecer_memoria_usuario": "Esqueça uma memória duradoura do usuário atual, com soft-delete auditável.",
 }

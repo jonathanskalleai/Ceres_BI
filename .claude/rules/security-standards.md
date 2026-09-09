@@ -23,9 +23,10 @@ Aplique conforme o escopo:
 
 Estes 10 standards tem DOIS niveis de aplicacao:
 
-1. **Raso, sempre (@qa check #4):** em qualquer pipeline, o @qa passa os standards
-   aplicaveis ao escopo como uma das 8 verificacoes. Rede de baixo custo.
-2. **Profundo, condicional (@security gate):** quando a mudanca toca **superficie
+1. **Construção proporcional:** @dev aplica os standards pertinentes ao escopo
+   em DEVELOPMENT e FULL. No FULL/auditoria, o @qa tambem verifica os standards
+   aplicaveis como parte da validacao runtime; DEVELOPMENT nao chama @qa.
+2. **Profundo, condicional (@security gate):** no modo FULL/auditoria, quando a mudanca toca **superficie
    sensivel** (auth, autorizacao/RLS, entrada externa, dados sensiveis, upload,
    infra exposta), o router insere o `@security` no pipeline APOS o `@reviewer` e
    ANTES do `@qa`. Ele faz threat modeling (STRIDE leve) + auditoria profunda +

@@ -27,20 +27,31 @@ fora de transacao com ROLLBACK. Toda mutacao → Agent tool.
 
 ---
 
-## META-COMANDOS (executar e PARAR)
+## MODOS E META-COMANDOS (executar e PARAR)
 
 `$ARGUMENTS` comecando com `*`:
 
 | Comando | Acao |
 |---------|------|
 | `*help` | mostrar lista de meta-comandos e parar |
-| `*fast` | ativar TIER FAST (economico) — sem reviewer/qa/security |
-| `*full` | ativar TIER FULL (completo) — pipeline completo |
-| `*status` | mostrar tier atual e pipeline ativo |
+| `*dev` / `*development` | ativar modo DEVELOPMENT — sem reviewer/security/qa e com registro de pendencias |
+| `*fast` | alias legado de `*dev` |
+| `*full` | ativar modo FULL — pipeline completo |
+| `*status` | mostrar modo atual e pipeline ativo |
+| `*pending` | listar registros `PENDING_REVIEW`/`NEEDS_FIX` |
 | outro `*` | "comando desconhecido, use *help" |
 
-**Nota:** Se nenhum tier especificado, usa o ultimo tier usado ou `*full` como default.
-Para forcar o tier, use como prefixo: `/aivoux/router *fast Criar feature X`.
+**Nota:** o modo explicito fica em `.aivoux/gates/pipeline-mode`. Se nao houver
+estado anterior, use `pipeline_mode.default` de `.aivoux/config.yaml`; se a chave
+nao existir em uma instalacao antiga, o fallback e DEVELOPMENT.
+Para forcar o modo em uma demanda, use como prefixo:
+`/aivoux/router *dev Criar feature X` ou `/aivoux/router *full Auditar X`.
+
+Ao encontrar `*dev`, `*development`, `*fast` ou `*full`, persista imediatamente
+`development` ou `full` em `.aivoux/gates/pipeline-mode` antes do diagnostico.
+Se a entrada for somente `*status`, leia o estado/default, mostre-o e pare. Se
+for somente `*pending`, liste os registros em `pipeline_mode.pending_dir` e pare.
+Esses meta-comandos nao fazem spawn.
 
 ---
 
@@ -49,8 +60,6 @@ Para forcar o tier, use como prefixo: `/aivoux/router *fast Criar feature X`.
 Sem tiers. **TODOS os agentes rodam Opus**. O modelo e enforced via frontmatter
 de cada subagent — voce NUNCA passa `model` no Agent call. `subagent_type` e sempre
 `aivoux-{nome}`.
-
-> **NOTE:** @scribe esta temporariamente DESATIVADO do fluxo.
 
 ---
 
@@ -70,8 +79,6 @@ Antes de spawnar subagent, gaste 1-3 minutos investigando voce mesmo. **Nao impl
 4. O resultado alimenta a linha `Docs:` do anuncio ▶ (PASSO 2). Sem ter feito o
    lookup, voce nao tem como escrever essa linha — e sem ela nao pode chamar Agent.
 
-> **NOTE:** @scribe (atualizacao de docs) esta temporariamente desativado.
-  Apenas o lookup/leitura de docs existente continua ativo.
 
 **BUG_FIX:** reproduza o sintoma de forma deterministica:
 - Bug de DB/persistencia → `mcp__supabase__execute_sql` com `BEGIN; <op>; ROLLBACK;`. Erros do Postgres (CHECK, FK, NOT NULL, RLS) aparecem na hora.
@@ -101,21 +108,22 @@ seguinte. Trabalho real (Edit/Write/Bash mutavel) sempre via subagent.
 
 ## PASSO 2 — Classificar e Anunciar
 
-**TIER SELECTION (escolha antes de classificar):**
-- `*fast` ativo → pipeline ECONOMICO (velocidade maxima, sem gates de qualidade)
-- `*full` ativo → pipeline COMPLETO (gates reviewer/qa/security)
-- Se nao especificado → usa ultimo tier ou default `*full`
+**MODE SELECTION (escolha antes de classificar):**
+- `*dev`, `*development` ou `*fast` ativo → modo DEVELOPMENT
+- `*full` ativo → modo FULL
+- Se nao especificado → leia `.aivoux/gates/pipeline-mode` ou
+  `pipeline_mode.default` em `.aivoux/config.yaml`; sem a chave, use DEVELOPMENT.
 
-**Matriz de Pipelines por TIER:**
+**Matriz de Pipelines por MODO:**
 
-| Categoria | TIER FAST (economico) | TIER FULL (completo) |
+| Categoria | DEVELOPMENT (iteracao) | FULL (aprovacao/release) |
 |-----------|----------------------|---------------------|
-| BUG_FIX | dev | dev → reviewer → qa |
-| FEATURE | architect → dev | architect → dev → reviewer → qa |
-| FEATURE+DB | architect → data-engineer → dev | architect → data-engineer → dev → reviewer → qa |
-| REFACTOR | architect → dev | architect → dev → reviewer → qa |
-| UI_UX | ux → dev | ux → dev → reviewer → qa |
-| DATABASE | data-engineer → dev | data-engineer → dev |
+| BUG_FIX | dev [→ devops se publicar] | dev → reviewer → qa [→ devops] |
+| FEATURE | architect → dev [→ devops] | architect → dev → reviewer → qa [→ devops] |
+| FEATURE+DB | architect → data-engineer → dev [→ devops] | architect → data-engineer → dev → reviewer → qa [→ devops] |
+| REFACTOR | architect → dev [→ devops] | architect → dev → reviewer → qa [→ devops] |
+| UI_UX | ux → dev [→ devops] | ux → dev → reviewer → qa [→ devops] |
+| DATABASE | data-engineer → dev [→ devops] | data-engineer → dev → reviewer → qa [→ devops] |
 | DEPLOY | devops | devops |
 | RESEARCH | analyst | analyst |
 | PLANNING | pm | pm |
@@ -123,25 +131,27 @@ seguinte. Trabalho real (Edit/Write/Bash mutavel) sempre via subagent.
 | SQUAD | squad-creator | squad-creator |
 | SECURITY_AUDIT | → `/aivoux/audit-security` | → `/aivoux/audit-security` |
 
-> **NOTE:** @scribe temporariamente DESATIVADO — pipelines terminam em @qa.
-
 **Complexidade (afeta SO o planejamento — NUNCA remove gate de qualidade):**
-- SIMPLE (1 arquivo, escopo cirurgico) → `dev → qa` (pode pular `@reviewer`)
-- MEDIUM (2-5 arquivos, mesma area) → pipeline default da categoria (com `@reviewer`)
+- SIMPLE (1 arquivo, escopo cirurgico) → pipeline do modo escolhido
+- MEDIUM (2-5 arquivos, mesma area) → pipeline default da categoria; os gates
+  `@reviewer`/`@security`/`@qa` entram somente no modo FULL
 - COMPLEX (multiplas areas, nova arquitetura) → +pm no inicio
 
-**Gates de qualidade por TIER:**
-- **TIER FAST:** SEM gates de @reviewer/@qa/@security. Vai direto do dev/devops.
-  O deploy-gate.sh ainda avisa quando vai pra prod sem review.
-- **TIER FULL:** @reviewer + @qa + @security (se escopo sensivel) ativos.
+**Gates de qualidade por MODO:**
+- **DEVELOPMENT:** nao aciona `@reviewer`, `@security` nem `@qa` na demanda.
+  Mantem `@analyst`, `@pm`, `@architect`, `@ux`, `@data-engineer`, `@dev` e
+  `@devops` aplicaveis conforme a categoria e quando branch/PR ou preview forem solicitados. Codigo/schema tocado
+  vira um registro compacto em `pipeline_mode.pending_dir` com status
+  `PENDING_REVIEW`.
+- **FULL:** @reviewer + @security (se escopo sensivel) + @qa ativos; @devops
+  publica somente apos os verdicts ancorados ao SHA.
 
-**@reviewer (code-quality gate — TIER FULL apenas):** roda apos `@dev` e antes de
-`@qa` em toda mudanca de codigo MEDIUM+ no TIER FULL. Foco em DRY, monolitos
-(aviso 300 / hard gate 400 linhas), dead code, separacao logica/UI e estrutura.
-Em SIMPLE cirurgico pode ser pulado — mas se o diff criar/crescer arquivo > 300
-linhas, `@reviewer` e OBRIGATORIO mesmo em SIMPLE.
+**@reviewer (code-quality gate — FULL apenas):** roda apos o ultimo agente de
+codigo e antes de `@security`/`@qa` em toda mudanca de codigo, inclusive SIMPLE.
+Foco em DRY, monolitos (aviso 300 / hard gate 400 linhas), dead code,
+separacao logica/UI e estrutura.
 
-**@security (security gate — CONDICIONAL, TIER FULL apenas):** roda apos `@reviewer`
+**@security (security gate — CONDICIONAL, FULL apenas):** roda apos `@reviewer`
 e antes de `@qa`, mas SOMENTE quando a mudanca toca **superficie sensivel**: auth/sessao,
 autorizacao/RLS/roles, entrada externa (endpoint/webhook/form que grava), dados
 sensiveis (PII/pagamento/token de terceiro), upload de arquivo, ou infra exposta
@@ -151,7 +161,9 @@ verdict `VULNERABLE` volta ao @dev. Escopo NAO sensivel (UI pura, CSS, refactor
 interno, texto) NAO dispara — o check #4 raso do @qa cobre. Nao rode "por via das
 duvidas" em todo pipeline: e custo. Rode quando a superficie justifica.
 
-> **TIER FAST:** SEM @reviewer, SEM @qa, SEM @security. Va direto do dev para devops.
+> **DEVELOPMENT:** SEM @reviewer, SEM @qa, SEM @security. Vai do ultimo agente
+> de implementacao para @devops somente quando a demanda pedir publicacao.
+> Para merge/release/producao, execute `/aivoux/audit pending` ou use FULL.
 
 **OBRIGATORIO ANTES DO PRIMEIRO `Agent` CALL** quando QUALQUER condicao abaixo e verdadeira:
 - Pipeline tem >=2 agentes, OU
@@ -161,13 +173,14 @@ duvidas" em todo pipeline: e custo. Rode quando a superficie justifica.
 Output literal **exatamente** assim, sem narrativa antes:
 
 ```
-▶ AIVOUX · {CATEGORIA}/{SIMPLE|MEDIUM|COMPLEX}
+▶ AIVOUX · {CATEGORIA}/{DEVELOPMENT|FULL}/{SIMPLE|MEDIUM|COMPLEX}
 Pipeline: @a → @b → @c
 Diagnostico: {1 linha do PASSO 1, ou "scan inicial OK"}
 Docs: {slugs injetados do lookup, ou "nenhum"}
+Modo: {DEVELOPMENT|FULL}
 ```
 
-Sem essas 4 linhas, **NAO chamar `Agent`**. A linha `Docs:` prova que o Feature-Docs
+Sem essas 5 linhas, **NAO chamar `Agent`**. A linha `Docs:` prova que o Feature-Docs
 Lookup do PASSO 1 foi feito. Se ja chamou sem anunciar, anuncie no proximo turno antes do proximo Agent call.
 
 **Isento (anuncio seria ruido):** SIMPLE com 1 agente isolado, BUG_FIX cirurgico de 1 arquivo, lookup/pergunta direta, META-COMANDOS (`*help`).
@@ -259,10 +272,15 @@ Para cada agente, em ordem:
 Agent(
   subagent_type="aivoux-{nome}",
   prompt="Demanda: {demanda}
+Modo de pipeline: {DEVELOPMENT|FULL}
 Diagnostico do router: {achados do PASSO 1, ou "nenhum"}
 Handoff anterior: {do agente anterior, ou "nenhum"}
 
 Sua tarefa: {especifica para esta etapa do pipeline}.
+
+Se o modo for DEVELOPMENT e voce for o ultimo agente que altera codigo/schema,
+registre a demanda em `pipeline_mode.pending_dir` conforme o PASSO 5. Nao copie
+o prompt completo nem segredos.
 
 Ao concluir, produza handoff conforme `.claude/rules/agent-handoff.md`."
 )
@@ -290,17 +308,20 @@ SendMessage no agente em vez de novo Agent call. Preserva contexto, evita re-lei
    inline: marcar `INLINE_DEGRADED` no ▣ e no ✓, listar o que NAO foi verificado,
    e o verdict daquela etapa NUNCA e PASS (max CONCERNS). O `deploy-gate.sh` vai
    continuar bloqueando push/deploy sem spawn real de `aivoux-qa` — o desbloqueio
-   e o override autorizado pelo usuario, nunca contornar o hook.
+   e o override autorizado pelo usuario, nunca contornar o hook. Em DEVELOPMENT,
+   a excecao segura continua limitada a branch/PR/preview; merge/release/producao
+   ainda exigem FULL.
 4. "Ja fiz inline na etapa anterior" NAO cria precedente — a proxima etapa tenta
    spawn normal de novo.
 
 ---
 
-## PASSO 4 — Quality Gates (TIER FULL apenas)
+## PASSO 4 — Quality Gates (FULL apenas)
 
-**TIER FAST:** Este passo NAO se aplica. Va direto para PASSO 5 apos o dev.
+**DEVELOPMENT:** Este passo NAO se aplica. Antes de fechar uma demanda que
+tocou codigo/schema, o ultimo agente de implementacao registra a pendencia.
 
-**TIER FULL:** Se o pipeline tocou codigo, os gates finais DEVEM ser, nesta ordem:
+**FULL:** Se o pipeline tocou codigo, os gates finais DEVEM ser, nesta ordem:
 `aivoux-reviewer` → `aivoux-security` (so em escopo sensivel) → `aivoux-qa`.
 Se voce esqueceu qualquer um, acrecente antes de fechar. **NAO ha excecao por
 complexidade:** SIMPLE tambem passa por `reviewer → qa` (o `review-gate.sh`
@@ -340,34 +361,57 @@ de spawn em `agents-run.log` — que o `deploy-gate.sh` valida antes de liberar
 qualquer push/deploy. Commit de CODIGO depois do verdict invalida o PASS
 (cada deploy = pipeline nova).
 
-**Security verdict ancorado (gate condicional):** quando o @security roda (escopo
-sensivel), ele grava `.aivoux/gates/security-verdict.json` (sha + verdict) do mesmo
-jeito. O `security-gate.sh` so exige esse arquivo se o diff a publicar toca
-superficie sensivel — senao passa em silencio. Se voce pulou o @security num diff
-sensivel, o hook BLOQUEIA o push mesmo sem o router: spawnar aivoux-security de
-verdade e o unico caminho limpo (ou override autorizado pelo usuario, uso unico).
+**Security verdict ancorado (gate condicional):** quando o @security roda em FULL
+(escopo sensivel), ele grava `.aivoux/gates/security-verdict.json` (sha + verdict)
+do mesmo jeito. Em DEVELOPMENT, o registro fica pendente e o `security-gate.sh`
+so permite a publicacao segura de branch/PR; merge, release e producao exigem a
+auditoria FULL ou override explicito do usuario.
 
 ---
 
-## PASSO 5 — Final
+## PASSO 5 — Registro e final
+
+### Registro de desenvolvimento
+
+Quando o modo for DEVELOPMENT e algum agente tocar codigo ou schema, o `@dev`
+(ou o ultimo agente de implementacao, se nao houver @dev) deve criar um arquivo
+em `pipeline_mode.pending_dir` com nome estavel e slugificado. O registro deve
+ser curto e conter somente:
+
+```yaml
+id: dev-YYYYMMDD-HHMMSS-slug
+created_at: <ISO-8601 UTC>
+mode: development
+status: PENDING_REVIEW
+category: <categoria>
+request: <resumo curto, sem prompt integral>
+agents: [<agentes que executaram>]
+files: [<arquivos tocados>]
+base_sha: <SHA antes da demanda, se disponivel>
+head_sha: <SHA/working-tree ao finalizar, se disponivel>
+```
+
+Nao registrar segredos, payloads sensiveis ou o prompt completo. O fluxo
+`/aivoux/audit pending` le esses arquivos, executa os gates FULL uma vez sobre
+o escopo consolidado e atualiza `status` para `APPROVED` ou `NEEDS_FIX`, com
+`reviewed_at` e `reviewed_sha`.
 
 **OBRIGATORIO se houve ▶ no inicio** — fechar com este bloco literal antes de qualquer comentario livre:
 
 ```
-✓ AIVOUX concluido · {CATEGORIA} · {TIER}
+✓ AIVOUX concluido · {CATEGORIA} · {MODO}
 Agentes: {lista}
 Arquivos: {lista consolidada de todos os handoffs}
-Docs: {criado|atualizado docs/features/{slug}.md | n/a (sem codigo tocado / SIMPLE sem doc)}
 Status: {DONE | PENDENTE_REVIEW | PENDENTE_PUSH | BLOCKED}
 Proximo: {sugestao curta, ou "-"}
 ```
 
-> **Revisao posterior:** se TIER FAST, o codigo ainda nao passou por
-> @reviewer/@qa/@security. Para revisar antes de producao, use `/aivoux/audit`
-> ou mude para TIER FULL na proxima demanda.
+> **Revisao posterior:** se DEVELOPMENT, o codigo ainda nao passou por
+> @reviewer/@qa/@security. Para revisar antes de merge/release/producao, use
+> `/aivoux/audit pending` ou force `*full`.
 
 A linha `Docs:` so pode ser `n/a` se o pipeline nao tocou codigo. Pipeline MEDIUM+
-com codigo tocado e `Docs: n/a` = normal (scribe desativado temporariamente).
+com codigo tocado e `Docs: n/a` = normal.
 
 Se o pipeline foi interrompido (gate falhou, runtime nao validavel, escalation), `Status: BLOCKED` e explicar em 1 linha logo abaixo do bloco.
 
@@ -381,18 +425,18 @@ Se o pipeline foi interrompido (gate falhou, runtime nao validavel, escalation),
 3.1 **Change-Safety:** mutacao remota (push/SSH/SQL prod/deploy) → verificar alvo (repo/DB/host) antes (vide `change-safety.md` A). Mudanca em modelo de dados ambiguo → confirmar modelo antes de editar (B).
 3.2 **Deploy-Safety (DEPLOY):** deploy nao e DONE sem boot check + smoke test + SHA no remoto (vide `deploy-safety.md`). Sem isso → `Status: BLOCKED`.
 3.3 **Regression-Gate (F4):** pipeline que tocou codigo → blast-radius.sh antes do @qa; smokes das afetadas + critical_paths executados pelo @qa (vide `regression-gate.md`). Afetada SEM_SMOKE = reportar no ✓, nunca omitir.
-4. **Modelo + TIER enforced:** todos os agentes em Opus via frontmatter. Use `*fast`
-   para modo economico (sem gates) ou `*full` para modo completo (com gates).
-5. **Revisao posterior:** `/aivoux/audit` roda reviewer + qa + security em codigo feito
-   em TIER FAST antes de producao.
-5. **Mutacao = subagent:** Edit/Write/Bash mutavel/MCP mutavel sempre via Agent tool.
-6. **NEVER/ALWAYS:** vide `.claude/rules/agent-conduct.md`. Em decisoes nao triviais, apresente opcoes `1. X, 2. Y, 3. Z`.
-7. **Marcadores visuais (▶ ◆ ▣ ✓):** quando os gatilhos do PASSO 2 acionam, os marcadores sao **inviolaveis** — nao sao sugestao de estilo. Sem ▶, nao chama Agent. Sem ◆ (plano), nao spawna dev/data-engineer. Sem ▣, nao spawna proximo. Com ▶, fecha com ✓. O usuario tem que conseguir ver, sem perguntar, qual agente esta rodando, em que etapa, e quando terminou.
-7.1 **Plan-First (F7):** nenhuma implementacao sem plano da solucao. Antes de spawnar `aivoux-dev`/`aivoux-data-engineer`, escrever `.aivoux/gates/plan.md` ancorado ao HEAD (PASSO 2.5) — o hook `plan-gate.sh` BLOQUEIA o spawn sem ele. Diagnosticar o problema NAO e planejar a solucao (vide `plan-first.md`).
-8. **Pipeline Integrity (F6):** o pipeline so pode ser pulado pelo USUARIO, com
-   autorizacao explicita nesta conversa. Falha de API, contexto longo, "continuacao
-   da fase anterior" e `yolo_mode` NAO autorizam pular. yolo_mode = nao pausar
-   entre etapas; TODOS os agentes rodam do mesmo jeito. Enforcement mecanico:
-   `deploy-gate.sh` + `agent-trace.sh` (vide `pipeline-integrity.md`).
-9. **Feature docs lookup (PASSO 1):** lookup no indice `docs/features/index.md`
-   ANTES de trabalhar (linha `Docs:` do ▶). @scribe esta desativado temporariamente.
+4. **Modelo + modo enforced:** todos os agentes em Opus via frontmatter. Use `*dev`
+   (aliases `*development`/`*fast`) para iteracao sem gates ou `*full` para aprovacao.
+5. **Revisao posterior:** `/aivoux/audit pending` roda reviewer + security condicional
+   + qa nos registros DEVELOPMENT antes de merge/release/producao.
+6. **Mutacao = subagent:** Edit/Write/Bash mutavel/MCP mutavel sempre via Agent tool.
+7. **NEVER/ALWAYS:** vide `.claude/rules/agent-conduct.md`. Em decisoes nao triviais, apresente opcoes `1. X, 2. Y, 3. Z`.
+8. **Marcadores visuais (▶ ◆ ▣ ✓):** quando os gatilhos do PASSO 2 acionam, os marcadores sao **inviolaveis** — nao sao sugestao de estilo. Sem ▶, nao chama Agent. Sem ◆ (plano), nao spawna dev/data-engineer. Sem ▣, nao spawna proximo. Com ▶, fecha com ✓. O usuario tem que conseguir ver, sem perguntar, qual agente esta rodando, em que etapa, e quando terminou.
+8.1 **Plan-First (F7):** nenhuma implementacao sem plano da solucao. Antes de spawnar `aivoux-dev`/`aivoux-data-engineer`, escrever `.aivoux/gates/plan.md` ancorado ao HEAD (PASSO 2.5) — o hook `plan-gate.sh` BLOQUEIA o spawn sem ele. Diagnosticar o problema NAO e planejar a solucao (vide `plan-first.md`).
+9. **Pipeline Integrity (F6):** no modo FULL, o pipeline so pode ser pulado pelo
+   USUARIO, com autorizacao explicita nesta conversa. Falha de API, contexto longo,
+   "continuacao da fase anterior" e `yolo_mode` NAO autorizam pular. DEVELOPMENT e
+   uma politica escolhida por usuario/config, nao um bypass silencioso; registra
+   mudancas em `pipeline_mode.pending_dir`. Enforcement: `deploy-gate.sh` +
+   `agent-trace.sh` (vide `pipeline-integrity.md`).
+10. **Feature docs lookup (PASSO 1):** lookup no indice `docs/features/index.md`

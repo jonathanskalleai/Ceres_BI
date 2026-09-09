@@ -79,7 +79,7 @@ export function AcoesGestaoCarteira({ from, to, vendedor, cidade, active = true,
   // `keepPreviousData` preserva total e controles enquanto a proxima pagina
   // chega. Sem este estado, os nomes da pagina anterior ficam visiveis por
   // varios segundos e parece que o botao de pagina nao funcionou.
-  const carregandoPagina = atual.isLoading || atual.isPlaceholderData;
+  const carregandoPagina = !active || atual.isLoading || atual.isPlaceholderData;
   const total = atual.data?.total ?? 0;
   const meta = atual.data?.meta;
   const exibidas = atual.data?.rows.length ?? 0;

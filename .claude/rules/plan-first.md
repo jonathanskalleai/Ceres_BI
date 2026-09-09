@@ -136,7 +136,7 @@ enquanto `.aivoux/gates/plan.md` nao for valido:
    fora dos headers). Header vazio nao e plano (anti-teatro).
 
 Agentes de planejamento (@architect, @pm, @analyst, @ux), review (@reviewer,
-@security), @qa e @scribe NAO sao gateados — eles nao implementam.
+@security), @qa NAO sao gateados — eles nao implementam.
 
 **Limite honesto:** o gate garante que UM plano existe e tem substancia; nao
 garante que o plano e BOM — bash nao raciocina sobre o codigo. O gate e o piso

@@ -91,14 +91,14 @@ SESSIONS=$(jq -r 'select(.type=="stop")' "$FILE" | wc -l)
   Extensoes mais tocadas:
     {TOP_EXT}
 
-  Hashes de arquivos mais reincidentes (candidatos a @scribe):
+  Hashes de arquivos mais reincidentes (candidatos a registro):
     {TOP_FILES}
 ═══════════════════════════════════════════════
 ```
 
 Analisar e adicionar **recomendacoes automaticas** baseadas nos dados:
 - Se um `fh` aparece >5x: "arquivo lido/editado {N} vezes — candidato a
-  `docs/features/{slug}.md` via @scribe"
+  \`docs/features/{slug}\.md\` via /aivoux/discover"
 - Se uma tool tem taxa de erro >20%: "tool X falha {Y}% — revisar padrao de uso"
 - Se Read tem muitos erros: "possivel 'File Too Large' — use offset/limit"
 - Se Bash domina (>40% das tools): "muitas operacoes shell — considere

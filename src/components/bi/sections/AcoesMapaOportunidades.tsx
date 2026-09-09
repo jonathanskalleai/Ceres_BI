@@ -1,19 +1,17 @@
-import { useMemo, useState } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, MapPin } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BiGestaoErro } from "@/components/bi/BiGestaoErro";
-import { MapView } from "@/components/dashboard/mapa";
-import { ClusterMarker } from "@/components/dashboard/mapa/ClusterMarker";
-import { OPORTUNIDADE_ABERTA_PIN_COLOR, type OportunidadePoint } from "@/components/dashboard/mapa";
+import { OPORTUNIDADE_ABERTA_PIN_COLOR } from "@/components/dashboard/mapa/constants";
 import { useAcoesMapaRpc } from "@/hooks/bi/useAcoesMapaRpc";
-import { fmtBRL, fmtNum } from "@/lib/formatters";
+import { fmtNum } from "@/lib/formatters";
+import type { OportunidadePoint } from "@/components/dashboard/mapa/types";
 import type { AcoesMapaPino } from "@/types/biRpc";
+
+const LazyAcoesMapaCanvas = lazy(() => import("./AcoesMapaCanvas"));
 
 const CARD =
   "rounded-2xl border border-[var(--voux-card-border)] bg-[var(--surface-raised)] shadow-[var(--voux-card-shadow)]";
-
-/** Centro padrao do mapa — mesma regiao de atuacao do restante do dashboard. */
-const CENTRO: [number, number] = [-27.1, -52.6];
 
 /** Transforma o payload da RPC no ponto do mapa (`lon` -> `lng` do Leaflet). */
 function toPoints(pinos: AcoesMapaPino[]): OportunidadePoint[] {
@@ -65,12 +63,13 @@ interface Props {
 export function AcoesMapaOportunidades({ vendedor, cidade, from, to, active = true }: Props) {
   const [aberto, setAberto] = useState(true);
   const [fullscreen, setFullscreen] = useState(false);
+  const shouldLoad = active && aberto;
   const { data, isLoading, error } = useAcoesMapaRpc({
     vendedor,
     cidade,
     from,
     to,
-    enabled: active && aberto,
+    enabled: shouldLoad,
   });
 
   const points = useMemo(() => toPoints(data?.pinos ?? []), [data]);
@@ -125,57 +124,35 @@ export function AcoesMapaOportunidades({ vendedor, cidade, from, to, active = tr
             <span><i className="mr-1 inline-block h-2 w-2 rounded-full bg-[var(--voux-danger)]" />Perdidos: {fmtNum(data?.meta.perdidos ?? 0)}</span>
           </div>
 
-          {isLoading && (
+          {!shouldLoad && (
             <Skeleton className="w-full rounded-[20px]" style={{ height: 520, background: "var(--voux-skeleton)" }} />
           )}
 
-          {!isLoading && error && <BiGestaoErro error={error} contexto="os pinos do mapa" />}
+          {shouldLoad && isLoading && (
+            <Skeleton className="w-full rounded-[20px]" style={{ height: 520, background: "var(--voux-skeleton)" }} />
+          )}
 
-          {!isLoading && !error && (
+          {shouldLoad && !isLoading && error && <BiGestaoErro error={error} contexto="os pinos do mapa" />}
+
+          {shouldLoad && !isLoading && !error && (
             <>
-              <MapView
-                mapView="oportunidades"
-                setMapView={() => {}}
-                clientePoints={[]}
-                regions={[]}
-                oportunidades={singlePoints}
-                center={CENTRO}
-                zoom={7}
-                hideModeSwitch
-                fullscreen={fullscreen}
-                toggleFullscreen={() => setFullscreen((v) => !v)}
-                onRegionClick={() => {}}
-                oportunidadesResumo={{
-                  negocios: data?.comCoordenada ?? 0,
-                  locais: locaisNoMapa,
-                }}
-              >
-                {clusterGroups.map((g) => (
-                  <ClusterMarker key={g.key} points={g.points} lat={g.lat} lng={g.lng} />
-                ))}
-              </MapView>
-              <p className="mt-3 text-[11px] leading-relaxed text-[var(--voux-text-muted)]">
-                {fmtNum(data?.comCoordenada ?? 0)} de {fmtNum(data?.total ?? 0)} oportunidades do período
-                estão plotadas em {fmtNum(locaisNoMapa)} pinos (
-                {fmtBRL(data?.valorNoMapa ?? 0)} de {fmtBRL(data?.valorTotal ?? 0)}).{" "}
-                {oportunidadesAgrupadas > 0 && (
-                  <>
-                    {fmtNum(oportunidadesAgrupadas)} oportunidade{oportunidadesAgrupadas === 1 ? "" : "s"} compartilha
-                    localização com outra e aparece em um pino com contador. {" "}
-                  </>
-                )}
-                {(data?.semCoordenada ?? 0) > 0 && (
-                  <strong className="text-[var(--voux-text-primary)]">
-                    {fmtNum(data?.semCoordenada ?? 0)} nao aparecem no mapa por falta de coordenada do
-                    cliente.
-                  </strong>
-                )}{" "}
-                Coordenada resolvida pela ultima acao geolocalizada do cliente (
-                {fmtNum(data?.meta.viaAcao ?? 0)}) e, na falta dela, pelo cadastro da carteira (
-                {fmtNum(data?.meta.viaCarteira ?? 0)}). A oportunidade entra pela primeira passagem no funil
-                VENDAS; ganho = pedido aprovado e perdido = fechamento no período. Pino azul = em andamento,
-                verde = ganho e vermelho = perdido.
-              </p>
+              <Suspense fallback={<Skeleton className="w-full rounded-[20px]" style={{ height: 520, background: "var(--voux-skeleton)" }} />}>
+                <LazyAcoesMapaCanvas
+                  singlePoints={singlePoints}
+                  clusterGroups={clusterGroups}
+                  comCoordenada={data?.comCoordenada ?? 0}
+                  total={data?.total ?? 0}
+                  valorNoMapa={data?.valorNoMapa ?? 0}
+                  valorTotal={data?.valorTotal ?? 0}
+                  semCoordenada={data?.semCoordenada ?? 0}
+                  viaAcao={data?.meta.viaAcao ?? 0}
+                  viaCarteira={data?.meta.viaCarteira ?? 0}
+                  locaisNoMapa={locaisNoMapa}
+                  oportunidadesAgrupadas={oportunidadesAgrupadas}
+                  fullscreen={fullscreen}
+                  onToggleFullscreen={() => setFullscreen((v) => !v)}
+                />
+              </Suspense>
             </>
           )}
         </div>

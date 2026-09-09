@@ -1,9 +1,9 @@
-# AIVOUX — Pipeline Integrity (F6): o pipeline e INQUEBRAVEL
+# AIVOUX — Pipeline Integrity (F6): o modo FULL e INQUEBRAVEL
 
 Resposta ao padrao de falha F6 — **pipeline ignorado por decisao propria da IA**
 (incidente real, 2026-07-04): @reviewer e @qa falharam com 529 na Fase 1 e o
 agente assumiu os papeis inline SEM AVISAR; na Fase 2 nem tentou spawnar — foi
-do codigo direto pro deploy. O @scribe nunca rodou. Consequencia concreta: bug
+do codigo direto pro deploy. Consequencia concreta: bug
 real (`retry-failed` incapaz de reprocessar `whatsapp_send_media` porque o
 `request_payload` nao carrega o base64) chegou em producao sem ser detectado —
 o @qa teria pego.
@@ -16,14 +16,41 @@ o Smart Router estar orquestrando a sessao.
 Owner: **router/orquestrador** (processo) + hooks (enforcement).
 Aplica-se a TODA sessao — inclusive sessao direta SEM router.
 
+## Modos
+
+O framework tem duas politicas intencionais, selecionadas pelo usuario ou pelo
+`pipeline_mode.default` de `.aivoux/config.yaml`:
+
+- **DEVELOPMENT** (`*dev`, `*development`, alias `*fast`): itera sem os gates
+  `reviewer`, `security` e `qa`; registra codigo/schema em
+  `pipeline_mode.pending_dir`. Publicacao de branch/PR e permitida, mas
+  merge/release/producao exigem auditoria FULL.
+- **FULL** (`*full`): executa `dev -> reviewer -> security` condicional `-> qa
+  -> devops`, com verdicts ancorados ao SHA.
+
+O modo DEVELOPMENT nao e uma falha de integridade nem autoriza apagar os
+registros. O que nao pode acontecer e o router dizer FULL e pular etapas, ou
+publicar em producao sem promover as pendencias pelo fluxo FULL.
+
+### Registro de pendencias
+
+Quando DEVELOPMENT tocar codigo/schema, o ultimo agente de implementacao cria um
+registro em `pipeline_mode.pending_dir` com `status: PENDING_REVIEW`, resumo curto,
+agentes, arquivos e SHAs de referencia. O registro nao deve conter prompt
+integral, segredos ou payloads sensiveis. `/aivoux/audit pending` consolida os
+registros e, apos reviewer/security condicional/QA com runtime, marca
+`APPROVED` ou `NEEDS_FIX` com `reviewed_sha`.
+
 ---
 
 ## Regra de Ouro
 
-> O pipeline (dev → reviewer → qa → scribe → devops) so pode ser pulado por
-> UMA pessoa: **o usuario, com autorizacao explicita nesta conversa.**
-> Falha de API, contexto longo, "e so uma extensao da fase anterior",
-> yolo_mode, pressa — NADA disso e autorizacao.
+> No modo FULL, o pipeline (dev → reviewer → security condicional → qa → devops)
+> so pode ser pulado por UMA pessoa: **o usuario, com autorizacao explicita nesta
+> conversa.** No modo DEVELOPMENT, a ausencia desses gates e uma politica
+> selecionada e registrada, nao um bypass silencioso. Falha de API, contexto
+> longo, "e so uma extensao da fase anterior", yolo_mode e pressa nao alteram o
+> modo nem autorizam mascarar uma etapa.
 
 ---
 
@@ -44,13 +71,13 @@ Quando um `Agent(subagent_type="aivoux-*")` falha (529, timeout, erro):
 
 ### 2. Hard gate de deploy (mecanico — `deploy-gate.sh`)
 
-`git push`, `gh pr create/merge`, `gh release`, deploys de plataforma
+No modo FULL, `git push` em producao, `gh pr merge`, `gh release`, deploys de plataforma
 (vercel/netlify/fly/wrangler/railway/supabase functions/docker push/kubectl
 apply) e MCP (`deploy_edge_function`, `apply_migration`) sao **BLOQUEADOS**
 (PreToolUse, exit 2) a menos que:
 
 - `.aivoux/gates/qa-verdict.json` exista com `verdict: PASS|WAIVED` e
-  `sha` == HEAD (commits pos-verdict docs-only, ex: @scribe, sao tolerados)
+  `sha` == HEAD (commits docs-only sao tolerados)
 - `.aivoux/gates/agents-run.log` comprove **spawn real** de `aivoux-qa` apos o
   commit validado (verdict escrito inline sem spawnar @qa NAO passa — Regra 1)
 - `.aivoux/gates/reviewer-verdict.json` exista com `verdict: PASS|WAIVED` e
@@ -62,6 +89,11 @@ apply) e MCP (`deploy_edge_function`, `apply_migration`) sao **BLOQUEADOS**
 Isencao automatica: range a publicar e docs-only (`docs/`, `.aivoux/`,
 `.claude/`, `*.md`). Typo/docs nao exigem pipeline.
 
+No modo DEVELOPMENT, o hook permite somente `git push` de branch que nao seja
+`main`/`master` e `gh pr create`, sempre com aviso. `gh pr merge`, release,
+deploy de plataforma, `git push` para a branch de producao e MCP continuam
+exigindo o ciclo FULL (ou override explicito, auditado e de uso unico).
+
 ### 3. Cada deploy = pipeline nova
 
 "Mesmo padrao da fase anterior, so outro arquivo" NAO herda o PASS anterior.
@@ -69,17 +101,18 @@ O gate mecanico implementa isso: qualquer commit de codigo alem do SHA
 validado invalida o verdict. Excecoes: docs-only, ou hotfix com autorizacao
 explicita do usuario (override, Regra abaixo).
 
-### 4. yolo_mode ≠ skip_pipeline
+### 4. yolo_mode ≠ mode_selection
 
 `yolo_mode: true` significa **apenas** "nao pausar para confirmacao entre
-etapas". TODOS os agentes do pipeline rodam do mesmo jeito, na mesma ordem.
-Interpretar yolo como licenca para pular etapa e violacao direta desta rule.
+etapas". No FULL, todos os gates rodam na mesma ordem. No DEVELOPMENT, a
+ausencia de reviewer/security/qa e lida de forma igual em todos os harnesses e
+gera registro; interpretar yolo como troca silenciosa de modo e violacao.
 
 ### 5. Fallback degradado e explicito, nunca silencioso
 
 Tudo que rodou fora do fluxo normal aparece no fechamento:
 - Etapa inline autorizada → `INLINE_DEGRADED` + lista do que nao foi verificado
-- @scribe falhou → `DOCS_PENDING` no ✓ + TODO para a proxima sessao
+
 - Afetada sem smoke → `SEM_SMOKE` no handoff (ja era regra do F4)
 Silencio sobre degradacao = a proxima sessao opera sobre estado falso.
 
@@ -88,13 +121,8 @@ Silencio sobre degradacao = a proxima sessao opera sobre estado falso.
 Feature em `regression_gate.critical_paths` sem secao `## Smoke` na doc =
 regression gate e teatro (roda e nunca falha). O `deploy-gate.sh` **bloqueia
 push/deploy** enquanto houver critical_path sem smoke registrado. Registrar
-via @scribe (apos @qa PASS) ou `/aivoux/discover`.
+via \`/aivoux/discover\`.
 
-### 7. Regra eliminada — scribe-gate.sh removido
-
-O gate mecanico `scribe-gate.sh` foi removido. A documentacao de features
-continua sendo recomendada apos @qa PASS, mas nao e mais imposta via hook
-de parada.
 
 ### 8. Feature-Docs Lookup antes do primeiro spawn (mecanico — `docs-gate.sh`)
 
@@ -103,7 +131,7 @@ seguiu o RESUMO desatualizado do CLAUDE.md em vez do router.md canonico — os
 subagentes trabalharam sem a memoria do projeto. Correcao em duas pontas:
 
 - **Gate:** se o projeto TEM `docs/features/index.md`, spawn de qualquer
-  `aivoux-*` (exceto `aivoux-scribe`) e BLOQUEADO ate o index ser lido na
+  \`aivoux-\*\` e BLOQUEADO ate o index ser lido na
   janela atual. O `docs-lookup-trace.sh` (PostToolUse Read|Bash) grava o
   marker `.aivoux/gates/docs-lookup` automaticamente quando qualquer
   Read/Bash toca o index — ler o arquivo JA destrava (TTL 60min).
@@ -112,18 +140,18 @@ subagentes trabalharam sem a memoria do projeto. Correcao em duas pontas:
   entre resumo e `.claude/commands/aivoux/router.md` / `.claude/rules/*`,
   **o router/rules VENCEM** — resumo desatualizado nao autoriza pular passo.
 
-### 9. @reviewer e obrigatorio em TODO pipeline de codigo (mecanico — `review-gate.sh`)
+### 9. @reviewer e obrigatorio em TODO pipeline FULL de codigo (mecanico — `review-gate.sh`)
 
-Decisao de produto (2026-07): o @reviewer pega defeito estrutural real com
-frequencia; pular ele em demanda "SIMPLE" economiza 1 spawn e custa retrabalho.
-Complexidade muda SO a composicao do planejamento (pm/discussion) — NUNCA
-remove gate de qualidade. Enforcement em dois pontos:
+Decisao de produto (2026-07): no modo FULL o @reviewer pega defeito estrutural
+real com frequencia; pular ele em demanda "SIMPLE" economiza 1 spawn e custa
+retrabalho. No modo DEVELOPMENT ele e deliberadamente adiado junto com os
+demais gates e precisa aparecer no registro de pendencia. Enforcement em dois pontos:
 
-- **`review-gate.sh` (PreToolUse Task/Agent):** spawn de `aivoux-qa` e
+- **`review-gate.sh` (PreToolUse Task/Agent):** no modo FULL, spawn de `aivoux-qa` e
   BLOQUEADO se o ultimo spawn de agente que produz codigo (`aivoux-dev` /
   `aivoux-data-engineer`, janela 24h) nao foi seguido por spawn de
   `aivoux-reviewer` (fonte: `agents-run.log`, deterministico).
-- **`deploy-gate.sh`:** exige `reviewer-verdict.json` com PASS|WAIVED ancorado
+- **`deploy-gate.sh`:** no modo FULL, exige `reviewer-verdict.json` com PASS|WAIVED ancorado
   ao SHA + spawn real de `aivoux-reviewer` (mesmas regras do qa-verdict).
 
 Override: `skip-review-authorized` — SO com autorizacao explicita do usuario,
@@ -145,7 +173,7 @@ O diagnostico (PASSO 1) entende o PROBLEMA; o plano (PASSO 2.5) desenha a SOLUCA
   obrigatorias `## Abordagem` / `## Arquivos` / `## Risco / Blast` /
   `## Suposicao mais fraca` / `## Validar` preenchidas com conteudo nao-trivial
   (anti-teatro). Planejadores (architect/pm/analyst/ux), review
-  (reviewer/security), qa e scribe NAO sao gateados — nao implementam.
+  (reviewer/security), qa NAO sao gateados — nao implementam.
 - **Peso escalavel:** o plano existe SEMPRE, mas SIMPLE = 4 linhas (~1 min) e
   MEDIUM+ CONSOLIDA a saida do Discussion Mode / @architect (nao e etapa nova).
   Complexidade muda o TAMANHO do plano, nunca o remove.
@@ -180,8 +208,8 @@ maquina nao vale em outra):
   qa-verdict.json            # escrito pelo @qa ao emitir verdict
   reviewer-verdict.json      # escrito pelo @reviewer ao emitir verdict (Regra 9)
   security-verdict.json      # escrito pelo @security ao emitir verdict (gate condicional)
+  pipeline-mode              # development|full, compartilhado entre harnesses
   docs-lookup                # escrito pelo docs-lookup-trace.sh ao ler o index (Regra 8)
-  docs-na                   # reservado (era escape do scribe-gate, agora disponivel)
   skip-pipeline-authorized   # override de USO UNICO do deploy-gate — so com autorizacao do usuario
   skip-security-authorized   # override de USO UNICO do security-gate — so com autorizacao do usuario
   skip-review-authorized     # override de USO UNICO do review-gate — so com autorizacao do usuario
@@ -245,10 +273,10 @@ do usuario e violacao da mesma gravidade que contornar o delete-guard.
 
 - ❌ Subagente deu 529 → assumir o papel inline e seguir como se nada
 - ❌ "Ja aprendi que posso fazer sozinho" — Fase 2 sem nem tentar spawnar
-- ❌ Interpretar `yolo_mode: true` como "posso pular reviewer/qa"
+- ❌ Interpretar `yolo_mode: true` como troca silenciosa para DEVELOPMENT ou FULL
 - ❌ Tratar continuacao ("Fase 2") como extensao que herda o PASS da Fase 1
 - ❌ Deploy declarado DONE sem nenhum verdict de @qa para aquele SHA
-- ❌ Encerrar sessao com @qa PASS e entrega sem documentacao registrada (memoria do projeto nao registra a entrega)
+- ❌ Marcar registro DEVELOPMENT como `APPROVED` sem os gates FULL e runtime do @qa
 - ❌ Criar `skip-pipeline-authorized` sem o usuario ter autorizado (fraude de gate)
 
 ---

@@ -1,7 +1,7 @@
 import { type DateRange } from "react-day-picker";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { HorizontalBarChart } from "@/components/bi/charts";
-import { CHART_COLORS } from "@/lib/chartTheme";
+import { CHART_COLORS } from "@/lib/chartPalette";
 import { formatBRL } from "@/lib/dateUtils";
 import { useInteligenciaBIRpc } from "@/hooks/bi/useInteligenciaBIRpc";
 

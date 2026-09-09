@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # AIVOUX review-gate — PreToolUse (Task|Agent), BLOQUEANTE
 #
-# Enforcement mecanico: @reviewer e OBRIGATORIO em TODO pipeline que produziu
-# codigo — inclusive SIMPLE. Decisao de produto (2026-07): o @reviewer pega
-# defeito estrutural real com frequencia; a economia de pular ele em demanda
-# "simples" custa mais caro que o spawn. Complexidade NUNCA remove gate de
-# qualidade — ela so muda a composicao do planejamento (pm/discussion).
+# Enforcement mecanico: no modo FULL, @reviewer e OBRIGATORIO em TODO pipeline
+# que produziu codigo — inclusive SIMPLE. DEVELOPMENT e a politica curta
+# intencional: o review fica registrado para a auditoria posterior. Decisao de
+# produto (2026-07): o @reviewer pega defeito estrutural real com frequencia;
+# complexidade NUNCA remove o gate no FULL — so muda o planejamento.
 #
 # Regra: spawn de `aivoux-qa` e BLOQUEADO se o ultimo spawn de agente que
 # produz codigo (aivoux-dev / aivoux-data-engineer) e mais recente que o
@@ -17,7 +17,8 @@
 # grava reviewer-verdict.json com WAIVED (para o deploy-gate nao re-bloquear).
 #
 # Contrato: exit 2 + stderr => Claude ve o feedback, spawna aivoux-reviewer
-# primeiro e re-spawna o qa. Falha interna => exit 0 (nunca travar por bug).
+# primeiro e re-spawna o qa. DEVELOPMENT sai sem bloquear; uma chamada direta
+# ao @qa continua sendo permitida pelo usuario. Falha interna => exit 0.
 set +e
 
 INPUT=""
@@ -39,7 +40,21 @@ fi
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
 cd "$PROJECT_DIR" 2>/dev/null || exit 0
 GATES=".aivoux/gates"
+CONFIG=".aivoux/config.yaml"
 LOG="$GATES/agents-run.log"
+
+# O hook tambem precisa conhecer o modo quando o @qa for chamado diretamente.
+# Sem estado/config valido, o fallback seguro e DEVELOPMENT (instalacoes antigas).
+MODE=$(cat "$GATES/pipeline-mode" 2>/dev/null | head -1)
+if [ "$MODE" != "development" ] && [ "$MODE" != "full" ]; then
+  MODE=""
+  if [ -f "$CONFIG" ]; then
+    MODE=$(awk '/^pipeline_mode:/{f=1;next} f && /^[^[:space:]]/{exit} f && /^[[:space:]]*default:/{print $2; exit}' "$CONFIG" 2>/dev/null)
+  fi
+fi
+[ "$MODE" != "development" ] && [ -f "$GATES/tier-fast-used" ] && MODE="development"
+[ "$MODE" != "development" ] && [ "$MODE" != "full" ] && MODE="development"
+[ "$MODE" = "development" ] && exit 0
 
 # Sem log => agent-trace desabilitado ou nenhum subagent rodou; nao ha como
 # cobrar com evidencia. Nao bloquear.
@@ -80,7 +95,7 @@ fi
   printf '⛔ AIVOUX review-gate: spawn de aivoux-qa BLOQUEADO — @reviewer nao rodou apos o codigo.\n\n'
   printf 'O pipeline produziu codigo (aivoux-dev/aivoux-data-engineer no agents-run.log)\n'
   printf 'e NAO ha spawn de aivoux-reviewer depois disso. @reviewer e OBRIGATORIO em\n'
-  printf 'TODO pipeline que toca codigo — inclusive SIMPLE. Complexidade nao remove gate.\n\n'
+  printf 'TODO pipeline FULL que toca codigo — inclusive SIMPLE. Complexidade nao remove gate.\n\n'
   printf 'Antes de re-spawnar o @qa:\n'
   printf '  1. Spawnar aivoux-reviewer com o diff/escopo da mudanca.\n'
   printf '  2. Se FAIL estrutural: devolver ao @dev, corrigir, re-spawnar reviewer.\n'

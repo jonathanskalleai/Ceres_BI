@@ -4,7 +4,7 @@ import { useAdminBIRpc } from "@/hooks/bi/useAdminBIRpc";
 import { KPICard } from "@/components/bi/KPICard";
 import { ChartCard } from "@/components/bi/ChartCard";
 import { HorizontalBarChart, PieChartWithLabels, BrazilHeatmap } from "@/components/bi/charts";
-import { CHART_COLORS, POSITIVE_COLOR } from "@/lib/chartTheme";
+import { CHART_COLORS, POSITIVE_COLOR } from "@/lib/chartPalette";
 import type { RpcAdminBI } from "@/types/biRpc";
 
 const EMPTY: RpcAdminBI = {

@@ -69,9 +69,9 @@ export function AcoesTermometroFechamento({ from, to, vendedor, cidade, active =
   return (
     <BiTableCard
       title="Termômetro de Fechamento"
-      loading={isLoading && !data}
+      loading={!active || (isLoading && !data)}
       error={error}
-      isEmpty={!isLoading && !!resumo && resumo.negocios === 0}
+      isEmpty={active && !isLoading && !!resumo && resumo.negocios === 0}
       emptyMessage={escopo === "ativos_periodo" ? "Nenhum negócio aberto com ação no período" : "Nenhum negócio aberto na carteira"}
       skeletonRows={8}
       className="flex h-full min-h-0 flex-col"

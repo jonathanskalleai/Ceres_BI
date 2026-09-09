@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# AIVOUX tier-gate — PreToolUse, nao-bloqueante
+# AIVOUX pipeline-mode — PreToolUse, nao-bloqueante
 #
-# Marca quando TIER FAST esta ativo para que o deploy-gate.sh possa
-# avisar (mas nao bloquear) quando codigo TIER FAST vai pra producao.
+# Mantem o modo selecionado pelo router em um arquivo compartilhado pelos
+# hooks e pelos tres harnesses. O nome tier-gate permanece por compatibilidade
+# com instalacoes existentes.
 #
-# Este hook NAO bloqueia nada — apenas registra o tier ativo.
+# Este hook NAO bloqueia nada — apenas registra o modo ativo.
 set +e
 
 INPUT=""
@@ -13,24 +14,42 @@ INPUT=""
 [ -z "$INPUT" ] && exit 0
 
 GATES=".aivoux/gates"
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
+cd "$PROJECT_DIR" 2>/dev/null || exit 0
 mkdir -p "$GATES" 2>/dev/null
 
-# Extrair tier do input
-TIER=""
+# Extrair modo do input
+MODE=""
 if command -v jq >/dev/null 2>&1; then
-  TIER=$(printf '%s' "$INPUT" | jq -r '.tool_input // empty' 2>/dev/null | grep -oE '\*fast|\*full' | head -1)
+  MODE=$(printf '%s' "$INPUT" | jq -r '.tool_input // empty' 2>/dev/null | grep -oE '\*(dev|development|fast|full)' | head -1)
 fi
-[ -z "$TIER" ] && TIER=$(printf '%s' "$INPUT" | grep -oE '\*fast|\*full' | head -1)
+[ -z "$MODE" ] && MODE=$(printf '%s' "$INPUT" | grep -oE '\*(dev|development|fast|full)' | head -1)
 
-# Se encontrou tier no comando, marcar
-if [ -n "$TIER" ]; then
-  if [ "$TIER" = "*fast" ]; then
-    touch "$GATES/tier-fast-used"
-    printf '📍 AIVOUX: TIER FAST ativado — gates de qualidade desativados.\n'
-    printf '   Para revisar antes de producao: /aivoux/audit\n'
-  else
-    rm -f "$GATES/tier-fast-used"
+# Se encontrou modo no comando, persistir. DEVELOPMENT inclui aliases legados.
+case "$MODE" in
+  '*dev'|'*development'|'*fast')
+    printf 'development\n' > "$GATES/pipeline-mode" 2>/dev/null
+    touch "$GATES/tier-fast-used" 2>/dev/null
+    printf '📍 AIVOUX: modo DEVELOPMENT ativado — gates de review/seguranca/QA adiados.\n'
+    printf '   Pendencias: docs/development/pending/ · Auditoria: /aivoux/audit pending\n'
+    ;;
+  '*full')
+    printf 'full\n' > "$GATES/pipeline-mode" 2>/dev/null
+    rm -f "$GATES/tier-fast-used" 2>/dev/null
+    printf '📍 AIVOUX: modo FULL ativado — reviewer/security condicional/QA exigidos.\n'
+    ;;
+esac
+
+# Inicializar o estado quando o input nao trouxe prefixo explicito.
+if [ ! -f "$GATES/pipeline-mode" ]; then
+  DEFAULT=""
+  if [ -f .aivoux/config.yaml ]; then
+    DEFAULT=$(awk '/^pipeline_mode:/{f=1;next} f && /^[^[:space:]]/{exit} f && /^[[:space:]]*default:/{print $2; exit}' .aivoux/config.yaml 2>/dev/null)
   fi
+  case "$DEFAULT" in
+    development|full) printf '%s\n' "$DEFAULT" > "$GATES/pipeline-mode" 2>/dev/null ;;
+    *) printf 'development\n' > "$GATES/pipeline-mode" 2>/dev/null ;;
+  esac
 fi
 
 exit 0

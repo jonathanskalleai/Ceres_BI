@@ -69,7 +69,7 @@ docs/MAPEAMENTO_DADOS.md                     — Documentação completa
 
 ## Credenciais / Acessos
 
-- **VPS:** root@178.238.235.203 (senha: 5qv2fJT3Cv5W36RrY)
+- **VPS:** root@178.238.235.203 porta **2222** (`ssh -p 2222 root@178.238.235.203`)
 - **SQL Server:** wfrsistemas.net.br:1433 / CamposDealer_BI / usrBI_CresCandiotto
 - **Supabase:** https://ceressupabasebi.vouxconsultoria.com.br
 - **Anon Key:** eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzE1MDUwODAwLAogICJleHAiOiAxODcyODE3MjAwCn0.yXg8zkCdBRNXAPyONyI0GuX77HnQWed9Rnh_R0idFg4
@@ -91,7 +91,7 @@ sshpass -p '5qv2fJT3Cv5W36RrY' scp -o StrictHostKeyChecking=no \
   root@178.238.235.203:/root/supabase/docker/volumes/functions/query-sqlserver/index.ts
 
 # Restart edge functions
-sshpass -p '5qv2fJT3Cv5W36RrY' ssh -o StrictHostKeyChecking=no root@178.238.235.203 \
+sshpass -p '5qv2fJT3Cv5W36RrY' ssh -p 2222 -o StrictHostKeyChecking=no root@178.238.235.203 \
   "docker service update --force supabase_supabase_functions"
 
 # Testar edge function
@@ -101,6 +101,6 @@ curl -s -X POST "https://ceressupabasebi.vouxconsultoria.com.br/functions/v1/que
   -d '{"view": "VW_Ceres_CRM_Acoes", "columns": ["CLI_Nome","ACO_Vendedor"], "limit": 5}'
 
 # Ver logs do edge runtime
-sshpass -p '5qv2fJT3Cv5W36RrY' ssh root@178.238.235.203 \
+sshpass -p '5qv2fJT3Cv5W36RrY' ssh -p 2222 root@178.238.235.203 \
   "docker logs \$(docker ps -q -f name=supabase_supabase_functions) 2>&1 | tail -20"
 ```

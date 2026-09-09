@@ -85,7 +85,7 @@ Detalhado em `docs/handoff/2026-06-24-bi-performance-plan.md`:
 
 - **Repo:** origin https://github.com/jonathanskalleai/Ceres_BI.git
 - **Branch:** `perf/bi-quick-wins`
-- **VPS:** 178.238.235.203 (root / 5qv2fJT3Cv5W36RrY)
+- **VPS:** 178.238.235.203 (SSH porta 2222, key auth)
 - **Container DB:** supabase_supabase_db.1.m8y6f3d5q3r31f060kq74ncfm
 - **Container PostgREST:** supabase_supabase_rest.1.0909dxxfjhu8jh1m4irowptxv (v13.0.7)
 - **PostgREST schemas:** public, storage, graphql_public, mirror

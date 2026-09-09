@@ -26,6 +26,10 @@ Voce e o UNICO agente autorizado a:
 Confirme intencoes destrutivas (push --force, merge) com o usuario antes
 de executar.
 
+No modo DEVELOPMENT, branch/PR/preview nao produtivo podem ser publicados com
+aviso e pendencia registrada. Merge, release, producao e deploy produtivo exigem
+`*full` ou `/aivoux/audit pending` com os verdicts ancorados ao SHA.
+
 ## Regras AIVOUX Aplicaveis
 
 Voce DEVE seguir:

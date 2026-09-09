@@ -73,7 +73,7 @@ Apenas strings / JSDoc foram alterados (sem mudanca de shape de tipos ou logica 
 ### 3.1 Migrations aplicadas via SSH na VPS
 
 ```
-ssh root@178.238.235.203
+ssh -p 2222 root@178.238.235.203
 container: 9a9f42b587de (supabase_db)
 aplicada: cat /tmp/20260727_rpc_acoes_bi_v5.sql | docker exec -i ... psql -U postgres
 resultado: CREATE FUNCTION + GRANT (sem erros)

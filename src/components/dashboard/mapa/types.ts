@@ -1,4 +1,5 @@
 import L from "leaflet";
+export { OPORTUNIDADE_ABERTA_PIN_COLOR } from "./constants";
 
 // ─── Domain types for the map sub-components ───────────────────────────────
 
@@ -57,9 +58,6 @@ export const CARD_BASE =
 export const MONO: React.CSSProperties = {
   fontFamily: "var(--voux-font-mono, 'JetBrains Mono', monospace)",
 };
-
-/** Azul forte para negócios em andamento: mantém contraste no mapa claro. */
-export const OPORTUNIDADE_ABERTA_PIN_COLOR = "#2563eb";
 
 // ─── Utility functions ─────────────────────────────────────────────────────
 

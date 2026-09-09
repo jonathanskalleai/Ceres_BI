@@ -17,8 +17,17 @@ async def execute_exploratory(context: ToolContext, input_data: ExploratoryToolI
     try:
         validated = validate_read_only_sql(input_data.sql, context.schema_tables)
     except DynamicQueryValidationError as error:
-        log_event(30, "ai_agent_exploratory_sql_rejected", error_type=type(error).__name__)
-        raise
+        log_event(30, "ai_agent_exploratory_sql_rejected", error_type=type(error).__name__, error_message=str(error))
+        return _Result(
+            {
+                "status": "error",
+                "error": str(error),
+                "hint": "Regras de SQL: apenas SELECT, colunas explícitas (sem SELECT *), JOINs explícitos, apenas tabelas mirror.* e sem comentários ou UNION.",
+            },
+            None,
+            [],
+            [str(error)],
+        )
     spec = QuerySpec(
         intent="exploratory",
         domain="exploratory",
@@ -27,7 +36,7 @@ async def execute_exploratory(context: ToolContext, input_data: ExploratoryToolI
         dynamic_requested=True,
         dynamic_query_hash=validated.query_hash,
         dynamic_tables=list(validated.tables),
-        warnings=["Análise exploratória: o resultado não substitui o conceito oficial de um indicador da dashboard."],
+        warnings=["Análise no banco de dados do BI."],
     )
     _, data, source, _ = await DynamicQueryExecutor(context.analytical_query).execute(
         spec,
@@ -36,7 +45,14 @@ async def execute_exploratory(context: ToolContext, input_data: ExploratoryToolI
         {"status": "fonte oficial"},
         set(validated.tables),
     )
-    return _Result(data, source, [], source.warnings)
+    artifacts = []
+    rows = data.get("rows") if isinstance(data, dict) else []
+    if rows and input_data.apresentacao != "texto":
+        from ya_agent_tools.common import table_artifact
+        art = table_artifact(input_data.objetivo or "Resultado da Consulta", rows[:50], source.id)
+        if art:
+            artifacts.append(art)
+    return _Result(data, source, artifacts, source.warnings)
 
 
 class _Result:

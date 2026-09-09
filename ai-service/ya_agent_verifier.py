@@ -30,6 +30,8 @@ def verify_answer(answer: str, evidence: Iterable[Any]) -> VerificationResult:
             line = LIST_MARKER.sub("", line, count=1)
         for token in NUMBER_TOKEN.findall(line):
             cleaned = token.rstrip("%")
+            if cleaned.isdigit() and 2020 <= int(cleaned) <= 2035:
+                continue
             forms = _token_forms(cleaned)
             if not forms:
                 continue
@@ -42,7 +44,22 @@ def verify_answer(answer: str, evidence: Iterable[Any]) -> VerificationResult:
 def _numeric_forms(text: str) -> set[str]:
     forms: set[str] = set()
     for token in NUMBER_TOKEN.findall(text):
-        forms.update(_token_forms(token.rstrip("%")))
+        cleaned = token.rstrip("%")
+        forms.update(_token_forms(cleaned))
+        val = None
+        try:
+            val = float(cleaned)
+        except (ValueError, OverflowError):
+            try:
+                val = float(cleaned.replace(".", "").replace(",", "."))
+            except (ValueError, OverflowError):
+                val = None
+        if val is not None:
+            try:
+                forms.add(str(round(val)))
+                forms.add(str(int(val)))
+            except (ValueError, OverflowError):
+                pass
     return forms
 
 

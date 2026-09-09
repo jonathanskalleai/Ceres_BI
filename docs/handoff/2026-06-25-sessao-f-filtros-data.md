@@ -66,6 +66,6 @@ O BI tem um filtro global de data no topo que deveria funcionar para todas as te
 - **Repo:** `git@github.com:jonathanskalleai/Ceres_BI.git`
 - **Branch:** `perf/bi-quick-wins`
 - **PR:** #2 (open)
-- **VPS BI:** 178.238.235.203
+- **VPS BI:** 178.238.235.203 (SSH porta 2222)
 - **Container DB:** `supabase_supabase_db.1.m8y6f3d5q3r31f060kq74ncfm`
 - **Schema reload:** `docker kill --signal=SIGUSR1 $(docker ps -q -f name=supabase_rest)`
