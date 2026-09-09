@@ -7,7 +7,7 @@ import logging
 import time
 import uuid
 from datetime import datetime, timezone
-from typing import Any, AsyncIterator, Awaitable, Callable
+from typing import Any, Awaitable, Callable
 
 from fastapi import HTTPException
 
@@ -21,6 +21,7 @@ from ya_agent_support import (
     active_topic,
     call_key,
     choices,
+    error_tool_execution,
     estimated_cost,
     safe_tool_input,
     topic_from_tool,
@@ -38,11 +39,10 @@ from ya_db import query_async, query_read_only_async
 from ya_memory import (
     ensure_conversation,
     load_agent_memory,
-    persist_agent_tool_run,
-    persist_agent_turn_metrics,
     persist_message,
     update_agent_state,
 )
+from ya_memory_persistence import persist_agent_tool_run, persist_agent_turn_metrics
 from ya_models import YaChatRequest
 from ya_provider import YA_MODEL, complete_structured, complete_with_tools, normalize_tool_calls
 from ya_schema import load_schema
@@ -53,10 +53,6 @@ MAX_TOOL_CALLS = 8
 MAX_EXPLORATORY_CALLS = 2
 MAX_TOTAL_SECONDS = 90
 EventCallback = Callable[[str, dict[str, Any]], Awaitable[None]]
-
-
-class AgentLimitReached(RuntimeError):
-    """Reserved for callers that need to distinguish a bounded turn."""
 
 
 class AgentRunner:
@@ -163,11 +159,29 @@ class AgentRunner:
                     arguments = raw_call.get("arguments")
                     call_key_value = call_key(name, arguments)
                     if required_tool and name != required_tool:
-                        execution = ToolExecution(tool_name=name, tool_call_id=call_id, data={"status": "error", "error": {"category": "contract_required", "message": "A ferramenta necessária para esta pergunta não foi usada."}}, warnings=["A ferramenta exigida pelo contrato semântico não foi usada."], status="error", error_category="contract_required")
+                        execution = error_tool_execution(
+                            name,
+                            call_id,
+                            category="contract_required",
+                            message="A ferramenta necessária para esta pergunta não foi usada.",
+                            warning="A ferramenta exigida pelo contrato semântico não foi usada.",
+                        )
                     elif call_key_value in seen_calls:
-                        execution = ToolExecution(tool_name=name, tool_call_id=call_id, data={"status": "error", "error": {"category": "duplicate_call", "message": "Essa consulta idêntica já foi executada nesta rodada."}}, warnings=["Consulta repetida bloqueada."], status="error", error_category="duplicate_call")
+                        execution = error_tool_execution(
+                            name,
+                            call_id,
+                            category="duplicate_call",
+                            message="Essa consulta idêntica já foi executada nesta rodada.",
+                            warning="Consulta repetida bloqueada.",
+                        )
                     elif name == "consultar_banco_bi" and exploratory_calls >= MAX_EXPLORATORY_CALLS:
-                        execution = ToolExecution(tool_name=name, tool_call_id=call_id, data={"status": "error", "error": {"category": "exploration_limit", "message": "O limite de investigações exploratórias desta pergunta foi atingido."}}, warnings=["Limite de exploração atingido."], status="error", error_category="exploration_limit")
+                        execution = error_tool_execution(
+                            name,
+                            call_id,
+                            category="exploration_limit",
+                            message="O limite de investigações exploratórias desta pergunta foi atingido.",
+                            warning="Limite de exploração atingido.",
+                        )
                     else:
                         seen_calls.add(call_key_value)
                         arguments = contract.tool_arguments(name, arguments)
@@ -182,7 +196,13 @@ class AgentRunner:
                             execution = await asyncio.wait_for(self.registry.execute(ToolCall(call_id=call_id, name=name, arguments=arguments if isinstance(arguments, dict) else arguments), tool_context), timeout=remaining)
                         except asyncio.TimeoutError:
                             log_event(logging.WARNING, "ai_agent_tool_timeout", trace_id=trace_id, tool_name=name)
-                            execution = ToolExecution(tool_name=name, tool_call_id=call_id, data={"status": "error", "error": {"category": "timeout", "message": "A consulta excedeu o tempo limite."}}, warnings=["Limite de tempo atingido."], status="error", error_category="timeout")
+                            execution = error_tool_execution(
+                                name,
+                                call_id,
+                                category="timeout",
+                                message="A consulta excedeu o tempo limite.",
+                                warning="Limite de tempo atingido.",
+                            )
                     tool_outputs.append(execution)
                     required_tool = contract.next_required_tool(tool_outputs)
                     if execution.source:

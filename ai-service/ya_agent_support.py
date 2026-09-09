@@ -12,7 +12,7 @@ from typing import Any
 from fastapi import HTTPException
 
 from ai_logger import log_event
-from ya_agent_models import AgentChoice, AgentTurnResult
+from ya_agent_models import AgentChoice, AgentTurnResult, ToolExecution
 from ya_agent_tools.common import public_source
 
 
@@ -39,6 +39,25 @@ def call_key(name: str, arguments: Any) -> str:
         log_event(logging.DEBUG, "ai_agent_call_key_fallback", error_type=type(error).__name__)
         encoded = str(arguments)[:2_000]
     return f"{name}:{encoded}"
+
+
+def error_tool_execution(
+    tool_name: str,
+    tool_call_id: str,
+    *,
+    category: str,
+    message: str,
+    warning: str,
+) -> ToolExecution:
+    """Build the stable error payload returned when a tool call is blocked."""
+    return ToolExecution(
+        tool_name=tool_name,
+        tool_call_id=tool_call_id,
+        data={"status": "error", "error": {"category": category, "message": message}},
+        warnings=[warning],
+        status="error",
+        error_category=category,
+    )
 
 
 def topic_from_tool(name: str, arguments: Any) -> str:

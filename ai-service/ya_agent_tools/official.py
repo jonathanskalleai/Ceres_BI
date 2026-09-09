@@ -16,7 +16,6 @@ from ya_agent_tools.common import (
     compact_result,
     decode_payload,
     filters_payload,
-    first_number,
     find_value,
     funnel_scope,
     list_value,

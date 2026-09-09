@@ -14,17 +14,14 @@ from fastapi.responses import StreamingResponse
 
 from ai_logger import log_event, log_exception
 from auth import AuthenticatedBIUser, CurrentUser
-from ya_memory import (
+from ya_memory import ensure_conversation, load_thread_memory, persist_message, update_state
+from ya_memory_persistence import (
     close_conversation,
-    ensure_conversation,
     get_conversation,
     list_conversations,
-    load_thread_memory,
     persist_feedback,
-    persist_message,
     persist_tool_run,
     persist_turn_metric,
-    update_state,
 )
 from ya_models import FeedbackRequest, PreparedTurn, YaChatRequest, YaChatResponse
 from ya_prompts import answer_messages, planner_messages
@@ -253,8 +250,8 @@ async def conversations(user: AuthenticatedBIUser, limit: int = Query(default=12
 
 
 @router.get("/conversations/{conversation_id}")
-async def conversation(conversation_id: str, user: AuthenticatedBIUser):
-    return await get_conversation(query_async, conversation_id, user.id)
+async def conversation(conversation_id: str, user: AuthenticatedBIUser, limit: int = Query(default=40, ge=1, le=100), offset: int = Query(default=0, ge=0)):
+    return await get_conversation(query_async, conversation_id, user.id, limit=limit, offset=offset)
 
 
 @router.post("/conversations/{conversation_id}/close")

@@ -1,11 +1,33 @@
 import asyncio
+import os
+import subprocess
+import sys
 import unittest
+from pathlib import Path
 
 from ya_memory import forget_user_memory, load_user_memories, save_user_memory, structured_thread_state, update_state
 from ya_models import YaContext, YaSource
 
 
 class YaMemoryTests(unittest.TestCase):
+    def test_persistence_can_be_imported_before_memory_without_a_cycle(self):
+        module_root = Path(__file__).resolve().parents[1]
+        environment = os.environ.copy()
+        environment["PYTHONPATH"] = str(module_root)
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "from ya_memory_persistence import persist_agent_tool_run; from ya_memory import QueryFn, json_default, next_summary; assert persist_agent_tool_run and QueryFn and json_default and next_summary",
+            ],
+            cwd=module_root,
+            env=environment,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_durable_memory_is_loaded_for_the_requested_user_and_filters_current_numbers(self):
         calls = []
 

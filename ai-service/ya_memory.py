@@ -7,19 +7,17 @@ import logging
 import re
 import uuid
 from dataclasses import dataclass, field
-from datetime import date, datetime, timezone
-from decimal import Decimal
-from typing import Any, Awaitable, Callable, Optional
+from datetime import datetime, timezone
+from typing import Any, Optional
 
 from fastapi import HTTPException
 
 from ai_logger import log_event
-from ya_models import ConversationDetail, ConversationMessage, ConversationPreview, YaContext, YaSource
+from ya_memory_shared import THREAD_SUMMARY_MAX_CHARS, QueryFn, _json_value, json_default, next_summary, sources_from_db
+from ya_models import YaContext, YaSource
 
 
 THREAD_HISTORY_MESSAGES = 16
-THREAD_SUMMARY_MAX_CHARS = 3_200
-QueryFn = Callable[[str, tuple[Any, ...]], Awaitable[list[dict[str, Any]]]]
 MEMORY_CONTENT_MAX_CHARS = 1_000
 SENSITIVE_MEMORY = re.compile(
     r"(?:sk[-_ ]?[a-z0-9]{12,}|bearer\s+[a-z0-9._-]{12,}|password|senha|secret|token|api[_ -]?key|"
@@ -40,41 +38,6 @@ class ThreadMemory:
     history: list[dict[str, str]]
     last_sources: list[YaSource]
     user_memories: list[dict[str, str]] = field(default_factory=list)
-
-
-def json_default(value: Any) -> str:
-    if isinstance(value, (date, datetime)):
-        return value.isoformat()
-    if isinstance(value, Decimal):
-        return str(value)
-    return str(value)
-
-
-def iso(value: Any) -> str:
-    return value.isoformat() if isinstance(value, datetime) else str(value)
-
-
-def _json_value(value: Any, fallback: Any) -> Any:
-    if isinstance(value, str):
-        try:
-            return json.loads(value)
-        except json.JSONDecodeError as error:
-            log_event(logging.WARNING, "ai_memory_invalid_json", error_type=type(error).__name__)
-            return fallback
-    return value if value is not None else fallback
-
-
-def sources_from_db(value: Any) -> list[YaSource]:
-    raw = _json_value(value, [])
-    if not isinstance(raw, list):
-        return []
-    sources: list[YaSource] = []
-    for item in raw:
-        try:
-            sources.append(YaSource.model_validate(item))
-        except (TypeError, ValueError) as error:
-            log_event(logging.WARNING, "ai_memory_invalid_source", error_type=type(error).__name__)
-    return sources
 
 
 async def ensure_conversation(query: QueryFn, conversation_id: Optional[str], user_id: str, context: YaContext, message: str) -> str:
@@ -334,13 +297,6 @@ async def update_agent_state(query: QueryFn, conversation_id: str, previous_stat
     return state
 
 
-def next_summary(previous: str, message: str, answer: str, context: YaContext) -> str:
-    filters = context.filters.model_dump(by_alias=True, exclude_none=True)
-    context_note = ", ".join(f"{key}={value}" for key, value in filters.items()) or "filtros da tela"
-    fragment = f"\n- Pergunta: {message[:420]}\n  Resposta: {answer[:720]}\n  Contexto: {context_note}"
-    return (previous.strip() + fragment)[-THREAD_SUMMARY_MAX_CHARS:]
-
-
 async def update_state(query: QueryFn, conversation_id: str, previous: str, message: str, answer: str, context: YaContext, query_spec: dict[str, Any], evidence: list[YaSource]) -> dict[str, Any]:
     previous_state = await query("SELECT COALESCE(conversation_state, '{}'::jsonb) AS conversation_state FROM public.ya_chat_conversations WHERE id = %s::uuid", (conversation_id,))
     old = _json_value(previous_state[0].get("conversation_state"), {}) if previous_state else {}
@@ -361,15 +317,3 @@ async def update_state(query: QueryFn, conversation_id: str, previous: str, mess
         (next_summary(previous, message, answer, context), json.dumps(context.model_dump(by_alias=True), default=json_default), json.dumps(state, default=json_default), conversation_id),
     )
     return state
-
-
-from ya_memory_persistence import (
-    close_conversation,
-    get_conversation,
-    list_conversations,
-    persist_agent_tool_run,
-    persist_agent_turn_metrics,
-    persist_feedback,
-    persist_tool_run,
-    persist_turn_metric,
-)

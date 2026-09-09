@@ -10,8 +10,8 @@ from typing import Any
 from fastapi import HTTPException
 
 from ai_logger import log_event
+from ya_memory_shared import QueryFn, _json_value, iso, json_default, sources_from_db
 from ya_models import ConversationDetail, ConversationMessage, ConversationPreview, YaSource
-from ya_memory import QueryFn, _json_value, iso, json_default, next_summary, sources_from_db
 
 
 async def persist_tool_run(

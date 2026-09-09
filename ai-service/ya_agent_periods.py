@@ -2,19 +2,11 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 import logging
 from typing import Any
-from zoneinfo import ZoneInfo
 
 from ai_logger import log_event
-
-
-BUSINESS_TIMEZONE = ZoneInfo("America/Sao_Paulo")
-
-
-def business_today() -> date:
-    return datetime.now(BUSINESS_TIMEZONE).date()
 
 
 def resolve_period(

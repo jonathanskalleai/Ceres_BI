@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, patch
 from auth import CurrentUser
 from ya_agent import AgentRunner
 from ya_agent_models import AgentArtifact, ToolExecution
+from ya_agent_support import error_tool_execution
 from ya_memory import ThreadMemory
 from ya_models import YaChatRequest, YaSource
 from ya_schema import SchemaSnapshot
@@ -80,6 +81,23 @@ def patch_runner_dependencies():
 
 
 class YaAgentRunnerTests(unittest.TestCase):
+    def test_error_tool_execution_factory_preserves_the_runner_error_contract(self):
+        execution = error_tool_execution(
+            "consultar_desempenho_vendas",
+            "call-error",
+            category="duplicate_call",
+            message="Essa consulta idêntica já foi executada nesta rodada.",
+            warning="Consulta repetida bloqueada.",
+        )
+
+        self.assertEqual(execution.status, "error")
+        self.assertEqual(execution.error_category, "duplicate_call")
+        self.assertEqual(execution.warnings, ["Consulta repetida bloqueada."])
+        self.assertEqual(
+            execution.model_payload()["data"],
+            {"status": "error", "error": {"category": "duplicate_call", "message": "Essa consulta idêntica já foi executada nesta rodada."}},
+        )
+
     def test_whitespace_only_messages_are_rejected(self):
         with self.assertRaises(ValueError):
             YaChatRequest(message="   \n\t")
