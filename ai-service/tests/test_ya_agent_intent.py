@@ -121,6 +121,33 @@ class YaAgentIntentTests(unittest.TestCase):
         self.assertEqual(resolution.classifier_input_tokens, 11)
         self.assertEqual(resolution.classifier_output_tokens, 5)
 
+    def test_resolver_recovers_unambiguous_comparison_when_classifier_output_is_invalid(self):
+        async def classifier(*args, **kwargs):
+            return {"content": "<function=get_vendas_faturamento>{}", "usage": {}}
+
+        resolution = asyncio.run(resolve_turn(
+            YaChatRequest(message="Compare setembro até hoje com agosto inteiro"),
+            {}, [], classifier=classifier, session_id="conversation",
+        ))
+
+        self.assertEqual(resolution.contract.intent, "sales_comparison")
+        self.assertEqual(resolution.contract.classifier_status, "fallback")
+        self.assertEqual(resolution.contract.tool_names, ("comparar_periodos",))
+        self.assertEqual(resolution.contract.comparison["base"], {"from": "2026-08-01", "to": "2026-08-31"})
+
+    def test_resolver_recovers_loss_diagnosis_for_the_common_typo(self):
+        async def classifier(*args, **kwargs):
+            raise ValueError("invalid provider output")
+
+        resolution = asyncio.run(resolve_turn(
+            YaChatRequest(message="Me manda um diagnóstico dessas percas"),
+            {}, [], classifier=classifier, session_id="conversation",
+        ))
+
+        self.assertEqual(resolution.contract.intent, "loss_diagnosis")
+        self.assertEqual(resolution.contract.classifier_status, "fallback")
+        self.assertEqual(resolution.contract.tool_names, ("consultar_desempenho_vendas",))
+
     def test_evidence_postcondition_rejects_wrong_period(self):
         contract = TurnContract(intent="loss_details", domain="vendas", required_tool="consultar_desempenho_vendas", required_blocks=("perdas",), period={"from": "2026-09-01", "to": "2026-09-09"})
         source = YaSource(id="sales", label="Vendas", applied_scope={"period": {"from": "2026-08-01", "to": "2026-08-31"}})

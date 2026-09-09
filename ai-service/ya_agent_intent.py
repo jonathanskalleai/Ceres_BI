@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import logging
+from dataclasses import replace
 from datetime import date, datetime
 from typing import Any, Awaitable, Callable
 from zoneinfo import ZoneInfo
@@ -56,7 +57,7 @@ async def resolve_turn(
         )
         content, usage = _classifier_content(response)
         raw = _parse_classifier(content)
-        if raw is None:
+        if raw is None or not isinstance(raw.get("intent"), str) or not raw.get("intent", "").strip():
             raise ValueError("interpretação sem JSON válido")
         contract = _build_contract(raw, request, state, last_sources, today)
         return ContractResolution(
@@ -66,6 +67,17 @@ async def resolve_turn(
             _usage_int(usage, "completion_tokens", "output_tokens"),
         )
     except Exception as error:
+        fallback_raw = _deterministic_fallback(request, state, last_sources)
+        if fallback_raw:
+            try:
+                fallback_contract = replace(
+                    _build_contract(fallback_raw, request, state, last_sources, today),
+                    classifier_status="fallback",
+                )
+                log_event(logging.WARNING, "ai_agent_intent_deterministic_fallback", intent=fallback_contract.intent)
+                return ContractResolution(fallback_contract, fallback_raw)
+            except Exception as fallback_error:
+                log_event(logging.ERROR, "ai_agent_intent_fallback_failed", error_type=type(fallback_error).__name__)
         log_event(logging.ERROR, "ai_agent_intent_resolution_failed", error_type=type(error).__name__)
         return ContractResolution(
             TurnContract(
@@ -109,6 +121,48 @@ def _classifier_content(response: Any) -> tuple[str, dict[str, Any]]:
             usage = response.get("usage") if isinstance(response.get("usage"), dict) else {}
             return message["content"], usage
     raise ValueError("resposta do classificador inválida")
+
+
+def _deterministic_fallback(request: YaChatRequest, state: dict[str, Any], sources: list[YaSource]) -> dict[str, Any] | None:
+    """Recover only high-confidence intents when the classifier output is unusable.
+
+    This fallback never selects a number, SQL statement or tool arguments. It
+    only keeps unmistakable comparison/loss questions on their server-owned
+    evidence path instead of turning a transient model-format failure into a
+    misleading generic clarification.
+    """
+    message = request.message.casefold()
+    comparison = any(fragment in message for fragment in ("comparad", "compare", "comparar", "versus", " x ", "diferença entre", "diferenca entre"))
+    previous = mentions_previous(message)
+    if comparison and previous:
+        return {
+            "intent": "sales_comparison",
+            "domain": "vendas",
+            "period_request": "current_to_date",
+            "comparison_scope": _comparison_scope("", message),
+            "metricas": [],
+            "presentation": "tabela",
+        }
+
+    if any(fragment in message for fragment in ("perdas", "percas", "negócios perdidos", "negocios perdidos")):
+        detail = any(fragment in message for fragment in ("detalh", "mais sobre", "motivo", "vendedor", "cidade", "produto"))
+        period_request = "inherit" if _has_sales_context(state, sources) else "current_to_date"
+        return {
+            "intent": "loss_details" if detail else "loss_diagnosis",
+            "domain": "vendas",
+            "period_request": period_request,
+            "comparison_scope": "none",
+            "metricas": [],
+            "presentation": "tabela",
+        }
+    return None
+
+
+def _has_sales_context(state: dict[str, Any], sources: list[YaSource]) -> bool:
+    topics = state.get("topics") if isinstance(state, dict) else None
+    if isinstance(topics, dict) and isinstance(topics.get("vendas"), dict) and topics["vendas"].get("period"):
+        return True
+    return any(source.intent in {"agent_tool", "sales", "vendas"} for source in sources[:5])
 
 
 def _parse_classifier(content: str) -> dict[str, Any] | None:
