@@ -1,11 +1,15 @@
 ---
 feature: ya-conversational-data
-updated_at: 2026-09-08T22:45:00Z
+updated_at: 2026-09-09T00:00:00Z
 updated_by: codex
-status: active
+status: superseded_by_ya-agent-v2
 ---
 
 # Assistente conversacional de dados
+
+Este documento registra o incremento anterior. O contrato vigente e o runbook
+do agente estão em [`ya-agent-v2.md`](ya-agent-v2.md); não use este arquivo como
+roteiro de publicação do runtime atual.
 
 **Propósito:** conversar naturalmente e responder BI com contexto, comparação,
 detalhe e evidência. O modelo pode propor uma consulta exploratória, mas quem

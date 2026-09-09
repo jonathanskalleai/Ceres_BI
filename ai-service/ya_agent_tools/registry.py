@@ -58,10 +58,10 @@ TOOL_MODELS: dict[str, Type[BaseModel]] = {
 }
 
 TOOL_DESCRIPTIONS = {
-    "consultar_desempenho_vendas": "Consulte vendas, faturamento, ticket, perdas, rankings e produtos com o conceito oficial.",
+    "consultar_desempenho_vendas": "Fonte oficial obrigatória para vendas e perdas. Use blocos kpis, serie, rankings, perdas, produtos ou resumo conforme o contrato; perdas detalhadas exigem blocos perdas e rankings.",
     "consultar_acoes_comerciais": "Consulte ações, visitas, oportunidades, funil e ganhos/perdas ligados à área de Ações.",
     "consultar_desempenho_equipe": "Consulte vendas, faturamento, metas, ticket e conversão por consultor e mês.",
-    "comparar_periodos": "Compare dois períodos com os mesmos filtros e cálculos feitos no backend.",
+    "comparar_periodos": "Fonte oficial obrigatória para qualquer comparação. Consulta os dois períodos com os mesmos filtros e calcula deltas no backend; não substitua por dois resumos narrativos.",
     "consultar_banco_bi": "Faça uma investigação read-only quando nenhum contrato oficial responder à pergunta.",
     "correlacionar_metricas": "Calcule uma associação observada entre duas métricas pareáveis; nunca causalidade.",
     "explicar_conceito": "Explique a definição, competência, fórmula, deduplicação e exclusões de um indicador.",

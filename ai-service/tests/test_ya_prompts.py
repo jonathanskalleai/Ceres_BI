@@ -1,6 +1,9 @@
 import json
 import unittest
 
+from ya_agent_contract import TurnContract
+from ya_agent_prompt import PROMPT_VERSION, build_context
+from ya_memory import ThreadMemory
 from ya_models import YaChatRequest
 from ya_prompts import answer_messages, planner_messages
 
@@ -28,6 +31,33 @@ class YaPromptTests(unittest.TestCase):
         prompt = answer_messages(request=YaChatRequest(message="faturamento", context={"route": "/bi", "filters": {}}), prepared=_prepared_turn())[0]["content"]
         self.assertIn("R$ 1.234,56", prompt)
         self.assertIn("Não escreva um relatório", prompt)
+
+    def test_v2_prompt_never_uses_previous_answer_numbers_as_current_evidence(self):
+        request = YaChatRequest(message="Me explique as perdas deste período")
+        memory = ThreadMemory(
+            summary=json.dumps({"ultima_resposta": "O ticket médio foi R$ 4.506.000,00."}, ensure_ascii=False),
+            state={"last_answer": "O ticket médio foi R$ 4.506.000,00."},
+            history=[
+                {"role": "user", "content": "Qual foi o ticket?"},
+                {"role": "assistant", "content": "O ticket médio foi R$ 4.506.000,00."},
+            ],
+            last_sources=[],
+        )
+        prompt = build_context(
+            request,
+            memory,
+            contract=TurnContract(
+                intent="loss_details",
+                domain="vendas",
+                required_tool="consultar_desempenho_vendas",
+                required_blocks=("perdas", "rankings", "produtos"),
+                period={"from": "2026-09-01", "to": "2026-09-09"},
+            ),
+        )
+        system_text = prompt.messages[0]["content"]
+        self.assertIn(PROMPT_VERSION, system_text)
+        self.assertIn('"required_tool": "consultar_desempenho_vendas"', system_text)
+        self.assertNotIn("4.506.000", json.dumps(prompt.messages, ensure_ascii=False))
 
 
 def _prepared_turn():

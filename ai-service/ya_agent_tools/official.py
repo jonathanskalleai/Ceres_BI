@@ -13,19 +13,19 @@ from ya_agent_runtime import RuntimeFunctionUnavailable, RuntimeRpcAdapter
 from ya_agent_tools.common import (
     ToolContext,
     ToolUnavailable,
-    chart_artifact,
     compact_result,
     decode_payload,
     filters_payload,
     first_number,
     find_value,
     funnel_scope,
-    kpi_artifact,
     list_value,
     now_elapsed,
     source_for,
     table_artifact,
 )
+from ya_agent_tools.sales_artifacts import build_sales_artifacts
+from ya_agent_tools.official_helpers import count_nested_rows, drop_unselected, team_rows, team_totals
 
 
 SALES_RPC = "rpc_desempenho_vendas_bi"
@@ -193,28 +193,7 @@ async def execute_sales(context: ToolContext, input_data: SalesToolInput, call_i
         freshness=freshness,
         funnel_mode=input_data.modo_funil,
     )
-    artifacts: list[Any] = []
-    kpis = data.get("kpis") if isinstance(data, dict) else {}
-    if isinstance(kpis, dict):
-        kpi_rows = []
-        for key, label, unit in (("totalPedidos", "Pedidos aprovados", "quantidade"), ("faturamento", "Faturamento", "BRL"), ("ticketMedio", "Ticket médio", "BRL/pedido"), ("totalPerdido", "Negócios perdidos", "quantidade"), ("valorPerdido", "Valor perdido", "BRL")):
-            if key in kpis:
-                kpi_rows.append({"label": label, "value": kpis[key], "unit": unit})
-        artifact = kpi_artifact("Indicadores de vendas", kpi_rows, source_id)
-        if artifact:
-            artifacts.append(artifact)
-    if input_data.apresentacao == "linha" and series:
-        artifact = chart_artifact("line", "Evolução mensal", series, source_id, "name")
-        if artifact:
-            artifacts.append(artifact)
-    if input_data.apresentacao == "barras" and ranking_rows:
-        artifact = chart_artifact("bar", "Ranking de vendedores", ranking_rows, source_id, "name")
-        if artifact:
-            artifacts.append(artifact)
-    if input_data.apresentacao == "tabela" and ranking_rows:
-        artifact = table_artifact("Ranking de vendedores", ranking_rows, source_id)
-        if artifact:
-            artifacts.append(artifact)
+    artifacts = build_sales_artifacts(data, input_data.blocos, input_data.apresentacao, source_id)
     return ToolExecutionResult(data=data, source=source, artifacts=artifacts, warnings=mode_warnings)
 
 
@@ -308,7 +287,7 @@ async def execute_actions(context: ToolContext, input_data: ActionsToolInput, ca
         warnings=mode_warnings,
         refreshed_at=refreshed_at,
         elapsed_ms=now_elapsed(started),
-        row_count=_count_nested_rows(data),
+        row_count=count_nested_rows(data),
         competence=["conclusão da ação", "aprovação do pedido", "fechamento do negócio"],
         lineage_executor="+".join(name for name in (summary_rpc, funnel_rpc, details_rpc) if name),
         freshness=freshness,
@@ -347,8 +326,8 @@ async def execute_team(context: ToolContext, input_data: TeamToolInput, call_id:
     payload = decode_payload(raw)
     if not isinstance(payload, dict):
         payload = {"rows": [], "team": []}
-    rows = _team_rows(payload.get("rows"), input_data.meses)
-    team = _team_rows(payload.get("team"), input_data.meses)
+    rows = team_rows(payload.get("rows"), input_data.meses)
+    team = team_rows(payload.get("team"), input_data.meses)
     selected = set(input_data.indicadores)
     data: dict[str, Any] = {
         "status": "computed",
@@ -357,14 +336,14 @@ async def execute_team(context: ToolContext, input_data: TeamToolInput, call_id:
         "rows": rows,
         "team": team,
         "indicadores": list(input_data.indicadores),
-        "total": _team_totals(team),
+        "total": team_totals(team),
         "concept": "Agregados por consultor e mês conforme a fonte oficial da equipe.",
     }
     if "vendas" not in selected:
         for item in data["rows"]:
-            _drop_unselected(item, selected)
+            drop_unselected(item, selected)
         for item in data["team"]:
-            _drop_unselected(item, selected)
+            drop_unselected(item, selected)
     data = compact_result(data)
     refreshed_at, freshness = await _freshness(context)
     source_id = f"equipe:{context.conversation_id}:{call_id}"
@@ -391,68 +370,3 @@ async def execute_team(context: ToolContext, input_data: TeamToolInput, call_id:
         if artifact:
             artifacts.append(artifact)
     return ToolExecutionResult(data=data, source=source, artifacts=artifacts)
-
-
-def _team_rows(value: Any, months: list[int]) -> list[dict[str, Any]]:
-    rows = [dict(item) for item in (value if isinstance(value, list) else []) if isinstance(item, dict)]
-    if months:
-        filtered: list[dict[str, Any]] = []
-        for row in rows:
-            month = _month_from_row(row)
-            if month in months:
-                filtered.append(row)
-        rows = filtered
-    for row in rows:
-        quantity = first_number(row, "quantidade_vendas", "quantidadeVendas", "vendas", "qtd_vendas", "qtdVendas")
-        revenue = first_number(row, "faturamento", "valor_vendido", "valorVendido", "valor")
-        ticket = first_number(row, "ticket_medio", "ticketMedio")
-        businesses = first_number(row, "negocios", "negócios")
-        conversion = first_number(row, "taxa_conversao_negocios", "taxaConversaoNegocios", "conversao", "conversão")
-        if ticket is None and quantity not in (None, 0) and revenue is not None:
-            row["ticket_medio"] = round(float(revenue) / float(quantity), 2)
-        if conversion is None and businesses not in (None, 0) and quantity is not None:
-            row["taxa_conversao_negocios"] = round(float(quantity) * 100 / float(businesses), 1)
-    return rows[:100]
-
-
-def _month_from_row(row: dict[str, Any]) -> int | None:
-    value = row.get("competencia") or row.get("mes") or row.get("month") or row.get("data")
-    if hasattr(value, "month"):
-        return value.month
-    if isinstance(value, str):
-        try:
-            return int(value[5:7]) if len(value) >= 7 and value[4] == "-" else int(value)
-        except ValueError as error:
-            log_event(logging.DEBUG, "ai_agent_team_month_invalid", error_type=type(error).__name__)
-            return None
-    return None
-
-
-def _drop_unselected(row: dict[str, Any], selected: set[str]) -> None:
-    keep = {"consultor", "cidade", "competencia", "mes", "data", "vendas", "quantidade_vendas"}
-    mapping = {"faturamento": "faturamento", "ticket_medio": "ticket_medio", "meta": "meta", "conversao": "taxa_conversao_negocios", "negocios": "negocios", "oportunidades_abertas": "oportunidades_abertas"}
-    for indicator, key in mapping.items():
-        if indicator not in selected and key not in keep:
-            row.pop(key, None)
-
-
-def _team_totals(rows: list[dict[str, Any]]) -> dict[str, Any]:
-    totals: dict[str, float] = {}
-    for row in rows:
-        for key in ("quantidade_vendas", "vendas", "faturamento", "meta", "negocios", "oportunidades_abertas"):
-            number = first_number(row, key)
-            if number is not None:
-                totals[key] = round(totals.get(key, 0) + float(number), 2)
-    if totals.get("quantidade_vendas") is not None and totals.get("faturamento") is not None and totals["quantidade_vendas"]:
-        totals["ticket_medio"] = round(totals["faturamento"] / totals["quantidade_vendas"], 2)
-    if totals.get("negocios"):
-        totals["taxa_conversao_negocios"] = round(totals.get("quantidade_vendas", 0) * 100 / totals["negocios"], 1)
-    return totals
-
-
-def _count_nested_rows(value: Any) -> int:
-    if isinstance(value, list):
-        return len(value)
-    if isinstance(value, dict):
-        return sum(_count_nested_rows(item) for item in value.values())
-    return 0

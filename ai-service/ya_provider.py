@@ -69,6 +69,45 @@ async def complete(
         raise HTTPException(status_code=502, detail="A AI não conseguiu concluir a análise agora") from error
 
 
+async def complete_structured(
+    messages: list[dict[str, Any]],
+    *,
+    temperature: float = 0.0,
+    max_tokens: int = 420,
+    json_mode: bool = True,
+    session_id: Optional[str] = None,
+) -> dict[str, Any]:
+    """Return a JSON-mode model response with usage for semantic routing."""
+    if not OPENROUTER_API_KEY:
+        raise HTTPException(status_code=503, detail="OpenRouter não configurado")
+    payload: dict[str, Any] = {
+        "model": YA_MODEL,
+        "messages": messages,
+        "temperature": temperature,
+        "max_tokens": max_tokens,
+    }
+    if json_mode:
+        payload["response_format"] = {"type": "json_object"}
+    if session_id:
+        payload["session_id"] = session_id[:256]
+    try:
+        async with httpx.AsyncClient(timeout=90.0) as client:
+            response = await client.post(OPENROUTER_URL, json=payload, headers=_headers())
+            response.raise_for_status()
+            body = response.json()
+            content = body["choices"][0]["message"]["content"]
+            if not isinstance(content, str):
+                raise TypeError("structured provider content is not text")
+            return {
+                "content": content,
+                "usage": body.get("usage") if isinstance(body.get("usage"), dict) else {},
+                "model": str(body.get("model") or YA_MODEL),
+            }
+    except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as error:
+        log_exception("ai_provider_structured_completion_failed", error, model=YA_MODEL)
+        raise HTTPException(status_code=502, detail="A AI não conseguiu interpretar a pergunta agora") from error
+
+
 async def complete_with_tools(
     messages: list[dict[str, Any]],
     tools: list[dict[str, Any]],
@@ -76,6 +115,7 @@ async def complete_with_tools(
     temperature: float = 0.1,
     max_tokens: int = 1_200,
     session_id: Optional[str] = None,
+    tool_choice: Any = "auto",
 ) -> dict[str, Any]:
     """Return one normalized provider turn, including tools and usage."""
     if not OPENROUTER_API_KEY:
@@ -84,7 +124,7 @@ async def complete_with_tools(
         "model": YA_MODEL,
         "messages": messages,
         "tools": tools,
-        "tool_choice": "auto",
+        "tool_choice": tool_choice,
         "temperature": temperature,
         "max_tokens": max_tokens,
     }

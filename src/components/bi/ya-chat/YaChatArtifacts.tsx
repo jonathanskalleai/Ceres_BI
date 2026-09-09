@@ -19,9 +19,9 @@ function safeChartText(value: unknown): string {
   return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char] ?? char);
 }
 
-function displayValue(value: unknown): string {
+function displayValue(value: unknown, unit?: string): string {
   if (value === null || value === undefined || value === "") return "—";
-  if (typeof value === "number") return formatEvidenceValue(value);
+  if (typeof value === "number") return formatEvidenceValue(value, unit);
   if (typeof value === "boolean") return value ? "sim" : "não";
   return String(value).slice(0, 240);
 }
@@ -44,7 +44,7 @@ function TableArtifact({ artifact }: { artifact: YaArtifact }) {
 
 function KpiArtifact({ artifact }: { artifact: YaArtifact }) {
   const rows = safeRows(artifact);
-  return <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{rows.slice(0, 12).map((row, index) => <div key={`${String(row.label ?? index)}`} className="rounded-lg border bg-muted/20 px-3 py-2"><div className="text-[10px] uppercase tracking-wide text-muted-foreground">{displayValue(row.label ?? row.name)}</div><div className="text-base font-semibold">{displayValue(row.value)}</div>{row.unit && <div className="text-[10px] text-muted-foreground">{displayValue(row.unit)}</div>}</div>)}</div>;
+  return <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{rows.slice(0, 12).map((row, index) => <div key={`${String(row.label ?? index)}`} className="rounded-lg border bg-muted/20 px-3 py-2"><div className="text-[10px] uppercase tracking-wide text-muted-foreground">{displayValue(row.label ?? row.name)}</div><div className="text-base font-semibold">{displayValue(row.value, typeof row.unit === "string" ? row.unit : undefined)}</div>{row.unit && <div className="text-[10px] text-muted-foreground">{displayValue(row.unit)}</div>}</div>)}</div>;
 }
 
 function BarArtifact({ artifact }: { artifact: YaArtifact }) {

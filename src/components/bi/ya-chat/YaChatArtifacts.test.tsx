@@ -13,7 +13,7 @@ describe("YaChatArtifacts", () => {
       choices={[{ label: "Agosto inteiro", value: "Compare com agosto inteiro" }]}
       artifacts={[
         { type: "table", title: "Tabela", columns: [{ key: "name", label: "Nome" }, { key: "email", label: "E-mail" }], rows: [{ name: "Ana", email: "hidden@example.com" }] },
-        { type: "kpi_group", title: "KPIs", rows: [{ label: "Vendas", value: 3, unit: "quantidade" }] },
+        { type: "kpi_group", title: "KPIs", rows: [{ label: "Vendas", value: 3, unit: "quantidade" }, { label: "Ticket médio", value: 45060, unit: "BRL/pedido" }] },
         { type: "bar", title: "Barras", x_key: "name", series: [{ key: "value", label: "Valor" }], rows: [{ name: "Ana", value: 3 }] },
         { type: "line", title: "Linha", x_key: "name", series: [{ key: "value", label: "Valor" }], rows: [{ name: "set/2026", value: 3 }] },
       ]}
@@ -21,6 +21,7 @@ describe("YaChatArtifacts", () => {
 
     expect(screen.getByText("Nome")).toBeInTheDocument();
     expect(screen.getByText("KPIs")).toBeInTheDocument();
+    expect(screen.getByText("R$ 45.060,00")).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "mock bar chart" })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "mock line chart" })).toBeInTheDocument();
     expect(screen.queryByText("E-mail")).not.toBeInTheDocument();

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import { AppSidebar } from '@/components/layout/AppSidebar';
@@ -6,6 +6,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
+import { reportClientError } from '@/lib/logger';
 
 /** Map route prefix to section label + title */
 const ROUTE_META: Record<string, { section: string; title: string }> = {
@@ -99,7 +100,7 @@ export function AppShell() {
 
   // Close mobile sheet on route change
   const pathnameRef = location.pathname;
-  useMemo(() => { setMobileOpen(false); }, [pathnameRef]);
+  useEffect(() => { setMobileOpen(false); }, [pathnameRef]);
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -119,7 +120,7 @@ export function AppShell() {
       <main className="flex-1 overflow-auto flex flex-col">
         <AppShellTopbar section={meta.section} title={meta.title} onMenuClick={isMobile ? () => setMobileOpen(true) : undefined} />
         <div className="flex-1 overflow-auto">
-          <ErrorBoundary>
+          <ErrorBoundary onError={(error, errorInfo) => reportClientError('react.render_error', error, { component_stack: errorInfo.componentStack?.slice(0, 1_000) })}>
             <Outlet />
           </ErrorBoundary>
         </div>

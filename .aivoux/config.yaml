@@ -152,7 +152,7 @@ observability:
   enforce: true
   error_tracking: ""              # ex: https://...@sentry.io/123 | webhook Telegram/Slack
   require_tracking_on_deploy: true
-  health_endpoint: ""             # ex: /health — preenchido quando o projeto tiver
+  health_endpoint: "/api/ai/v2/health" # endpoint público de health do agente
 
 coderabbit:
   enabled: false

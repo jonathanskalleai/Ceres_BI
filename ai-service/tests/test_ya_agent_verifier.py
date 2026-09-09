@@ -14,6 +14,11 @@ class YaAgentVerifierTests(unittest.TestCase):
         self.assertFalse(result.valid)
         self.assertEqual(result.unknown_numbers, ("6",))
 
+    def test_rejects_misformatted_ticket_that_changes_the_numeric_value(self):
+        result = verify_answer("O ticket médio foi R$ 4.506.000,00.", [{"ticketMedio": 45060}])
+        self.assertFalse(result.valid)
+        self.assertIn("4.506.000,00", result.unknown_numbers)
+
     def test_ignores_enumeration_markers_but_checks_data_numbers(self):
         result = verify_answer("1. Primeiro cenário\n2. Segundo cenário com 3 vendas.", [{"vendas": 3}])
         self.assertTrue(result.valid)

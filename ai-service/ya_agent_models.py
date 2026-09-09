@@ -81,7 +81,7 @@ class TeamToolInput(StrictModel):
 
 class CompareToolInput(StrictModel):
     dominio: Literal["vendas", "acoes", "equipe"]
-    metricas: list[str] = Field(min_length=1, max_length=4)
+    metricas: list[str] = Field(min_length=1, max_length=5)
     periodo_atual_inicio: date
     periodo_atual_fim: date
     periodo_base_inicio: date

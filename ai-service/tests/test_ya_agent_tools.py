@@ -32,6 +32,15 @@ class FakeRuntimeQuery:
         return []
 
 
+class LossRuntimeQuery(FakeRuntimeQuery):
+    async def __call__(self, sql, params):
+        if "rpc_desempenho_vendas_bi" in sql:
+            if "pg_proc" in sql:
+                return await super().__call__(sql, params)
+            return [{"payload": {"kpis": {"faturamento": 1000, "totalPedidos": 2, "ticketMedio": 500, "valorPerdido": 900, "totalPerdido": 3}, "perdas": {"motivosPerda": [{"motivo": "Preço", "quantidade": 2, "valor": 700}], "rankingVendedores": [{"vendedor": "Ana", "quantidade": 2, "valor": 700}], "rankingProdutos": [{"produto": "Máquina", "quantidade": 1, "valor": 200}]}}}]
+        return await super().__call__(sql, params)
+
+
 class YaAgentToolTests(unittest.TestCase):
     def test_all_ten_tool_schemas_are_strict(self):
         self.assertEqual(len(TOOL_DEFINITIONS), 10)
@@ -65,6 +74,30 @@ class YaAgentToolTests(unittest.TestCase):
         self.assertTrue(sales.artifacts)
         team = asyncio.run(execute_team(context, TeamToolInput(ano=2026, indicadores=["vendas", "faturamento"]), "call-team"))
         self.assertEqual(team.data["rows"][0]["ticket_medio"], 500.0)
+
+    def test_loss_diagnosis_returns_detail_tables_instead_of_only_kpis(self):
+        fake = LossRuntimeQuery()
+        context = ToolContext("user", "conversation", "message", fake, fake, fake)
+        result = asyncio.run(execute_sales(context, SalesToolInput(periodo_inicio="2026-09-01", periodo_fim="2026-09-09", blocos=["perdas", "rankings", "produtos"], apresentacao="tabela"), "call-loss"))
+        titles = {artifact.title for artifact in result.artifacts}
+        self.assertIn("Perdas por motivo", titles)
+        self.assertIn("Perdas por vendedor", titles)
+        self.assertIn("Perdas por produto", titles)
+        self.assertGreaterEqual(len(result.artifacts), 3)
+
+    def test_product_drilldown_exposes_product_ranking_and_artifact(self):
+        fake = FakeRuntimeQuery()
+        original = fake.__call__
+
+        async def product_query(sql, params):
+            if "rpc_desempenho_vendas_bi" in sql and "pg_proc" not in sql:
+                return [{"payload": {"kpis": {}, "rankingProdutos": [{"produto": "Máquina", "valor": 100}]}}]
+            return await original(sql, params)
+
+        context = ToolContext("user", "conversation", "message", product_query, product_query, product_query)
+        result = asyncio.run(execute_sales(context, SalesToolInput(periodo_inicio="2026-09-01", periodo_fim="2026-09-09", blocos=["produtos", "rankings"], apresentacao="tabela"), "call-product"))
+        self.assertEqual(result.data["rankings"]["produtos"][0]["produto"], "Máquina")
+        self.assertIn("Ranking de produtos", {artifact.title for artifact in result.artifacts})
 
     def test_exploration_is_blocked_when_runtime_schema_is_unavailable(self):
         async def no_query(sql, params):
