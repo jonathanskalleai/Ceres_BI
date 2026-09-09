@@ -110,6 +110,14 @@ class AgentRunner:
         limit_reached = False
 
         while model_rounds < MAX_MODEL_ROUNDS:
+            if contract.intent == "clarify":
+                # Ambiguous coverage is a server-owned clarification, not a
+                # model turn.  Some OpenAI-compatible providers emit legacy
+                # ``<function=...>`` markup as plain content when tools are
+                # disabled; never let that markup become the user answer.
+                final_answer = contract.clarification_text or "Pode esclarecer qual recorte você quer comparar?"
+                choices_result = choices(list(contract.choices))
+                break
             if time.monotonic() - started >= MAX_TOTAL_SECONDS:
                 limit_reached = True
                 break

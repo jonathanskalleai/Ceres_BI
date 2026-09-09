@@ -154,6 +154,32 @@ class YaAgentRunnerTests(unittest.TestCase):
         self.assertIn("plan", events)
         self.assertIn("sources", events)
 
+    def test_clarification_contract_never_leaks_provider_function_markup(self):
+        provider_calls = []
+
+        async def classifier(*args, **kwargs):
+            return {"content": '{"intent":"sales_comparison","domain":"vendas","period_request":"current_to_date","comparison_scope":"ask","metricas":[]}', "usage": {}}
+
+        async def provider(*args, **kwargs):
+            provider_calls.append(True)
+            return {"message": {"content": "<function=get_vendas_faturamento>{}</function>"}, "usage": {}}
+
+        runner = AgentRunner(provider=provider, intent_provider=classifier)
+        patches = patch_runner_dependencies()
+        for item in patches:
+            item.start()
+        try:
+            result = asyncio.run(runner.run(YaChatRequest(message="Compare este mês até agora com o mês passado"), USER))
+        finally:
+            for item in reversed(patches):
+                item.stop()
+
+        self.assertEqual(provider_calls, [])
+        self.assertIn("qual cobertura", result.answer)
+        self.assertNotIn("<function=", result.answer)
+        self.assertEqual(len(result.choices), 2)
+        self.assertEqual(result.query_spec["contract_status"], "clarification")
+
     def test_tool_result_returns_to_provider_with_matching_call_id(self):
         calls = []
         async def provider(messages, tools, **kwargs):
