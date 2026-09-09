@@ -2,10 +2,38 @@ import unittest
 from datetime import date, timedelta
 
 from ya_catalog import CATALOG_VERSION, METRICS
-from ya_semantics import QueryValidationError, build_query_spec, previous_period
+from ya_semantics import QueryValidationError, build_query_spec, conversational_mode, previous_period
 
 
 class YaSemanticTests(unittest.TestCase):
+    def test_greeting_is_conversation_not_missing_metric(self):
+        spec = build_query_spec("Bom dia")
+        self.assertEqual(spec.intent, "conversation")
+        self.assertEqual(spec.mode, "conversation")
+        self.assertIsNone(spec.clarification)
+
+    def test_source_question_is_conversation_context_not_metric_query(self):
+        spec = build_query_spec("De onde você tirou essa informação?")
+        self.assertEqual(spec.intent, "source")
+        self.assertEqual(conversational_mode("De onde você tirou essa informação?"), "source")
+        self.assertIsNone(spec.clarification)
+
+    def test_business_origin_question_is_not_mistaken_for_source_audit(self):
+        spec = build_query_spec("De onde vêm nossos clientes?")
+        self.assertNotEqual(spec.intent, "source")
+
+    def test_data_follow_up_is_not_swallowed_by_a_complaint(self):
+        spec = build_query_spec("Não gostei, qual o motivo dessa perda?")
+        self.assertNotEqual(spec.intent, "conversation")
+
+    def test_exploratory_plan_can_run_without_catalog_metric(self):
+        spec = build_query_spec(
+            "Resuma a situação comercial",
+            planned={"mode": "data", "sql": "SELECT ngo_conclusao, COUNT(*) AS total FROM mirror.crm_negocios GROUP BY ngo_conclusao"},
+        )
+        self.assertTrue(spec.dynamic_requested)
+        self.assertIsNone(spec.clarification)
+
     def test_catalog_has_versioned_metrics(self):
         self.assertEqual(CATALOG_VERSION, "2026-09-08.1")
         self.assertIn("vendas.faturamento", METRICS)

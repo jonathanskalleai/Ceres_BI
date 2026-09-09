@@ -6,7 +6,7 @@ import json
 import logging
 import time
 from collections import defaultdict, deque
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, AsyncIterator
 
 from fastapi import APIRouter, HTTPException, Query
@@ -26,10 +26,13 @@ from ya_memory import (
     persist_turn_metric,
     update_state,
 )
-from ya_models import FeedbackRequest, PreparedTurn, YaChatRequest, YaChatResponse, YaSource
+from ya_models import FeedbackRequest, PreparedTurn, YaChatRequest, YaChatResponse
 from ya_prompts import answer_messages, planner_messages
 from ya_provider import complete, parse_json_object, stream
-from ya_semantics import QueryValidationError, build_query_spec
+from ya_dynamic_query import DynamicQueryValidationError, validate_read_only_sql
+from ya_conversation import greeting_answer, source_answer
+from ya_schema import load_schema
+from ya_semantics import QueryValidationError, build_query_spec, conversational_mode
 from ya_tools import ToolGateway, query_async
 
 
@@ -55,12 +58,13 @@ async def _plan_query(
     state: dict[str, Any],
     summary: str = "",
     history: list[dict[str, str]] | None = None,
+    schema_text: str = "",
 ) -> dict[str, Any]:
     try:
         response = await complete(
-            planner_messages(request.message, request, state, summary=summary, history=history),
+            planner_messages(request.message, request, state, summary=summary, history=history, schema_text=schema_text),
             temperature=0.0,
-            max_tokens=650,
+            max_tokens=1_200,
             json_mode=True,
         )
         return parse_json_object(response) or {}
@@ -88,7 +92,15 @@ async def _prepare_turn(request: YaChatRequest, user: CurrentUser) -> PreparedTu
         raise HTTPException(status_code=422, detail="Informe uma pergunta para a AI")
     conversation_id = await ensure_conversation(query_async, request.conversation_id, user.id, request.context, message)
     memory = await load_thread_memory(query_async, conversation_id, user.id)
-    proposed = await _plan_query(request, memory.state, memory.summary, memory.history)
+    forced_mode = conversational_mode(message)
+    schema_snapshot = None if forced_mode else await load_schema(query_async)
+    proposed = {"mode": forced_mode, "intent": forced_mode} if forced_mode else await _plan_query(
+        request,
+        memory.state,
+        memory.summary,
+        memory.history,
+        schema_text=schema_snapshot.prompt_text() if schema_snapshot else "",
+    )
     try:
         spec = build_query_spec(
             message,
@@ -100,26 +112,57 @@ async def _prepare_turn(request: YaChatRequest, user: CurrentUser) -> PreparedTu
     except QueryValidationError as error:
         log_event(logging.WARNING, "ai_query_plan_rejected", error=str(error)[:200])
         spec = _fallback_spec(request, memory.state)
+    dynamic_sql = proposed.get("sql") if spec.mode == "data" and isinstance(proposed.get("sql"), str) else None
+    known_tables = schema_snapshot.table_names if schema_snapshot and schema_snapshot.available else None
+    if dynamic_sql and dynamic_sql.strip():
+        try:
+            validated = validate_read_only_sql(dynamic_sql, known_tables)
+            spec.dynamic_query_hash = validated.query_hash
+            spec.dynamic_tables = list(validated.tables)
+            dynamic_sql = validated.sql
+        except DynamicQueryValidationError as error:
+            log_event(logging.WARNING, "ai_dynamic_plan_rejected", error_type=type(error).__name__)
+            fallback_planned = {key: value for key, value in proposed.items() if key not in {"sql", "tables"}}
+            try:
+                spec = build_query_spec(
+                    message,
+                    route=request.context.route,
+                    context_filters=request.context.filters,
+                    memory_state=memory.state,
+                    planned=fallback_planned,
+                )
+            except QueryValidationError:
+                spec = _fallback_spec(request, memory.state)
+            dynamic_sql = None
     spec_dict = spec.model_dump(mode="json", by_alias=True)
     user_message_id = await persist_message(query_async, conversation_id, "user", message, spec_dict, [])
-    if spec.clarification:
+    answer_override = None
+    sources = memory.last_sources if spec.intent == "source" else []
+    if spec.intent == "source":
+        answer_override = source_answer(memory.last_sources)
+    elif spec.intent == "conversation":
+        answer_override = greeting_answer(message)
+    elif spec.clarification:
+        answer_override = spec.clarification
+    if answer_override:
         return PreparedTurn(
             conversation_id=conversation_id,
             user_message_id=user_message_id,
             history=memory.history,
             summary=memory.summary,
             conversation_state=memory.state,
+            last_sources=memory.last_sources,
             query_spec=spec_dict,
-            sources=[],
+            sources=sources,
             executed=[],
-            answer_override=spec.clarification,
+            answer_override=answer_override,
             db_ms=0,
             cache_hits=0,
             row_count=0,
         )
     started = time.monotonic()
-    results = await _gateway.execute(spec, user.id)
-    sources: list[YaSource] = []
+    results = await _gateway.execute(spec, user.id, dynamic_sql=dynamic_sql, known_tables=known_tables)
+    sources = []
     executed: list[dict[str, Any]] = []
     cache_hits = 0
     row_count = 0
@@ -135,6 +178,7 @@ async def _prepare_turn(request: YaChatRequest, user: CurrentUser) -> PreparedTu
         history=memory.history,
         summary=memory.summary,
         conversation_state=memory.state,
+        last_sources=memory.last_sources,
         query_spec=spec_dict,
         sources=sources,
         executed=executed,
@@ -195,7 +239,7 @@ async def _finalize_turn(
         sources=prepared.sources,
         evidence=prepared.sources,
         query_spec=prepared.query_spec,
-        generated_at=datetime.utcnow().isoformat() + "Z",
+        generated_at=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
     )
 
 
@@ -252,7 +296,7 @@ async def chat(request: YaChatRequest, user: AuthenticatedBIUser) -> YaChatRespo
         raise
     except Exception as error:
         log_exception("ai_chat_unexpected_failure", error)
-        raise HTTPException(status_code=503, detail="Não foi possível concluir a análise agora.") from error
+        raise HTTPException(status_code=503, detail="Não consegui concluir esta consulta. Tente reformular a pergunta ou indicar o período e o assunto que quer investigar.") from error
 
 
 @router.post("/chat/stream")
@@ -269,12 +313,20 @@ async def chat_stream(request: YaChatRequest, user: AuthenticatedBIUser) -> Stre
             yield _sse("plan", {"query_spec": prepared.query_spec})
             yield _sse("sources", {"sources": [source.model_dump() for source in prepared.sources], "db_ms": prepared.db_ms, "cache_hits": prepared.cache_hits})
             if prepared.answer_override:
-                yield _sse("status", {"message": "Preciso confirmar um detalhe do recorte…"})
+                override_status = "Recuperando a fonte da resposta anterior…" if prepared.query_spec.get("intent") == "source" else "Preparando uma resposta…"
+                yield _sse("status", {"message": override_status})
                 answer = prepared.answer_override
                 model_ms = 0
                 yield _sse("delta", {"text": answer})
             else:
-                status = "Calculando a comparação…" if prepared.query_spec.get("intent") in {"compare", "correlation"} else "Consultando os contratos aprovados…"
+                if prepared.query_spec.get("dynamic_query_hash"):
+                    status = "Consultando o banco do BI em modo somente leitura…"
+                elif prepared.query_spec.get("intent") in {"compare", "correlation"}:
+                    status = "Calculando a comparação…"
+                elif prepared.query_spec.get("intent") == "conversation":
+                    status = "Preparando a resposta…"
+                else:
+                    status = "Consultando as fontes do BI…"
                 yield _sse("status", {"message": status})
                 answer_parts: list[str] = []
                 model_started = time.monotonic()
@@ -294,6 +346,6 @@ async def chat_stream(request: YaChatRequest, user: AuthenticatedBIUser) -> Stre
             if prepared:
                 await persist_turn_metric(query_async, conversation_id=prepared.conversation_id, message_id=prepared.user_message_id, route=request.context.route, query_spec=prepared.query_spec, requested_filters=prepared.query_spec.get("requested_filters", {}), sources=prepared.sources, db_ms=prepared.db_ms, model_ms=0, total_ms=round((time.monotonic() - started) * 1000), answer_chars=0, cache_hits=prepared.cache_hits, row_count=prepared.row_count, status="failed")
             log_exception("ai_chat_stream_unexpected_failure", error)
-            yield _sse("error", {"detail": "Não foi possível concluir a análise agora."})
+            yield _sse("error", {"detail": "Não consegui concluir esta consulta agora. Tente reformular a pergunta ou indicar o período e o assunto que quer investigar."})
 
     return StreamingResponse(generate(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})

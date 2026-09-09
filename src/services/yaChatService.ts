@@ -240,7 +240,7 @@ export async function streamAIChat(request: YaChatRequest, handlers: AIChatStrea
       });
     }
     if (parsed.event === "error") {
-      streamError = new Error(typeof data.detail === "string" ? data.detail : "Não foi possível concluir a análise agora.");
+      streamError = new Error(typeof data.detail === "string" ? data.detail : "Não consegui concluir esta consulta. Tente reformular a pergunta ou indicar o período e o assunto que quer investigar.");
     }
   };
 

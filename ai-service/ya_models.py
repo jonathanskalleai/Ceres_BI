@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field
@@ -109,3 +109,4 @@ class PreparedTurn:
     db_ms: int
     cache_hits: int
     row_count: int
+    last_sources: list[YaSource] = field(default_factory=list)

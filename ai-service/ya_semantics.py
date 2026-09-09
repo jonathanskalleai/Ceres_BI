@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import re
-import unicodedata
 from typing import Any, Optional
 
 from ya_catalog import METRICS, MetricDefinition, get_metric
+from ya_intents import conversational_mode, normalize_text
 from ya_periods import QueryValidationError, _period_from, comparison_for, previous_period
 from ya_query_models import QuerySpec
 from ya_semantic_filters import question_filters as extract_question_filters, safe_filter
@@ -16,7 +16,7 @@ ALLOWED_FILTERS = {
     "categoria", "cidade", "vendedor", "produto", "condicao", "origem", "banco",
     "motivo_perda", "funis", "cliente",
 }
-NON_DATA_INTENTS = {"explain_metric", "get_freshness", "list_filter_values"}
+NON_DATA_INTENTS = {"conversation", "source", "explain_metric", "get_freshness", "list_filter_values"}
 FOLLOW_UP_PREFIXES = ("e ", "agora ", "tambem ", "isso ", "esse ", "essa ", "estes ", "estas ")
 FOLLOW_UP_TERMS = (
     "mes anterior", "periodo anterior", "por vendedor", "por cidade", "por produto",
@@ -25,12 +25,18 @@ FOLLOW_UP_TERMS = (
 )
 
 
-def normalize_text(value: Any) -> str:
-    raw = " ".join(str(value or "").split()).casefold()
-    return "".join(
-        char for char in unicodedata.normalize("NFD", raw)
-        if unicodedata.category(char) != "Mn"
-    )
+def resolve_mode(message: str, planned: dict[str, Any]) -> str:
+    detected = conversational_mode(message)
+    if detected:
+        return detected
+    proposed = planned.get("mode")
+    if proposed in {"conversation", "source", "data"}:
+        return str(proposed)
+    if planned.get("intent") in {"conversation", "source"}:
+        return str(planned["intent"])
+    if isinstance(planned.get("sql"), str) and planned["sql"].strip():
+        return "data"
+    return "data"
 
 
 def _contains_term(text: str, term: str) -> bool:
@@ -68,6 +74,12 @@ def _context_dict(context_filters: Any) -> dict[str, Any]:
 
 
 def _intent(message: str, planned: dict[str, Any]) -> str:
+    forced_mode = planned.get("mode")
+    if forced_mode in {"conversation", "source"}:
+        return str(forced_mode)
+    detected_mode = conversational_mode(message)
+    if detected_mode:
+        return detected_mode
     proposed = planned.get("intent")
     allowed = {"metric", "breakdown", "timeseries", "compare", "drilldown", "correlation", "entity_360", *NON_DATA_INTENTS}
     if isinstance(proposed, str) and proposed in allowed:
@@ -254,12 +266,14 @@ def _safe_limit(value: Any) -> int:
 def _apply_validation(spec: QuerySpec) -> QuerySpec:
     if spec.intent in NON_DATA_INTENTS:
         return spec
+    if spec.dynamic_requested:
+        return spec
     if spec.intent == "entity_360":
         if not spec.entity:
             spec.clarification = "Qual cliente você quer consultar? Informe o nome para eu resolver a entidade com segurança."
         return spec
     if not spec.metrics:
-        spec.clarification = "Qual métrica você quer analisar? Posso consultar faturamento, pedidos, visitas, perdas, pipeline ou serviços com o período e os filtros informados."
+        spec.clarification = "Não consegui identificar o recorte de dados. Diga o que quer analisar, por exemplo faturamento, pedidos, visitas, perdas, pipeline, clientes ou serviços, e o período se ele for importante."
         return spec
     definitions = [get_metric(metric_id) for metric_id in spec.metrics]
     if any(item is None for item in definitions):
@@ -348,7 +362,7 @@ def build_query_spec(
     filter_origins.update({key: "question" for key in natural_filters if key in requested_filters})
     if intent == "entity_360":
         domain = "cliente"
-    metrics = [] if intent in {"get_freshness", "list_filter_values", "entity_360"} else _metric_ids(clean_message, domain, proposal, state, intent)
+    metrics = [] if intent in {*NON_DATA_INTENTS, "entity_360"} else _metric_ids(clean_message, domain, proposal, state, intent)
     dimensions = _dimension(clean_message, domain, proposal)
     entity = _entity(clean_message, proposal, state)
     if intent == "entity_360" and entity:
@@ -357,12 +371,15 @@ def build_query_spec(
     comparison = comparison_for(clean_message, period) if intent == "compare" else None
     drilldown_ref = state.get("last_drilldown_ref") if intent == "drilldown" else None
     output = {"breakdown": "table", "timeseries": "series", "drilldown": "table", "correlation": "text"}.get(intent, "metric")
+    mode = resolve_mode(clean_message, proposal)
     proposed_order = proposal.get("order_by")
     if proposed_order is not None and (not isinstance(proposed_order, str) or proposed_order not in {"value_desc", "value_asc", "name_asc"}):
         raise QueryValidationError("A ordenação proposta não é suportada pelo catálogo vigente.")
     spec = QuerySpec(
         intent=intent,
         domain=domain,
+        mode=mode,
+        dynamic_requested=isinstance(proposal.get("sql"), str) and bool(proposal.get("sql", "").strip()),
         metrics=metrics,
         period=None if intent == "get_freshness" else period,
         comparison=comparison,

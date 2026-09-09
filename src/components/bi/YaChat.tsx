@@ -23,10 +23,11 @@ import { YaChatMessage, type ChatMessageData } from "./ya-chat/YaChatMessage";
 type ChatMessage = ChatMessageData;
 
 const SUGGESTIONS = [
+  "Bom dia",
   "Quantas visitas tivemos neste período?",
   "Quebre o faturamento por vendedor.",
   "Compare o faturamento com o período anterior.",
-  "Mostre os negócios perdidos do funil de ações.",
+  "Resuma a situação comercial e diga onde estão os principais problemas.",
 ];
 
 export function YaChat() {
@@ -268,7 +269,7 @@ export function YaChat() {
           <div className="flex-1 space-y-4 overflow-y-auto px-5 py-5">
             {messages.length === 0 && !isLoadingThreads && (
               <div className="space-y-4 pt-3">
-                <div className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">Posso consultar métricas de vendas, negócios, ações, pedidos, clientes e pós-venda com período, filtros, comparação e evidência. Esta conversa mantém seu contexto enquanto estiver ativa.</div>
+                <div className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">Sou a agente de dados do Ceres BI. Posso conversar normalmente e investigar vendas, negócios, ações, pedidos, clientes, produtos e serviços usando as fontes vivas do banco. Você pode refinar a pergunta, pedir uma correlação ou perguntar de onde veio cada informação.</div>
                 <div className="space-y-2">
                   {SUGGESTIONS.map((suggestion) => <button key={suggestion} type="button" onClick={() => void send(suggestion)} className="w-full rounded-lg border px-3 py-2 text-left text-sm transition-colors hover:border-primary/50 hover:bg-accent">{suggestion}</button>)}
                 </div>
@@ -285,7 +286,7 @@ export function YaChat() {
           </div>
 
           <form onSubmit={onSubmit} className="border-t bg-background p-4">
-            <Textarea value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={onKeyDown} placeholder="Ex.: Onde estamos perdendo mais negócios e por quê?" className="min-h-[84px] resize-none" disabled={isSending} />
+            <Textarea value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={onKeyDown} placeholder="Ex.: Onde estamos perdendo mais negócios e por quê?" className="min-h-[84px] resize-none" disabled={isSending} aria-label="Mensagem para a agente de dados" />
             <div className="mt-2 flex items-center justify-between gap-3">
               <span className="text-xs text-muted-foreground">Ctrl/Cmd + Enter para enviar</span>
               <Button type="submit" size="sm" disabled={isSending || !input.trim()}>{isSending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <SendHorizontal className="h-4 w-4" />}<span className="ml-2">Enviar</span></Button>

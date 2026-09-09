@@ -27,6 +27,7 @@ class ComparisonSpec(BaseModel):
 class QuerySpec(BaseModel):
     intent: str
     domain: str
+    mode: str = "data"
     metrics: list[str] = Field(default_factory=list, max_length=2)
     period: Optional[PeriodSpec] = None
     comparison: Optional[ComparisonSpec] = None
@@ -41,4 +42,8 @@ class QuerySpec(BaseModel):
     warnings: list[str] = Field(default_factory=list)
     filter_origins: dict[str, str] = Field(default_factory=dict)
     clarification: Optional[str] = None
+    dynamic_requested: bool = False
+    dynamic_query_hash: Optional[str] = None
+    dynamic_tables: list[str] = Field(default_factory=list, max_length=12)
+    dynamic_columns: list[str] = Field(default_factory=list, max_length=24)
     catalog_version: str = CATALOG_VERSION

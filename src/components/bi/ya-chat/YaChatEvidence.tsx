@@ -110,6 +110,15 @@ function sourceFilterSummary(source: YaChatSource): string {
   return extra ? `${periodLabel} · ${extra}` : periodLabel;
 }
 
+function lineageSummary(source: YaChatSource): string | null {
+  const lineage = source.lineage;
+  if (!lineage) return null;
+  const tables = Array.isArray(lineage.tables) ? lineage.tables.filter((item): item is string => typeof item === "string") : [];
+  if (tables.length > 0) return `Fonte consultada: ${tables.join(", ")}.`;
+  if (typeof lineage.executor === "string") return `Contrato: ${lineage.executor}.`;
+  return null;
+}
+
 export function YaChatEvidence({ sources }: { sources: YaChatSource[] }) {
   const [copiedId, setCopiedId] = useState<string>();
   const timerRef = useRef<number>();
@@ -136,11 +145,13 @@ export function YaChatEvidence({ sources }: { sources: YaChatSource[] }) {
       <div className="space-y-2 border-t px-3 py-2">
         {sources.map((source) => {
           const metrics = metricDefinitions(source);
+          const lineage = lineageSummary(source);
           return (
             <details key={source.id} className="rounded-lg border bg-background/50 px-3 py-2">
               <summary className="cursor-pointer list-none font-medium text-foreground">{source.label} · {sourceFilterSummary(source)}</summary>
               <div className="mt-2 space-y-2">
                 {metrics.map((metric) => <div key={metric.id}><div><span className="font-medium text-foreground">{metric.label}:</span> {metric.definition} <span className="text-muted-foreground">({metric.unit})</span></div><div><span className="font-medium text-foreground">Competência:</span> {metric.competence}. <span className="font-medium text-foreground">Deduplicação:</span> {metric.deduplication}.</div></div>)}
+                {lineage && <div><span className="font-medium text-foreground">Linhagem:</span> {lineage}</div>}
                 {source.freshness?.status && <div className="flex items-center gap-1"><Database className="h-3.5 w-3.5" />Atualização: {source.freshness.status}{source.freshness.refreshed_at ? ` · ${formatChatDateTime(source.freshness.refreshed_at)}` : ""}</div>}
                 {source.warnings?.map((warning) => <div key={warning} className="flex items-start gap-1 text-amber-700 dark:text-amber-300"><TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />{warning}</div>)}
                 <PreviewSummary preview={source.preview} />

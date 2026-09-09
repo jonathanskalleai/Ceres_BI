@@ -3,12 +3,41 @@ from datetime import datetime
 
 from ya_catalog import get_metric
 from ya_semantics import build_query_spec
+from ya_query_models import QuerySpec
 
 from ya_tool_utils import compare_data
 from ya_tools import _compact, pearson
 
 
 class YaToolTests(unittest.TestCase):
+    def test_gateway_routes_exploratory_plan_to_read_only_executor(self):
+        calls = []
+
+        async def fake_query(sql, params):
+            calls.append(("regular", sql))
+            if "sync_control" in sql:
+                return [{"refreshed_at": datetime(2024, 5, 31, 12, 0)}]
+            return []
+
+        async def fake_read_only(sql, params):
+            calls.append(("read_only", sql))
+            return [{"total": 7}]
+
+        async def exercise():
+            from ya_tools import ToolGateway
+
+            return await ToolGateway(fake_query, fake_read_only).execute(
+                QuerySpec(intent="metric", domain="vendas", mode="data"),
+                "user-dynamic-test",
+                dynamic_sql="SELECT COUNT(*) AS total FROM mirror.crm_negocios",
+                known_tables={"mirror.crm_negocios"},
+            )
+
+        result = _run_async(exercise())[0]
+        self.assertEqual(result[1]["rows"], [{"total": 7}])
+        self.assertEqual([kind for kind, _ in calls], ["regular", "read_only"])
+        self.assertEqual(result[2].lineage["executor"], "dynamic_read_only")
+
     def test_pearson_requires_a_real_paired_sample(self):
         self.assertEqual(pearson([(1, 2), (2, 4), (3, 6)]), 1.0)
         self.assertIsNone(pearson([(1, 2), (2, 4)]))

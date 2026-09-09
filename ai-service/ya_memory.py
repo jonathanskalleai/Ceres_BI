@@ -6,7 +6,7 @@ import json
 import logging
 import uuid
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import Any, Awaitable, Callable, Optional
 
@@ -26,6 +26,7 @@ class ThreadMemory:
     summary: str
     state: dict[str, Any]
     history: list[dict[str, str]]
+    last_sources: list[YaSource]
 
 
 def json_default(value: Any) -> str:
@@ -94,10 +95,20 @@ async def load_thread_memory(query: QueryFn, conversation_id: str, user_id: str)
         (conversation_id, THREAD_HISTORY_MESSAGES),
     )
     state = _json_value(summary_rows[0].get("conversation_state"), {})
+    last_rows = await query(
+        "SELECT sources, evidence FROM public.ya_chat_messages WHERE conversation_id = %s::uuid AND role = 'assistant' ORDER BY created_at DESC LIMIT 1",
+        (conversation_id,),
+    )
+    last_sources = sources_from_db(last_rows[0].get("evidence")) if last_rows else []
+    if not last_sources and last_rows:
+        last_sources = sources_from_db(last_rows[0].get("sources"))
+    if not last_sources and isinstance(state, dict):
+        last_sources = sources_from_db(state.get("last_sources"))
     return ThreadMemory(
         summary=str(summary_rows[0].get("summary") or ""),
         state=state if isinstance(state, dict) else {},
         history=[{"role": row["role"], "content": row["content"]} for row in reversed(rows)],
+        last_sources=last_sources,
     )
 
 
@@ -130,7 +141,8 @@ async def update_state(query: QueryFn, conversation_id: str, previous: str, mess
         "last_drilldown_ref": next((item.drilldown_ref for item in evidence if item.drilldown_ref), None),
         "last_question": message[:500],
         "last_answer": answer[:800],
-        "updated_at": datetime.utcnow().isoformat() + "Z",
+        "last_sources": [item.model_dump(exclude={"preview"}) for item in evidence] or state.get("last_sources", []),
+        "updated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
     })
     await query(
         "UPDATE public.ya_chat_conversations SET summary = %s, summary_updated_at = NOW(), last_context = %s::jsonb, conversation_state = %s::jsonb WHERE id = %s::uuid",

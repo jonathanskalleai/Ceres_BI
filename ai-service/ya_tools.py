@@ -12,9 +12,10 @@ from typing import Any, Callable, Awaitable
 
 from fastapi import HTTPException
 
-from ai_logger import log_event
-from ya_catalog import EXECUTOR_LABELS, MetricDefinition, get_metric
-from ya_db import query_async
+from ai_logger import log_event, log_exception
+from ya_dynamic_query import DynamicQueryExecutor
+from ya_catalog import EXECUTOR_LABELS, EXECUTOR_TABLES, MetricDefinition, get_metric
+from ya_db import query_async, query_read_only_async
 from ya_models import YaSource
 from ya_query_models import PeriodSpec, QuerySpec
 from ya_tool_utils import (
@@ -38,13 +39,25 @@ QueryFn = Callable[[str, tuple[Any, ...]], Awaitable[list[dict[str, Any]]]]
 
 
 class ToolGateway:
-    def __init__(self, query_fn: QueryFn = query_async):
+    def __init__(self, query_fn: QueryFn = query_async, read_only_query_fn: QueryFn = query_read_only_async):
         self._query = query_fn
+        self._dynamic = DynamicQueryExecutor(read_only_query_fn)
 
-    async def execute(self, spec: QuerySpec, user_id: str) -> list[tuple[str, Any, YaSource, bool]]:
+    async def execute(
+        self,
+        spec: QuerySpec,
+        user_id: str,
+        *,
+        dynamic_sql: str | None = None,
+        known_tables: set[str] | None = None,
+    ) -> list[tuple[str, Any, YaSource, bool]]:
         if spec.clarification:
             return []
+        if spec.intent in {"conversation", "source"}:
+            return []
         freshness = await self._freshness()
+        if dynamic_sql:
+            return [await self._dynamic.execute(spec, dynamic_sql, user_id, freshness, known_tables)]
         if spec.intent == "get_freshness":
             return [await self._freshness_result(freshness)]
         if spec.intent == "list_filter_values":
@@ -139,7 +152,7 @@ class ToolGateway:
             refreshed_at=freshness.get("refreshed_at"),
             applied_scope={"period": {"from": spec.period.from_date.isoformat(), "to": spec.period.to_date.isoformat()} if spec.period else None, "filters": spec.filters, "filter_origins": spec.filter_origins, "timezone": "America/Sao_Paulo"},
             freshness=freshness,
-            lineage={"catalog_version": spec.catalog_version, "executor": "rpc_listas_filtros" if used_rpc else "semantic_catalog"},
+            lineage={"catalog_version": spec.catalog_version, "executor": "rpc_listas_filtros" if used_rpc else "semantic_catalog", "tables": ["mirror.sync_control"] if used_rpc else []},
             warnings=warnings,
             execution_metrics={"elapsed_ms": 0, "row_count": _row_count(data), "cache_hit": False, "period_label": "filter_values"},
             preview=data,
@@ -368,7 +381,7 @@ class ToolGateway:
             metric_definitions=metric_defs,
             applied_scope={"period": filters.get("from") and {"from": filters.get("from"), "to": filters.get("to")}, "filters": {key: value for key, value in filters.items() if key not in {"from", "to"}}, "filter_origins": spec.filter_origins, "timezone": period.timezone if period else "America/Sao_Paulo"},
             freshness=freshness,
-            lineage={"executor": executor or (metric.executor if metric else "mirror.sync_control"), "metric_ids": spec.metrics, "catalog_version": spec.catalog_version},
+            lineage={"executor": executor or (metric.executor if metric else "mirror.sync_control"), "tables": EXECUTOR_TABLES.get(executor or (metric.executor if metric else ""), []), "metric_ids": spec.metrics, "catalog_version": spec.catalog_version},
             warnings=list(dict.fromkeys([*spec.warnings, *warnings])),
             drilldown_ref=ref,
             execution_metrics={"elapsed_ms": elapsed_ms, "row_count": row_count, "cache_hit": cache_hit, "period_label": label},

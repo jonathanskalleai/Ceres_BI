@@ -1,8 +1,15 @@
 # Arquitetura — Assistente conversacional de dados
 
-**Escopo:** primeiro incremento executável das fases 0–3 do plano de 2026-09-08.
-**Estado:** desenho para implementação; a instalação das RPCs no Postgres vivo não
-foi validada nesta sessão porque as credenciais de conexão não estão disponíveis.
+**Escopo:** arquitetura do chat conversacional com cobertura canônica e
+exploratória do BI.
+**Estado:** implementação local pronta no serviço de IA. O chat mantém os
+contratos canônicos das dashboards e adiciona conversa livre, schema runtime e
+consulta analítica somente leitura. A publicação e a validação viva de cada
+pergunta continuam pendentes.
+
+> Esta atualização substitui a decisão anterior de bloquear toda pergunta fora
+> do catálogo. O modelo pode propor SQL exploratório, mas nunca o executa
+> diretamente: o servidor valida, limita e executa em transação read-only.
 
 ## Decisões
 
@@ -17,19 +24,22 @@ históricos não substituem essa fonte.
 ### QuerySpec validado
 
 Toda pergunta passa por um `QuerySpec` limitado por Pydantic. O planejador pode
-sugerir intenção e argumentos, mas não SQL nem ferramenta fora do catálogo. A
-validação rejeita métrica desconhecida, dimensão incompatível, filtro não
-suportado, período inválido e comparação entre coortes incompatíveis antes de
-consultar o banco. O parser determinístico cobre os follow-ups mais importantes
-quando o planejador não estiver disponível.
+escolher conversa, fonte, um contrato canônico ou uma consulta exploratória.
+Contratos canônicos continuam validando métrica, dimensão, filtro, período e
+coorte antes do banco. Uma consulta exploratória sem métrica catalogada só
+prossegue se o SQL for um único SELECT/WITH com tabelas `mirror` conhecidas,
+colunas explícitas e sem operações administrativas. O parser determinístico
+cobre saudações, pedido de fonte e follow-ups quando o planejador não estiver
+disponível.
 
 ### Gateway determinístico
 
 `ai-service/ya_tools.py` é o único ponto que conhece os executores de dados.
 `ai-service/ya_db.py` concentra a conexão privada. Inicialmente o gateway
-reutiliza RPCs existentes e normaliza seus blocos nomeados;
-novas fontes precisam de um executor e de testes dourados antes de entrarem no
-catálogo. O gateway nunca recebe SQL do modelo e não libera conexão ao cliente.
+reutiliza RPCs existentes e normaliza seus blocos nomeados. Para perguntas
+abertas, `ya_dynamic_query.py` valida a proposta do modelo contra o schema
+descoberto por `ya_schema.py`, aplica limite/timeout e chama `query_read_only`.
+O gateway nunca libera conexão ao cliente, credenciais ou SQL bruto.
 
 Cada execução devolve `data`, `applied_scope`, `metric_definitions`, `freshness`,
 `lineage`, `warnings`, `drilldown_ref` e `execution_metrics`. O modelo recebe
@@ -45,10 +55,12 @@ apenas como ajuda de linguagem. Estado antigo não é evidência factual.
 ### Segurança e exposição
 
 O endpoint continua protegido por JWT e permissão `bi.ya`. O banco é consultado
-por conexão privada do serviço, com RPCs `SECURITY DEFINER` já aprovadas. O
-drill-down usa somente colunas aprovadas e paginação; não expõe CNPJ, telefone,
-e-mail, SQL ou credenciais. Alterações em auth, entrada externa e dados de CRM
-passam pelo gate de segurança.
+por conexão privada do serviço, com RPCs `SECURITY DEFINER` já aprovadas ou
+transação dinâmica `READ ONLY`. O validador rejeita escrita, múltiplas
+instruções, schemas de sistema e funções de arquivo/rede; o executor limita
+linhas/colunas e remove CNPJ, telefone, e-mail, documentos e outros campos
+sensíveis do resultado. O drill-down continua usando colunas aprovadas e
+paginação; não expõe SQL ou credenciais.
 
 ## Organização proposta
 
@@ -58,8 +70,13 @@ ai-service/
   ya_catalog.py     # métricas, dimensões e executores versionados
   ya_query_models.py # contratos Pydantic do plano
   ya_semantics.py   # parser e validação
+  ya_intents.py     # reconhecimento de conversa/fonte
   ya_periods.py     # janelas e comparações temporais
   ya_tools.py       # executores RPC, normalização e envelopes de evidência
+  ya_dynamic_query.py # consulta exploratória somente leitura
+  ya_schema.py      # descoberta cacheada das colunas mirror
+  ya_context.py     # carregamento do contexto permanente
+  YA_CONTEXT.md     # regras das dashboards e limites da agente
   ya_db.py          # conexão e execução parametrizada privada
   ya_memory.py      # estado estruturado e persistência da conversa
 ```
@@ -81,6 +98,8 @@ regra de componentes pequenos e a lógica de transporte fora da UI.
 | `get_freshness` | `mirror.sync_control` | ausência de estado vira aviso |
 | `get_entity_360` | cliente com resolução limitada | homônimo exige desambiguação |
 | `correlate` | validação de compatibilidade | sem chave/coorte, retorna bloqueio legível |
+| `open_data_query` | perguntas exploratórias e cruzamentos ainda não catalogados | somente SELECT/WITH em `mirror`, com timeout, limite e redaction |
+| `conversation` / `source` | saudações, conversa e explicação da última evidência | não inventa números; fonte usa a última execução registrada |
 
 ## Banco e observabilidade
 
@@ -110,5 +129,5 @@ estruturado no serviço.
   ambiente vivo; isso ficará como `CONCERNS` até uma validação runtime.
 - Algumas RPCs retornam resumos amplos ou têm séries com janela própria. O
   catálogo marca esse limite em vez de prometer granularidade inexistente.
-- Não haverá RAG nesta entrega: adicionar documentos antes de estabilizar a
-  semântica aumentaria o risco de explicação histórica ser usada como fato atual.
+- `YA_CONTEXT.md` é contexto curado, não RAG factual: explica o produto e as
+  dashboards, mas nenhum número atual pode sair dele sem uma consulta viva.

@@ -342,6 +342,17 @@ EXECUTOR_LABELS = {
     "operational_snapshot": "Operacional e agenda",
 }
 
+EXECUTOR_TABLES = {
+    "sales_overview": ["mirror.crm_pedidos", "mirror.crm_negocios"],
+    "business_analysis": ["mirror.crm_negocios", "mirror.crm_funil_etapa"],
+    "funnel": ["mirror.crm_acoes", "mirror.crm_negocios", "mirror.crm_pedidos"],
+    "orders": ["mirror.crm_pedidos", "mirror.crm_pedidos_item"],
+    "after_sales": ["mirror.ordens_servico"],
+    "client_360": ["mirror.crm_carteira_clientes", "mirror.crm_acoes", "mirror.crm_negocios", "mirror.crm_pedidos", "mirror.cliente_parque_maquinas", "mirror.ordens_servico"],
+    "products_snapshot": ["mirror.cliente_parque_maquinas"],
+    "admin_snapshot": ["mirror.crm_carteira_clientes"],
+}
+
 CAPABILITIES = {
     "get_metric": "KPI único ou conjunto compacto com escopo e definição.",
     "get_breakdown": "Quebra de uma métrica por uma dimensão aprovada.",
@@ -353,6 +364,9 @@ CAPABILITIES = {
     "explain_metric": "Definição normativa do catálogo sem usar resultado corrente.",
     "get_freshness": "Estado de atualização do mirror/ETL.",
     "list_filter_values": "Valores canônicos para desambiguação de filtros.",
+    "open_data_query": "Consulta exploratória somente leitura nas tabelas mirror quando o catálogo não cobre a pergunta.",
+    "conversation": "Conversa natural, saudações e orientação sobre o Ceres BI sem inventar dados.",
+    "source": "Explicação da fonte e do escopo da última evidência registrada.",
 }
 
 

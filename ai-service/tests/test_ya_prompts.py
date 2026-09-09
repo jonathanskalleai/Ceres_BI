@@ -14,12 +14,15 @@ class YaPromptTests(unittest.TestCase):
             {"last_query_spec": {"metrics": ["vendas.faturamento"]}},
             summary="Pergunta anterior: Qual foi o faturamento?",
             history=[{"role": "user", "content": "Qual foi o faturamento?"}],
+            schema_text="SCHEMA RUNTIME:\n- mirror.crm_negocios: ngo_conclusao",
         )
         payload = json.loads(messages[1]["content"])
         self.assertEqual(payload["estado_anterior"]["last_query_spec"]["metrics"], ["vendas.faturamento"])
         self.assertIn("faturamento", payload["resumo_conversa"])
         self.assertEqual(payload["ultimas_mensagens"][0]["role"], "user")
         self.assertIn("metrics=[]", messages[0]["content"])
+        self.assertIn("SCHEMA RUNTIME", messages[0]["content"])
+        self.assertIn('"mode": "data|conversation|source"', messages[0]["content"])
 
     def test_answer_prompt_requires_brazilian_format_and_conversational_style(self):
         prompt = answer_messages(request=YaChatRequest(message="faturamento", context={"route": "/bi", "filters": {}}), prepared=_prepared_turn())[0]["content"]
