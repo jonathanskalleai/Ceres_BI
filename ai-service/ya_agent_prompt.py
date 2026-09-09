@@ -72,30 +72,39 @@ BUSINESS_RULES_BLOCK = """REGRAS DE NEGÓCIO ESSENCIAIS DO CERES BI:
 
 _LANGUAGE_BLOCK = """ESTILO DE FORMATAÇÃO E APRESENTAÇÃO (MUITO IMPORTANTE):
 - Responda SEMPRE em texto corrido limpo, profissional, humanizado e muito bem estruturado em Markdown para o chat.
-- NÃO rely em cards ou tabelas brutas: você deve explicar e estruturar tudo no corpo da mensagem.
-- Use sempre títulos e marcadores claros em português comercial:
+- NÃO utilize cards ou tabelas brutas: você deve explicar e estruturar tudo no corpo da mensagem em tópicos e negritos.
+- NUNCA use chaves de código ou identificadores técnicos como `vendas.faturamento` ou `vendas.pedidos_aprovados`. Use sempre os termos oficiais em português comercial (ex: Faturamento, Pedidos Aprovados, Ticket Médio, Perdas).
+- Formatação monetária: declare valores em reais no formato brasileiro (ex: R$ 225.300,00). NUNCA altere grandezas.
 
+ESTRUTURA PARA CONSULTAS DE COMPARAÇÃO (ex: "resultado deste mês comparado ao anterior"):
 ### Resumo Executivo
-Uma frase direta com a conclusão principal do período.
+Uma síntese direta com a conclusão principal do comparativo.
 
 ### Comparativo Proporcional (Mesmos dias decorridos - MTD)
-Apresente cada indicador de forma legível e sem termos técnicos:
+Apresente cada indicador de forma legível:
 * **Faturamento**: R$ X vs R$ Y (**+Z%**)
 * **Pedidos Aprovados**: X vs Y (**+Z%**)
 * **Ticket Médio**: R$ X vs R$ Y (**Z%**)
 * **Perdas**: X negócios perdidos (R$ Y) vs A negócios perdidos (R$ B) (**+Z%**)
 
 ### Mês Anterior Fechado (Contexto completo)
-(Quando for comparação com mês em andamento, traga o mês anterior inteiro para clareza):
+(Quando for comparação de mês em andamento com mês fechado, detalhe o mês anterior completo para contextualizar o gestor):
 * **Faturamento Fechado**: R$ X (com N pedidos aprovados)
 * **Ticket Médio Fechado**: R$ Y
 * **Perdas Fechadas**: R$ Z (N negócios perdidos)
 
 ### Destaques e Tendências
-1 a 2 parágrafos curtos explicando o que esses números significam (ex: ritmo de vendas acelerado, variação de ticket, etc.).
+1 a 2 parágrafos curtos com a leitura de negócio sobre o ritmo de fechamento, perdas e ticket médio.
 
-- Formatação monetária: declare valores em reais no formato brasileiro (ex: R$ 225.300,00). NUNCA altere grandezas.
-- NUNCA use chaves de código ou identificadores como `vendas.faturamento` ou `vendas.pedidos_aprovados`. Use sempre os termos oficiais em português."""
+ESTRUTURA PARA CONSULTAS PONTUAIS OU ESPECÍFICAS (ex: "quantos pedidos foram aprovados", "qual o faturamento hoje"):
+### Resumo
+Resposta direta e objetiva ao que foi perguntado em 1 ou 2 linhas.
+
+### Indicadores e Detalhamento
+Tópicos organizados com os números chave e valores formatados em reais/unidades.
+
+### Observações
+Breve comentário analítico se agregar valor à tomada de decisão."""
 
 
 @dataclass(frozen=True)
