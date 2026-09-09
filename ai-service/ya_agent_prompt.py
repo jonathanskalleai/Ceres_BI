@@ -15,7 +15,7 @@ from ya_memory import ThreadMemory, json_default
 from ya_models import YaChatRequest
 
 
-PROMPT_VERSION = "ya-agent-v2.5"
+PROMPT_VERSION = "ya-agent-v2.6"
 MAX_HISTORY_MESSAGES = int(os.getenv("YA_AGENT_HISTORY_MESSAGES", "18"))
 MAX_MEMORY_CHARS = int(os.getenv("YA_AGENT_MEMORY_CONTEXT_CHARS", "10_000"))
 BUSINESS_TIMEZONE = ZoneInfo("America/Sao_Paulo")
@@ -70,10 +70,32 @@ BUSINESS_RULES_BLOCK = """REGRAS DE NEGÓCIO ESSENCIAIS DO CERES BI:
      * Além disso, forneça SEMPRE o contexto do total fechado do mês anterior completo (ex: "No mês de agosto inteiro foram X pedidos aprovados somando R$ Y"), para que o gestor tenha clareza de que o mês anterior fechou com mais pedidos, mas na mesma janela proporcional o comparativo foi o indicado.
    - Formatação monetária: declare valores em reais no formato exato da ferramenta (ex: R$ 225.300,00). Nunca multiplique por 100 ou altere grandezas."""
 
-_LANGUAGE_BLOCK = """Linguagem e apresentação:
-- Nunca exponha senhas, tokens ou credenciais.
-- Apresente os resultados em linguagem de negócios clara, com conclusões diretas, valores monetários formatados em R$, percentuais e contagens.
-- Sempre declare de forma transparente o período analisado e a exclusão do funil Repasse."""
+_LANGUAGE_BLOCK = """ESTILO DE FORMATAÇÃO E APRESENTAÇÃO (MUITO IMPORTANTE):
+- Responda SEMPRE em texto corrido limpo, profissional, humanizado e muito bem estruturado em Markdown para o chat.
+- NÃO rely em cards ou tabelas brutas: você deve explicar e estruturar tudo no corpo da mensagem.
+- Use sempre títulos e marcadores claros em português comercial:
+
+### Resumo Executivo
+Uma frase direta com a conclusão principal do período.
+
+### Comparativo Proporcional (Mesmos dias decorridos - MTD)
+Apresente cada indicador de forma legível e sem termos técnicos:
+* **Faturamento**: R$ X vs R$ Y (**+Z%**)
+* **Pedidos Aprovados**: X vs Y (**+Z%**)
+* **Ticket Médio**: R$ X vs R$ Y (**Z%**)
+* **Perdas**: X negócios perdidos (R$ Y) vs A negócios perdidos (R$ B) (**+Z%**)
+
+### Mês Anterior Fechado (Contexto completo)
+(Quando for comparação com mês em andamento, traga o mês anterior inteiro para clareza):
+* **Faturamento Fechado**: R$ X (com N pedidos aprovados)
+* **Ticket Médio Fechado**: R$ Y
+* **Perdas Fechadas**: R$ Z (N negócios perdidos)
+
+### Destaques e Tendências
+1 a 2 parágrafos curtos explicando o que esses números significam (ex: ritmo de vendas acelerado, variação de ticket, etc.).
+
+- Formatação monetária: declare valores em reais no formato brasileiro (ex: R$ 225.300,00). NUNCA altere grandezas.
+- NUNCA use chaves de código ou identificadores como `vendas.faturamento` ou `vendas.pedidos_aprovados`. Use sempre os termos oficiais em português."""
 
 
 @dataclass(frozen=True)

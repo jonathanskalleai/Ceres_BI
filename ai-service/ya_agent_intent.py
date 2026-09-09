@@ -161,7 +161,7 @@ def _deterministic_fallback(request: YaChatRequest, state: dict[str, Any], sourc
             "period_request": "current_to_date",
             "comparison_scope": _comparison_scope("", message),
             "metricas": [],
-            "presentation": "tabela",
+            "presentation": "tabela" if any(w in message.lower() for w in ("tabela", "planilha", "grade", "colunas")) else "texto",
         }
 
     if any(fragment in message for fragment in ("perdas", "percas", "negócios perdidos", "negocios perdidos")):
@@ -173,7 +173,7 @@ def _deterministic_fallback(request: YaChatRequest, state: dict[str, Any], sourc
             "period_request": period_request,
             "comparison_scope": "none",
             "metricas": [],
-            "presentation": "tabela",
+            "presentation": "tabela" if any(w in message.lower() for w in ("tabela", "planilha", "grade", "colunas")) else "texto",
         }
     return None
 
@@ -268,7 +268,7 @@ def _build_contract(raw: dict[str, Any], request: YaChatRequest, state: dict[str
             period=period,
             filters=filters,
             funnel_mode=funnel_mode,
-            presentation="tabela",
+            presentation="tabela" if any(w in message.lower() for w in ("tabela", "planilha", "grade", "colunas", "grafico", "gráfico", "card")) else "texto",
         )
     tool = {
         "actions": "consultar_acoes_comerciais",

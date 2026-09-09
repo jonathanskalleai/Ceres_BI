@@ -207,8 +207,15 @@ async def execute_compare(context: ToolContext, input_data: CompareToolInput, ca
             "base": {"from": input_data.periodo_base_inicio.isoformat(), "to": input_data.periodo_base_fim.isoformat()},
         },
     )
-    rows = [{"metrica": item["metrica"], "atual": item["atual"], "base": item["base"], "variacao": item["variacao"]["percentage"]} for item in comparisons]
-    artifact = table_artifact("Comparação entre períodos", rows, source_id)
+    METRIC_HUMAN_LABELS = {
+        "vendas.faturamento": "Faturamento",
+        "vendas.pedidos_aprovados": "Pedidos Aprovados",
+        "vendas.ticket_medio": "Ticket Médio",
+        "vendas.valor_perdido": "Valor Perdido",
+        "vendas.negocios_perdidos": "Negócios Perdidos",
+    }
+    rows = [{"Métrica": METRIC_HUMAN_LABELS.get(item["metrica"], item["metrica"]), "Atual": item["atual"], "Base": item["base"], "Variação (%)": item["variacao"]["percentage"]} for item in comparisons]
+    artifact = table_artifact("Comparação entre períodos", rows, source_id) if input_data.apresentacao != "texto" else None
     artifacts = [artifact] if artifact else []
     return _Result(data, source, artifacts, source.warnings)
 
