@@ -128,6 +128,15 @@ class AgentRunner:
             model_started = time.monotonic()
             remaining = max(0.1, MAX_TOTAL_SECONDS - (time.monotonic() - started))
             required_tool = contract.next_required_tool(tool_outputs)
+            if contract.requires_evidence and required_tool is None and any(e.status == "ok" for e in tool_outputs):
+                tool_choice_mode: Any = "none"
+            elif (model_rounds == 1 or required_tool) and required_tool:
+                tool_choice_mode = contract.tool_choice(required_tool)
+            elif any(e.tool_name == "consultar_banco_bi" and e.status == "ok" for e in tool_outputs):
+                tool_choice_mode = "none"
+            else:
+                tool_choice_mode = "auto"
+
             try:
                 response = await asyncio.wait_for(
                     self.provider(
@@ -136,7 +145,7 @@ class AgentRunner:
                         temperature=0.1,
                         max_tokens=1_400,
                         session_id=conversation_id,
-                        tool_choice=contract.tool_choice(required_tool) if (model_rounds == 1 or required_tool) and required_tool else "auto",
+                        tool_choice=tool_choice_mode,
                     ),
                     timeout=remaining,
                 )

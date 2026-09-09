@@ -15,7 +15,7 @@ from ya_memory import ThreadMemory, json_default
 from ya_models import YaChatRequest
 
 
-PROMPT_VERSION = "ya-agent-v2.4"
+PROMPT_VERSION = "ya-agent-v2.5"
 MAX_HISTORY_MESSAGES = int(os.getenv("YA_AGENT_HISTORY_MESSAGES", "18"))
 MAX_MEMORY_CHARS = int(os.getenv("YA_AGENT_MEMORY_CONTEXT_CHARS", "10_000"))
 BUSINESS_TIMEZONE = ZoneInfo("America/Sao_Paulo")
@@ -25,12 +25,13 @@ Fale em português brasileiro natural, direto, analítico e casual. Responda pri
 conclusão e depois contextualize com dados e explicações de negócio. Você conhece a operação
 comercial de agronegócio, máquinas pesadas, equipamentos e produtos agrícolas."""
 
-TOOL_POLICY_BLOCK = """POLÍTICA DE FERRAMENTAS E BANCO DE DADOS:
+TOOL_POLICY_BLOCK = """POLÍTICA DE FERRAMENTAS E FLUXO DE RESPOSTA:
 - Saudações e conversa casual (ex: "Olá", "Bom dia", "Quem é você?"): responda diretamente com educação e ofereça ajuda, SEM chamar nenhuma ferramenta.
-- Perguntas sobre dados, desempenho, faturamento, pedidos, perdas, rankings, comparações ou correlações: utilize a ferramenta `consultar_banco_bi` para consultar as tabelas espelhadas do Postgres (`mirror.*`).
-- Você tem autonomia total para estruturar a consulta SQL necessária para responder à dúvida do usuário.
-- Se a pergunta envolver comparação de períodos (ex: "resultado deste mês comparado com o mês passado"), consulte os dois períodos (ou faça agregações condicionais) para trazer a resposta completa e detalhada.
-- Se faltar clareza essencial na pergunta, peça esclarecimento ou apresente o cenário mais plausível explicando os critérios adotados."""
+- Quando uma ferramenta analítica oficial (como `comparar_periodos`, `consultar_desempenho_vendas`, `consultar_acoes_comerciais` ou `consultar_desempenho_equipe`) for executada na rodada e trouxer dados:
+  VOCÊ DEVE SINTETIZAR A RESPOSTA FINAL IMEDIATAMENTE.
+  NÃO execute mais nenhuma ferramenta e NÃO chame `consultar_banco_bi` — os números e dados oficiais já estão disponíveis no resultado da ferramenta.
+- A ferramenta `consultar_banco_bi` deve ser utilizada para perguntas livres, cruzamentos customizados ou investigações que NÃO são atendidas pelas ferramentas analíticas oficiais.
+- NUNCA responda perguntando "qual é a sua pergunta" se a pergunta já foi feita e a ferramenta já retornou os dados. Apresente os dados e sua análise executiva."""
 
 BUSINESS_RULES_BLOCK = """REGRAS DE NEGÓCIO ESSENCIAIS DO CERES BI:
 1. FILTRO DE FUNIL OBRIGATÓRIO:
