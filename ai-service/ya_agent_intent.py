@@ -71,7 +71,7 @@ async def resolve_turn(
                 {"role": "user", "content": _classifier_context(request, state, last_sources, today)},
             ],
             temperature=0.0,
-            max_tokens=150,
+            max_tokens=420,
             json_mode=True,
             session_id=session_id,
         )
@@ -198,8 +198,8 @@ def _deterministic_fallback(request: YaChatRequest, state: dict[str, Any], sourc
     misleading generic clarification.
     """
     message = request.message.casefold()
-    comparison = any(fragment in message for fragment in ("comparad", "compare", "comparar", "versus", " x ", "diferença entre", "diferenca entre"))
-    previous = mentions_previous(message)
+    comparison = any(fragment in message for fragment in ("comparad", "compare", "comparar", "versus", " x ", "diferença entre", "diferenca entre", "mais vendas", "menos vendas", "vendi mais", "vendeu mais"))
+    previous = mentions_previous(message) or any(w in message for w in ("anterior", "passado", "agosto", "julho"))
     if comparison and previous:
         return {
             "intent": "sales_comparison",
@@ -210,15 +210,15 @@ def _deterministic_fallback(request: YaChatRequest, state: dict[str, Any], sourc
             "presentation": "tabela" if any(w in message.lower() for w in ("tabela", "planilha", "grade", "colunas")) else "texto",
         }
 
-    if any(fragment in message for fragment in ("perdas", "percas", "negócios perdidos", "negocios perdidos")):
-        detail = any(fragment in message for fragment in ("detalh", "mais sobre", "motivo", "vendedor", "cidade", "produto"))
+    if any(fragment in message for fragment in ("perda", "perdas", "perca", "percas", "negócios perdidos", "negocios perdidos", "perdido", "perdidos")):
+        detail = any(fragment in message for fragment in ("detalh", "mais sobre", "motivo", "vendedor", "cidade", "produto", "por que", "porque"))
         period_request = "inherit" if _has_sales_context(state, sources) else "current_to_date"
         return {
             "intent": "loss_details" if detail else "loss_diagnosis",
             "domain": "vendas",
             "period_request": period_request,
             "comparison_scope": "none",
-            "metricas": [],
+            "metricas": ["vendas.negocios_perdidos", "vendas.valor_perdido"],
             "presentation": "tabela" if any(w in message.lower() for w in ("tabela", "planilha", "grade", "colunas")) else "texto",
         }
     return None
@@ -291,7 +291,20 @@ def _build_contract(raw: dict[str, Any], request: YaChatRequest, state: dict[str
             presentation="tabela" if intent in {"loss_diagnosis", "loss_details"} else presentation,
         )
     if intent == "sales_comparison":
-        comparison = resolve_comparison(period_request, scope, today, raw)
+        comparison_keywords = ("mês anterior", "mes anterior", "mês passado", "mes passado", "anterior", "passado")
+        if any(w in message for w in comparison_keywords) and not any(m in message for m in ("julho", "junho", "maio", "abril", "março", "marco", "fevereiro", "janeiro")):
+            curr_start = today.replace(day=1)
+            target = shift_month(curr_start, -1)
+            base_start = target.replace(day=1)
+            elapsed_days = today.day - 1
+            base_end = min(base_start + timedelta(days=elapsed_days), shift_month(base_start, 1) - timedelta(days=1))
+            comparison = {
+                "atual": {"from": curr_start.isoformat(), "to": today.isoformat()},
+                "base": {"from": base_start.isoformat(), "to": base_end.isoformat()},
+                "scope": "same_elapsed",
+            }
+        else:
+            comparison = resolve_comparison(period_request, scope, today, raw)
         if "resultado" in message or not metrics:
             comparison_metrics = _default_comparison_metrics(domain)
         else:
@@ -396,7 +409,7 @@ def _semantic_intent_override(intent: str, message: str) -> str:
         return "sales_comparison"
     if "produt" in message and any(fragment in message for fragment in ("diferença", "diferenca", "explicam")):
         return "sales_comparison"
-    if any(fragment in message for fragment in ("perdas", "percas", "negócios perdidos", "negocios perdidos")):
+    if any(fragment in message for fragment in ("perda", "perdas", "perca", "percas", "negócios perdidos", "negocios perdidos", "perdido", "perdidos")):
         if any(fragment in message for fragment in ("detalh", "mais sobre", "motivo", "vendedor", "cidade", "produto")):
             return "loss_details"
         if any(fragment in message for fragment in ("diagnóst", "diagnost", "por que", "por quê", "porque")):
