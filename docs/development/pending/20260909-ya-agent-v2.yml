@@ -73,19 +73,21 @@ runtime_validation:
   preview_smoke: PENDENTE
   golden_factual_conciliation: PENDENTE
   migration_application: "APLICADA em 2026-09-09 03:32 UTC no ceres-prod/178.238.235.203; commit e pós-check do schema confirmados"
-  publish_or_deploy: "não realizado"
+  publish_or_deploy: "PUBLICADO em 2026-09-09 no ceres-prod; SHA final 2ce52bd4ee237c61c628f98cd9545f44998fac3f; web/AI 1/1; flags v2 ativas"
 
 known_pending:
   - "Validar em preview autenticado as assinaturas, permissões, frescor e números das RPCs vivas do BI."
   - "Validar tool calling real do modelo configurado no OpenRouter e o fluxo SSE completo."
   - "Executar os smokes F1-F10, perguntas douradas e conciliação com as três dashboards."
   - "Validar os overrides padrão, todos os funis e somente REPASSE DE MAQUINA; neste checkout local as RPCs históricas não aceitam p_funis e o gateway falha fechado."
+  - "Executar smoke autenticado com usuário e administrador: saudação, duas perguntas na mesma thread, tool calling real, SSE, memória e números conciliados com os dashboards."
+  - "No momento, 2 contas têm bi.ya e ambas são admin; conceder bi.ya a um usuário comum antes do teste desse perfil."
   - "Executar reviewer; os módulos ya_agent.py, ya_memory.py e official.py ainda exigem revisão de tamanho/estrutura no gate posterior."
   - "Executar security condicional e QA conforme o blast radius antes de qualquer merge/release."
 
 safety:
-  - "O endpoint v2 permanece atrás de YA_AGENT_V2_ENABLED=false por padrão."
+  - "O código mantém YA_AGENT_V2_ENABLED=false por padrão; a produção está explicitamente com a flag true para teste autorizado."
   - "O chat legado foi preservado para rollback."
   - "A migration é aditiva/idempotente; foi aplicada somente no banco Supabase self-hosted do Ceres BI após autorização explícita do usuário."
-  - "Não houve push/deploy de código nesta operação; o endpoint v2 permanece atrás de YA_AGENT_V2_ENABLED=false."
+  - "O código foi publicado no SHA 2ce52bd4ee237c61c628f98cd9545f44998fac3f; o chat legado permanece disponível para rollback desligando as flags."
   - "Procedimento canônico e diferença entre ceres-prod e ceres-vps estão documentados em docs/architecture/production-runtime.md e no handoff da migration."
