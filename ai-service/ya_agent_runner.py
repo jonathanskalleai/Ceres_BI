@@ -234,12 +234,13 @@ class AgentRunner:
                                 warning="Limite de tempo atingido.",
                             )
                     tool_outputs.append(execution)
-                    required_tool = contract.next_required_tool(tool_outputs)
                     if execution.source:
                         source_list.append(execution.source)
                     artifact_list.extend(execution.artifacts)
                     await self._persist_tool(conversation_id, user_message_id, execution, name, arguments, trace_id, contract.query_spec())
-                    await self._emit(on_event, "tool_result", {"label": TOOL_LABELS.get(name, "a fonte do BI"), "status": execution.status, "source": public_source(execution.source).model_dump() if execution.source else None, "artifacts": [artifact.model_dump() for artifact in execution.artifacts], "warnings": execution.warnings[:6]})
+                    wants_card = any(w in request.message.lower() for w in ("card", "cards", "grafico", "gráfico", "tabela", "planilha")) or name == "consultar_banco_bi"
+                    emitted_arts = [artifact.model_dump() for artifact in execution.artifacts] if wants_card else []
+                    await self._emit(on_event, "tool_result", {"label": TOOL_LABELS.get(name, "a fonte do BI"), "status": execution.status, "source": public_source(execution.source).model_dump() if execution.source else None, "artifacts": emitted_arts, "warnings": execution.warnings[:6]})
                     messages.append(tool_result_message(call_id, execution.model_payload()))
                     tool_context.last_sources = list(source_list)
                 if limit_reached:
@@ -282,7 +283,8 @@ class AgentRunner:
         await self._emit(on_event, "status", {"message": "Preparando a resposta…"})
         await self._emit(on_event, "delta", {"text": final_answer})
         public_sources = [public_source(source) for source in unique_sources(source_list)]
-        if not final_answer or "Não consegui" in final_answer:
+        wants_cards = any(w in request.message.lower() for w in ("card", "cards", "grafico", "gráfico", "tabela", "planilha")) or any(e.tool_name == "consultar_banco_bi" for e in tool_outputs)
+        if not wants_cards or not final_answer or "Não consegui" in final_answer:
             public_artifacts = []
         else:
             public_artifacts = unique_artifacts(artifact_list)
