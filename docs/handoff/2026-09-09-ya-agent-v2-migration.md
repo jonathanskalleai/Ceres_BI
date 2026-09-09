@@ -31,8 +31,9 @@ executadas conforme a seção seguinte.
 ## Publicação do código
 
 Depois da migration, o código foi publicado na mesma VPS pela branch
-`release/bi-consolidacao-fase-1`. O SHA final no GitHub, no checkout remoto e
-nos serviços é `2ce52bd4ee237c61c628f98cd9545f44998fac3f`.
+`release/bi-consolidacao-fase-1`. O SHA do código efetivamente publicado nos
+serviços é `2ce52bd4ee237c61c628f98cd9545f44998fac3f`; commits posteriores
+somente de documentação não alteram essa imagem de runtime.
 
 - `ceresbi_web` e `ceresbi_ai`: `1/1`;
 - `YA_AGENT_V2_ENABLED=true` no serviço AI;
