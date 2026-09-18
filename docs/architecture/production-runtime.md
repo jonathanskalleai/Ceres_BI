@@ -31,10 +31,12 @@ Postgres mirror no Supabase self-hosted (VPS / Docker Swarm)
 
 O sincronismo atual nao e feito pelo Supabase nem pelo stack `etl` do Swarm.
 
-1. O cron ativo `/etc/cron.d/ceres-etl-simple` roda a cada 15 minutos:
-   `/opt/etl-stack/run_etl_parallel.sh`.
-2. O launcher cria cinco containers efemeros com `docker run --rm`, imagem
-   `etl-ceres:v15`, e aguarda todos terminarem.
+1. O cron ativo `/etc/cron.d/ceres-etl-sequential` roda a cada 15 minutos:
+   `/opt/etl-stack/run_etl_sequential.sh` (o `ceres-etl-simple` e o
+   `run_etl_parallel.sh` citados em versoes antigas desta doc nao existem mais).
+2. O launcher roda os cinco blocos em SERIE com `docker run --rm`, imagem
+   `etl-ceres:v21`, com lock global nao-bloqueante contra sobreposicao e ate
+   2 tentativas por bloco.
 3. Cada container executa `etl_campos_dealer.py --block <A-E> --once` e grava o
    resultado no schema `mirror` do Postgres self-hosted.
 4. O resultado de cada ciclo vai para `/var/log/etl/etl.log`; a situacao das
@@ -58,6 +60,39 @@ incidente, use nesta ordem:
 
 Os arquivos `ceres-etl-stack.disabled`, `ceres-etl.disabled` e o caminho
 `/opt/etl/` sao historicos. Nao os reative como tentativa de corrigir sincronismo.
+
+### Incidente 2026-09-12 -> 2026-09-18: ETL parado 6 dias por IP fixo
+
+Sintoma relatado: mapa de `/bi/acoes` "sem pinos" em datas recentes. Causa real:
+o ETL nao gravava nada desde 2026-09-12 20:00 (-03). 9.654 falhas consecutivas
+com `connection to server at "10.0.1.43", port 5432 failed: No route to host`.
+
+O `config.yaml` tinha o IP do container Postgres fixo em `10.0.1.43`. O container
+foi recriado em 2026-09-12 23:07:54 UTC — 7 minutos depois do ultimo ciclo bom
+(23:00:31 UTC) — e subiu como `10.0.1.54`. O IP antigo deixou de existir na rede.
+
+Correcao aplicada: `postgres.host` passou a ser `127.0.0.1`. O launcher ja roda os
+containers com `--network container:<postgres>`, ou seja dentro do namespace de
+rede do proprio banco, e o `pg_hba.conf` tem `host all all 127.0.0.1/32 trust`.
+Localhost nao muda quando o container e recriado, o que elimina a classe do bug.
+Imagem `etl-ceres:v21` (a v20 ficou intacta para rollback; `ETL_IMAGE` sobrescreve
+a tag no launcher).
+
+Cuidados que este incidente ensinou:
+- O `config.yaml` e **embutido na imagem** (`COPY config/` no Dockerfile, sem `-v`).
+  Editar o arquivo no host nao muda nada sem `docker build`.
+- `/opt/etl-stack` **nao esta sob controle de versao**: a correcao vive no disco da
+  VPS. Backups do incidente: `config.yaml.bak-20260918-preflight` e
+  `run_etl_sequential.sh.bak-20260918`.
+- `config.host.yaml` ainda tem o IP antigo, mas nenhum consumidor o referencia e a
+  porta 5432 nao esta publicada no host — ele so serviria para execucao fora do
+  Docker, que hoje nao existe.
+- `pg_stat_user_tables` com `n_tup_ins = 0` e `last_analyze` NULL em todo o schema
+  `mirror` foi o sinal que revelou o incidente: leituras eram contadas (9.222
+  `idx_scan`), escritas nao. Antes de culpar o frontend por "dado que nao aparece",
+  confira o frescor do mirror.
+- Antes de rodar o ETL manualmente, faca dump do schema: ele usa `TRUNCATE` +
+  `INSERT ... ON CONFLICT`, e uma falha no meio deixa o mirror pior que dado velho.
 
 ## Acesso e seguranca operacional
 
