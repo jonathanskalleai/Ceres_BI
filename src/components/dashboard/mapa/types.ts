@@ -84,6 +84,13 @@ export const formatCurrency = (v: number): string =>
  * nível — resolver `var()` para hex aqui mudaria o que é pintado. Aqui é
  * divIcon (SVG no DOM), que resolve a custom property; a armadilha do `var()`
  * silenciosamente virar preto é do canvas (`CircleMarker`), não deste caminho.
+ *
+ * INVARIANTE: a cor vem SEMPRE de constante do código, nunca de payload de RPC
+ * nem de entrada do usuário. Hoje são 7 valores possíveis (3 de situação da
+ * oportunidade, 1 de cliente, 3 de nível de região), então o Map é limitado por
+ * construção e não precisa de eviction. Colorir pino com valor vindo do banco
+ * transforma este cache em crescimento ilimitado — nesse dia, ele precisa de
+ * limite.
  */
 const pinIconPorCor = new Map<string, L.DivIcon>();
 

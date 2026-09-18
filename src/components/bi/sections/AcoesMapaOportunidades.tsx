@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, MapPin } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BiGestaoErro } from "@/components/bi/BiGestaoErro";
@@ -63,6 +63,9 @@ interface Props {
 export function AcoesMapaOportunidades({ vendedor, cidade, from, to, active = true }: Props) {
   const [aberto, setAberto] = useState(true);
   const [fullscreen, setFullscreen] = useState(false);
+  // Identidade estável: criado inline, este handler descia como prop nova a cada
+  // render e desligava o `memo` do MapView (que é compartilhado com /crm/mapa).
+  const alternarFullscreen = useCallback(() => setFullscreen((v) => !v), []);
   const shouldLoad = active && aberto;
   const { data, isLoading, error } = useAcoesMapaRpc({
     vendedor,
@@ -150,7 +153,7 @@ export function AcoesMapaOportunidades({ vendedor, cidade, from, to, active = tr
                   locaisNoMapa={locaisNoMapa}
                   oportunidadesAgrupadas={oportunidadesAgrupadas}
                   fullscreen={fullscreen}
-                  onToggleFullscreen={() => setFullscreen((v) => !v)}
+                  onToggleFullscreen={alternarFullscreen}
                 />
               </Suspense>
             </>

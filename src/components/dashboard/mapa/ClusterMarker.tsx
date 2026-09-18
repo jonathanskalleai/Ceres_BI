@@ -28,7 +28,8 @@ function corCluster(points: OportunidadePoint[]): string {
  * Memoizado pelo mesmo motivo do pino individual: o `position` é um array
  * literal, então sem a barreira todo render do pai reposicionava os clusters. O
  * `points` de cada grupo já é estável entre renders (vem do `useMemo` de
- * clusterização em `AcoesMapaOportunidades`).
+ * clusterização em `AcoesMapaOportunidades`); a LISTA de clusters é estabilizada
+ * pelo `useMemo` de `clusterMarkers` em `AcoesMapaCanvas`.
  */
 export const ClusterMarker = memo(function ClusterMarker({ points, lat, lng }: ClusterMarkerProps) {
   const count = points.length;
