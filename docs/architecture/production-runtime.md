@@ -24,6 +24,14 @@ Postgres mirror no Supabase self-hosted (VPS / Docker Swarm)
   Cloud identificado por `supabase/config.toml`.
 - Aplicacao publica: `https://ceresbi.vouxconsultoria.com.br`; o service
   `ceresbi_web` entrega a imagem local `ceresbi:latest` por Traefik.
+- **Os security headers e a CSP vivem em `nginx.conf`, DENTRO da imagem web** —
+  nao no Traefik e nao em config do host. Consequencia pratica: mudar CSP exige
+  rebuild da imagem + `deploy.sh`, nunca um reload de nginx na VPS. A CSP esta
+  duplicada em 3 blocos `location` (`/assets/`, `/` e `= /index.html`); alterar
+  um e esquecer os outros produz bug por rota. Em 2026-09-12 um aperto de
+  `img-src` bloqueou as tiles do OpenStreetMap e o mapa do BI ficou sem fundo em
+  producao por dias, em silencio: CSP nao lanca exception nem chega a error
+  tracking. Ver armadilhas 34-35 em `docs/features/acoes-bi.md`.
 - Checkout de deploy na VPS: `/home/jonathan/ceresbi`, branch `main`. O antigo
   caminho `/root/ceresbi` nao existe.
 

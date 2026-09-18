@@ -188,6 +188,8 @@ mesma resposta. Os 4 negocios com `ngo_conclusao` divergente sao resolvidos por
 31. **`useAlturaColunaEsquerda` (`src/hooks/bi/`) escreve a altura direto no style, sem estado.** Era `useState` dentro da `AcoesSection`: cada medicao do ResizeObserver re-renderizava a secao inteira e, com ela, o mapa. Como o mapa muda de altura conforme as respostas chegam, uma medicao disparava a proxima. Reintroduzir `setState` ali recria a cascata
 32. **`MapView` e COMPARTILHADO com `/crm/mapa`** (`CrmMapaRpc.tsx` → `DashboardMapa` → `LazyMapView`), que usa `clientes` e `regioes`. A camada de pinos vive em `MapMarkers.tsx` (extraida para manter o `MapView` abaixo do aviso de 300 linhas). Otimizar o mapa de uma tela sem rodar o smoke da outra e quebrar o vizinho para consertar o proprio
 33. **O fullscreen monta um SEGUNDO `MapContainer`** com todos os markers de novo (`MapView.tsx`, overlay). O `memo` reduz o custo de cada render, mas com o fullscreen aberto o numero de pinos no DOM dobra — pre-existente, nao resolvido aqui
+34. **A CSP do `nginx.conf` (imagem web, nao Traefik) governa se o FUNDO do mapa aparece.** `img-src` precisa conter `https://*.tile.openstreetmap.org`: as tiles sao `<img>` de dominio externo. Os pinos sao SVG inline via `divIcon`, contam como `'self'` e **aparecem mesmo com a CSP bloqueando as tiles** — o sintoma e "pinos sim, mapa nao", com o pane cinza e os pinos flutuando sobre nada. Introduzido em `24b2e2c` (hardening de seguranca) e so descoberto em producao pelo usuario, porque CSP nao lanca exception, nao cai em `catch`, nao chega a error tracking, e **jsdom nao aplica CSP** (a suite seguiu 100% verde). A CSP e triplicada em 3 blocos `location` (`/assets/`, `/`, `= /index.html`): alterar um e esquecer os outros da bug por rota. Gate de regressao: `MapView.csp.test.ts` cruza a URL do `TileLayer` com o `img-src` do `nginx.conf` — verificado que ele FALHA na CSP antiga e passa na corrigida. Mudar CSP exige **rebuild da imagem + `deploy.sh`**, nao reload de config no host
+35. **A mesma CSP ainda bloqueia `api.dicebear.com` e `fonts.googleapis.com`** (confirmado em Chromium real, nao inferido): os avatares dos rankings caem no fallback de iniciais e a tipografia do `index.html` (Inter/Instrument Serif/JetBrains Mono) nunca carrega — o app renderiza com `Space Grotesk`/`DM Sans` self-hospedadas via `@fontsource` em `main.tsx`. Nao foi corrigido junto com o mapa de proposito: sao decisoes de produto/privacidade separadas (self-hospedar as fontes NAO afrouxa a CSP e melhora o LCP; o dicebear manda o nome do consultor no `seed` para um terceiro)
 
 ### v8 (dedup + paginação numerada — novas armadilhas)
 18. **Dedup condicional em rpc_acoes_detalhe v5:** ROW_NUMBER PARTITION BY ngo_nronegocio aplica-se APENAS quando p_status IS NOT NULL. Quando p_status IS NULL (sem filtro), todas as ações retornam sem dedup — alterar essa lógica quebra a contagem total vs filtrada
@@ -212,6 +214,12 @@ mesma resposta. Os 4 negocios com `ngo_conclusao` divergente sao resolvidos por
 - `/crm/mapa` no ambiente vivo: alternar Clientes ↔ Regioes, pinos champagne e por nivel, popup ok
 - Abrir e fechar TELA CHEIA nas duas telas → sem pino fantasma
 - **Nenhum numero da tela muda com este fix.** Se um indicador se mover, nao e performance: e regressao
+
+### Fundo do mapa / CSP (v9.2 — SEMPRE rodar ao tocar CSP, headers ou provedor de tile)
+- `npx vitest run src/components/dashboard/mapa/__tests__/MapView.csp.test.ts` → 5/5. Cruza a URL do `TileLayer` com o `img-src` do `nginx.conf`; e o unico gate que pega a classe do bug de `24b2e2c` antes do deploy
+- `curl -sI https://ceresbi.vouxconsultoria.com.br | grep -i content-security-policy` → `img-src` contem `tile.openstreetmap.org`
+- `/bi/acoes` E `/crm/mapa` no ambiente vivo: **o FUNDO do mapa renderiza** (tiles OSM visiveis, nao pane cinza), e o console do navegador nao tem `violates the following Content Security Policy`. **Pino visivel NAO prova mapa funcionando** — foi exatamente esse falso positivo que deixou o bug ir a producao: os itens de smoke acima olhavam so os pinos
+- Ao apertar CSP ou qualquer header de seguranca: inventariar os hosts externos que a tela usa e fazer smoke de cada um. CSP falha em silencio absoluto
 
 ### v9 / funil v6 (contrato de tres fontes — SEMPRE rodar)
 - `npm run build` → sucesso; `npx vitest run` → 169/169 (12 arquivos)

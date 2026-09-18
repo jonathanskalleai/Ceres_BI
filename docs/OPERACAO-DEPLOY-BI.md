@@ -26,6 +26,17 @@ Git, alterações rastreadas, segredos ausentes ou serviços com imagem diferent
 do SHA construído. Ao final, ele verifica a página pública e a saúde do serviço
 de IA.
 
+Atenção ao ler a saída: o smoke do `/api/ai/health` pode responder `404` nas
+primeiras tentativas enquanto o Traefik troca de backend, e o script imprime
+`Done` na mesma saída onde esses `404` apareceram. `Done` com `404` acima não é
+falha, mas também não é evidência — confirme o estado final por fora
+(`docker service ls` com a tag do SHA + `curl` nos endpoints).
+
+Os security headers e a CSP ficam em `nginx.conf`, dentro da imagem web: mudar
+CSP exige passar por este deploy (rebuild), não por reload de nginx na VPS.
+Se a alteração afetar `img-src`, `script-src` ou `connect-src`, faça smoke dos
+recursos externos da tela — CSP falha em silêncio, sem exception e sem log.
+
 ## Agenda semanal
 
 Instale a linha abaixo no crontab do usuário que opera Docker, ajustando o
