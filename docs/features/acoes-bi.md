@@ -1,7 +1,7 @@
 ---
 feature: acoes-bi
-updated_at: 2026-08-03T00:30:00Z
-updated_by: "@dev (contrato v9/v6: oportunidades, ganhos e perdidos separados)"
+updated_at: 2026-09-17T21:20:00Z
+updated_by: "@dev (v9.1: performance de render do mapa — cache de icone + memo; nenhum numero alterado)"
 status: active
 ---
 
@@ -86,7 +86,10 @@ mesma resposta. Os 4 negocios com `ngo_conclusao` divergente sao resolvidos por
 - `src/components/bi/charts/InlineBar.tsx` — barra horizontal inline para rankings (NOVO v7.2, 34 linhas)
 - `src/components/bi/charts/BarChart.tsx` — propaga `itemColors` para SvgBarV como `barColors` (v7.3, cor por barra)
 - `src/components/bi/charts/primitives/SvgBarV.tsx` — aceita `barColors?: string[]` (cor por índice, fallback para `color` se ausente) (v7.3)
-- `src/components/dashboard/mapa/ClusterMarker.tsx` — agrupa pinos por coordenada (4 decimais), badge numérico, popup com lista (NOVO v7.2, 93 linhas)
+- `src/components/dashboard/mapa/ClusterMarker.tsx` — agrupa pinos por coordenada (4 decimais), badge numérico, popup com lista (v7.2; `memo` na v9.1)
+- `src/components/dashboard/mapa/MapMarkers.tsx` — camada de pinos dos 3 modos (`oportunidades` | `clientes` | `regioes`), extraída do `MapView` na v9.1; cada pino é um `memo` próprio (NOVO v9.1, 120 linhas)
+- `src/components/dashboard/mapa/types.ts` — tipos do mapa + `createPinIcon` com **cache de `L.DivIcon` por cor** (v9.1)
+- `src/hooks/bi/useAlturaColunaEsquerda.ts` — medição de altura casada entre as colunas do termômetro, **sem estado** (escreve no style do nó). Extraído da `AcoesSection` na v9.1 (NOVO v9.1, 54 linhas)
 - `src/bi/debug/isBiDebugEnabled.ts` — gate de debug por flag isBiDebugEnabled (NOVO)
 - `src/services/bi/acoesGestaoService.ts` — logica de transformacao dos dados de gestao (NOVO)
 - `src/lib/bi/acoesGestaoUtils.ts` — utilitarios: diasParado, mapeadores de criteria (NOVO)
@@ -178,6 +181,14 @@ mesma resposta. Os 4 negocios com `ngo_conclusao` divergente sao resolvidos por
 16. **AcoesGestaoCarteiraSummary retorna `null` se vazio:** componente invisível quando não há dados — não é bug, é design. Mas se o hook falhar (erro de rede), também retorna null → indistinguível de "sem dados"
 17. **PieChartWithLabels NÃO é dead code:** removido de AcoesSection (v7.3) mas ainda usado em 5 outras sections. Não deletar o componente
 
+### v9.1 (performance de render do mapa — novas armadilhas)
+28. **`createPinIcon` tem cache por cor, e a chave e a cor CRUA.** O `react-leaflet` compara `icon` por IDENTIDADE (`Marker.js`: `props.icon !== prevProps.icon`); um `L.DivIcon` novo por render fazia todo pino chamar `setIcon()`, que no Leaflet roda `_initIcon()` — remove o no do pane, recria, re-registra a interacao e re-executa `bindPopup()`. Medido: 5 pinos x 3 renders = **15 recriacoes** → **0**. NAO normalizar a chave para hex: os modos `clientes` (`var(--voux-champagne-400)`) e `regioes` (cor por nivel) dependem da string crua. Aqui e divIcon (SVG no DOM), que RESOLVE `var()` — o inverso da armadilha 10, que e do canvas
+29. **`position` do `Marker` e array literal:** `[lat, lng]` novo a cada render faz `props.position !== prevProps.position` e o Leaflet reposiciona todos os pinos sem nenhuma coordenada ter mudado. Por isso cada pino e um componente `memo` proprio (`OportunidadePin`, `ClienteMarker`, `RegiaoMarker`), nao JSX inline no `.map()`
+30. **`memo` no `MapView` so paga se o PAI estabilizar as props — inclusive `children`.** `AcoesMapaCanvas` usa constantes de modulo (`SEM_CLIENTES`, `SEM_REGIOES`, `NAO_TROCA_MODO`, `SEM_CLIQUE_EM_REGIAO`) e `useMemo` no resumo e nos `ClusterMarker`. Voltar a criar `clientePoints={[]}` ou `setMapView={() => {}}` inline no JSX nao quebra a tela — silenciosamente desliga o memo e o travamento volta
+31. **`useAlturaColunaEsquerda` (`src/hooks/bi/`) escreve a altura direto no style, sem estado.** Era `useState` dentro da `AcoesSection`: cada medicao do ResizeObserver re-renderizava a secao inteira e, com ela, o mapa. Como o mapa muda de altura conforme as respostas chegam, uma medicao disparava a proxima. Reintroduzir `setState` ali recria a cascata
+32. **`MapView` e COMPARTILHADO com `/crm/mapa`** (`CrmMapaRpc.tsx` → `DashboardMapa` → `LazyMapView`), que usa `clientes` e `regioes`. A camada de pinos vive em `MapMarkers.tsx` (extraida para manter o `MapView` abaixo do aviso de 300 linhas). Otimizar o mapa de uma tela sem rodar o smoke da outra e quebrar o vizinho para consertar o proprio
+33. **O fullscreen monta um SEGUNDO `MapContainer`** com todos os markers de novo (`MapView.tsx`, overlay). O `memo` reduz o custo de cada render, mas com o fullscreen aberto o numero de pinos no DOM dobra — pre-existente, nao resolvido aqui
+
 ### v8 (dedup + paginação numerada — novas armadilhas)
 18. **Dedup condicional em rpc_acoes_detalhe v5:** ROW_NUMBER PARTITION BY ngo_nronegocio aplica-se APENAS quando p_status IS NOT NULL. Quando p_status IS NULL (sem filtro), todas as ações retornam sem dedup — alterar essa lógica quebra a contagem total vs filtrada
 19. **Total conta negócios únicos no modo filtrado:** quando dedup ativo, o total retornado é COUNT(DISTINCT ngo_nronegocio), não COUNT(*) das linhas — PaginationControls usa esse total para calcular páginas. Trocar por count de linhas quebra a paginação
@@ -193,6 +204,15 @@ mesma resposta. Os 4 negocios com `ngo_conclusao` divergente sao resolvidos por
 27. **Oportunidade e ESTADO:** mes fechado muda retroativamente quando um negocio dele for concluido depois. Nao abrir chamado de "carga errada" sem antes checar se foi isso
 
 ## Smoke
+### Performance de render do mapa (v9.1 — SEMPRE rodar ao tocar o mapa)
+- `npx vitest run src/components/dashboard/mapa` → 8/8. Os dois arquivos sao gate de regressao, nao decoracao:
+  - `OportunidadeMarkers.render.test.tsx` conta `L.Marker.prototype.setIcon` / `setLatLng` com o pai re-renderizando 3x sem mudar dados → deve ser **0**. Antes do fix dava **15** (5 pinos x 3 renders). Se voltar a ser > 0, a cascata de re-render voltou
+  - `MapView.modos.test.tsx` e o smoke do VIZINHO `/crm/mapa`: modo `clientes` com 2 pinos e `var(--voux-champagne-400)` CRU no html, modo `regioes` com as cores de cada nivel, fullscreen montando 2 `.leaflet-container`
+- `/bi/acoes` no ambiente vivo: pinos aparecem na primeira carga (azul em andamento / verde ganho / vermelho perdido), hover e clique abrem o conteudo certo, cluster com badge numerico
+- `/crm/mapa` no ambiente vivo: alternar Clientes ↔ Regioes, pinos champagne e por nivel, popup ok
+- Abrir e fechar TELA CHEIA nas duas telas → sem pino fantasma
+- **Nenhum numero da tela muda com este fix.** Se um indicador se mover, nao e performance: e regressao
+
 ### v9 / funil v6 (contrato de tres fontes — SEMPRE rodar)
 - `npm run build` → sucesso; `npx vitest run` → 169/169 (12 arquivos)
 - `SELECT (public.rpc_acoes_bi('2026-07-01','2026-07-31',NULL,NULL,NULL))::text` → o objeto `kpis` **NAO** contem as chaves `valorAberto`, `negociosAberto`, `valorTocado`, `negociosTocados` (bucket "aberto" removido inteiro)
