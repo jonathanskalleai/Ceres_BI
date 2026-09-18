@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { type DateRange } from "react-day-picker";
 import { useAcoesBIRpc } from "@/hooks/bi/useAcoesBIRpc";
 import { useAcoesEvolucaoMensalAnoCorrenteRpc } from "@/hooks/bi/useAcoesEvolucaoMensalAnoCorrenteRpc";
@@ -31,6 +31,7 @@ import { CHART_COLORS } from "@/lib/chartPalette";
 import { faixaToDiasRange } from "@/lib/bi/acoesGestaoUtils";
 import { toISODate, getPreviousPeriod, formatMonthYear, formatDateBR } from "@/lib/dateUtils";
 import { useDelayedReady } from "@/hooks/useDelayedReady";
+import { useAlturaColunaEsquerda } from "@/hooks/bi/useAlturaColunaEsquerda";
 import type { AcoesFunil, AcoesFunilMeta, RpcAcoesBI } from "@/types/biRpc";
 
 const EMPTY: RpcAcoesBI = {
@@ -66,48 +67,9 @@ interface Props {
   dateRange?: DateRange;
 }
 
-/**
- * No desktop o termômetro é uma lista rolável ao lado de dois cards com altura
- * variável. CSS não consegue atrelar a altura máxima de um irmão à altura real
- * do outro sem deixar o conteúdo da direita definir a linha do grid. A medição
- * mantém o fim dos dois lados alinhado mesmo quando textos ou dados mudam.
- */
-function useAlturaColunaEsquerda() {
-  const ref = useRef<HTMLDivElement>(null);
-  const [altura, setAltura] = useState<number>();
-
-  useEffect(() => {
-    const elemento = ref.current;
-    if (!elemento) return;
-
-    const desktop = window.matchMedia("(min-width: 1024px)");
-    const medir = () => {
-      if (!desktop.matches) {
-        setAltura(undefined);
-        return;
-      }
-
-      const proximaAltura = Math.ceil(elemento.getBoundingClientRect().height);
-      setAltura((atual) => atual === proximaAltura ? atual : proximaAltura);
-    };
-
-    const observador = new ResizeObserver(medir);
-    observador.observe(elemento);
-    desktop.addEventListener("change", medir);
-    medir();
-
-    return () => {
-      observador.disconnect();
-      desktop.removeEventListener("change", medir);
-    };
-  }, []);
-
-  return { ref, altura };
-}
-
 export default function AcoesSection({ active, dateRange }: Props) {
   const { vendedor, cidade, tipoAcao, statusNegocio } = useNegociosFilter();
-  const { ref: colunaEsquerdaRef, altura: alturaColunaEsquerda } = useAlturaColunaEsquerda();
+  const { medidoRef: colunaEsquerdaRef, alvoRef: colunaTermometroRef } = useAlturaColunaEsquerda();
   const [diasSemAcaoAberto, setDiasSemAcaoAberto] = useState(false);
 
   const from = useMemo(() => toISODate(dateRange?.from), [dateRange?.from]);
@@ -310,7 +272,7 @@ export default function AcoesSection({ active, dateRange }: Props) {
             />
           </ChartCard>
         </div>
-        <div className="min-h-0" style={alturaColunaEsquerda ? { height: alturaColunaEsquerda } : undefined}>
+        <div ref={colunaTermometroRef} className="min-h-0">
           <AcoesTermometroFechamento
             from={from}
             to={to}

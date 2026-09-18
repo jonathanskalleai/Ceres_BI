@@ -68,8 +68,30 @@ export const formatCurrency = (v: number): string =>
       ? `R$ ${(v / 1e3).toFixed(0)}K`
       : `R$ ${v.toFixed(0)}`;
 
-export const createPinIcon = (color: string): L.DivIcon =>
-  L.divIcon({
+/**
+ * Uma instância de ícone por cor, reaproveitada entre renders e entre markers.
+ *
+ * O `react-leaflet` compara o prop `icon` por IDENTIDADE (`Marker.js`:
+ * `props.icon !== prevProps.icon`). Um `L.DivIcon` novo a cada render fazia todo
+ * pino chamar `setIcon()`, que no Leaflet roda `_initIcon()` — remove o elemento
+ * do pane, recria, re-registra a interação e ainda re-executa `bindPopup()`. Com
+ * o cache, o pino só é reconstruído quando a cor realmente muda. `L.Icon` é
+ * feito para ser compartilhado (o próprio `L.Icon.Default` é uma instância só
+ * para todos os markers): `createIcon()` gera um elemento novo por chamada.
+ *
+ * A chave é a string de cor CRUA, sem normalizar. O modo `clientes` passa
+ * `var(--voux-champagne-400)` e o modo `regioes` passa uma cor arbitrária por
+ * nível — resolver `var()` para hex aqui mudaria o que é pintado. Aqui é
+ * divIcon (SVG no DOM), que resolve a custom property; a armadilha do `var()`
+ * silenciosamente virar preto é do canvas (`CircleMarker`), não deste caminho.
+ */
+const pinIconPorCor = new Map<string, L.DivIcon>();
+
+export const createPinIcon = (color: string): L.DivIcon => {
+  const emCache = pinIconPorCor.get(color);
+  if (emCache) return emCache;
+
+  const icon = L.divIcon({
     html: `<svg width="18" height="42" viewBox="0 0 18 42" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="9" cy="9" r="8.5" fill="${color}" stroke="#0f172a" stroke-width="1"/>
       <circle cx="6.5" cy="5.5" r="3" fill="rgba(255,255,255,0.38)"/>
@@ -82,3 +104,7 @@ export const createPinIcon = (color: string): L.DivIcon =>
     popupAnchor: [0, -42],
     tooltipAnchor: [0, -42],
   });
+
+  pinIconPorCor.set(color, icon);
+  return icon;
+};

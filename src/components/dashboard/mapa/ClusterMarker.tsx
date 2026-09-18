@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import { Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import { OPORTUNIDADE_ABERTA_PIN_COLOR, type OportunidadePoint } from "@/components/dashboard/mapa";
@@ -24,8 +24,13 @@ function corCluster(points: OportunidadePoint[]): string {
  *
  * Mantém a mesma linguagem de pino dos negócios individuais e acrescenta o
  * badge numérico quando há mais de um negócio no mesmo ponto.
+ *
+ * Memoizado pelo mesmo motivo do pino individual: o `position` é um array
+ * literal, então sem a barreira todo render do pai reposicionava os clusters. O
+ * `points` de cada grupo já é estável entre renders (vem do `useMemo` de
+ * clusterização em `AcoesMapaOportunidades`).
  */
-export function ClusterMarker({ points, lat, lng }: ClusterMarkerProps) {
+export const ClusterMarker = memo(function ClusterMarker({ points, lat, lng }: ClusterMarkerProps) {
   const count = points.length;
   const cor = corCluster(points);
 
@@ -107,4 +112,4 @@ export function ClusterMarker({ points, lat, lng }: ClusterMarkerProps) {
       </Popup>
     </Marker>
   );
-}
+});

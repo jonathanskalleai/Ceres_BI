@@ -1,9 +1,9 @@
-import { type ReactNode } from "react";
-import { MapPin, Users, Maximize2, Minimize2, X } from "lucide-react";
-import { MapContainer, TileLayer, Marker, Popup, Tooltip as LTooltip } from "react-leaflet";
+import { memo, type ReactNode } from "react";
+import { MapPin, Users, Maximize2, X } from "lucide-react";
+import { MapContainer, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { MONO, MapRegion, ClientePoint, MapViewMode, OportunidadePoint, createPinIcon, formatCurrency } from "./types";
-import { OportunidadeMarkers } from "./OportunidadeMarkers";
+import { MONO, type MapRegion, type ClientePoint, type MapViewMode, type OportunidadePoint } from "./types";
+import { MapMarkers } from "./MapMarkers";
 
 interface MapViewProps {
   mapView: MapViewMode;
@@ -33,68 +33,13 @@ interface MapViewProps {
   oportunidadesResumo?: { negocios: number; locais: number };
 }
 
-function MapMarkers({
-  mapView,
-  clientePoints,
-  regions,
-  onRegionClick,
-  oportunidades,
-}: Pick<MapViewProps, "mapView" | "clientePoints" | "regions" | "onRegionClick" | "oportunidades">) {
-  if (mapView === "oportunidades") {
-    return <OportunidadeMarkers oportunidades={oportunidades ?? []} />;
-  }
-
-  if (mapView === "clientes") {
-    return (
-      <>
-        {clientePoints.map((c) => (
-          <Marker key={c.cliente} position={[c.lat, c.lng]} icon={createPinIcon("var(--voux-champagne-400)")}>
-            <LTooltip direction="top" offset={[0, -42]}>
-              <div className="text-xs"><strong>{c.cliente}</strong><br />{c.cidade} · {c.totalAcoes} ações</div>
-            </LTooltip>
-            <Popup>
-              <div className="text-xs space-y-1 min-w-[180px]">
-                <p className="font-bold text-sm">{c.cliente}</p>
-                <p>Cidade: <strong>{c.cidade}</strong></p>
-                <p>Total ações: <strong>{c.totalAcoes}</strong></p>
-                <p>Última visita: <strong>{c.ultimaAcao || "—"}</strong></p>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
-      </>
-    );
-  }
-
-  return (
-    <>
-      {regions.map((r) => (
-        <Marker
-          key={r.cidade}
-          position={[r.lat, r.lng]}
-          icon={createPinIcon(r.color)}
-          eventHandlers={{ click: () => onRegionClick(r) }}
-        >
-          <LTooltip direction="top" offset={[0, -42]}>
-            <div className="text-xs"><strong>{r.cidade}</strong><br />{r.totalAcoes} ações · {r.clientes} clientes</div>
-          </LTooltip>
-          <Popup>
-            <div className="text-xs space-y-1 min-w-[180px]">
-              <p className="font-bold text-sm">{r.cidade}</p>
-              <p>Ações: <strong>{r.totalAcoes}</strong></p>
-              <p>Clientes: <strong>{r.clientes}</strong></p>
-              <p>Pipeline: <strong>{formatCurrency(r.pipeline)}</strong></p>
-              <p>Visitas: <strong>{r.visitas}</strong></p>
-              <p>Nível: <span style={{ color: r.color, fontWeight: 700 }}>{r.level}</span></p>
-            </div>
-          </Popup>
-        </Marker>
-      ))}
-    </>
-  );
-}
-
-export const MapView = ({
+/**
+ * Memoizado para cortar a cascata de re-render que vinha do pai (a seção do BI
+ * remede altura por ResizeObserver e libera as consultas em ondas). O memo só
+ * paga se o pai estabilizar as props — incluindo `children`, que muda de
+ * identidade a cada render de quem o cria. `AcoesMapaCanvas` faz isso.
+ */
+export const MapView = memo(({
   mapView,
   setMapView,
   clientePoints,
@@ -166,7 +111,8 @@ export const MapView = ({
       )}
     </>
   );
-};
+});
+MapView.displayName = "MapView";
 
 function FullscreenOverlay({
   mapView,

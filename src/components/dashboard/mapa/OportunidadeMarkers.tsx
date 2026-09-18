@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Marker, Popup, Tooltip as LTooltip } from "react-leaflet";
 import { createPinIcon, formatCurrency, OPORTUNIDADE_ABERTA_PIN_COLOR, type OportunidadePoint } from "./types";
 
@@ -35,27 +36,42 @@ function OportunidadeInfo({ oportunidade }: { oportunidade: OportunidadePoint })
 }
 
 /**
+ * Um pino. Isolado em componente memoizado porque o `position` do `Marker` é um
+ * array literal: sem a barreira do `memo`, cada render do pai criava um array
+ * novo, `props.position !== prevProps.position` dava true e o Leaflet
+ * reposicionava todos os pinos sem que nenhuma coordenada tivesse mudado.
+ */
+const OportunidadePin = memo(function OportunidadePin({ oportunidade }: { oportunidade: OportunidadePoint }) {
+  return (
+    <Marker
+      position={[oportunidade.lat, oportunidade.lng]}
+      icon={createPinIcon(corSituacao(oportunidade.situacao))}
+    >
+      <LTooltip direction="top" offset={[0, -42]} className="mapa-oportunidade-tooltip">
+        <OportunidadeInfo oportunidade={oportunidade} />
+      </LTooltip>
+      <Popup>
+        <OportunidadeInfo oportunidade={oportunidade} />
+      </Popup>
+    </Marker>
+  );
+});
+
+/**
  * Pinos dos negócios que tiveram ação no período. O recorte é naturalmente
  * menor que o antigo estoque inteiro, então o marcador de localização é mais
  * legível do que as bolinhas e ainda deixa ganho/perdido inequívocos.
  */
-export function OportunidadeMarkers({ oportunidades }: { oportunidades: OportunidadePoint[] }) {
+export const OportunidadeMarkers = memo(function OportunidadeMarkers({
+  oportunidades,
+}: {
+  oportunidades: OportunidadePoint[];
+}) {
   return (
     <>
       {oportunidades.map((o) => (
-        <Marker
-          key={o.negocio}
-          position={[o.lat, o.lng]}
-          icon={createPinIcon(corSituacao(o.situacao))}
-        >
-          <LTooltip direction="top" offset={[0, -42]} className="mapa-oportunidade-tooltip">
-            <OportunidadeInfo oportunidade={o} />
-          </LTooltip>
-          <Popup>
-            <OportunidadeInfo oportunidade={o} />
-          </Popup>
-        </Marker>
+        <OportunidadePin key={o.negocio} oportunidade={o} />
       ))}
     </>
   );
-}
+});
