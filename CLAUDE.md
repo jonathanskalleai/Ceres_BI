@@ -36,10 +36,13 @@ services + hooks React Query → telas React
    `supabase/config.toml` e o MCP do Supabase apontam para outro alvo/nao
    autenticam nesse banco. Para verificar producao, use SSH read-only na VPS e
    `docker exec` no Postgres; nao comece tentando o MCP.
-2. **Python e o ETL em uso.** O cron ativo chama
-   `/opt/etl-stack/run_etl_parallel.sh` a cada 15 minutos e cria cinco containers
-   efemeros `etl-ceres:v15`. O antigo stack Swarm `etl_etl-*` (v14) ainda aparece,
-   mas nao e o agendador ativo; replicas `0/0` nele nao provam dessincronizacao.
+2. **Python e o ETL em uso.** O cron ativo (`/etc/cron.d/ceres-etl-sequential`) chama
+   `/opt/etl-stack/run_etl_sequential.sh` a cada 15 minutos e roda cinco containers
+   efemeros `etl-ceres:v21` EM SERIE. O antigo stack Swarm `etl_etl-*` (v14) ainda
+   aparece, mas nao e o agendador ativo; replicas `0/0` nele nao provam
+   dessincronizacao. `run_etl_parallel.sh` + `etl-ceres:v15` seguem no disco, orfaos:
+   a v15 tem o IP de container fixo que parou o ETL por 6 dias em 2026-09-12 — nao a
+   execute (ver `docs/architecture/production-runtime.md`).
 3. **A RPC e o contrato de uma tela.** Antes de validar um numero ou escrever SQL,
    encontre o hook/service da tela, leia a RPC instalada e a migration mais
    recente. Nunca deduza a regra por nomes de coluna ou por uma consulta ad hoc.
@@ -375,12 +378,21 @@ ANTES de qualquer acao e retome sem perguntar ao usuario.
 
 ### ETL Python (caminho ATIVO)
 - **Tipo:** Python 3, `psycopg2-binary pyyaml pyodbc`, codigo em `/opt/etl-stack/etl_campos_dealer.py`.
-- **Agendador ativo:** `/etc/cron.d/ceres-etl-simple`, a cada 15 min, chama
-  `/opt/etl-stack/run_etl_parallel.sh`.
-- **Execucao ativa:** o launcher sobe cinco containers efemeros `docker run --rm`
-  da imagem `etl-ceres:v15`, um por bloco, todos em paralelo, cada um com
-  `etl_campos_dealer.py --block <A-E> --once`. Fluxo: SQL Server Campos Dealer →
-  Python ETL → tabelas `mirror` no Postgres/Supabase.
+- **Agendador ativo:** `/etc/cron.d/ceres-etl-sequential`, a cada 15 min, chama
+  `/opt/etl-stack/run_etl_sequential.sh` (lock global nao-bloqueante: um ciclo
+  atrasado faz o proximo ser SKIPPED, nao sobreposto).
+- **Execucao ativa:** o launcher roda cinco containers efemeros `docker run --rm`
+  da imagem `etl-ceres:v21`, um por bloco, EM SERIE, com ate 2 tentativas por bloco,
+  cada um com `etl_campos_dealer.py --block <A-E> --once`. Fluxo: SQL Server Campos
+  Dealer → Python ETL → tabelas `mirror` no Postgres/Supabase.
+- **Host do Postgres = `127.0.0.1`, nunca IP de container.** Os containers sobem com
+  `--network container:<postgres>`, dentro do namespace de rede do banco, e o
+  `pg_hba.conf` tem `host all all 127.0.0.1/32 trust`. Um IP fixo (`10.0.1.43`) no
+  `config.yaml` parou o ETL por 6 dias em 2026-09-12: o container foi recriado e
+  mudou de IP. O `config.yaml` e EMBUTIDO na imagem, entao mudar o arquivo no host
+  exige `docker build`. `/opt/etl-stack` nao esta sob controle de versao.
+- **Orfaos que nao devem ser executados:** `run_etl_parallel.sh` e `etl-ceres:v15`
+  seguem no disco/daemon, mas nenhum cron os chama e a v15 carrega o IP fixo antigo.
 - **Blocos:** A=crm_acoes/crm_negocios/crm_pedidos | B=crm_pedidos_item/crm_carteira_clientes/usuarios | C=ordens_servico/crm_funil_etapa/cliente_parque_maquinas | D=empresas/produtos | E=tecnico_tempo/agenda_servico/atendimentos_os/ocorrencias_os.
 - **Nao confundir com o stack `etl`:** os services `etl_etl-{a..e}` (imagem v14)
   ainda existem no Swarm, mas o cron ativo NAO os escala. Estados `0/0` ou `0/1`

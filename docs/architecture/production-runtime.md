@@ -10,7 +10,7 @@ Campos Dealer (SQL Server)
         |
         |  cron do host, a cada 15 min
         v
-Python ETL /opt/etl-stack (5 blocos paralelos, imagem etl-ceres:v15)
+Python ETL /opt/etl-stack (5 blocos EM SERIE, imagem etl-ceres:v21)
         |
         v
 Postgres mirror no Supabase self-hosted (VPS / Docker Swarm)
@@ -32,8 +32,11 @@ Postgres mirror no Supabase self-hosted (VPS / Docker Swarm)
 O sincronismo atual nao e feito pelo Supabase nem pelo stack `etl` do Swarm.
 
 1. O cron ativo `/etc/cron.d/ceres-etl-sequential` roda a cada 15 minutos:
-   `/opt/etl-stack/run_etl_sequential.sh` (o `ceres-etl-simple` e o
-   `run_etl_parallel.sh` citados em versoes antigas desta doc nao existem mais).
+   `/opt/etl-stack/run_etl_sequential.sh`.
+   ATENCAO: `run_etl_parallel.sh` (987 bytes, mtime Jul 1) ainda EXISTE no disco e
+   `etl-ceres:v15` ainda esta no daemon — estao ORFAOS (nenhum cron os chama), o que
+   e diferente de inexistentes. A v15 carrega o config com o IP fixo antigo, entao
+   rodar aquele script a mao RECRIA o incidente de 2026-09-12. Nao o execute.
 2. O launcher roda os cinco blocos em SERIE com `docker run --rm`, imagem
    `etl-ceres:v21`, com lock global nao-bloqueante contra sobreposicao e ate
    2 tentativas por bloco.
