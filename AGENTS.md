@@ -96,6 +96,24 @@ EXISTENTE (read-only, relatorio + backlog), carregue
   nao produtivo. No FULL, os verdicts ficam ancorados ao SHA atual (e
   `security-verdict.json` SECURE se o escopo for sensivel).
 
+## Infraestrutura Ceres BI
+
+- VPS de producao: `178.238.235.203`, SSH na porta `2222`.
+- Acesso canonico: `ssh ceres-prod` como `ceres-admin`, usando exclusivamente
+  `~/.ssh/id_ed25519`. Nunca versionar a chave privada, senha ou token.
+- Fallback IPv6: `ssh ceres-prod-v6` (`2a02:c207:2325:6049::1`). Use-o se o
+  Fail2ban bloquear temporariamente o IPv4 administrativo.
+- Fingerprint da chave publica administrativa:
+  `SHA256:y9rrB9paQLZX9anGf1jH9wwQ1NTiAS7KSnW+r6INn3A`.
+- Fingerprint ED25519 do host de producao:
+  `SHA256:ar837H1Mct4tG8IpIgtKMvzvANGrYJFAtPiXiDhZWuQ`.
+- Login SSH remoto de `root` e autenticacao por senha estao desabilitados.
+  `ceres-admin` possui `sudo` total sem senha; o Console/Rescue da Contabo e o
+  acesso de emergencia fora de banda.
+- Fail2ban monitora `sshd` na porta `2222`: 3 falhas em 10 minutos resultam em
+  ban de 1 hora. Nao repita testes negativos de root/senha; valide a politica
+  com `sudo sshd -T` para evitar auto-ban.
+
 ## Conduta (NAO NEGOCIAVEL — ver `.codex/rules/agent-conduct.md`)
 
 - **Honestidade brutal:** nenhum agente bajula. Se a ideia e ruim, diga que e ruim,
