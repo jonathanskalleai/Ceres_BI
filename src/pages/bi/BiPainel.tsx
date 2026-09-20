@@ -20,11 +20,11 @@ import { useEvolucaoGPO } from "@/hooks/useEvolucaoGPO";
 
 export default function BiPainel() {
   const { dateRange, categoria, funil, vendedor, cidade } = useNegociosFilter();
-  const { kpis, loading: painelLoading } = usePainelKPIsRpc(dateRange, categoria, funil, vendedor || undefined, cidade || undefined);
-  const { kpis: pedKpis, isLoading: pedLoading } = usePedidosKPIsRpc(dateRange, categoria, funil, vendedor || undefined, cidade || undefined);
+  const { kpis, loading: painelLoading, comparisonReady: painelComparisonReady } = usePainelKPIsRpc(dateRange, categoria, funil, vendedor || undefined, cidade || undefined);
+  const { kpis: pedKpis, isLoading: pedLoading, comparisonReady: pedComparisonReady } = usePedidosKPIsRpc(dateRange, categoria, funil, vendedor || undefined, cidade || undefined);
   const { kpis: cliKpis, isLoading: cliLoading } = useClientesKPIsRpc(dateRange, cidade || undefined);
-  const { kpis: svcKpis, isLoading: svcLoading } = useServicosKPIsRpc(dateRange, cidade || undefined);
-  const { kpis: crossKpis, isLoading: crossLoading } = useCrossKPIsRpc(dateRange, categoria, funil, vendedor || undefined, cidade || undefined);
+  const { kpis: svcKpis, isLoading: svcLoading, comparisonReady: svcComparisonReady } = useServicosKPIsRpc(dateRange, cidade || undefined);
+  const { kpis: crossKpis, isLoading: crossLoading, comparisonReady: crossComparisonReady } = useCrossKPIsRpc(dateRange, categoria, funil, vendedor || undefined, cidade || undefined);
   const { data: gpoData, isLoading: gpoLoading } = useEvolucaoGPO({ enabled: true });
 
   // Preserve every card and chart, but let a finished domain render while an
@@ -44,14 +44,14 @@ export default function BiPainel() {
         <TabsContent value="cards" className="space-y-2">
           <StatusDesconhecidoAlert count={kpis.negociosOutrosStatus} />
           <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
-            <PainelNegociosSection kpis={kpis} loading={negociosLoading} />
-            <PainelCrossSection crossKpis={crossKpis} loading={crossLoading} />
-            <PainelValoresSection kpis={kpis} loading={valoresLoading} />
-            <PainelPedidosSection pedKpis={pedKpis} loading={pedLoading} />
+            <PainelNegociosSection kpis={kpis} loading={negociosLoading} comparisonReady={painelComparisonReady} />
+            <PainelCrossSection crossKpis={crossKpis} loading={crossLoading} comparisonReady={crossComparisonReady} />
+            <PainelValoresSection kpis={kpis} loading={valoresLoading} comparisonReady={painelComparisonReady} />
+            <PainelPedidosSection pedKpis={pedKpis} loading={pedLoading} comparisonReady={pedComparisonReady} />
             <PainelClientesSection cliKpis={cliKpis} loading={cliLoading} />
-            <PainelServicosSection svcKpis={svcKpis} loading={svcLoading} />
+            <PainelServicosSection svcKpis={svcKpis} loading={svcLoading} comparisonReady={svcComparisonReady} />
           </div>
-          <PainelAcoesSection kpis={kpis} loading={acoesLoading} />
+          <PainelAcoesSection kpis={kpis} loading={acoesLoading} comparisonReady={painelComparisonReady} />
           <ChartCard
             title="Desempenho Comercial"
             description="Vendas, perdas e novas oportunidades — últimos 12 meses"

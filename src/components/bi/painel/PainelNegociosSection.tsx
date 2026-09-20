@@ -8,9 +8,10 @@ import type { PainelKPIs } from "@/hooks/bi/usePainelKPIsRpc";
 interface Props {
   kpis: PainelKPIs;
   loading: boolean;
+  comparisonReady: boolean;
 }
 
-export function PainelNegociosSection({ kpis, loading }: Props) {
+export function PainelNegociosSection({ kpis, loading, comparisonReady }: Props) {
   return (
     <>
       {(loading || !isEmpty(kpis.totalNegocios.value)) && (
@@ -18,7 +19,7 @@ export function PainelNegociosSection({ kpis, loading }: Props) {
           title="Total Negocios"
           value={fmtNum(kpis.totalNegocios.value)}
           icon={Briefcase}
-          previousValue={fmtNum(kpis.totalNegocios.previousValue)}
+          previousValue={comparisonReady ? fmtNum(kpis.totalNegocios.previousValue) : undefined}
           trend={kpis.totalNegocios.trend}
           loading={loading}
           formula="Quantidade de negocios diferentes no periodo. Conta cada negocio uma unica vez, mesmo que tenha varios produtos"
@@ -29,7 +30,7 @@ export function PainelNegociosSection({ kpis, loading }: Props) {
           title="Ganhos"
           value={fmtNum(kpis.ganhos.value)}
           icon={TrendingUp}
-          previousValue={fmtNum(kpis.ganhos.previousValue)}
+          previousValue={comparisonReady ? fmtNum(kpis.ganhos.previousValue) : undefined}
           trend={kpis.ganhos.trend}
           loading={loading}
           accentColor="var(--voux-success)"
@@ -42,7 +43,7 @@ export function PainelNegociosSection({ kpis, loading }: Props) {
           title="Perdidos"
           value={fmtNum(kpis.perdidos.value)}
           icon={TrendingDown}
-          previousValue={fmtNum(kpis.perdidos.previousValue)}
+          previousValue={comparisonReady ? fmtNum(kpis.perdidos.previousValue) : undefined}
           trend={kpis.perdidos.trend}
           invertTrend
           loading={loading}
@@ -56,7 +57,7 @@ export function PainelNegociosSection({ kpis, loading }: Props) {
           title="Em Andamento"
           value={fmtNum(kpis.andamento.value)}
           icon={Activity}
-          previousValue={fmtNum(kpis.andamento.previousValue)}
+          previousValue={comparisonReady ? fmtNum(kpis.andamento.previousValue) : undefined}
           trend={kpis.andamento.trend}
           loading={loading}
           formula="Negocios ainda abertos, sem resultado definido"
@@ -67,7 +68,7 @@ export function PainelNegociosSection({ kpis, loading }: Props) {
           title="Taxa de Conversao"
           value={fmtPct(kpis.taxaConversao.value)}
           icon={Target}
-          previousValue={fmtPct(kpis.taxaConversao.previousValue)}
+          previousValue={comparisonReady ? fmtPct(kpis.taxaConversao.previousValue) : undefined}
           trend={kpis.taxaConversao.trend}
           loading={loading}
           formula="Dos negocios que tiveram resultado, quantos % foram ganhos"

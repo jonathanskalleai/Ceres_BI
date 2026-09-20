@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { EtlHistoryPanel } from "@/components/bi/EtlHistoryPanel";
 import { useEtlStatus } from "@/hooks/bi/useEtlStatus";
 import type { EtlSyncStatus } from "@/types/biRpc";
+import { BiErrorState } from "@/components/bi/BiErrorState";
 
 function FreshnessBadge({ minutes, hasError }: { minutes: number; hasError: boolean }) {
   if (hasError) {
@@ -112,11 +113,25 @@ function SyncTable({ tables }: { tables: EtlSyncStatus[] }) {
 }
 
 export default function BiEtlMonitor() {
-  const { tables, isLoading } = useEtlStatus();
+  const { tables, isLoading, error, refetch } = useEtlStatus();
 
   const totalTables = tables.length;
-  const allHealthy = tables.every((t) => !t.error_message && t.minutes_since_sync < 1440);
+  const hasData = totalTables > 0;
+  const allHealthy = hasData && tables.every((t) => !t.error_message && t.minutes_since_sync < 1440);
   const lastSyncGlobal = tables.length > 0 ? tables[0].last_sync_at : null;
+
+  if (!isLoading && (error || !hasData)) {
+    return (
+      <section className="p-8" style={{ background: "var(--voux-bg)" }}>
+        <BiErrorState
+          message={error
+            ? "Não foi possível consultar a saúde do ETL. O estado não é OK até a fonte responder."
+            : "O monitor ETL não retornou nenhuma tabela. O estado não pode ser considerado saudável."}
+          onRetry={() => void refetch()}
+        />
+      </section>
+    );
+  }
 
   return (
     <section className="p-8 space-y-6" style={{ background: "var(--voux-bg)" }}>

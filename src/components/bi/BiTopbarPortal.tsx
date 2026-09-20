@@ -20,6 +20,7 @@ import {
 import { toISODate } from "@/lib/dateUtils";
 import { useListasFiltrosRpc } from "@/hooks/useListasFiltrosRpc";
 import { cn } from "@/lib/utils";
+import { shouldHideCategoryFunil } from "@/lib/bi/biRouteFilters";
 
 /**
  * Renders BI filters inside the AppShell topbar via React Portal.
@@ -49,10 +50,9 @@ export function BiTopbarPortal() {
   // Categoria/funil não participam do contrato reconciliado de Negócios & Funil;
   // tipo de ação também não é filtro dessa visão. Escondê-los evita a falsa
   // impressão de que alteram KPIs calculados nas mesmas regras de /bi/acoes.
-  const isRegistrosPage = location.pathname.includes("/crm/registros");
   const isResultadosNegociosPage = location.pathname === "/bi/comercial";
   const isDesempenhoPage = location.pathname.startsWith("/bi/desempenho");
-  const hideFunilFilters = isRegistrosPage || isResultadosNegociosPage;
+  const hideFunilFilters = shouldHideCategoryFunil(location.pathname);
 
   useEffect(() => {
     const el = document.getElementById("topbar-actions");

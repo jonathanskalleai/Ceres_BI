@@ -6,9 +6,10 @@ import type { useServicosKPIs } from "@/hooks/bi/useServicosKPIs";
 interface Props {
   svcKpis: ReturnType<typeof useServicosKPIs>["kpis"];
   loading: boolean;
+  comparisonReady: boolean;
 }
 
-export function PainelServicosSection({ svcKpis, loading }: Props) {
+export function PainelServicosSection({ svcKpis, loading, comparisonReady }: Props) {
   return (
     <>
       {(loading || !isEmpty(svcKpis.osAbertas.value)) && (
@@ -16,7 +17,7 @@ export function PainelServicosSection({ svcKpis, loading }: Props) {
           title="OS Abertas"
           value={fmtNum(svcKpis.osAbertas.value)}
           icon={Wrench}
-          previousValue={fmtNum(svcKpis.osAbertas.previousValue)}
+          previousValue={comparisonReady ? fmtNum(svcKpis.osAbertas.previousValue) : undefined}
           trend={svcKpis.osAbertas.trend}
           loading={loading}
           formula="Ordens de servico abertas que ainda nao foram encerradas"
@@ -27,7 +28,7 @@ export function PainelServicosSection({ svcKpis, loading }: Props) {
           title="OS Fechadas"
           value={fmtNum(svcKpis.osFechadas.value)}
           icon={ShieldCheck}
-          previousValue={fmtNum(svcKpis.osFechadas.previousValue)}
+          previousValue={comparisonReady ? fmtNum(svcKpis.osFechadas.previousValue) : undefined}
           trend={svcKpis.osFechadas.trend}
           loading={loading}
           accentColor="var(--voux-success)"
@@ -39,7 +40,7 @@ export function PainelServicosSection({ svcKpis, loading }: Props) {
           title="Tempo Medio Resolucao"
           value={fmtDias(svcKpis.tempoMedioResolucao.value)}
           icon={Clock}
-          previousValue={fmtDias(svcKpis.tempoMedioResolucao.previousValue)}
+          previousValue={comparisonReady ? fmtDias(svcKpis.tempoMedioResolucao.previousValue) : undefined}
           trend={svcKpis.tempoMedioResolucao.trend}
           invertTrend
           loading={loading}

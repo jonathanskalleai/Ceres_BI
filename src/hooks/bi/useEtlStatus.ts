@@ -29,5 +29,6 @@ export function useEtlStatus() {
     tables: query.data ?? [],
     isLoading: query.isLoading,
     error: query.error,
+    refetch: query.refetch,
   };
 }

@@ -6,9 +6,10 @@ import type { PainelKPIs } from "@/hooks/bi/usePainelKPIsRpc";
 interface Props {
   kpis: PainelKPIs;
   loading: boolean;
+  comparisonReady: boolean;
 }
 
-export function PainelValoresSection({ kpis, loading }: Props) {
+export function PainelValoresSection({ kpis, loading, comparisonReady }: Props) {
   return (
     <>
       {(loading || !isEmpty(kpis.valorGanho.value)) && (
@@ -17,7 +18,7 @@ export function PainelValoresSection({ kpis, loading }: Props) {
           value={fmtBRLKpi(kpis.valorGanho.value)}
           rawValue={kpis.valorGanho.value}
           icon={DollarSign}
-          previousValue={fmtBRLKpi(kpis.valorGanho.previousValue)}
+          previousValue={comparisonReady ? fmtBRLKpi(kpis.valorGanho.previousValue) : undefined}
           trend={kpis.valorGanho.trend}
           loading={loading}
           accentColor="var(--voux-success)"
@@ -31,7 +32,7 @@ export function PainelValoresSection({ kpis, loading }: Props) {
           value={fmtBRLKpi(kpis.valorPerdido.value)}
           rawValue={kpis.valorPerdido.value}
           icon={TrendingDown}
-          previousValue={fmtBRLKpi(kpis.valorPerdido.previousValue)}
+          previousValue={comparisonReady ? fmtBRLKpi(kpis.valorPerdido.previousValue) : undefined}
           trend={kpis.valorPerdido.trend}
           invertTrend
           loading={loading}
@@ -46,7 +47,7 @@ export function PainelValoresSection({ kpis, loading }: Props) {
           value={fmtBRLKpi(kpis.pipelineAberto.value)}
           rawValue={kpis.pipelineAberto.value}
           icon={Briefcase}
-          previousValue={fmtBRLKpi(kpis.pipelineAberto.previousValue)}
+          previousValue={comparisonReady ? fmtBRLKpi(kpis.pipelineAberto.previousValue) : undefined}
           trend={kpis.pipelineAberto.trend}
           loading={loading}
           formula="Valor dos negocios abertos trabalhados no periodo — negocios com pelo menos uma acao concluida que continuam Em Andamento. Nao representa somente a etapa CRM 'Oportunidade'."
@@ -59,7 +60,7 @@ export function PainelValoresSection({ kpis, loading }: Props) {
           value={fmtBRLKpi(kpis.ticketMedio.value)}
           rawValue={kpis.ticketMedio.value}
           icon={Ticket}
-          previousValue={fmtBRLKpi(kpis.ticketMedio.previousValue)}
+          previousValue={comparisonReady ? fmtBRLKpi(kpis.ticketMedio.previousValue) : undefined}
           trend={kpis.ticketMedio.trend}
           loading={loading}
           formula="Valor medio por pedido aprovado — divide o total de Valor Ganho pela quantidade de pedidos aprovados"

@@ -7,6 +7,7 @@ import { useNegociosBIRpc } from "@/hooks/bi/useNegociosBIRpc";
 import { useAcoesBIRpc } from "@/hooks/bi/useAcoesBIRpc";
 import { useAcoesFunilRpc } from "@/hooks/bi/useAcoesFunilRpc";
 import { useOperacionalBIRpc } from "@/hooks/bi/useOperacionalBIRpc";
+import { useDelayedReady } from "@/hooks/useDelayedReady";
 
 export interface PainelKPIs {
   // Negocios (de rpc_negocios_bi)
@@ -53,6 +54,7 @@ export interface UsePainelResult {
     funil: boolean;
     operacional: boolean;
   };
+  comparisonReady: boolean;
 }
 
 /**
@@ -79,6 +81,8 @@ export function usePainelKPIsRpc(
 
   // Funis filter from categoria + funil (mirrors ComercialSection logic)
   const funis = useMemo(() => resolveFunis(categoria, funil), [categoria, funil]);
+  const comparisonKey = `${fromAtual}|${toAtual}|${categoria}|${funil}|${vendedor ?? ""}|${cidade ?? ""}`;
+  const comparisonEnabled = useDelayedReady(Boolean(fromAnterior && toAnterior), 600, comparisonKey);
 
   // Negocios — current period (mantido para Taxa Conv, Total Neg, Em Andamento)
   const { data: negAtual, isLoading: negLoad1 } = useNegociosBIRpc({
@@ -97,7 +101,7 @@ export function usePainelKPIsRpc(
     funis,
     vendedor,
     cidade,
-    enabled: !!fromAnterior && !!toAnterior,
+    enabled: comparisonEnabled,
   });
 
   // Acoes — current period (v9: valorGanho, valorPerdido, negociosGanho, negociosPerdido)
@@ -115,7 +119,7 @@ export function usePainelKPIsRpc(
     to: toAnterior || undefined,
     vendedor,
     cidade,
-    enabled: true,
+    enabled: comparisonEnabled,
   });
 
   // Funil Gestao — current period (v9: valorOportunidades para Pipeline Aberto)
@@ -133,7 +137,7 @@ export function usePainelKPIsRpc(
     to: toAnterior || undefined,
     vendedor,
     cidade,
-    enabled: true,
+    enabled: comparisonEnabled,
   });
 
   // Operacional (single period — no historical comparison available)
@@ -251,15 +255,23 @@ export function usePainelKPIsRpc(
     };
   }, [negAtual, negAnterior, acoesAtual, acoesAnterior, funilAtual, funilAnterior, opData]);
 
-  const isLoading = negLoad1 || negLoad2 || acoesLoad1 || acoesLoad2 || funilLoad1 || funilLoad2 || opLoad;
+  const isLoading = negLoad1 || acoesLoad1 || funilLoad1 || opLoad;
+  const comparisonReady = comparisonEnabled
+    && !negLoad2
+    && !acoesLoad2
+    && !funilLoad2
+    && negAnterior !== undefined
+    && acoesAnterior !== undefined
+    && funilAnterior !== undefined;
 
   return {
     kpis,
     isLoading,
+    comparisonReady,
     loading: {
-      negocios: negLoad1 || negLoad2,
-      acoes: acoesLoad1 || acoesLoad2,
-      funil: funilLoad1 || funilLoad2,
+      negocios: negLoad1,
+      acoes: acoesLoad1,
+      funil: funilLoad1,
       operacional: opLoad,
     },
   };

@@ -39,6 +39,8 @@ export function reportClientError(event: string, error: unknown, fields?: LogFie
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ event: event.slice(0, 120), error: detail.slice(0, 240), fields: safe, at: new Date().toISOString() }),
     keepalive: true,
+  }).then((response) => {
+    if (!response.ok) throw new Error(`telemetry_http_${response.status}`);
   }).catch((trackingError: unknown) => {
     logClientWarning("client_error_tracking_failed", trackingError, { event });
   });

@@ -31,9 +31,11 @@ from ya_conversation import greeting_answer, source_answer
 from ya_schema import load_schema
 from ya_semantics import QueryValidationError, build_query_spec, conversational_mode
 from ya_tools import ToolGateway, query_async
+from client_telemetry import router as client_telemetry_router
 
 
 router = APIRouter(prefix="/ai", tags=["ai-chat"])
+router.include_router(client_telemetry_router)
 REQUEST_LIMIT = 12
 REQUEST_WINDOW_SECONDS = 10 * 60
 _request_windows: dict[str, deque[float]] = defaultdict(deque)

@@ -3,6 +3,7 @@ import { type DateRange } from "react-day-picker";
 import { toISODate, getPreviousPeriod } from "@/lib/dateUtils";
 import { makeKPI, type KPIWithPrev } from "@/lib/kpiUtils";
 import { usePedidosBIRpc } from "@/hooks/bi/usePedidosBIRpc";
+import { useDelayedReady } from "@/hooks/useDelayedReady";
 
 export type { KPIWithPrev };
 
@@ -16,6 +17,7 @@ export interface PedidosKPIsResult {
 export interface UsePedidosKPIsResult {
   kpis: PedidosKPIsResult;
   isLoading: boolean;
+  comparisonReady: boolean;
 }
 
 /**
@@ -34,6 +36,7 @@ export function usePedidosKPIsRpc(
   const prevRange = useMemo(() => getPreviousPeriod(dateRange), [dateRange]);
   const prevFrom = toISODate(prevRange?.from) ?? "";
   const prevTo = toISODate(prevRange?.to ?? prevRange?.from) ?? "";
+  const comparisonEnabled = useDelayedReady(Boolean(prevFrom && prevTo), 600, `${from}|${to}|${vendedor ?? ""}|${cidade ?? ""}`);
 
   const { data: atual, isLoading: l1 } = usePedidosBIRpc({ from, to, vendedor, cidade });
   const { data: anterior, isLoading: l2 } = usePedidosBIRpc({
@@ -41,7 +44,7 @@ export function usePedidosKPIsRpc(
     to: prevTo,
     vendedor,
     cidade,
-    enabled: !!prevFrom && !!prevTo,
+    enabled: comparisonEnabled,
   });
 
   const kpis: PedidosKPIsResult = atual
@@ -58,5 +61,9 @@ export function usePedidosKPIsRpc(
         mixFinanciamento: makeKPI(0, 0),
       };
 
-  return { kpis, isLoading: l1 || l2 };
+  return {
+    kpis,
+    isLoading: l1,
+    comparisonReady: comparisonEnabled && !l2 && anterior !== undefined,
+  };
 }

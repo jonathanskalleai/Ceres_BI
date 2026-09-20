@@ -4,6 +4,7 @@ import { toISODate, getPreviousPeriod } from "@/lib/dateUtils";
 import { makeKPI, makeKPIInverted, type KPIWithPrev } from "@/lib/kpiUtils";
 import { type CategoriaFilter, resolveFunis } from "@/lib/categoriaFunil";
 import { useNegociosBIRpc } from "@/hooks/bi/useNegociosBIRpc";
+import { useDelayedReady } from "@/hooks/useDelayedReady";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -19,6 +20,7 @@ export interface CrossKPIs {
 export interface UseCrossKPIsResult {
   kpis: CrossKPIs;
   isLoading: boolean;
+  comparisonReady: boolean;
 }
 
 /**
@@ -40,6 +42,7 @@ export function useCrossKPIsRpc(
   const prevRange = useMemo(() => getPreviousPeriod(dateRange), [dateRange]);
   const prevFrom = toISODate(prevRange?.from) ?? "";
   const prevTo = toISODate(prevRange?.to ?? prevRange?.from) ?? "";
+  const comparisonEnabled = useDelayedReady(Boolean(prevFrom && prevTo), 600, `${from}|${to}|${categoria}|${funil}|${vendedor ?? ""}|${cidade ?? ""}`);
 
   // Current period
   const { data: negData, isLoading: l1 } = useNegociosBIRpc({ from, to, funis, vendedor, cidade });
@@ -51,7 +54,7 @@ export function useCrossKPIsRpc(
     funis,
     vendedor,
     cidade,
-    enabled: !!prevFrom && !!prevTo,
+    enabled: comparisonEnabled,
   });
 
   const kpis = useMemo((): CrossKPIs => {
@@ -68,5 +71,9 @@ export function useCrossKPIsRpc(
     };
   }, [negData, negPrev]);
 
-  return { kpis, isLoading: l1 || l3 };
+  return {
+    kpis,
+    isLoading: l1,
+    comparisonReady: comparisonEnabled && !l3 && negPrev !== undefined,
+  };
 }

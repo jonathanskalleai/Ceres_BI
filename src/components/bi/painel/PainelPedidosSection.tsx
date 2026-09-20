@@ -6,9 +6,10 @@ import type { PedidosKPIsResult } from "@/hooks/bi/usePedidosKPIsRpc";
 interface Props {
   pedKpis: PedidosKPIsResult;
   loading: boolean;
+  comparisonReady: boolean;
 }
 
-export function PainelPedidosSection({ pedKpis, loading }: Props) {
+export function PainelPedidosSection({ pedKpis, loading, comparisonReady }: Props) {
   return (
     <>
       {(loading || !isEmpty(pedKpis.faturamento.value)) && (
@@ -17,7 +18,7 @@ export function PainelPedidosSection({ pedKpis, loading }: Props) {
           value={fmtBRLKpi(pedKpis.faturamento.value)}
           rawValue={pedKpis.faturamento.value}
           icon={DollarSign}
-          previousValue={fmtBRLKpi(pedKpis.faturamento.previousValue)}
+          previousValue={comparisonReady ? fmtBRLKpi(pedKpis.faturamento.previousValue) : undefined}
           trend={pedKpis.faturamento.trend}
           loading={loading}
           accentColor="var(--voux-success)"
@@ -29,7 +30,7 @@ export function PainelPedidosSection({ pedKpis, loading }: Props) {
           title="Total Pedidos"
           value={fmtNum(pedKpis.totalPedidos.value)}
           icon={FileCheck}
-          previousValue={fmtNum(pedKpis.totalPedidos.previousValue)}
+          previousValue={comparisonReady ? fmtNum(pedKpis.totalPedidos.previousValue) : undefined}
           trend={pedKpis.totalPedidos.trend}
           loading={loading}
           formula="Quantidade de pedidos emitidos no periodo"
@@ -40,7 +41,7 @@ export function PainelPedidosSection({ pedKpis, loading }: Props) {
           title="Taxa Aprovacao"
           value={fmtPct(pedKpis.taxaAprovacao.value)}
           icon={ShieldCheck}
-          previousValue={fmtPct(pedKpis.taxaAprovacao.previousValue)}
+          previousValue={comparisonReady ? fmtPct(pedKpis.taxaAprovacao.previousValue) : undefined}
           trend={pedKpis.taxaAprovacao.trend}
           loading={loading}
           formula="De todos os pedidos, quantos % foram aprovados"
@@ -51,7 +52,7 @@ export function PainelPedidosSection({ pedKpis, loading }: Props) {
           title="Mix Financiamento"
           value={fmtPct(pedKpis.mixFinanciamento.value)}
           icon={Percent}
-          previousValue={fmtPct(pedKpis.mixFinanciamento.previousValue)}
+          previousValue={comparisonReady ? fmtPct(pedKpis.mixFinanciamento.previousValue) : undefined}
           trend={pedKpis.mixFinanciamento.trend}
           loading={loading}
           formula="Quanto do valor total foi via financiamento (vs recurso proprio)"

@@ -6,9 +6,10 @@ import type { CrossKPIs } from "@/hooks/bi/useCrossKPIsRpc";
 interface Props {
   crossKpis: CrossKPIs;
   loading: boolean;
+  comparisonReady: boolean;
 }
 
-export function PainelCrossSection({ crossKpis, loading }: Props) {
+export function PainelCrossSection({ crossKpis, loading, comparisonReady }: Props) {
   return (
     <>
       {(loading || !isEmpty(crossKpis.cicloMedioVendas.value)) && (
@@ -16,7 +17,7 @@ export function PainelCrossSection({ crossKpis, loading }: Props) {
           title="Ciclo Medio"
           value={fmtDias(crossKpis.cicloMedioVendas.value)}
           icon={Clock}
-          previousValue={fmtDias(crossKpis.cicloMedioVendas.previousValue)}
+          previousValue={comparisonReady ? fmtDias(crossKpis.cicloMedioVendas.previousValue) : undefined}
           trend={crossKpis.cicloMedioVendas.trend}
           invertTrend
           loading={loading}
@@ -28,7 +29,7 @@ export function PainelCrossSection({ crossKpis, loading }: Props) {
           title="Esforco Medio"
           value={fmtNum(crossKpis.esforcoMedio.value)}
           icon={ClipboardList}
-          previousValue={fmtNum(crossKpis.esforcoMedio.previousValue)}
+          previousValue={comparisonReady ? fmtNum(crossKpis.esforcoMedio.previousValue) : undefined}
           trend={crossKpis.esforcoMedio.trend}
           invertTrend
           loading={loading}

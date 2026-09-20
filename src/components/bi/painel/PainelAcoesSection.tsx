@@ -8,9 +8,10 @@ import type { PainelKPIs } from "@/hooks/bi/usePainelKPIsRpc";
 interface Props {
   kpis: PainelKPIs;
   loading: boolean;
+  comparisonReady: boolean;
 }
 
-export function PainelAcoesSection({ kpis, loading }: Props) {
+export function PainelAcoesSection({ kpis, loading, comparisonReady }: Props) {
   const num = (v: number) => v.toLocaleString("pt-BR");
 
   return (
@@ -22,7 +23,7 @@ export function PainelAcoesSection({ kpis, loading }: Props) {
             title="Total Acoes"
             value={fmtNum(kpis.totalAcoes.value)}
             icon={ClipboardList}
-            previousValue={fmtNum(kpis.totalAcoes.previousValue)}
+            previousValue={comparisonReady ? fmtNum(kpis.totalAcoes.previousValue) : undefined}
             trend={kpis.totalAcoes.trend}
             loading={loading}
             formula="Todas as acoes concluidas pelos consultores no periodo (qualquer tipo)"
@@ -33,7 +34,7 @@ export function PainelAcoesSection({ kpis, loading }: Props) {
             title="Total Visitas"
             value={fmtNum(kpis.totalVisitas.value)}
             icon={Eye}
-            previousValue={fmtNum(kpis.totalVisitas.previousValue)}
+            previousValue={comparisonReady ? fmtNum(kpis.totalVisitas.previousValue) : undefined}
             trend={kpis.totalVisitas.trend}
             loading={loading}
             formula="Visitas presenciais realizadas pelos consultores"
@@ -47,7 +48,7 @@ export function PainelAcoesSection({ kpis, loading }: Props) {
               title={tipo.name}
               value={fmtNum(tipo.value)}
               icon={ClipboardList}
-              previousValue={fmtNum(tipo.previousValue)}
+              previousValue={comparisonReady ? fmtNum(tipo.previousValue) : undefined}
               trend={tipo.trend}
               loading={loading}
               formula={`Acoes classificadas como ${tipo.name.toLowerCase()} no periodo`}
@@ -62,7 +63,7 @@ export function PainelAcoesSection({ kpis, loading }: Props) {
             title="Negocios Abertos Trabalhados"
             value={fmtNum(kpis.oportunidadesAbertas.value)}
             icon={Target}
-            previousValue={fmtNum(kpis.oportunidadesAbertas.previousValue)}
+            previousValue={comparisonReady ? fmtNum(kpis.oportunidadesAbertas.previousValue) : undefined}
             trend={kpis.oportunidadesAbertas.trend}
             loading={loading}
             hint={kpis.pipelineAberto.value > 0 ? fmtBRLKpi(kpis.pipelineAberto.value) : undefined}
@@ -75,7 +76,7 @@ export function PainelAcoesSection({ kpis, loading }: Props) {
             title="Visitas por Negocio Aberto"
             value={fmtRatio(kpis.visitasPorOportunidade.value)}
             icon={Gauge}
-            previousValue={fmtRatio(kpis.visitasPorOportunidade.previousValue)}
+            previousValue={comparisonReady ? fmtRatio(kpis.visitasPorOportunidade.previousValue) : undefined}
             trend={kpis.visitasPorOportunidade.trend}
             loading={loading}
             formula="Visitas presenciais registradas por negocio aberto trabalhado. Nao e uma medida da etapa CRM 'Oportunidade'."
@@ -87,7 +88,7 @@ export function PainelAcoesSection({ kpis, loading }: Props) {
             title="Dias Parados (mediana)"
             value={`${num(kpis.diasParados.value)} dias`}
             icon={PauseCircle}
-            previousValue={`${num(kpis.diasParados.previousValue)} dias`}
+            previousValue={comparisonReady ? `${num(kpis.diasParados.previousValue)} dias` : undefined}
             trend={kpis.diasParados.trend}
             invertTrend
             loading={loading}

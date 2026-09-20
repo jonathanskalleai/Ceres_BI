@@ -1,7 +1,7 @@
 import { lazy, Suspense } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
-import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Toaster as Sonner, toast } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -13,6 +13,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import BiLayout from "./components/bi/BiLayout";
 import CrmLayout from "./components/crm/CrmLayout";
 import NotFound from "./pages/NotFound";
+import { reportClientError } from "@/lib/logger";
 
 // CRM pages load after navigation. Some of their detail views include charting
 // libraries, so keeping the whole CRM tree out of the bootstrap makes login
@@ -51,6 +52,15 @@ const AdminProfile = lazy(() => import("./pages/admin/AdminProfile"));
 // Cache global: dados de BI/SQL Server não são realtime. Sem isso (staleTime:0
 // padrão) toda troca de aba/remontagem refazia o fetch inteiro — causa da lentidão.
 const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: (error, query) => {
+      reportClientError("data_query_failed", error, { query_hash: query.queryHash });
+      toast.error("Não foi possível carregar parte dos dados.", {
+        id: `bi-query-${query.queryHash}`,
+        description: "Os números incompletos não devem ser interpretados como zero. Tente novamente.",
+      });
+    },
+  }),
   defaultOptions: {
     queries: {
       staleTime: 5 * 60_000, // 5 min "fresco" — não refetch ao trocar de aba

@@ -23,6 +23,7 @@ export interface ServicosKPIsResult {
 export interface UseServicosKPIsReturn {
   kpis: ServicosKPIsResult;
   isLoading: boolean;
+  comparisonReady: boolean;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -159,5 +160,5 @@ export function useServicosKPIs(
     };
   }, [allOrdens, dateRange, prevDateRange]);
 
-  return { kpis, isLoading };
+  return { kpis, isLoading, comparisonReady: !isLoading };
 }

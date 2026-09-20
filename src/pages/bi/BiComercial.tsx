@@ -3,6 +3,8 @@ import { BriefcaseBusiness, PackageSearch, ShoppingCart } from "lucide-react";
 import { useNegociosFilter } from "@/contexts/NegociosFilterContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useDelayedReady } from "@/hooks/useDelayedReady";
+import { toISODate } from "@/lib/dateUtils";
 
 const NegociosResultadosSection = lazy(() => import("@/components/bi/sections/NegociosResultadosSection"));
 const NegociosExpandidoSection = lazy(() => import("@/components/bi/sections/NegociosExpandidoSection"));
@@ -37,6 +39,11 @@ function PositionCurrentNotice({ children }: { children: React.ReactNode }) {
 export default function BiComercial() {
   const { dateRange, vendedor, cidade } = useNegociosFilter();
   const [tab, setTab] = useState("vendas");
+  const expandedReady = useDelayedReady(
+    tab === "vendas",
+    1_400,
+    `${toISODate(dateRange?.from)}|${toISODate(dateRange?.to ?? dateRange?.from)}|${vendedor}|${cidade}`,
+  );
 
   return (
     <div className="space-y-5 p-8">
@@ -60,14 +67,16 @@ export default function BiComercial() {
               cidade={cidade || undefined}
             />
           </Suspense>
-          <Suspense fallback={<SectionFallback />}>
-            <NegociosExpandidoSection
-              active={tab === "vendas"}
-              dateRange={dateRange}
-              vendedor={vendedor || undefined}
-              cidade={cidade || undefined}
-            />
-          </Suspense>
+          {expandedReady ? (
+            <Suspense fallback={<SectionFallback />}>
+              <NegociosExpandidoSection
+                active
+                dateRange={dateRange}
+                vendedor={vendedor || undefined}
+                cidade={cidade || undefined}
+              />
+            </Suspense>
+          ) : <SectionFallback />}
         </TabsContent>
 
         <TabsContent value="pedidos">

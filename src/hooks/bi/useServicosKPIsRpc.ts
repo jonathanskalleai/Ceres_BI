@@ -4,6 +4,7 @@ import { toISODate, getPreviousPeriod } from "@/lib/dateUtils";
 import { makeKPI, makeKPIInverted } from "@/lib/kpiUtils";
 import { useServicosBIRpc } from "@/hooks/bi/useServicosBIRpc";
 import type { KPIWithPrev, ServicosKPIsResult, UseServicosKPIsReturn } from "@/hooks/bi/useServicosKPIs";
+import { useDelayedReady } from "@/hooks/useDelayedReady";
 
 /**
  * RPC-backed Serviços KPIs with previous-period comparison.
@@ -18,13 +19,14 @@ export function useServicosKPIsRpc(
   const prevRange = useMemo(() => getPreviousPeriod(dateRange), [dateRange]);
   const prevFrom = toISODate(prevRange?.from) ?? "";
   const prevTo = toISODate(prevRange?.to ?? prevRange?.from) ?? "";
+  const comparisonEnabled = useDelayedReady(Boolean(prevFrom && prevTo), 600, `${from}|${to}|${cidade ?? ""}`);
 
   const { data: atual, isLoading: l1 } = useServicosBIRpc({ from, to, cidade });
   const { data: anterior, isLoading: l2 } = useServicosBIRpc({
     from: prevFrom,
     to: prevTo,
     cidade,
-    enabled: !!prevFrom && !!prevTo,
+    enabled: comparisonEnabled,
   });
 
   const kpis: ServicosKPIsResult = atual
@@ -45,5 +47,9 @@ export function useServicosKPIsRpc(
         tempoMedioResolucao: makeKPI(0, 0),
       };
 
-  return { kpis, isLoading: l1 || l2 };
+  return {
+    kpis,
+    isLoading: l1,
+    comparisonReady: comparisonEnabled && !l2 && anterior !== undefined,
+  };
 }

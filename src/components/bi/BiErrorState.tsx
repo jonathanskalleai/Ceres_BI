@@ -15,7 +15,7 @@ export function BiErrorState({
   onRetry,
 }: BiErrorStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+    <div role="alert" className="flex flex-col items-center justify-center gap-3 py-12 text-center">
       <div
         className="w-12 h-12 rounded-full flex items-center justify-center"
         style={{ background: "rgba(201,117,101,0.12)" }}

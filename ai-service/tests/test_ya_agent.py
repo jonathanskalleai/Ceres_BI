@@ -1,11 +1,13 @@
 import asyncio
 import unittest
+from datetime import datetime
 from unittest.mock import AsyncMock, patch
 
 from auth import CurrentUser
 from ya_agent import AgentRunner
 from ya_agent_models import AgentArtifact, ToolExecution
 from ya_agent_support import error_tool_execution
+from ya_agent_intent import BUSINESS_TIMEZONE
 from ya_memory import ThreadMemory
 from ya_models import YaChatRequest, YaSource
 from ya_schema import SchemaSnapshot
@@ -261,7 +263,10 @@ class YaAgentRunnerTests(unittest.TestCase):
                 item.stop()
         self.assertEqual(main_calls[0]["tool_choice"]["function"]["name"], "consultar_desempenho_vendas")
         self.assertEqual(registry.calls[0].arguments["periodo_inicio"], "2026-09-01")
-        self.assertEqual(registry.calls[0].arguments["periodo_fim"], "2026-09-09")
+        self.assertEqual(
+            registry.calls[0].arguments["periodo_fim"],
+            datetime.now(BUSINESS_TIMEZONE).date().isoformat(),
+        )
         self.assertEqual(registry.calls[0].arguments["blocos"], ["perdas", "rankings", "produtos"])
         self.assertEqual(result.query_spec["intent"], "loss_details")
         self.assertEqual(result.query_spec["contract_status"], "passed")

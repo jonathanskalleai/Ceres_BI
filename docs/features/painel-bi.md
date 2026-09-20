@@ -1,7 +1,7 @@
 ---
 feature: painel-bi
-updated_at: 2026-08-04T00:00:00Z
-updated_by: "@dev + Codex adversarial review"
+updated_at: 2026-09-20T16:10:00Z
+updated_by: "AIVOUX FULL performance audit"
 status: active
 ---
 
@@ -56,6 +56,10 @@ KPIs que NAO obedecem ao filtro de categoria/funil:
 
 ## Smoke
 - `npm run build` — sucesso
+- Cards do periodo atual aparecem antes dos comparativos; durante os 600 ms de
+  adiamento nenhuma variacao falsa contra zero e exibida
+- Falha de RPC ativa mostra o alerta persistente "Dados incompletos" e o botao
+  "Tentar novamente"
 - Valores de Valor Ganho/Perdido batem com a tela Acoes no mesmo periodo
 - Pipeline Aberto mostra valorOportunidades (nao mais todos abertos)
 - StatusDesconhecidoAlert aparece se negociosOutrosStatus > 0
