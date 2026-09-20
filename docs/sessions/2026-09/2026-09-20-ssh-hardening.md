@@ -26,6 +26,17 @@ O `etl_etl-d` exibido como `0/1` no Swarm é um job legado concluído. O caminho
 ativo é `/etc/cron.d/ceres-etl-sequential`, executando a imagem `etl-ceres:v21`.
 Os blocos A-E concluíram com sucesso a cada 15 minutos durante a validação.
 
+## Deploy e smoke do mapa
+
+- Deploy produtivo concluído no SHA `edaad1707bf60a3fe6dddbc7380a8e4d7ee9a6e7`.
+- Serviços `ceresbi_web` e `ceresbi_ai` executando imagens desse SHA.
+- Web pública e `/api/ai/health`: HTTP 200.
+- CSP pública permite `https://*.tile.openstreetmap.org` em `img-src`.
+- Tile do OpenStreetMap respondeu HTTP 200.
+- Smoke visual autenticado em `/bi/acoes`: mapa renderizado com fundo do
+  OpenStreetMap, controles do Leaflet e dados do período (50 pinos para 57 de
+  76 oportunidades). Nenhum estado de erro foi exibido no painel.
+
 ## Incidente durante a validacao
 
 Um teste negativo de root completou o limite do Fail2ban e baniu temporariamente
