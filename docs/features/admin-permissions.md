@@ -1,7 +1,7 @@
 ---
 feature: admin-permissions
-updated_at: 2026-08-04T00:00:00Z
-updated_by: "@dev + Codex adversarial review"
+updated_at: 2026-09-21T13:44:34Z
+updated_by: "scribe (Codex)"
 status: active
 ---
 
@@ -10,9 +10,18 @@ status: active
 **Proposito:** Permitir ocultar modulos da sidebar sem bloquear o acesso a rota.
 
 ## Entry Points
+- `src/pages/admin/AdminUsers.tsx` — lista administrativa de usuários
+- `src/services/adminService.ts` — perfis, permissões e e-mails administrativos
 - `src/components/admin/UserPermissionsSheet.tsx` — modal de permissoes com toggle de visibilidade
 - `src/components/layout/AppSidebar.tsx` — usa `visibleModules` para renderizar
 - `src/hooks/usePermissions.ts` — exporta `visibleModules` e `canAccess`
+
+## E-mails dos Usuários
+
+`admin_get_user_emails(uuid[])` lê `auth.users` em lote. A função é
+`SECURITY DEFINER`, usa `search_path` vazio e só aceita sessão de administrador
+ativo. `anon` e `PUBLIC` não possuem `EXECUTE`; a service role nunca entra no
+bundle web. A UI mostra o e-mail ou “E-mail não cadastrado”, nunca o UUID.
 
 ## Modelo de Dados
 
@@ -75,6 +84,9 @@ $$;
 
 ## Smoke
 - `npm run build` — sucesso
+- `npx vitest run src/services/__tests__/adminService.test.ts src/components/admin/UserRow.test.tsx` — e-mail exibido e UUID oculto
+- Admin autenticado abre `/admin/users`: cada linha mostra o e-mail correspondente
+- Chamada sem admin a `admin_get_user_emails` → erro `42501`
 - Usuario restrito abre PermissionsSheet, clica Salvar sem alteracoes: nenhum modulo e concedido
 - Modulo oculto na sidebar: URL direta continua acessivel
 - Modulo visivel na sidebar: toggle em PermissionsSheet reflete estado atual

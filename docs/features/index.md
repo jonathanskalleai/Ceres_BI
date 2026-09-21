@@ -5,5 +5,5 @@
 - `crm-overview-charts` · Aba Graficos no BI Painel (5 LineCharts evolucao 12m) · kw: bi, painel, graficos, charts, evolucao, negocios, acoes, visitas, pipeline · 2026-07-08
 - `negocios-bi` · RPC server-side metricas negocios CRM (KPIs, funil, evolucao) · kw: bi, negocios, crm, rpc, ganhos, perdidos, funil, datafechamento, evolucao, velocidade · 2026-07-27
 - `painel-bi` · KPIs do Painel alinhados com v9 (Acoes) — valorGanho de rpc_acoes_bi, pipeline aberto com valorOportunidades, gestao comercial · kw: bi, painel, visao geral, valores, negocios, acoes, gestao, oportunidades, pipeline · 2026-08-04
-- `admin-permissions` · Controle de visibilidade de modulos na sidebar por usuario — is_visible em user_permissions, visibleModules · kw: admin, permissoes, modulos, sidebar, visibilidade, access control · 2026-08-04
+- `admin-permissions` · Gestão administrativa: visibilidade de módulos e e-mails de usuários via RPC protegida · kw: admin, usuarios, email, auth, permissoes, modulos, sidebar, visibilidade, access control · 2026-09-21
 - `ya-agent-v2` · Agente analítico conversacional v2: classificação semântica, contratos server-side, tool calling real/múltiplo, comparação, perdas, memória, evidências, artefatos, SSE e rollout/rollback · kw: ai, ya, chat, bi, agente, tool calling, comparação, perdas, percas, memória, evidência, sse, golden, segurança · 2026-09-09
