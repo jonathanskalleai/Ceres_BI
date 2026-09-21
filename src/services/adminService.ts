@@ -255,32 +255,32 @@ export async function listModules(): Promise<AppModule[]> {
 // Fetch user email from auth (admin needs to see emails in the list)
 // ---------------------------------------------------------------------------
 
-/**
- * Get emails for profiles. Since profiles table may not store email,
- * we query auth.users via the admin endpoint. If that fails (no admin access),
- * fall back to session user metadata or return empty.
- *
- * For MVP: we store email directly from a join or assume email is available
- * through auth metadata in the profile creation trigger.
- */
+interface AdminUserEmailRow {
+  user_id: string;
+  email: string | null;
+}
+
+/** Get auth emails in one server-authorized query without exposing service role. */
 export async function getUserEmails(
   userIds: string[],
 ): Promise<Record<string, string>> {
-  const emailMap: Record<string, string> = {};
-  if (!supabaseAdmin) return emailMap;
+  if (userIds.length === 0) return {};
 
-  for (const uid of userIds) {
-    try {
-      const { data } = await supabaseAdmin.auth.admin.getUserById(uid);
-      if (data?.user?.email) {
-        emailMap[uid] = data.user.email;
-      }
-    } catch {
-      continue;
-    }
+  const { data, error } = await supabase.rpc('admin_get_user_emails', {
+    p_user_ids: userIds,
+  });
+
+  if (error) {
+    throw new Error(`Erro ao listar e-mails dos usuarios: ${error.message}`);
   }
 
-  return emailMap;
+  return ((data ?? []) as AdminUserEmailRow[]).reduce<Record<string, string>>(
+    (emailMap, row) => {
+      if (row.email) emailMap[row.user_id] = row.email;
+      return emailMap;
+    },
+    {},
+  );
 }
 
 // Re-export so UI components can check service-role availability from one place.

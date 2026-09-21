@@ -74,7 +74,9 @@ export function UserRow({
             <Badge className="bg-red-950/40 text-red-400 border-red-800/40 text-[10px]">inativo</Badge>
           )}
         </div>
-        <p className="text-xs text-muted-foreground mt-0.5 truncate">{email || u.id}</p>
+        <p className="text-xs text-muted-foreground mt-0.5 truncate">
+          {email || 'E-mail não cadastrado'}
+        </p>
       </div>
 
       {/* Actions dropdown */}
