@@ -5,18 +5,25 @@ from __future__ import annotations
 import asyncio
 import logging
 from contextlib import asynccontextmanager
+from time import perf_counter
 from typing import Annotated
 from uuid import uuid4
-
-from fastapi import Depends, FastAPI, HTTPException, Query, Request
-from fastapi.middleware.cors import CORSMiddleware
 
 from auth import CurrentUser, make_bi_user_dependency
 from config import Settings
 from db import ReadOnlyDatabase
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi.middleware.cors import CORSMiddleware
+from observability import (
+    emit_bi_query,
+    error_code,
+    filter_hash,
+    payload_size,
+    period_case,
+    safe_request_id,
+)
 from rpc import fetch_core, fetch_detalhe, fetch_funil, fetch_mapa
-from schemas import AcoesDetalheFilters, AcoesFilters, BiEnvelope
-
+from schemas import AcoesDetalheFilters, AcoesFilters, BiEnvelope, BiMetrics
 
 logger = logging.getLogger("ceresbi.bi")
 settings = Settings.from_env()
@@ -44,7 +51,7 @@ app.add_middleware(
 
 
 def request_id(request: Request) -> str:
-    return request.headers.get("x-request-id") or str(uuid4())
+    return safe_request_id(request.headers.get("x-request-id") or str(uuid4()))
 
 
 def validate_period(filters: AcoesFilters) -> None:
@@ -54,14 +61,69 @@ def validate_period(filters: AcoesFilters) -> None:
         raise HTTPException(status_code=422, detail="from não pode ser posterior a to")
 
 
-async def execute_rpc(endpoint: str, call, request: Request) -> BiEnvelope:
+def envelope_size(envelope: BiEnvelope) -> int:
+    return len(envelope.model_dump_json().encode("utf-8"))
+
+
+async def execute_rpc(
+    endpoint: str,
+    rpc_name: str,
+    call,
+    request: Request,
+    filters: object,
+    route_started_at: float,
+) -> BiEnvelope:
     rid = request_id(request)
+    query_started_at = perf_counter()
     try:
         data = await asyncio.to_thread(call)
-        return BiEnvelope.success(data, rid)
-    except Exception:  # noqa: BLE001 - boundary logs and redacts details
+        query_ms = round((perf_counter() - query_started_at) * 1000, 3)
+        api_ms = round((perf_counter() - route_started_at) * 1000, 3)
+        metrics = BiMetrics(query_ms=query_ms, api_ms=api_ms, payload_bytes=payload_size(data))
+        response = BiEnvelope.success(data, rid, metrics)
+        metrics.payload_bytes = envelope_size(response)
+        emit_bi_query(
+            request_id=rid,
+            dashboard_id="acoes",
+            route=request.url.path,
+            endpoint=endpoint,
+            rpc=rpc_name,
+            case=period_case(filters),
+            filters_hash=filter_hash(filters),
+            status="ok",
+            query_ms=query_ms,
+            api_ms=api_ms,
+            payload_bytes=metrics.payload_bytes,
+        )
+        return response
+    except Exception as exc:
+        query_ms = round((perf_counter() - query_started_at) * 1000, 3)
+        api_ms = round((perf_counter() - route_started_at) * 1000, 3)
+        code = error_code(exc)
+        metrics = BiMetrics(query_ms=query_ms, api_ms=api_ms, payload_bytes=0)
         logger.exception("bi_rpc_failed endpoint=%s request_id=%s", endpoint, rid)
-        return BiEnvelope.failure(rid, message="Não foi possível carregar este bloco de dados.")
+        response = BiEnvelope.failure(
+            rid,
+            message="Não foi possível carregar este bloco de dados.",
+            code=code,
+            metrics=metrics,
+        )
+        metrics.payload_bytes = envelope_size(response)
+        emit_bi_query(
+            request_id=rid,
+            dashboard_id="acoes",
+            route=request.url.path,
+            endpoint=endpoint,
+            rpc=rpc_name,
+            case=period_case(filters),
+            filters_hash=filter_hash(filters),
+            status="error",
+            query_ms=query_ms,
+            api_ms=api_ms,
+            payload_bytes=metrics.payload_bytes,
+            error_code=code,
+        )
+        return response
 
 
 @app.get("/health")
@@ -70,7 +132,7 @@ async def health() -> dict[str, object]:
     if database.configured:
         try:
             database_ok = await asyncio.to_thread(database.ping)
-        except Exception:  # noqa: BLE001 - health must not leak database details
+        except Exception:
             logger.exception("bi_health_database_failed")
     return {
         "status": "ok" if database_ok and bool(settings.jwt_secret) else "degraded",
@@ -85,37 +147,49 @@ async def health() -> dict[str, object]:
 async def acoes_core(
     request: Request,
     filters: Annotated[AcoesFilters, Query()],
-    _: CurrentUser = Depends(require_bi_user),
+    _: CurrentUser = Depends(require_bi_user),  # noqa: B008
 ) -> BiEnvelope:
+    route_started_at = perf_counter()
     validate_period(filters)
-    return await execute_rpc("acoes.core", lambda: fetch_core(database, filters), request)
+    return await execute_rpc(
+        "acoes.core", "rpc_acoes_bi_periodo", lambda: fetch_core(database, filters), request, filters, route_started_at
+    )
 
 
 @app.get("/api/bi/acoes/detalhe", response_model=BiEnvelope)
 async def acoes_detalhe(
     request: Request,
     filters: Annotated[AcoesDetalheFilters, Query()],
-    _: CurrentUser = Depends(require_bi_user),
+    _: CurrentUser = Depends(require_bi_user),  # noqa: B008
 ) -> BiEnvelope:
+    route_started_at = perf_counter()
     validate_period(filters)
-    return await execute_rpc("acoes.detalhe", lambda: fetch_detalhe(database, filters), request)
+    return await execute_rpc(
+        "acoes.detalhe", "rpc_acoes_detalhe", lambda: fetch_detalhe(database, filters), request, filters, route_started_at
+    )
 
 
 @app.get("/api/bi/acoes/funil", response_model=BiEnvelope)
 async def acoes_funil(
     request: Request,
     filters: Annotated[AcoesFilters, Query()],
-    _: CurrentUser = Depends(require_bi_user),
+    _: CurrentUser = Depends(require_bi_user),  # noqa: B008
 ) -> BiEnvelope:
+    route_started_at = perf_counter()
     validate_period(filters)
-    return await execute_rpc("acoes.funil", lambda: fetch_funil(database, filters), request)
+    return await execute_rpc(
+        "acoes.funil", "rpc_acoes_funil_gestao_periodo", lambda: fetch_funil(database, filters), request, filters, route_started_at
+    )
 
 
 @app.get("/api/bi/acoes/mapa", response_model=BiEnvelope)
 async def acoes_mapa(
     request: Request,
     filters: Annotated[AcoesFilters, Query()],
-    _: CurrentUser = Depends(require_bi_user),
+    _: CurrentUser = Depends(require_bi_user),  # noqa: B008
 ) -> BiEnvelope:
+    route_started_at = perf_counter()
     validate_period(filters)
-    return await execute_rpc("acoes.mapa", lambda: fetch_mapa(database, filters), request)
+    return await execute_rpc(
+        "acoes.mapa", "rpc_acoes_mapa_oportunidades", lambda: fetch_mapa(database, filters), request, filters, route_started_at
+    )

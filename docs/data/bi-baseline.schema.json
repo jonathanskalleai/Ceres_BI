@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ceresbi.local/schemas/bi-baseline-event.json",
+  "title": "Ceres BI baseline event",
+  "description": "Redacted bi_query event emitted by the BI gateway or browser transport.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event",
+    "request_id",
+    "dashboard_id",
+    "route",
+    "endpoint",
+    "rpc",
+    "case",
+    "status",
+    "query_ms",
+    "api_ms",
+    "payload_bytes"
+  ],
+  "properties": {
+    "event": { "const": "bi_query" },
+    "observed_at": { "type": "string", "format": "date-time" },
+    "request_id": { "type": "string", "maxLength": 128, "pattern": "^[A-Za-z0-9._:-]+$" },
+    "dashboard_id": { "type": "string", "minLength": 1, "maxLength": 80 },
+    "route": { "type": "string", "minLength": 1, "maxLength": 240 },
+    "endpoint": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "rpc": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "case": { "enum": ["monthly", "annual", "custom"] },
+    "filters_hash": { "type": "string", "pattern": "^[a-f0-9]{16}$" },
+    "status": { "enum": ["ok", "partial", "error", "timeout", "unknown"] },
+    "query_ms": { "type": ["number", "null"], "minimum": 0 },
+    "db_ms": { "type": ["number", "null"], "minimum": 0 },
+    "api_ms": { "type": ["number", "null"], "minimum": 0 },
+    "frontend_ms": { "type": ["number", "null"], "minimum": 0 },
+    "payload_bytes": { "type": ["integer", "null"], "minimum": 0 },
+    "rows_read": { "type": ["integer", "null"], "minimum": 0 },
+    "rows_returned": { "type": ["integer", "null"], "minimum": 0 },
+    "cache_hit": { "type": ["boolean", "null"] },
+    "snapshot_at": { "type": ["string", "null"], "format": "date-time" },
+    "error_code": { "type": "string", "maxLength": 80, "pattern": "^[A-Z0-9_.-]+$" }
+  }
+}

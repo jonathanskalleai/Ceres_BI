@@ -1,16 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { rpcMock, getSessionMock, logErrorMock, logWarningMock } = vi.hoisted(() => ({
+const { rpcMock, getSessionMock, logErrorMock, logWarningMock, logMetricMock } = vi.hoisted(() => ({
   rpcMock: vi.fn(),
   getSessionMock: vi.fn(),
   logErrorMock: vi.fn(),
   logWarningMock: vi.fn(),
+  logMetricMock: vi.fn(),
 }));
 
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: { rpc: rpcMock, auth: { getSession: getSessionMock } },
 }));
-vi.mock("@/lib/logger", () => ({ logClientError: logErrorMock, logClientWarning: logWarningMock }));
+vi.mock("@/lib/logger", () => ({ logClientError: logErrorMock, logClientWarning: logWarningMock, logClientMetric: logMetricMock }));
 
 import {
   fetchAcoesDetalheRuntime,
@@ -36,6 +37,7 @@ beforeEach(() => {
   getSessionMock.mockReset();
   logErrorMock.mockReset();
   logWarningMock.mockReset();
+  logMetricMock.mockReset();
 });
 describe("acoesRuntimeService", () => {
   it("passes React Query's AbortSignal to the PostgREST builder", async () => {

@@ -25,6 +25,11 @@ export function logClientWarning(event: string, error: unknown, fields?: LogFiel
   console.warn(`[${event}]`, { error: detail, ...safeFields(fields) });
 }
 
+/** Emit bounded, non-sensitive client performance fields for BI baselines. */
+export function logClientMetric(event: string, fields?: LogFields): void {
+  console.info(`[${event}]`, safeFields(fields));
+}
+
 /**
  * Report a client failure without putting credentials, PII or full payloads in
  * the browser log or in an optional external tracking channel.

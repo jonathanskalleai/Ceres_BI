@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from fastapi.testclient import TestClient
+import json
+import logging
 
 from auth import CurrentUser
+from fastapi.testclient import TestClient
 from main import app, database, require_bi_user
 
 
@@ -20,7 +22,7 @@ def test_protected_endpoint_requires_bearer_token() -> None:
     assert "JWT" in response.json()["detail"]
 
 
-def test_core_returns_stable_envelope(monkeypatch) -> None:
+def test_core_returns_stable_envelope_and_redacted_query_event(monkeypatch, caplog) -> None:
     async def fake_user() -> CurrentUser:
         return CurrentUser(id="00000000-0000-0000-0000-000000000001", role="admin")
 
@@ -30,8 +32,12 @@ def test_core_returns_stable_envelope(monkeypatch) -> None:
         "execute_rpc",
         lambda name, args: {"kpis": {"totalAcoes": 3}, "porMes": []},
     )
+    caplog.set_level(logging.INFO, logger="ceresbi.bi")
     try:
-        response = TestClient(app).get("/api/bi/acoes/core?from=2026-01-01&to=2026-01-31")
+        response = TestClient(app).get(
+            "/api/bi/acoes/core?from=2026-01-01&to=2026-01-31&cidade=Não%20registrar",
+            headers={"X-Request-ID": "req:monthly-1"},
+        )
     finally:
         app.dependency_overrides.clear()
     assert response.status_code == 200
@@ -40,6 +46,16 @@ def test_core_returns_stable_envelope(monkeypatch) -> None:
     assert payload["data"]["kpis"]["totalAcoes"] == 3
     assert payload["requestId"]
     assert payload["fetchedAt"]
+    assert payload["metrics"]["query_ms"] >= 0
+    assert payload["metrics"]["api_ms"] >= payload["metrics"]["query_ms"]
+    assert payload["metrics"]["payload_bytes"] > 0
+    events = [json.loads(record.message) for record in caplog.records if record.message.startswith('{"')]
+    query_event = next(event for event in events if event.get("event") == "bi_query")
+    assert query_event["request_id"] == "req:monthly-1"
+    assert query_event["dashboard_id"] == "acoes"
+    assert query_event["case"] == "monthly"
+    assert query_event["rpc"] == "rpc_acoes_bi_periodo"
+    assert all("Não registrar" not in record.message for record in caplog.records)
 
 
 def test_query_validation_rejects_invalid_period_and_oversized_filter() -> None:

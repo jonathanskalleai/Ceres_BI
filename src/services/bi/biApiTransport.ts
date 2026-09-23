@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { resilientFetch } from "@/lib/network/resilientFetch";
 import { BiContractError, issue } from "@/types/biRuntime";
-import { logClientWarning } from "@/lib/logger";
+import { logClientMetric, logClientWarning } from "@/lib/logger";
 
 export interface BiApiIssue {
   code: string;
@@ -15,6 +15,12 @@ export interface BiApiEnvelope<T> {
   issues?: BiApiIssue[];
   requestId?: string;
   fetchedAt?: string;
+  metrics?: {
+    query_ms?: number;
+    api_ms?: number;
+    frontend_ms?: number;
+    payload_bytes?: number;
+  };
 }
 
 /** Feature flag is evaluated at call time so tests and runtime config stay deterministic. */
@@ -24,6 +30,37 @@ export function isBiApiEnabled(): boolean {
 
 function apiBaseUrl(): string {
   return String(import.meta.env.VITE_BI_API_BASE_URL ?? "/api/bi").replace(/\/$/, "");
+}
+
+function safeMetricRequestId(value: string | undefined): string {
+  const candidate = String(value ?? "").slice(0, 128);
+  return /^[A-Za-z0-9._:-]{1,128}$/.test(candidate) ? candidate : "client-unknown";
+}
+
+function inferCase(params: Record<string, unknown>): "monthly" | "annual" | "custom" {
+  const from = typeof params.from === "string" ? params.from : "";
+  const to = typeof params.to === "string" ? params.to : "";
+  const fromMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(from);
+  const toMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(to);
+  if (!fromMatch || !toMatch) return "custom";
+  if (fromMatch[1] === toMatch[1] && fromMatch[2] === toMatch[2] && fromMatch[3] === "01") {
+    const lastDays = new Date(Number(fromMatch[1]), Number(fromMatch[2]), 0).getDate();
+    if (Number(toMatch[3]) === lastDays) return "monthly";
+  }
+  if (from === `${fromMatch[1]}-01-01` && to === `${toMatch[1]}-12-31` && fromMatch[1] === toMatch[1]) {
+    return "annual";
+  }
+  return "custom";
+}
+
+function rpcForPath(path: string): string {
+  const names: Record<string, string> = {
+    "/acoes/core": "rpc_acoes_bi_periodo",
+    "/acoes/detalhe": "rpc_acoes_detalhe",
+    "/acoes/funil": "rpc_acoes_funil_gestao_periodo",
+    "/acoes/mapa": "rpc_acoes_mapa_oportunidades",
+  };
+  return names[path] ?? "unknown";
 }
 
 function buildQuery(params: Record<string, unknown>): string {
@@ -47,6 +84,7 @@ export async function fetchBiApi<T>(
   params: Record<string, unknown>,
   signal?: AbortSignal,
 ): Promise<T> {
+  const frontendStartedAt = typeof performance !== "undefined" ? performance.now() : Date.now();
   const { data: { session } } = await supabase.auth.getSession();
   const requestId = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
   const headers: Record<string, string> = { Accept: "application/json" };
@@ -75,6 +113,23 @@ export async function fetchBiApi<T>(
       "BI_CONTRACT_INVALID",
     );
   }
+  const frontendMs = Math.max(
+    0,
+    (typeof performance !== "undefined" ? performance.now() : Date.now()) - frontendStartedAt,
+  );
+  logClientMetric("bi_query", {
+    request_id: safeMetricRequestId(envelope.requestId),
+    dashboard_id: path.split("/").filter(Boolean)[0] ?? "unknown",
+    route: path,
+    endpoint: path,
+    rpc: rpcForPath(path),
+    case: inferCase(params),
+    status: envelope.status,
+    query_ms: envelope.metrics?.query_ms ?? null,
+    api_ms: envelope.metrics?.api_ms ?? null,
+    frontend_ms: Number(frontendMs.toFixed(3)),
+    payload_bytes: envelope.metrics?.payload_bytes ?? null,
+  });
   if (envelope.status === "error") {
     const firstIssue = envelope.issues?.[0];
     throw Object.assign(

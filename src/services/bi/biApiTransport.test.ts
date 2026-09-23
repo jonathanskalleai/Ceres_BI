@@ -1,14 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { getSessionMock, warningMock } = vi.hoisted(() => ({
+const { getSessionMock, warningMock, metricMock } = vi.hoisted(() => ({
   getSessionMock: vi.fn(),
   warningMock: vi.fn(),
+  metricMock: vi.fn(),
 }));
 
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: { auth: { getSession: getSessionMock } },
 }));
-vi.mock("@/lib/logger", () => ({ logClientWarning: warningMock }));
+vi.mock("@/lib/logger", () => ({ logClientMetric: metricMock, logClientWarning: warningMock }));
 
 import { fetchBiApi, isBiApiEnabled } from "@/services/bi/biApiTransport";
 
@@ -16,6 +17,7 @@ beforeEach(() => {
   vi.unstubAllEnvs();
   getSessionMock.mockReset();
   warningMock.mockReset();
+  metricMock.mockReset();
   getSessionMock.mockResolvedValue({ data: { session: { access_token: "test-token" } } });
 });
 
@@ -34,6 +36,7 @@ describe("biApiTransport", () => {
         data: { kpis: { totalAcoes: 4 } },
         requestId: "req-1",
         fetchedAt: "2026-09-23T00:00:00Z",
+        metrics: { query_ms: 12.5, api_ms: 14.2, payload_bytes: 42 },
       }), { status: 200, headers: { "Content-Type": "application/json" } }),
     );
     await expect(fetchBiApi<{ kpis: { totalAcoes: number } }>("/acoes/core", { from: "2026-01-01" }))
@@ -44,6 +47,13 @@ describe("biApiTransport", () => {
         headers: expect.objectContaining({ Accept: "application/json", Authorization: "Bearer test-token" }),
       }),
     );
+    expect(metricMock).toHaveBeenCalledWith("bi_query", expect.objectContaining({
+      request_id: "req-1",
+      query_ms: 12.5,
+      api_ms: 14.2,
+      payload_bytes: 42,
+      frontend_ms: expect.any(Number),
+    }));
     fetchMock.mockRestore();
   });
 
@@ -55,6 +65,7 @@ describe("biApiTransport", () => {
         data: { kpis: { totalAcoes: 4 } },
         issues: [{ code: "MAP_TIMEOUT", message: "Mapa indisponível" }],
         requestId: "req-2",
+        metrics: { query_ms: 4, api_ms: 5, payload_bytes: 18 },
       }), { status: 200 }),
     );
     await expect(fetchBiApi("/acoes/core", {})).resolves.toEqual({ kpis: { totalAcoes: 4 } });
