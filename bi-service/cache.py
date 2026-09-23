@@ -46,6 +46,13 @@ class QueryCache:
     def enabled(self) -> bool:
         return self.ttl_seconds > 0
 
+    async def _reject_inflight(self, key: str, error: BaseException) -> None:
+        async with self._lock:
+            pending = self._inflight.pop(key, None)
+            if pending and not pending.done():
+                pending.set_exception(error)
+                pending.exception()
+
     async def get_or_compute(
         self,
         key: str,
@@ -77,12 +84,11 @@ class QueryCache:
 
         try:
             value = await compute()
+        except asyncio.CancelledError as exc:
+            await self._reject_inflight(key, exc)
+            raise
         except Exception as exc:
-            async with self._lock:
-                pending = self._inflight.pop(key, None)
-                if pending and not pending.done():
-                    pending.set_exception(exc)
-                    pending.exception()
+            await self._reject_inflight(key, exc)
             raise
 
         try:
