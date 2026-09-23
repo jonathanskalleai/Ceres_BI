@@ -28,11 +28,12 @@ Host: `178.238.235.203` (`ceres-prod`, porta administrativa `2222`).
 - Função `rpc_bi_authorize_user(uuid,text[])` instalada como `SECURITY DEFINER`
   com `search_path` fixo; a API não recebeu `BYPASSRLS` nem leitura ampla.
 - `VITE_BI_API_ENABLED=true` na configuração privada de produção. Todas as
-  leituras de BI passam pelo gateway: as RPCs allow-listadas e os dois caminhos
-  legados (`rpc_negocios_crm` e `rpc_clientes_criticos_legacy`) agora usam a API
-  FastAPI. O acesso direto ao Supabase continua apenas para operações
-  administrativas de escrita e como fallback de rollback quando a flag é
-  desligada.
+  leituras analíticas das dashboards baseadas em RPC passam pelo gateway: as
+  RPCs allow-listadas e os dois caminhos legados (`rpc_negocios_crm` e
+  `rpc_clientes_criticos_legacy`) agora usam a API FastAPI. Leituras pequenas de
+  configuração de metas e operações administrativas continuam diretas por
+  escopo, e o acesso direto às RPCs permanece apenas como fallback de rollback
+  quando a flag é desligada.
 
 ### Composição server-side do painel
 
