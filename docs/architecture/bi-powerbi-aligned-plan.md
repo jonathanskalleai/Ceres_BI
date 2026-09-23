@@ -263,7 +263,9 @@ p95 e bytes.
 as chamadas core/funil da mesma onda de filtros; quando só um bloco é solicitado,
 mantém a rota individual para não dobrar a carga do banco. A flag continua
 desligada por padrão e a redução de requests só será habilitada no canário após
-paridade autenticada.
+paridade autenticada. A rota BI também passa por compressão HTTP no Traefik;
+`payload_bytes` continua medindo o JSON antes da compressão para que o baseline
+seja comparável entre ambientes.
 
 ### WP3 — mapa de Ações
 

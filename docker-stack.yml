@@ -89,10 +89,11 @@ services:
         - "traefik.http.routers.ceresbi-bi.rule=Host(`ceresbi.vouxconsultoria.com.br`) && PathPrefix(`/api/bi`)"
         - "traefik.http.routers.ceresbi-bi.tls=true"
         - "traefik.http.routers.ceresbi-bi.tls.certresolver=letsencryptresolver"
-        - "traefik.http.routers.ceresbi-bi.middlewares=ceresbi-bi-ratelimit"
+        - "traefik.http.routers.ceresbi-bi.middlewares=ceresbi-bi-ratelimit,ceresbi-bi-compress"
         - "traefik.http.middlewares.ceresbi-bi-ratelimit.ratelimit.average=20"
         - "traefik.http.middlewares.ceresbi-bi-ratelimit.ratelimit.burst=40"
         - "traefik.http.middlewares.ceresbi-bi-ratelimit.ratelimit.period=1s"
+        - "traefik.http.middlewares.ceresbi-bi-compress.compress=true"
         - "traefik.http.services.ceresbi-bi.loadbalancer.server.port=8100"
 
 networks:
