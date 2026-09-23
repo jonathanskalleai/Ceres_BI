@@ -10,6 +10,7 @@ from typing import Annotated
 from uuid import uuid4
 
 from auth import CurrentUser, authenticate_bi_user, make_bi_user_dependency
+from cache import QueryCache, make_cache_key
 from catalog import build_args, get_spec
 from config import Settings
 from db import ReadOnlyDatabase
@@ -24,11 +25,18 @@ from observability import (
     safe_request_id,
 )
 from rpc import fetch_core, fetch_detalhe, fetch_funil, fetch_mapa
-from schemas import AcoesDetalheFilters, AcoesFilters, BiEnvelope, BiMetrics, BiRpcRequest
+from schemas import (
+    AcoesDetalheFilters,
+    AcoesFilters,
+    BiEnvelope,
+    BiMetrics,
+    BiRpcRequest,
+)
 
 logger = logging.getLogger("ceresbi.bi")
 settings = Settings.from_env()
 database = ReadOnlyDatabase(settings)
+query_cache = QueryCache(settings.cache_max_items, settings.cache_ttl_seconds)
 require_bi_user = make_bi_user_dependency(settings, database)
 
 
@@ -75,14 +83,31 @@ async def execute_rpc(
     route_started_at: float,
     *,
     dashboard_id: str = "bi_acoes",
+    user: CurrentUser | None = None,
+    cacheable: bool = True,
 ) -> BiEnvelope:
     rid = request_id(request)
     query_started_at = perf_counter()
+    cache_hit = False
     try:
-        data = await asyncio.to_thread(call)
-        query_ms = round((perf_counter() - query_started_at) * 1000, 3)
+        async def compute():
+            return await asyncio.to_thread(call)
+
+        if cacheable and user is not None:
+            cache_key = make_cache_key(endpoint, user.id, rpc_name, (filter_hash(filters),))
+            cached = await query_cache.get_or_compute(cache_key, compute)
+            data = cached.value
+            cache_hit = cached.hit
+        else:
+            data = await compute()
+        query_ms = 0.0 if cache_hit else round((perf_counter() - query_started_at) * 1000, 3)
         api_ms = round((perf_counter() - route_started_at) * 1000, 3)
-        metrics = BiMetrics(query_ms=query_ms, api_ms=api_ms, payload_bytes=payload_size(data))
+        metrics = BiMetrics(
+            query_ms=query_ms,
+            api_ms=api_ms,
+            payload_bytes=payload_size(data),
+            cache_hit=cache_hit,
+        )
         response = BiEnvelope.success(data, rid, metrics)
         metrics.payload_bytes = envelope_size(response)
         emit_bi_query(
@@ -97,6 +122,7 @@ async def execute_rpc(
             query_ms=query_ms,
             api_ms=api_ms,
             payload_bytes=metrics.payload_bytes,
+            cache_hit=cache_hit,
         )
         return response
 
@@ -104,7 +130,7 @@ async def execute_rpc(
         query_ms = round((perf_counter() - query_started_at) * 1000, 3)
         api_ms = round((perf_counter() - route_started_at) * 1000, 3)
         code = error_code(exc)
-        metrics = BiMetrics(query_ms=query_ms, api_ms=api_ms, payload_bytes=0)
+        metrics = BiMetrics(query_ms=query_ms, api_ms=api_ms, payload_bytes=0, cache_hit=cache_hit)
         logger.exception("bi_rpc_failed endpoint=%s request_id=%s", endpoint, rid)
         response = BiEnvelope.failure(
             rid,
@@ -125,6 +151,7 @@ async def execute_rpc(
             query_ms=query_ms,
             api_ms=api_ms,
             payload_bytes=metrics.payload_bytes,
+            cache_hit=cache_hit,
             error_code=code,
         )
         return response
@@ -134,6 +161,7 @@ async def execute_acoes_batch(
     request: Request,
     filters: AcoesFilters,
     route_started_at: float,
+    user: CurrentUser,
 ) -> BiEnvelope:
     """Run the two primary Ações blocks concurrently with one API round trip.
 
@@ -147,11 +175,13 @@ async def execute_acoes_batch(
     async def run_block(block: str, rpc_name: str, call):
         started_at = perf_counter()
         try:
-            value = await asyncio.to_thread(call)
-            return block, value, None, round((perf_counter() - started_at) * 1000, 3)
-        except Exception as exc:  # noqa: BLE001 - converted to a safe issue below
+            cache_key = make_cache_key("acoes.batch", user.id, rpc_name, (filter_hash(filters),))
+            cached = await query_cache.get_or_compute(cache_key, lambda: asyncio.to_thread(call))
+            elapsed_ms = 0.0 if cached.hit else round((perf_counter() - started_at) * 1000, 3)
+            return block, cached.value, None, elapsed_ms, cached.hit
+        except Exception as exc:
             logger.exception("bi_batch_rpc_failed block=%s request_id=%s", block, rid)
-            return block, None, (rpc_name, error_code(exc)), round((perf_counter() - started_at) * 1000, 3)
+            return block, None, (rpc_name, error_code(exc)), round((perf_counter() - started_at) * 1000, 3), False
 
     results = await asyncio.gather(
         run_block("core", "rpc_acoes_bi_periodo", lambda: fetch_core(database, filters)),
@@ -161,8 +191,10 @@ async def execute_acoes_batch(
     issues = []
     query_ms = 0.0
     error_codes: list[str] = []
-    for block, value, failure, elapsed_ms in results:
+    cache_hit = False
+    for block, value, failure, elapsed_ms, block_cache_hit in results:
         query_ms = max(query_ms, elapsed_ms)
+        cache_hit = cache_hit or block_cache_hit
         if failure is None:
             data[block] = value
             continue
@@ -176,7 +208,7 @@ async def execute_acoes_batch(
 
     api_ms = round((perf_counter() - route_started_at) * 1000, 3)
     status = "ok" if len(data) == 2 else ("partial" if data else "error")
-    metrics = BiMetrics(query_ms=query_ms, api_ms=api_ms, payload_bytes=0)
+    metrics = BiMetrics(query_ms=query_ms, api_ms=api_ms, payload_bytes=0, cache_hit=cache_hit)
     if status == "error":
         response = BiEnvelope(
             status="error",
@@ -209,6 +241,7 @@ async def execute_acoes_batch(
         query_ms=query_ms,
         api_ms=api_ms,
         payload_bytes=metrics.payload_bytes,
+        cache_hit=cache_hit,
         **({"error_code": error_codes[0]} if error_codes else {}),
     )
     return response
@@ -235,12 +268,13 @@ async def health() -> dict[str, object]:
 async def acoes_core(
     request: Request,
     filters: Annotated[AcoesFilters, Query()],
-    _: CurrentUser = Depends(require_bi_user),  # noqa: B008
+    user: CurrentUser = Depends(require_bi_user),  # noqa: B008
 ) -> BiEnvelope:
     route_started_at = perf_counter()
     validate_period(filters)
     return await execute_rpc(
-        "acoes.core", "rpc_acoes_bi_periodo", lambda: fetch_core(database, filters), request, filters, route_started_at
+        "acoes.core", "rpc_acoes_bi_periodo", lambda: fetch_core(database, filters), request, filters, route_started_at,
+        user=user,
     )
 
 
@@ -248,23 +282,24 @@ async def acoes_core(
 async def acoes_batch(
     request: Request,
     filters: Annotated[AcoesFilters, Query()],
-    _: CurrentUser = Depends(require_bi_user),  # noqa: B008
+    user: CurrentUser = Depends(require_bi_user),  # noqa: B008
 ) -> BiEnvelope:
     route_started_at = perf_counter()
     validate_period(filters)
-    return await execute_acoes_batch(request, filters, route_started_at)
+    return await execute_acoes_batch(request, filters, route_started_at, user)
 
 
 @app.get("/api/bi/acoes/detalhe", response_model=BiEnvelope)
 async def acoes_detalhe(
     request: Request,
     filters: Annotated[AcoesDetalheFilters, Query()],
-    _: CurrentUser = Depends(require_bi_user),  # noqa: B008
+    user: CurrentUser = Depends(require_bi_user),  # noqa: B008
 ) -> BiEnvelope:
     route_started_at = perf_counter()
     validate_period(filters)
     return await execute_rpc(
-        "acoes.detalhe", "rpc_acoes_detalhe", lambda: fetch_detalhe(database, filters), request, filters, route_started_at
+        "acoes.detalhe", "rpc_acoes_detalhe", lambda: fetch_detalhe(database, filters), request, filters, route_started_at,
+        user=user,
     )
 
 
@@ -272,12 +307,13 @@ async def acoes_detalhe(
 async def acoes_funil(
     request: Request,
     filters: Annotated[AcoesFilters, Query()],
-    _: CurrentUser = Depends(require_bi_user),  # noqa: B008
+    user: CurrentUser = Depends(require_bi_user),  # noqa: B008
 ) -> BiEnvelope:
     route_started_at = perf_counter()
     validate_period(filters)
     return await execute_rpc(
-        "acoes.funil", "rpc_acoes_funil_gestao_periodo", lambda: fetch_funil(database, filters), request, filters, route_started_at
+        "acoes.funil", "rpc_acoes_funil_gestao_periodo", lambda: fetch_funil(database, filters), request, filters, route_started_at,
+        user=user,
     )
 
 
@@ -285,12 +321,13 @@ async def acoes_funil(
 async def acoes_mapa(
     request: Request,
     filters: Annotated[AcoesFilters, Query()],
-    _: CurrentUser = Depends(require_bi_user),  # noqa: B008
+    user: CurrentUser = Depends(require_bi_user),  # noqa: B008
 ) -> BiEnvelope:
     route_started_at = perf_counter()
     validate_period(filters)
     return await execute_rpc(
-        "acoes.mapa", "rpc_acoes_mapa_oportunidades", lambda: fetch_mapa(database, filters), request, filters, route_started_at
+        "acoes.mapa", "rpc_acoes_mapa_oportunidades", lambda: fetch_mapa(database, filters), request, filters, route_started_at,
+        user=user,
     )
 
 
@@ -310,7 +347,7 @@ async def bi_rpc(
     """
 
     spec = get_spec(rpc_name)
-    authenticate_bi_user(authorization, settings, database, spec.modules)
+    user = authenticate_bi_user(authorization, settings, database, spec.modules)
     _, args = build_args(rpc_name, payload.params)
     route_started_at = perf_counter()
     return await execute_rpc(
@@ -321,4 +358,6 @@ async def bi_rpc(
         payload.params,
         route_started_at,
         dashboard_id=spec.modules[0],
+        user=user,
+        cacheable=rpc_name not in {"rpc_etl_status", "rpc_etl_log"},
     )

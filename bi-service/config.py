@@ -19,6 +19,19 @@ def _int_env(name: str, default: int, *, minimum: int = 1) -> int:
     return value
 
 
+def _float_env(name: str, default: float, *, minimum: float = 0.0) -> float:
+    raw = os.getenv(name, "")
+    if not raw:
+        return default
+    try:
+        value = float(raw)
+    except ValueError as exc:
+        raise RuntimeError(f"{name} precisa ser numérico") from exc
+    if value < minimum:
+        raise RuntimeError(f"{name} precisa ser >= {minimum}")
+    return value
+
+
 @dataclass(frozen=True)
 class Settings:
     database_url: str
@@ -28,10 +41,12 @@ class Settings:
     pool_max: int
     statement_timeout_ms: int
     lock_timeout_ms: int
+    cache_ttl_seconds: float
+    cache_max_items: int
     cors_origins: tuple[str, ...]
 
     @classmethod
-    def from_env(cls) -> "Settings":
+    def from_env(cls) -> Settings:
         pool_min = _int_env("BI_DATABASE_POOL_MIN", 1)
         pool_max = _int_env("BI_DATABASE_POOL_MAX", 8)
         if pool_max < pool_min:
@@ -55,5 +70,7 @@ class Settings:
             pool_max=pool_max,
             statement_timeout_ms=_int_env("BI_STATEMENT_TIMEOUT_MS", 30_000),
             lock_timeout_ms=_int_env("BI_LOCK_TIMEOUT_MS", 5_000),
+            cache_ttl_seconds=_float_env("BI_CACHE_TTL_SECONDS", 5.0),
+            cache_max_items=_int_env("BI_CACHE_MAX_ITEMS", 512),
             cors_origins=origins,
         )

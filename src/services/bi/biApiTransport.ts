@@ -20,6 +20,7 @@ export interface BiApiEnvelope<T> {
     api_ms?: number;
     frontend_ms?: number;
     payload_bytes?: number;
+    cache_hit?: boolean;
   };
 }
 
@@ -136,6 +137,7 @@ async function parseBiResponse<T>(
     api_ms: envelope.metrics?.api_ms ?? null,
     frontend_ms: Number(frontendMs.toFixed(3)),
     payload_bytes: envelope.metrics?.payload_bytes ?? null,
+    cache_hit: envelope.metrics?.cache_hit ?? null,
   });
   if (envelope.status === "error") {
     const firstIssue = envelope.issues?.[0];

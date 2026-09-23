@@ -74,6 +74,11 @@ Não haverá um segundo banco nesta etapa.
   das dashboards inventariadas. Ações também mantém endpoints especializados
   para o batch dos blocos críticos. Tudo está protegido por
   `VITE_BI_API_ENABLED=false`; ainda não foi colocado em canário.
+- O gateway agora possui uma camada L1 process-local de TTL curto e
+  single-flight. Ela é isolada por usuário, RPC e filtros, expõe `cache_hit` na
+  telemetria e reduz ondas duplicadas. Ela não é cache distribuído, não recebe
+  dados de outro usuário e não substitui read models nem invalidação acionada
+  pelo ETL.
 - A medição anual aquecida das quatro RPCs principais de Ações ficou em cerca
   de 1,72 s se executada em série: core ~0,78 s, detalhe ~0,34 s, funil ~0,30 s
   e mapa ~0,30 s. O mapa retornou aproximadamente 214 KB.
@@ -160,6 +165,12 @@ Cada endpoint deve impor schema de filtros, período máximo quando aplicável,
 paginação, top-N, limite de payload, timeout e autorização. O cache deve usar
 dashboard + filtros normalizados + tenant/usuário quando necessário, com
 invalidação após ETL/reconciliação e coalescência de requisições iguais.
+
+**Implementado nesta etapa:** coalescência e cache L1 de 5 segundos no serviço
+FastAPI, com limite de 512 entradas por processo (ambos configuráveis). Cada
+resposta informa `metrics.cache_hit`. **Pendente:** invalidar após o ETL e
+substituir o L1 por cache compartilhado somente se o benchmark multi-instância
+demonstrar necessidade.
 
 ### Fase 4 — frontend orientado a query reduction
 

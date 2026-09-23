@@ -22,6 +22,7 @@ class BiMetrics(BaseModel):
     api_ms: float | None = None
     frontend_ms: float | None = None
     payload_bytes: int | None = None
+    cache_hit: bool | None = None
 
 
 class BiEnvelope(BaseModel):

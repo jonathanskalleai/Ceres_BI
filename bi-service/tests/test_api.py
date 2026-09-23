@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 
+import main as main_module
 from auth import CurrentUser
 from fastapi.testclient import TestClient
-import main as main_module
-from main import app, database, require_bi_user
+from main import app, database, query_cache, require_bi_user
 
 
 def test_health_reports_missing_configuration_without_exposing_secrets() -> None:
@@ -109,6 +110,7 @@ def test_batch_reports_partial_without_fabricating_failed_block(monkeypatch) -> 
         return CurrentUser(id="00000000-0000-0000-0000-000000000001", role="admin")
 
     app.dependency_overrides[require_bi_user] = fake_user
+    asyncio.run(query_cache.clear())
     monkeypatch.setattr(main_module, "fetch_core", lambda database, filters: {"kpis": {"totalAcoes": 3}})
 
     def fail_funil(database, filters):
@@ -175,3 +177,33 @@ def test_generic_rpc_gateway_rejects_unknown_rpc_and_invalid_params(monkeypatch)
     )
     assert unknown.status_code == 404
     assert invalid.status_code == 422
+
+
+def test_generic_rpc_gateway_reports_cache_hit_without_repeating_query(monkeypatch) -> None:
+    monkeypatch.setattr(
+        main_module,
+        "authenticate_bi_user",
+        lambda *args, **kwargs: CurrentUser(
+            id="00000000-0000-0000-0000-000000000099",
+            role="admin",
+        ),
+    )
+    asyncio.run(query_cache.clear())
+    calls = 0
+
+    def fake_execute(name, args):
+        nonlocal calls
+        calls += 1
+        return {"total": calls}
+
+    monkeypatch.setattr(database, "execute_rpc", fake_execute)
+    payload = {"params": {"p_from": "2026-02-01", "p_to": "2026-02-28"}}
+    first = TestClient(app).post("/api/bi/rpc/rpc_pedidos_bi", json=payload)
+    second = TestClient(app).post("/api/bi/rpc/rpc_pedidos_bi", json=payload)
+
+    assert first.status_code == second.status_code == 200
+    assert first.json()["data"] == {"total": 1}
+    assert second.json()["data"] == {"total": 1}
+    assert first.json()["metrics"]["cache_hit"] is False
+    assert second.json()["metrics"]["cache_hit"] is True
+    assert calls == 1

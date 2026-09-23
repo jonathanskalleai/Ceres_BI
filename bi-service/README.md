@@ -12,6 +12,11 @@ as RPCs existentes.
 - `BI_DATABASE_POOL_MIN`: conexões mínimas (padrão: `1`).
 - `BI_DATABASE_POOL_MAX`: conexões máximas (padrão: `8`).
 - `BI_STATEMENT_TIMEOUT_MS`: limite de cada RPC (padrão: `30000`).
+- `BI_CACHE_TTL_SECONDS`: TTL do cache L1 e da coalescência de consultas
+  idênticas (padrão: `5`; `0` desliga).
+- `BI_CACHE_MAX_ITEMS`: máximo de resultados mantidos por processo (padrão:
+  `512`). O cache é isolado por usuário, RPC e parâmetros e não substitui
+  read models nem a invalidação do ETL.
 - `BI_CORS_ORIGINS`: origens permitidas, separadas por vírgula. O padrão aceita
   somente `https://ceresbi.vouxconsultoria.com.br`; desenvolvimento local deve
   declarar `http://localhost:5173` explicitamente.
