@@ -1,12 +1,14 @@
 # Runbook — remoção dos overloads ambíguos do BI
 
-**Status:** aplicado e validado em produção em 23/09/2026 UTC.
+**Status:** aplicado e validado em produção em 23/09/2026 UTC; fast path de
+Resultados multi-ano aplicado e validado na mesma janela.
 
 **Escopo:** aplicar somente as duas migrations locais abaixo na VPS de
 produção, depois validar o contrato HTTP/RPC:
 
 - `supabase/migrations/20260922_remove_ambiguous_rpc_desempenho_vendas_overload.sql`
 - `supabase/migrations/20260922_remove_ambiguous_acoes_gpo_overloads.sql`
+- `supabase/migrations/20260923_resultados_multi_year_hash_fast_path.sql`
 
 As migrations foram transacionais, usaram `DROP FUNCTION ... RESTRICT`,
 validaram o contrato vigente antes/depois e emitiram `NOTIFY pgrst`. O serviço
@@ -116,6 +118,23 @@ O smoke visual autenticado em navegador das rotas `/bi/acoes` e
 `/bi/desempenho` ainda precisa ser executado com uma sessão de usuário; a
 validação CLI não possui credenciais de usuário e não deve inventar esse PASS.
 
+## Fast path de Resultados multi-ano (PASS)
+
+O wrapper `rpc_resultados_negocios_bi` mantinha o plano padrão para janelas
+longas, embora já existisse uma variante equivalente com `enable_nestloop = off`.
+Em produção, o mesmo payload (MD5 idêntico) foi medido assim:
+
+| Janela sem vendedor/cidade | Plano padrão | Plano hash | Redução |
+| --- | ---: | ---: | ---: |
+| 2023-01-01–2026-09-22 | 8,86 s | 1,62 s | 81,7% |
+| 2026-01-01–2026-09-22 | 4,01 s | 1,23 s | 69,3% |
+| 2026-07-01–2026-09-22 | 2,09 s | 0,73 s | 65,0% |
+
+A migration seleciona o plano hash apenas para janelas globais de pelo menos
+90 dias; filtros curtos ou com vendedor/cidade continuam no plano padrão.
+Após a aplicação, o wrapper multi-ano mediu 1,82 s e preservou o mesmo hash de
+payload. Não houve alteração de tabelas ou dados.
+
 ## Critério de saída
 
 - quatro overloads legados ausentes e quatro vigentes preservados — PASS;
@@ -124,4 +143,4 @@ validação CLI não possui credenciais de usuário e não deve inventar esse PA
 - `/bi/acoes` e `/bi/desempenho` renderizam sem shell preso — pendente apenas
   do smoke visual autenticado acima;
 - `pg_stat_statements`/`EXPLAIN` são recapturados depois, sem declarar ainda que
-  a latência multi-ano foi otimizada.
+  a latência filtrada ou p95/p99 de tráfego real foi otimizada.

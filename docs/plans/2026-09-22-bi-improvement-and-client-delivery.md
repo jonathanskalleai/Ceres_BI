@@ -58,7 +58,7 @@ As medições abaixo são amostras reais de produção, não um p95 de carga for
 | Fan-out inicial de Ações | aproximadamente 11 RPCs |
 | Fan-out do Painel | aproximadamente 10–14 chamadas |
 | `rpc_resultados_negocios_bi` YTD | ~1,19 s no banco |
-| `rpc_resultados_negocios_bi` multi-ano | ~8,74 s; picos de ~9,3 s |
+| `rpc_resultados_negocios_bi` multi-ano antes/depois | 9,42 s → 1,82 s no wrapper, MD5 preservado |
 | `rpc_acoes_mapa_oportunidades` | ~232 KB / 702 pinos |
 | Recarga problemática | shell por ~7 s + timeout de perfil observado |
 
@@ -160,11 +160,11 @@ reconciliação de dados e rollback independente. Não criar índice “por tent
    de restart controlado para recarregar o schema. Antes de qualquer hardening
    de ACL ou rewrite SQL, preservar a evidência pós-deploy e o snapshot da
    definição do GPO, que não existe como arquivo histórico no repositório.
-2. **`rpc_resultados_negocios_bi`** — é o maior risco de latência: multi-ano chegou a
-   ~8,7–9,3 s. Consolidar a coorte uma vez, evitar RPCs pesadas aninhadas e
-   recomputação de CTEs; filtrar período antes de `DISTINCT ON`, `STRING_AGG`,
-   cidade e produto. Manter caminho especializado para ano completo somente se
-   o plano e a paridade confirmarem benefício.
+2. **`rpc_resultados_negocios_bi`** — o fast path hash já foi aplicado para
+   janelas globais de pelo menos 90 dias e reduziu o multi-ano para ~1,82 s,
+   com paridade de payload. O próximo trabalho é medir p95/p99 em tráfego real,
+   repetir com vendedor/cidade e, depois, avaliar a consolidação da coorte para
+   reduzir RPCs pesadas aninhadas e recomputação de CTEs.
 3. **Mapa de oportunidades** — separar resumo de pinos; carregar mapa sob
    demanda/viewport; retornar clusters ou página de pinos, não centenas de
    registros e texto livre no caminho inicial. Validar coordenadas no servidor.
@@ -302,14 +302,14 @@ alterar o prazo.
   gateway, cliente ou concorrência) precisa de request id e telemetria.
 - A VPS tem disco raiz perto de 83%; não causou o congelamento observado, mas
   precisa de alerta e plano de manutenção.
-- A configuração same-origin está somente no commit local `6a25076`; produção
-  continua no SHA `ead1742538d2` até passar pelos gates.
+- A configuração same-origin e a camada de tolerância do BI estão publicadas;
+  a imagem web em produção é `ceresbi:4c38c89b6b93`.
 - O prazo de atualização/freshness do ETL e a semântica comercial de `partial`
   precisam de aceite explícito do cliente.
 
 ## 9. Próximo passo autorizado
 
-Executar F0 em branch/preview: fechar inventário, contratos, fixtures, p95,
-planos SQL e rollback. Só depois implementar F1/F2 e decidir publicação na VPS.
-Este documento e a auditoria são documentação; não aplicam código, migration,
-proxy ou alteração de serviço por conta própria.
+Executar smoke visual autenticado das rotas `/bi/acoes` e `/bi/desempenho`,
+fechar p50/p95/p99 em janela mensal/YTD/multi-ano e decidir separadamente o
+hardening das ACLs PUBLIC/anon nas RPCs `SECURITY DEFINER`. A migration do fast
+path já foi aplicada e possui rollback pelo wrapper anterior versionado.
