@@ -21,7 +21,7 @@ services:
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.ceresbi.entrypoints=websecure"
-        - "traefik.http.routers.ceresbi.rule=Host(`ceresbi.vouxconsultoria.com.br`) && !PathPrefix(`/api/ai`)"
+        - "traefik.http.routers.ceresbi.rule=Host(`ceresbi.vouxconsultoria.com.br`) && !PathPrefix(`/api/ai`) && !PathPrefix(`/api/bi`)"
         - "traefik.http.routers.ceresbi.tls=true"
         - "traefik.http.routers.ceresbi.tls.certresolver=letsencryptresolver"
         - "traefik.http.services.ceresbi.loadbalancer.server.port=80"
@@ -52,6 +52,30 @@ services:
         - "traefik.http.services.ceresbi-ai.loadbalancer.server.port=8000"
         - "traefik.http.middlewares.ai-strip.stripprefix.prefixes=/api"
         - "traefik.http.routers.ceresbi-ai.middlewares=ai-strip"
+
+  bi:
+    image: ${CERESBI_BI_IMAGE:?CERESBI_BI_IMAGE is required}
+    networks:
+      - redeinterna
+    environment:
+      BI_DATABASE_URL: ${CERESBI_BI_DATABASE_URL:?CERESBI_BI_DATABASE_URL is required}
+      BI_SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:?SUPABASE_JWT_SECRET is required}
+      BI_SUPABASE_JWT_AUDIENCE: ${SUPABASE_JWT_AUDIENCE:-authenticated}
+      BI_DATABASE_POOL_MIN: ${CERESBI_BI_DATABASE_POOL_MIN:-1}
+      BI_DATABASE_POOL_MAX: ${CERESBI_BI_DATABASE_POOL_MAX:-8}
+      BI_STATEMENT_TIMEOUT_MS: ${CERESBI_BI_STATEMENT_TIMEOUT_MS:-30000}
+      BI_LOCK_TIMEOUT_MS: ${CERESBI_BI_LOCK_TIMEOUT_MS:-5000}
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.ceresbi-bi.entrypoints=websecure"
+        - "traefik.http.routers.ceresbi-bi.rule=Host(`ceresbi.vouxconsultoria.com.br`) && PathPrefix(`/api/bi`)"
+        - "traefik.http.routers.ceresbi-bi.tls=true"
+        - "traefik.http.routers.ceresbi-bi.tls.certresolver=letsencryptresolver"
+        - "traefik.http.services.ceresbi-bi.loadbalancer.server.port=8100"
 
 networks:
   redeinterna:

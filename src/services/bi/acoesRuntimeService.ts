@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { fetchBiApi, isBiApiEnabled } from "@/services/bi/biApiTransport";
 import { logClientError, logClientWarning } from "@/lib/logger";
 import {
   isBiAbortError,
@@ -66,6 +67,23 @@ function withFilters(params: AcoesBIParams): RpcParams {
   return rpcParams;
 }
 
+function toBiApiParams(params: RpcParams): RpcParams {
+  const aliases: Record<string, string> = {
+    p_from: "from",
+    p_to: "to",
+    p_vendedor: "vendedor",
+    p_tipo_acao: "tipoAcao",
+    p_cidade: "cidade",
+    p_status: "statusNegocio",
+    p_limit: "limit",
+    p_offset: "offset",
+  };
+  return Object.entries(params).reduce<RpcParams>((result, [key, value]) => {
+    result[aliases[key] ?? key] = value;
+    return result;
+  }, {});
+}
+
 function withErrorContext(error: unknown, rpcName: string): Error {
   const normalized = normalizeBiError(error);
   if (isBiAbortError(normalized)) {
@@ -79,6 +97,17 @@ function withErrorContext(error: unknown, rpcName: string): Error {
 
 async function callRpc(rpcName: string, params: RpcParams, signal?: AbortSignal): Promise<unknown> {
   try {
+    if (isBiApiEnabled()) {
+      const endpointByRpc: Record<string, string> = {
+        rpc_acoes_bi_periodo: "/acoes/core",
+        rpc_acoes_detalhe: "/acoes/detalhe",
+        rpc_acoes_funil_gestao_periodo: "/acoes/funil",
+        rpc_acoes_mapa_oportunidades: "/acoes/mapa",
+      };
+      const endpoint = endpointByRpc[rpcName];
+      if (!endpoint) throw new Error(`RPC sem rota BI API: ${rpcName}`);
+      return await fetchBiApi(endpoint, toBiApiParams(params), signal);
+    }
     const request = rpcClient.rpc(rpcName, params);
     const response = signal ? await request.abortSignal(signal) : await request;
     if (response.error) throw response.error;
