@@ -65,6 +65,11 @@ Não haverá um segundo banco nesta etapa.
 - O ETL Python alimenta o schema `mirror`; não devemos duplicar esse banco.
 - O frontend ainda usa várias RPCs/PostgREST e mantém caminhos legados que
   precisam ser inventariados antes de qualquer remoção.
+- Existem helpers antigos que leem `mirror.*` diretamente
+  (`servicosBIService.ts`, `pedidosBIService.ts`, `negociosBIService.ts` e
+  `adminBIService.ts`). Eles não entram no grafo das páginas BI liberadas hoje;
+  permanecem marcados para remoção somente depois de confirmar que nenhum fluxo
+  CRM/legado os importa.
 - O gateway FastAPI possui uma borda genérica allow-listada para todas as RPCs
   das dashboards inventariadas. Ações também mantém endpoints especializados
   para o batch dos blocos críticos. Tudo está protegido por
