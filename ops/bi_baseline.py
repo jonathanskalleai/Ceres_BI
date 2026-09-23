@@ -101,6 +101,10 @@ def summarize_events(records: Iterable[dict[str, Any]]) -> dict[str, Any]:
             "error_rate": round(errors / len(group), 6) if group else 0,
             "timeout_rate": round(timeouts / len(group), 6) if group else 0,
         }
+        cache_values = [row["cache_hit"] for row in group if isinstance(row.get("cache_hit"), bool)]
+        result["cache_hit_rate"] = (
+            round(sum(cache_values) / len(cache_values), 6) if cache_values else None
+        )
         for field in METRIC_FIELDS:
             result[field] = metric_summary(row.get(field) for row in group)
         output_groups.append(result)

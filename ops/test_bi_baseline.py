@@ -27,6 +27,7 @@ def test_summary_separates_error_and_timeout_rates() -> None:
             "query_ms": 10,
             "api_ms": 15,
             "payload_bytes": 100,
+            "cache_hit": False,
         },
         {
             "event": "bi_query",
@@ -39,6 +40,7 @@ def test_summary_separates_error_and_timeout_rates() -> None:
             "query_ms": 100,
             "api_ms": 101,
             "payload_bytes": 200,
+            "cache_hit": True,
         },
     ]
     group = summarize_events(records)["groups"][0]
@@ -46,6 +48,7 @@ def test_summary_separates_error_and_timeout_rates() -> None:
     assert group["error_rate"] == 0.5
     assert group["timeout_rate"] == 0.5
     assert group["query_ms"]["p50"] == 55.0
+    assert group["cache_hit_rate"] == 0.5
 
 
 def test_server_and_browser_events_share_one_canonical_group() -> None:

@@ -43,7 +43,9 @@ O agregador agrupa por `dashboard_id`, `route`, `endpoint` e `case` (`monthly`,
 `annual` ou `custom`). Ele calcula p50 sempre que houver amostras e só publica
 p95/p99 quando o grupo tiver pelo menos 20 amostras. Percentis usam interpolação
 linear. `error_rate` e `timeout_rate` são separados; timeout é status `timeout`
-ou `error_code` contendo `TIMEOUT`.
+ou `error_code` contendo `TIMEOUT`. Quando o evento possui `cache_hit`, o grupo
+também expõe `cache_hit_rate`; eventos legados sem esse campo não entram no
+denominador.
 
 Entrada vazia é válida e produz grupos vazios. JSON/CSV inválido retorna código
 de saída 2 e uma mensagem curta em stderr; nenhum evento parcial é publicado.
