@@ -18,7 +18,7 @@ Host: `178.238.235.203` (`ceres-prod`, porta administrativa `2222`).
 
 ## Estado final publicado
 
-- Commit publicado e executado: `d3cbdd33239d`.
+- Commit publicado e executado: `c5e5d3b18caa` (`c5e5d3b18caadeafe3fcb5687071f89d10eeabd5`).
 - `ceresbi_web`, `ceresbi_ai` e `ceresbi_bi`: `1/1` no Swarm.
 - `/api/bi/health`: `status=ok`, banco alcançável e JWT configurado.
 - `ceres_bi_api`: `LOGIN`, `NOSUPERUSER`, `NOCREATEDB`, `NOCREATEROLE`,
@@ -27,8 +27,23 @@ Host: `178.238.235.203` (`ceres-prod`, porta administrativa `2222`).
 - Função `rpc_bi_authorize_user(uuid,text[])` instalada como `SECURITY DEFINER`
   com `search_path` fixo; a API não recebeu `BYPASSRLS` nem leitura ampla.
 - `VITE_BI_API_ENABLED=true` na configuração privada de produção. Todas as
-  chamadas que passam por `invokeBiRpc` usam agora o gateway; o fallback legado
-  permanece somente para rollback de código.
+  leituras de BI passam pelo gateway: as RPCs allow-listadas e os dois caminhos
+  legados (`rpc_negocios_crm` e `rpc_clientes_criticos_legacy`) agora usam a API
+  FastAPI. O acesso direto ao Supabase continua apenas para operações
+  administrativas de escrita e como fallback de rollback quando a flag é
+  desligada.
+
+### Composição server-side do painel
+
+O painel passou a usar `GET /api/bi/painel/kpis`. A API valida os filtros,
+autoriza o usuário, executa em paralelo as leituras PostgreSQL do período atual
+e anterior e calcula no backend os indicadores derivados (tendência, ticket
+médio e variações). O React recebe uma resposta semântica única; ele apenas
+mantém o estado visual e renderiza cards, séries e tabelas.
+
+Quando uma origem não retorna um campo, a resposta mantém compatibilidade de
+shape, mas marca `dataQuality.status=partial`, lista os campos ausentes e emite
+`BI_PANEL_DATA_INCOMPLETE`. Campo ausente não é tratado como zero válido.
 
 ## Medições diretas no banco
 
@@ -85,12 +100,20 @@ Também passaram as rotas específicas de Ações (`core`, `detalhe`, `funil`,
 `mapa` e `batch`), todas com envelope `ok`. A comparação estrutural do payload
 de `rpc_acoes_bi_periodo` entre a API e a chamada direta PostgreSQL foi `PASS`.
 
+O canário da composição nova retornou `status=ok` e
+`dataQuality.status=ready` para `01/01/2026–20/09/2026`, com payload de 3,9 KB,
+`query_ms≈1,33 s` e `ticketMedio` calculado no servidor. As leituras legadas
+também passaram pelo gateway: `rpc_negocios_crm` em aproximadamente 242 ms
+(191 KB) e `rpc_clientes_criticos_legacy` em aproximadamente 408 ms (62,6 KB),
+ambas HTTP 200 com envelope `ok`.
+
 Os testes de contrato retornaram: período inválido `422`, RPC não permitida
 `404`, chamada anônima `401` e usuário inexistente `401`. Nenhuma falha HTTP ou
 erro de envelope ocorreu no benchmark.
 
-A validação de qualidade da release também passou: 23 testes Python do gateway
-e baseline, 276 testes Vitest, `npx tsc --noEmit` e o build Vite de produção.
+A validação de qualidade da release também passou: 19 testes Python do serviço
+BI, 276 testes Vitest, `npx tsc --noEmit`, `ruff check bi-service` e o build
+Vite de produção.
 
 ## Critérios e limitações residuais
 
