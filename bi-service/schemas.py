@@ -6,7 +6,7 @@ from datetime import date, datetime, timezone
 from typing import Any, Literal
 from uuid import uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class BiIssue(BaseModel):
@@ -44,14 +44,20 @@ class BiEnvelope(BaseModel):
 class AcoesFilters(BaseModel):
     from_: date | None = Field(default=None, alias="from")
     to: date | None = None
-    vendedor: str | None = None
-    tipoAcao: str | None = None
-    cidade: str | None = None
+    vendedor: str | None = Field(default=None, max_length=160)
+    tipoAcao: str | None = Field(default=None, max_length=160)
+    cidade: str | None = Field(default=None, max_length=160)
 
     model_config = {"populate_by_name": True}
 
+    @model_validator(mode="after")
+    def validate_period(self) -> "AcoesFilters":
+        if self.from_ and self.to and self.from_ > self.to:
+            raise ValueError("from não pode ser posterior a to")
+        return self
+
 
 class AcoesDetalheFilters(AcoesFilters):
-    statusNegocio: str | None = None
+    statusNegocio: str | None = Field(default=None, max_length=80)
     limit: int = Field(default=50, ge=1, le=5000)
     offset: int = Field(default=0, ge=0)

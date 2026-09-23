@@ -55,6 +55,13 @@ services:
 
   bi:
     image: ${CERESBI_BI_IMAGE:?CERESBI_BI_IMAGE is required}
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     networks:
       - redeinterna
     environment:
@@ -65,16 +72,27 @@ services:
       BI_DATABASE_POOL_MAX: ${CERESBI_BI_DATABASE_POOL_MAX:-8}
       BI_STATEMENT_TIMEOUT_MS: ${CERESBI_BI_STATEMENT_TIMEOUT_MS:-30000}
       BI_LOCK_TIMEOUT_MS: ${CERESBI_BI_LOCK_TIMEOUT_MS:-5000}
+      BI_CORS_ORIGINS: ${CERESBI_BI_CORS_ORIGINS:-https://ceresbi.vouxconsultoria.com.br}
     deploy:
       replicas: 1
       restart_policy:
         condition: any
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          memory: 128M
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.ceresbi-bi.entrypoints=websecure"
         - "traefik.http.routers.ceresbi-bi.rule=Host(`ceresbi.vouxconsultoria.com.br`) && PathPrefix(`/api/bi`)"
         - "traefik.http.routers.ceresbi-bi.tls=true"
         - "traefik.http.routers.ceresbi-bi.tls.certresolver=letsencryptresolver"
+        - "traefik.http.routers.ceresbi-bi.middlewares=ceresbi-bi-ratelimit"
+        - "traefik.http.middlewares.ceresbi-bi-ratelimit.ratelimit.average=20"
+        - "traefik.http.middlewares.ceresbi-bi-ratelimit.ratelimit.burst=40"
+        - "traefik.http.middlewares.ceresbi-bi-ratelimit.ratelimit.period=1s"
         - "traefik.http.services.ceresbi-bi.loadbalancer.server.port=8100"
 
 networks:

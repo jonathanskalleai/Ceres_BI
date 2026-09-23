@@ -1,12 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { rpcMock, logErrorMock, logWarningMock } = vi.hoisted(() => ({
+const { rpcMock, getSessionMock, logErrorMock, logWarningMock } = vi.hoisted(() => ({
   rpcMock: vi.fn(),
+  getSessionMock: vi.fn(),
   logErrorMock: vi.fn(),
   logWarningMock: vi.fn(),
 }));
 
-vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: rpcMock } }));
+vi.mock("@/integrations/supabase/client", () => ({
+  supabase: { rpc: rpcMock, auth: { getSession: getSessionMock } },
+}));
 vi.mock("@/lib/logger", () => ({ logClientError: logErrorMock, logClientWarning: logWarningMock }));
 
 import {
@@ -28,7 +31,9 @@ function acoesPayload() {
 }
 
 beforeEach(() => {
+  vi.unstubAllEnvs();
   rpcMock.mockReset();
+  getSessionMock.mockReset();
   logErrorMock.mockReset();
   logWarningMock.mockReset();
 });
@@ -40,6 +45,33 @@ describe("acoesRuntimeService", () => {
 
     await expect(fetchAcoesRuntime({ signal })).resolves.toMatchObject({ kpis: { totalAcoes: 0 } });
     expect(abortSignal).toHaveBeenCalledWith(signal);
+  });
+
+  it("routes the legacy Ações call through the BI API with translated filters", async () => {
+    vi.stubEnv("VITE_BI_API_ENABLED", "true");
+    getSessionMock.mockResolvedValue({ data: { session: { access_token: "test-token" } } });
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({
+        status: "ok",
+        data: acoesPayload(),
+        requestId: "req-api",
+        fetchedAt: "2026-09-23T00:00:00Z",
+      }), { status: 200, headers: { "Content-Type": "application/json" } }),
+    );
+
+    await expect(fetchAcoesRuntime({
+      from: "2026-01-01",
+      to: "2026-12-31",
+      cidade: "São Paulo",
+    })).resolves.toMatchObject({ kpis: { totalAcoes: 0 } });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/bi/acoes/core?from=2026-01-01&to=2026-12-31&cidade=S%C3%A3o+Paulo",
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: "Bearer test-token" }),
+      }),
+    );
+    fetchMock.mockRestore();
   });
 
   it("accepts wrapped payloads but rejects NaN instead of defaulting to zero", async () => {

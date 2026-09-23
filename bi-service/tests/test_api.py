@@ -40,3 +40,22 @@ def test_core_returns_stable_envelope(monkeypatch) -> None:
     assert payload["data"]["kpis"]["totalAcoes"] == 3
     assert payload["requestId"]
     assert payload["fetchedAt"]
+
+
+def test_query_validation_rejects_invalid_period_and_oversized_filter() -> None:
+    async def fake_user() -> CurrentUser:
+        return CurrentUser(id="00000000-0000-0000-0000-000000000001", role="admin")
+
+    app.dependency_overrides[require_bi_user] = fake_user
+    try:
+        invalid_period = TestClient(app).get(
+            "/api/bi/acoes/core?from=2026-12-31&to=2026-01-01",
+        )
+        oversized_city = TestClient(app).get(
+            f"/api/bi/acoes/core?cidade={'á' * 161}",
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert invalid_period.status_code == 422
+    assert oversized_city.status_code == 422

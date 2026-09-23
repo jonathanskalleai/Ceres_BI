@@ -39,8 +39,8 @@ class Settings:
         origins = tuple(
             origin.strip()
             for origin in os.getenv(
-                "CORS_ORIGINS",
-                "https://ceresbi.vouxconsultoria.com.br,http://localhost:5173",
+                "BI_CORS_ORIGINS",
+                "https://ceresbi.vouxconsultoria.com.br",
             ).split(",")
             if origin.strip()
         )

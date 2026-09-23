@@ -12,7 +12,9 @@ as RPCs existentes.
 - `BI_DATABASE_POOL_MIN`: conexões mínimas (padrão: `1`).
 - `BI_DATABASE_POOL_MAX`: conexões máximas (padrão: `8`).
 - `BI_STATEMENT_TIMEOUT_MS`: limite de cada RPC (padrão: `30000`).
-- `CORS_ORIGINS`: origens permitidas, separadas por vírgula.
+- `BI_CORS_ORIGINS`: origens permitidas, separadas por vírgula. O padrão aceita
+  somente `https://ceresbi.vouxconsultoria.com.br`; desenvolvimento local deve
+  declarar `http://localhost:5173` explicitamente.
 
 O serviço falha fechado: sem `BI_DATABASE_URL` ou segredo JWT, as rotas
 protegidas não executam consultas. Nenhum usuário `postgres` é embutido no
@@ -41,3 +43,7 @@ uvicorn main:app --reload --port 8100
 
 O serviço usa a conexão PostgreSQL diretamente. O PostgREST não participa da
 consulta do BI.
+
+O container executa como usuário sem privilégios, com healthcheck próprio. Na
+stack de produção ele também usa filesystem somente leitura, sem capabilities e
+com limites de CPU/memória.

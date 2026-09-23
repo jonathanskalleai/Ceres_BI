@@ -5,9 +5,10 @@ from __future__ import annotations
 import asyncio
 import logging
 from contextlib import asynccontextmanager
+from typing import Annotated
 from uuid import uuid4
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from auth import CurrentUser, make_bi_user_dependency
@@ -46,6 +47,13 @@ def request_id(request: Request) -> str:
     return request.headers.get("x-request-id") or str(uuid4())
 
 
+def validate_period(filters: AcoesFilters) -> None:
+    # FastAPI's class-based query dependency validates individual fields but
+    # does not consistently run model-level validators across versions.
+    if filters.from_ and filters.to and filters.from_ > filters.to:
+        raise HTTPException(status_code=422, detail="from não pode ser posterior a to")
+
+
 async def execute_rpc(endpoint: str, call, request: Request) -> BiEnvelope:
     rid = request_id(request)
     try:
@@ -76,34 +84,38 @@ async def health() -> dict[str, object]:
 @app.get("/api/bi/acoes/core", response_model=BiEnvelope)
 async def acoes_core(
     request: Request,
-    filters: AcoesFilters = Depends(),
+    filters: Annotated[AcoesFilters, Query()],
     _: CurrentUser = Depends(require_bi_user),
 ) -> BiEnvelope:
+    validate_period(filters)
     return await execute_rpc("acoes.core", lambda: fetch_core(database, filters), request)
 
 
 @app.get("/api/bi/acoes/detalhe", response_model=BiEnvelope)
 async def acoes_detalhe(
     request: Request,
-    filters: AcoesDetalheFilters = Depends(),
+    filters: Annotated[AcoesDetalheFilters, Query()],
     _: CurrentUser = Depends(require_bi_user),
 ) -> BiEnvelope:
+    validate_period(filters)
     return await execute_rpc("acoes.detalhe", lambda: fetch_detalhe(database, filters), request)
 
 
 @app.get("/api/bi/acoes/funil", response_model=BiEnvelope)
 async def acoes_funil(
     request: Request,
-    filters: AcoesFilters = Depends(),
+    filters: Annotated[AcoesFilters, Query()],
     _: CurrentUser = Depends(require_bi_user),
 ) -> BiEnvelope:
+    validate_period(filters)
     return await execute_rpc("acoes.funil", lambda: fetch_funil(database, filters), request)
 
 
 @app.get("/api/bi/acoes/mapa", response_model=BiEnvelope)
 async def acoes_mapa(
     request: Request,
-    filters: AcoesFilters = Depends(),
+    filters: Annotated[AcoesFilters, Query()],
     _: CurrentUser = Depends(require_bi_user),
 ) -> BiEnvelope:
+    validate_period(filters)
     return await execute_rpc("acoes.mapa", lambda: fetch_mapa(database, filters), request)
