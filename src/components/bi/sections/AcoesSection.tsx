@@ -158,7 +158,7 @@ export default function AcoesSection({ active, dateRange }: Props) {
     to,
     vendedor: vendedor || undefined,
     cidade: cidade || undefined,
-    enabled: active,
+    enabled: active && carregarApoio,
   });
 
   const { data: esteiraData, isLoading: esteiraLoading } = usePedidosEsteira({
@@ -166,6 +166,7 @@ export default function AcoesSection({ active, dateRange }: Props) {
     to,
     vendedor: vendedor || undefined,
     cidade: cidade || undefined,
+    enabled: active && carregarApoio,
   });
 
   // Drill-down: clicar uma faixa do chart "Clientes em Risco" abre a aba
