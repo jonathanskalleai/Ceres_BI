@@ -7,8 +7,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from config import Settings  # noqa: E402
-
+from config import Settings
 
 SECRET_ENV_NAMES = (
     "BI_DATABASE_URL",

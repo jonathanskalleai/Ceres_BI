@@ -8,10 +8,9 @@ from typing import Annotated
 
 import jwt
 import psycopg2
-from fastapi import Header, HTTPException, status
-
 from config import Settings
 from db import ReadOnlyDatabase
+from fastapi import Header, HTTPException, status
 
 
 @dataclass(frozen=True)
@@ -51,22 +50,21 @@ def _decode_token(authorization: str | None, settings: Settings) -> str:
 
 def _load_dashboard_user(database: ReadOnlyDatabase, user_id: str, modules: tuple[str, ...]) -> CurrentUser:
     try:
-        with database.connection() as conn:
-            with conn.cursor() as cursor:
-                # profiles and user_permissions are protected by application
-                # RLS policies that depend on auth.uid(). The BI service has
-                # already verified the Supabase JWT, but it does not inject
-                # that JWT into a database session. Use the narrowly-scoped
-                # SECURITY DEFINER authorization helper instead of granting
-                # the API role RLS bypass or broad table access.
-                cursor.execute(
-                    """
+        with database.connection() as conn, conn.cursor() as cursor:
+            # profiles and user_permissions are protected by application
+            # RLS policies that depend on auth.uid(). The BI service has
+            # already verified the Supabase JWT, but it does not inject
+            # that JWT into a database session. Use the narrowly-scoped
+            # SECURITY DEFINER authorization helper instead of granting
+            # the API role RLS bypass or broad table access.
+            cursor.execute(
+                """
                     SELECT user_role, can_use_dashboard
                     FROM public.rpc_bi_authorize_user(%s::uuid, %s::text[])
                     """,
-                    (user_id, list(modules)),
-                )
-                row = cursor.fetchone()
+                (user_id, list(modules)),
+            )
+            row = cursor.fetchone()
     except psycopg2.Error as exc:
         raise HTTPException(status_code=503, detail="Não foi possível validar o acesso ao BI") from exc
     if not row:

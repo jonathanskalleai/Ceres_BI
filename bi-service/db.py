@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Any, Iterator
-
-from psycopg2 import pool
+from typing import Any
 
 from config import Settings
+from psycopg2 import pool
 
 
 class ReadOnlyDatabase:
@@ -67,10 +67,9 @@ class ReadOnlyDatabase:
         # rpc.py; do not interpolate user input here.
         placeholders = ", ".join(["%s"] * len(args))
         query = f"SELECT public.{function_name}({placeholders})"
-        with self.connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(query, args)
-                row = cursor.fetchone()
+        with self.connection() as conn, conn.cursor() as cursor:
+            cursor.execute(query, args)
+            row = cursor.fetchone()
         if not row:
             raise RuntimeError(f"RPC {function_name} não retornou dados")
         value = row[0]
@@ -79,7 +78,6 @@ class ReadOnlyDatabase:
         return value
 
     def ping(self) -> bool:
-        with self.connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute("SELECT 1")
-                return cursor.fetchone() == (1,)
+        with self.connection() as conn, conn.cursor() as cursor:
+            cursor.execute("SELECT 1")
+            return cursor.fetchone() == (1,)
