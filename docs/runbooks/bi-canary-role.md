@@ -232,5 +232,13 @@ explícita, verificação de dependências e backup do registro de auditoria.
 
 O WP1 só passa quando a role dedicada, ACL das quatro funções, autorização de
 usuário, resposta canônica, paridade mensal/anual e benchmark autenticado forem
-comprovados. Até lá, o gateway permanece com flag desligada e nenhuma alteração
-de produção é considerada concluída.
+comprovados. Esse era o bloqueio antes do canário; a execução registrada abaixo
+comprova a saída do WP1.
+
+### Registro de execução — 2026-09-23
+
+O procedimento foi concluído na VPS `ceres-prod`: role, secrets, helper de RLS,
+canário HTTPS, paridade do payload de Ações e benchmarks autenticados passaram.
+O serviço `ceresbi_bi` está `1/1` e `VITE_BI_API_ENABLED=true`. A frase acima é
+mantida como critério histórico; para o estado atual, consulte
+`docs/audits/2026-09-23-bi-readiness.md`.

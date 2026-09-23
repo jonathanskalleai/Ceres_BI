@@ -1,7 +1,7 @@
 ---
 feature: acoes-bi
 updated_at: 2026-09-23T18:25:00Z
-updated_by: "@dev (WP2: gateway canário + coalescência opcional core/funil; flag desligada)"
+updated_by: "@dev (WP2: gateway canário + coalescência core/funil; produção habilitada em 2026-09-23)"
 status: active
 ---
 
@@ -210,7 +210,7 @@ mesma resposta. Os 4 negocios com `ngo_conclusao` divergente sao resolvidos por
 - `PYTHONPATH=bi-service uv run --with pytest --with httpx --with-requirements bi-service/requirements.txt --python 3.12 pytest -q bi-service/tests` → testes do envelope, autenticação, validação e batch verdes
 - `npm exec vitest run src/services/bi/acoesBatchScheduler.test.ts src/services/bi/acoesRuntimeService.test.ts --runInBand` → chamadas core + funil com os mesmos filtros geram uma request `/api/bi/acoes/batch`; uma chamada isolada permanece na rota individual; ausência de bloco gera erro explícito, nunca zero
 - Em uma resposta autenticada do canário, `curl --compressed -I` deve mostrar `Content-Encoding: gzip` para JSON BI; comparar também `metrics.payload_bytes` (tamanho lógico, antes da compressão)
-- Com `VITE_BI_API_ENABLED=false`, os hooks continuam usando PostgREST legado; com a flag habilitada, o canário deve ser validado com JWT e paridade mensal/anual antes de qualquer promoção
+- Com `VITE_BI_API_ENABLED=true`, os hooks usam o gateway FastAPI autenticado; o fallback PostgREST legado permanece disponível para rollback, sem ser o caminho de produção atual
 
 ### Performance de render do mapa (v9.1 — SEMPRE rodar ao tocar o mapa)
 - `npx vitest run src/components/dashboard/mapa` → 8/8. Os dois arquivos sao gate de regressao, nao decoracao:
