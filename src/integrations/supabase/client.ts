@@ -10,13 +10,11 @@ const SUPABASE_URL = resolveSupabaseUrl({
   origin: window.location.origin,
 });
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-// A password login used to retry four 4s client-aborted requests. When the
-// gateway was congested, the button remained in "Entrando..." for ~17s and
-// could send multiple concurrent credential requests. One request with a
-// realistic deadline gives a definitive result without this retry cascade.
-const AUTH_LOGIN_ATTEMPTS = 1;
-const AUTH_LOGIN_ATTEMPT_TIMEOUT_MS = 15_000;
-const AUTH_LOGIN_RETRY_DELAY_MS = 0;
+// Auth refresh/login is the dependency of every protected query. Give the
+// token endpoint one bounded recovery attempt, without creating a retry storm.
+const AUTH_TOKEN_ATTEMPTS = 2;
+const AUTH_TOKEN_ATTEMPT_TIMEOUT_MS = 5_500;
+const AUTH_TOKEN_RETRY_DELAY_MS = 400;
 
 // Analytical RPCs can legitimately take longer than a regular REST request.
 // Retrying an aborted request here used to multiply the same expensive query
@@ -31,7 +29,7 @@ const GENERAL_RETRY_DELAY_MS = 0;
 // BI origin. Existing sessions are stored under the Supabase hostname key.
 export const AUTH_STORAGE_KEY = `sb-${new URL(CONFIGURED_SUPABASE_URL).hostname.split('.')[0]}-auth-token`;
 
-function isPasswordLoginRequest(input: RequestInfo | URL, init?: RequestInit): boolean {
+function isAuthTokenRequest(input: RequestInfo | URL, init?: RequestInit): boolean {
   const url = typeof input === 'string'
     ? input
     : input instanceof URL
@@ -39,9 +37,11 @@ function isPasswordLoginRequest(input: RequestInfo | URL, init?: RequestInit): b
       : input.url;
   const method = (init?.method ?? (typeof Request !== 'undefined' && input instanceof Request ? input.method : 'GET')).toUpperCase();
 
+  const parsed = new URL(url, window.location.origin);
+  const grantType = parsed.searchParams.get('grant_type');
   return method === 'POST'
-    && new URL(url, window.location.origin).pathname.endsWith('/auth/v1/token')
-    && new URL(url, window.location.origin).searchParams.get('grant_type') === 'password';
+    && parsed.pathname.endsWith('/auth/v1/token')
+    && (grantType === 'password' || grantType === 'refresh_token');
 }
 
 function waitForRetry(delayMs: number): Promise<void> {
@@ -55,10 +55,10 @@ function waitForRetry(delayMs: number): Promise<void> {
  * the login screen stuck.
  */
 async function resilientSupabaseFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
-  const isAuth = isPasswordLoginRequest(input, init);
-  const maxAttempts = isAuth ? AUTH_LOGIN_ATTEMPTS : GENERAL_ATTEMPTS;
-  const timeoutMs = isAuth ? AUTH_LOGIN_ATTEMPT_TIMEOUT_MS : GENERAL_TIMEOUT_MS;
-  const retryDelay = isAuth ? AUTH_LOGIN_RETRY_DELAY_MS : GENERAL_RETRY_DELAY_MS;
+  const isAuth = isAuthTokenRequest(input, init);
+  const maxAttempts = isAuth ? AUTH_TOKEN_ATTEMPTS : GENERAL_ATTEMPTS;
+  const timeoutMs = isAuth ? AUTH_TOKEN_ATTEMPT_TIMEOUT_MS : GENERAL_TIMEOUT_MS;
+  const retryDelay = isAuth ? AUTH_TOKEN_RETRY_DELAY_MS : GENERAL_RETRY_DELAY_MS;
 
   let lastError: unknown;
 
@@ -72,7 +72,12 @@ async function resilientSupabaseFetch(input: RequestInfo | URL, init?: RequestIn
     else parentSignal?.addEventListener('abort', abortFromParent, { once: true });
 
     try {
-      return await globalThis.fetch(input, { ...init, signal: controller.signal });
+      const response = await globalThis.fetch(input, { ...init, signal: controller.signal });
+      if (isAuth && [408, 425, 429, 500, 502, 503, 504].includes(response.status) && attempt < maxAttempts) {
+        await waitForRetry(retryDelay);
+        continue;
+      }
+      return response;
     } catch (error) {
       lastError = error;
       if (parentSignal?.aborted || attempt === maxAttempts) throw error;

@@ -8,11 +8,12 @@ import {
   InsightFilters,
   MetricComparison
 } from "@/types/insights";
+import { resilientFetch } from "@/lib/network/resilientFetch";
 
 /** Shared fetch wrapper — validates response and provides contextual error. */
 async function fetchJson<T>(url: string, caller: string, init?: RequestInit): Promise<T> {
   try {
-    const response = await fetch(url, init);
+    const response = await resilientFetch(url, init);
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
@@ -25,7 +26,7 @@ async function fetchJson<T>(url: string, caller: string, init?: RequestInit): Pr
 /** Fire-and-forget fetch wrapper for void endpoints. */
 async function fetchVoid(url: string, caller: string, init?: RequestInit): Promise<void> {
   try {
-    const response = await fetch(url, init);
+    const response = await resilientFetch(url, init);
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
@@ -118,7 +119,7 @@ export const insightsService = {
 
   async getViewRelationshipByViews(source: string, target: string): Promise<ViewRelationship | null> {
     try {
-      const response = await fetch(`/api/insights/view-relationships/${source}/${target}`);
+      const response = await resilientFetch(`/api/insights/view-relationships/${source}/${target}`);
       if (response.status === 404) return null;
       if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       return await response.json() as ViewRelationship;

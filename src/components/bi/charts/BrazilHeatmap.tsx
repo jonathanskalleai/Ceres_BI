@@ -5,6 +5,7 @@ import echarts from "@/lib/echartsCore";
 import { tooltipRow, baseAnimation } from "@/lib/chartTheme";
 import { useChartTheme } from "@/hooks/useChartTheme";
 import { ChartFrame } from "./ChartFrame";
+import { resilientFetch } from "@/lib/network/resilientFetch";
 
 const GEOJSON_URL =
   "https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson";
@@ -51,7 +52,7 @@ export default function BrazilHeatmap({
       return;
     }
     let cancelled = false;
-    fetch(GEOJSON_URL)
+    resilientFetch(GEOJSON_URL)
       .then((r) => r.json())
       .then((geo) => {
         if (cancelled) return;

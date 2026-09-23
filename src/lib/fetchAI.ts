@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { resilientFetch } from "@/lib/network/resilientFetch";
 
 /**
  * Fetch wrapper that injects the Supabase JWT into requests to the AI service.
@@ -12,5 +13,5 @@ export async function fetchAI(url: string, init?: RequestInit): Promise<Response
   if (session?.access_token) {
     headers["Authorization"] = `Bearer ${session.access_token}`;
   }
-  return fetch(url, { ...init, headers });
+  return resilientFetch(url, { ...init, headers });
 }

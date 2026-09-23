@@ -5,6 +5,7 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import { resilientFetch } from "@/lib/network/resilientFetch";
 
 const AI_BASE_URL = "/api/ai";
 
@@ -28,7 +29,7 @@ async function callAiEndpoint<T = unknown>(
       headers["Content-Type"] = "application/json";
     }
 
-    const res = await fetch(`${AI_BASE_URL}${path}`, {
+    const res = await resilientFetch(`${AI_BASE_URL}${path}`, {
       method,
       headers,
       body: body ? JSON.stringify(body) : undefined,

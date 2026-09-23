@@ -10,6 +10,7 @@ import {
 import type { Session, User } from '@supabase/supabase-js';
 import { clearPersistedAuthSession, supabase } from '@/integrations/supabase/client';
 import type { Profile } from '@/types/auth';
+import { retryTransient } from '@/lib/network/resilientFetch';
 
 const AUTH_REQUEST_TIMEOUT_MS = 12_000;
 const AUTH_LOGIN_REQUEST_TIMEOUT_MS = 17_000;
@@ -115,7 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const pending = profileRequestRef.current;
     if (pending?.userId === userId) return pending.request;
 
-    const request: Promise<Profile> = fetchProfile(userId)
+    const request: Promise<Profile> = retryTransient(() => fetchProfile(userId), { maxAttempts: 2 })
       .then((nextProfile) => {
         if (activeUserIdRef.current === userId) setProfile(nextProfile);
         return nextProfile;
@@ -156,7 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       const { data, error } = await withTimeout(
-        supabase.auth.getSession(),
+        retryTransient(() => supabase.auth.getSession(), { maxAttempts: 2 }),
         'Tempo esgotado ao verificar sua sessão.',
       );
       if (error) throw new Error(error.message);
