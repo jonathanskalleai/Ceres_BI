@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { invokeBiRpc } from "@/services/bi/biRpcGateway";
 import type { RpcNegociosCrmResult, RpcNegociosSummary } from "@/types/negociosCrm";
 
 /**
@@ -20,7 +20,7 @@ export async function fetchNegociosCrm(
     if (cidade) params.p_cidade = cidade;
     if (vendedor) params.p_vendedor = vendedor;
 
-    const { data, error } = await supabase.rpc("rpc_negocios_crm", params);
+    const { data, error } = await invokeBiRpc("rpc_negocios_crm", params);
     if (error) throw new Error(error.message);
 
     // RPC returns a single JSON value; normalize if wrapped in array

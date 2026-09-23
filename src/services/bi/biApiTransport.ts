@@ -79,7 +79,12 @@ function endpointForPath(path: string): string {
 function buildQuery(params: Record<string, unknown>): string {
   const query = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") query.set(key, String(value));
+    if (value === undefined || value === null || value === "") return;
+    if (Array.isArray(value)) {
+      value.forEach((item) => query.append(key, String(item)));
+      return;
+    }
+    query.set(key, String(value));
   });
   const encoded = query.toString();
   return encoded ? `?${encoded}` : "";

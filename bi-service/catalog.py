@@ -23,6 +23,7 @@ _COMMERCIAL_READ = ("bi.painel", "bi.comercial", "bi.desempenho")
 
 RPC_CATALOG: dict[str, RpcSpec] = {
     "rpc_negocios_bi": RpcSpec(("p_from", "p_to", "p_funis", "p_cidade", "p_vendedor"), _COMMON_COMMERCIAL, ("p_from", "p_to")),
+    "rpc_negocios_crm": RpcSpec(("p_from", "p_to", "p_cidade", "p_vendedor"), ("bi.painel", "bi.comercial")),
     "rpc_resultados_negocios_bi": RpcSpec(("p_from", "p_to", "p_vendedor", "p_cidade"), _COMMON_COMMERCIAL, ("p_from", "p_to")),
     "rpc_negocios_bi_expandido": RpcSpec(("p_from", "p_to", "p_vendedor", "p_cidade"), _COMMON_COMMERCIAL, ("p_from", "p_to")),
     "rpc_acoes_bi": RpcSpec(("p_from", "p_to", "p_vendedor", "p_tipo_acao", "p_cidade"), _ACOES),
@@ -56,6 +57,7 @@ RPC_CATALOG: dict[str, RpcSpec] = {
     "rpc_acoes_evolucao_mensal_ano_corrente": RpcSpec(("p_vendedor", "p_tipo_acao", "p_cidade"), _ACOES),
     "rpc_acoes_clientes_risco": RpcSpec(("p_vendedor", "p_cidade"), _ACOES),
     "rpc_clientes_criticos_bi": RpcSpec(("p_vendedor", "p_cidade", "p_dias_min", "p_limit"), _ACOES),
+    "rpc_clientes_criticos_legacy": RpcSpec(("p_dias_limite",), ("bi.painel", "bi.comercial")),
     "rpc_acoes_em_andamento": RpcSpec(("p_from", "p_to", "p_vendedor", "p_cidade", "p_limit", "p_offset"), _ACOES),
     "rpc_acoes_funil_gestao": RpcSpec(("p_from", "p_to", "p_vendedor", "p_cidade"), _ACOES),
     "rpc_acoes_funil_gestao_periodo": RpcSpec(("p_from", "p_to", "p_vendedor", "p_cidade"), _ACOES),
@@ -98,10 +100,10 @@ def _validate_value(name: str, value: Any) -> Any:
             raise HTTPException(status_code=422, detail=f"{name} possui formato inválido")
         if any(len(item) > _TEXT_LIMIT for item in value):
             raise HTTPException(status_code=422, detail=f"{name} excede o limite de tamanho")
-    if name in {"p_limit", "p_limite", "p_offset", "p_dias_min", "p_dias_max", "p_cutoff_anos", "p_ano"}:
+    if name in {"p_limit", "p_limite", "p_offset", "p_dias_min", "p_dias_max", "p_dias_limite", "p_cutoff_anos", "p_ano"}:
         if not isinstance(value, int) or isinstance(value, bool):
             raise HTTPException(status_code=422, detail=f"{name} precisa ser inteiro")
-        if name in {"p_limit", "p_limite", "p_cutoff_anos"} and not 1 <= value <= 5000:
+        if name in {"p_limit", "p_limite", "p_dias_limite", "p_cutoff_anos"} and not 1 <= value <= 5000:
             raise HTTPException(status_code=422, detail=f"{name} fora do limite permitido")
         if name in {"p_offset", "p_dias_min", "p_dias_max", "p_ano"} and value < 0:
             raise HTTPException(status_code=422, detail=f"{name} não pode ser negativo")

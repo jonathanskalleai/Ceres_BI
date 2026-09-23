@@ -24,6 +24,7 @@ from observability import (
     period_case,
     safe_request_id,
 )
+from panel_runtime import execute_panel_kpis
 from rpc import fetch_core, fetch_detalhe, fetch_funil, fetch_mapa
 from schemas import (
     AcoesDetalheFilters,
@@ -31,6 +32,7 @@ from schemas import (
     BiEnvelope,
     BiMetrics,
     BiRpcRequest,
+    PanelFilters,
 )
 
 logger = logging.getLogger("ceresbi.bi")
@@ -42,6 +44,11 @@ query_cache = QueryCache(
     settings.cache_max_entry_bytes,
 )
 require_bi_user = make_bi_user_dependency(settings, database)
+require_panel_user = make_bi_user_dependency(
+    settings,
+    database,
+    ("bi.painel", "bi.comercial", "bi.desempenho", "bi.operacional"),
+)
 
 
 @asynccontextmanager
@@ -267,6 +274,17 @@ async def health() -> dict[str, object]:
         "databaseReachable": database_ok,
         "jwtConfigured": bool(settings.jwt_secret),
     }
+
+
+@app.get("/api/bi/painel/kpis", response_model=BiEnvelope)
+async def painel_kpis(
+    request: Request,
+    filters: Annotated[PanelFilters, Query()],
+    user: CurrentUser = Depends(require_panel_user),  # noqa: B008
+) -> BiEnvelope:
+    """Return current/previous panel KPIs composed outside the browser."""
+
+    return await execute_panel_kpis(request, filters, user, database, query_cache)
 
 
 @app.get("/api/bi/acoes/core", response_model=BiEnvelope)

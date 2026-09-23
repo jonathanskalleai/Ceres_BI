@@ -1,51 +1,65 @@
-import { act, renderHook } from "@testing-library/react";
+import { renderHook, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { usePainelKPIsRpc } from "@/hooks/bi/usePainelKPIsRpc";
-import { useAcoesBIRpc } from "@/hooks/bi/useAcoesBIRpc";
-import { useAcoesFunilRpc } from "@/hooks/bi/useAcoesFunilRpc";
+import { usePainelKPIsRpc, type PainelKPIs } from "@/hooks/bi/usePainelKPIsRpc";
+import { fetchPainelKPIs } from "@/services/bi/painelService";
 
-vi.mock("@/hooks/bi/useNegociosBIRpc", () => ({
-  useNegociosBIRpc: vi.fn(() => ({ data: undefined, isLoading: false })),
+vi.mock("@/services/bi/painelService", () => ({
+  fetchPainelKPIs: vi.fn(),
 }));
-vi.mock("@/hooks/bi/useAcoesBIRpc", () => ({
-  useAcoesBIRpc: vi.fn(() => ({ data: undefined, isLoading: false })),
-}));
-vi.mock("@/hooks/bi/useAcoesFunilRpc", () => ({
-  useAcoesFunilRpc: vi.fn(() => ({ data: undefined, isLoading: false })),
-}));
-vi.mock("@/hooks/bi/useOperacionalBIRpc", () => ({
-  useOperacionalBIRpc: vi.fn(() => ({
-    data: { kpis: { eventosAgenda: 0 } },
-    isLoading: false,
-  })),
-}));
+
+const kpi = { value: 10, previousValue: 8, trend: "up" as const };
+const panel: PainelKPIs = {
+  totalNegocios: kpi,
+  ganhos: kpi,
+  perdidos: kpi,
+  andamento: kpi,
+  taxaConversao: kpi,
+  valorGanho: kpi,
+  valorPerdido: kpi,
+  pipelineAberto: kpi,
+  ticketMedio: kpi,
+  totalAcoes: kpi,
+  totalVisitas: kpi,
+  totalOS: kpi,
+  porTipoAcao: [],
+  oportunidadesAbertas: kpi,
+  visitasPorOportunidade: kpi,
+  diasParados: kpi,
+  negociosOutrosStatus: 0,
+  ignoresFunilFilter: {},
+  dataQuality: { status: "ready", missing: [] },
+};
 
 describe("usePainelKPIsRpc", () => {
-  afterEach(() => {
-    vi.clearAllMocks();
-    vi.useRealTimers();
-  });
+  afterEach(() => vi.clearAllMocks());
 
-  it("starts current queries immediately and defers only previous-period queries", () => {
-    vi.useFakeTimers();
-    renderHook(() => usePainelKPIsRpc(
-      { from: new Date(2026, 0, 1), to: new Date(2026, 8, 20) },
-      "__all__",
-      "__all__",
-    ));
+  it("loads one server-composed panel contract with all filters", async () => {
+    vi.mocked(fetchPainelKPIs).mockResolvedValue(panel);
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
 
-    expect(vi.mocked(useAcoesBIRpc).mock.calls[0][0].enabled).toBe(true);
-    expect(vi.mocked(useAcoesBIRpc).mock.calls[1][0].enabled).toBe(false);
-    expect(vi.mocked(useAcoesFunilRpc).mock.calls[0][0].enabled).toBe(true);
-    expect(vi.mocked(useAcoesFunilRpc).mock.calls[1][0].enabled).toBe(false);
+    const { result } = renderHook(
+      () => usePainelKPIsRpc(
+        { from: new Date(2026, 0, 1), to: new Date(2026, 8, 20) },
+        "Vendas Maquinas",
+        "__all__",
+        "vend-1",
+        "São Paulo",
+      ),
+      { wrapper },
+    );
 
-    act(() => vi.advanceTimersByTime(600));
-
-    const acoesCalls = vi.mocked(useAcoesBIRpc).mock.calls;
-    const funilCalls = vi.mocked(useAcoesFunilRpc).mock.calls;
-    expect(acoesCalls.at(-2)?.[0].enabled).toBe(true);
-    expect(acoesCalls.at(-1)?.[0].enabled).toBe(true);
-    expect(funilCalls.at(-2)?.[0].enabled).toBe(true);
-    expect(funilCalls.at(-1)?.[0].enabled).toBe(true);
+    await waitFor(() => expect(result.current.comparisonReady).toBe(true));
+    expect(result.current.kpis.ticketMedio.value).toBe(10);
+    expect(vi.mocked(fetchPainelKPIs)).toHaveBeenCalledWith({
+      from: "2026-01-01",
+      to: "2026-09-20",
+      funis: ["VENDAS", "ADM", "BANCOS", "OFICINA", "MARKETING"],
+      vendedor: "vend-1",
+      cidade: "São Paulo",
+    });
   });
 });

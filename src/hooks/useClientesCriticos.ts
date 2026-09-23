@@ -1,5 +1,5 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeBiRpc } from "@/services/bi/biRpcGateway";
 
 const STALE_TIME = 5 * 60_000; // 5 minutes
 
@@ -23,11 +23,11 @@ interface UseClientesCriticosOptions {
 }
 
 async function fetchClientesCriticos(diasLimite: number): Promise<RpcClienteCritico[]> {
-  const { data, error } = await supabase.rpc("rpc_clientes_criticos", {
+  const { data, error } = await invokeBiRpc<RpcClienteCritico[]>("rpc_clientes_criticos_legacy", {
     p_dias_limite: diasLimite,
   });
   if (error) throw new Error(`rpc_clientes_criticos: ${error.message}`);
-  return (data ?? []) as RpcClienteCritico[];
+  return data ?? [];
 }
 
 export function useClientesCriticos({ diasLimite = 60, enabled = true }: UseClientesCriticosOptions = {}) {

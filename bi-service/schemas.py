@@ -88,5 +88,25 @@ class AcoesDetalheFilters(AcoesFilters):
     offset: int = Field(default=0, ge=0)
 
 
+class PanelFilters(BaseModel):
+    """Filters for the server-composed panel KPI contract."""
+
+    from_: date = Field(alias="from")
+    to: date
+    funis: list[str] = Field(default_factory=list, max_length=100)
+    vendedor: str | None = Field(default=None, max_length=160)
+    cidade: str | None = Field(default=None, max_length=160)
+
+    model_config = {"populate_by_name": True}
+
+    @model_validator(mode="after")
+    def validate_period(self) -> PanelFilters:
+        if self.from_ > self.to:
+            raise ValueError("from não pode ser posterior a to")
+        if any(len(funil) > 160 for funil in self.funis):
+            raise ValueError("funis excede o limite de tamanho")
+        return self
+
+
 class BiRpcRequest(BaseModel):
     params: dict[str, Any] = Field(default_factory=dict)
