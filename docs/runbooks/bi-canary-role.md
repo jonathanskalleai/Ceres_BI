@@ -39,6 +39,13 @@ GRANT SELECT (id, role, is_active) ON public.profiles TO ceres_bi_api;
 GRANT SELECT (user_id, module_id) ON public.user_permissions TO ceres_bi_api;
 ```
 
+`profiles` e `user_permissions` possuem RLS baseado em `auth.uid()`, mas o
+gateway valida o JWT fora do PostgreSQL. Para não conceder `BYPASSRLS` nem
+leitura ampla, a release instala a função `rpc_bi_authorize_user(uuid,text[])`
+como `SECURITY DEFINER`, com `search_path` fixo, e concede somente `EXECUTE`
+para `ceres_bi_api`. A API usa essa função apenas para decidir se o usuário
+ativo possui o módulo solicitado.
+
 Defina a senha fora do repositório, usando o mecanismo de segredo da VPS. Não
 coloque senha em migration, `.env` versionado, log, shell history ou neste
 runbook. O DSN do serviço deve apontar para `ceres_bi_api`, nunca para

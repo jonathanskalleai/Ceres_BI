@@ -53,16 +53,16 @@ def _load_dashboard_user(database: ReadOnlyDatabase, user_id: str, modules: tupl
     try:
         with database.connection() as conn:
             with conn.cursor() as cursor:
+                # profiles and user_permissions are protected by application
+                # RLS policies that depend on auth.uid(). The BI service has
+                # already verified the Supabase JWT, but it does not inject
+                # that JWT into a database session. Use the narrowly-scoped
+                # SECURITY DEFINER authorization helper instead of granting
+                # the API role RLS bypass or broad table access.
                 cursor.execute(
                     """
-                    SELECT p.role,
-                           EXISTS (
-                             SELECT 1 FROM public.user_permissions up
-                             WHERE up.user_id = p.id
-                               AND up.module_id = ANY(%s)
-                           ) AS can_use_dashboard
-                    FROM public.profiles p
-                    WHERE p.id = %s::uuid AND p.is_active = true
+                    SELECT user_role, can_use_dashboard
+                    FROM public.rpc_bi_authorize_user(%s::uuid, %s::text[])
                     """,
                     (user_id, list(modules)),
                 )
