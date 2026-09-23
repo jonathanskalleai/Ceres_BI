@@ -22,6 +22,23 @@ python ops/bi_baseline.py /tmp/ceres-bi-events.jsonl > /tmp/ceres-bi-baseline.js
 cat /tmp/ceres-bi-events.csv | python ops/bi_baseline.py - --format csv
 ```
 
+Para validar um canário autenticado ponta a ponta, use o benchmark HTTP. O
+token deve vir somente da variável de ambiente e nunca é impresso:
+
+```bash
+BI_BENCHMARK_TOKEN="$TOKEN" \
+  python ops/bi_gateway_benchmark.py \
+  --url https://ceresbi-bi-canary.internal \
+  --rpc rpc_desempenho_vendas_bi \
+  --params '{"p_from":"2026-01-01","p_to":"2026-12-31","p_funis":null}' \
+  --requests 20 --concurrency 4
+```
+
+O relatório mostra latência de rede (`wall_ms`), latência do banco/API,
+payload, status, códigos de erro e taxa de `cache_hit`. O script retorna código
+2 quando existe erro HTTP, erro de envelope ou falha de transporte. Ele não
+altera dados nem ativa a feature flag.
+
 O agregador agrupa por `dashboard_id`, `route`, `endpoint` e `case` (`monthly`,
 `annual` ou `custom`). Ele calcula p50 sempre que houver amostras e só publica
 p95/p99 quando o grupo tiver pelo menos 20 amostras. Percentis usam interpolação

@@ -172,6 +172,11 @@ resposta informa `metrics.cache_hit`. **Pendente:** invalidar após o ETL e
 substituir o L1 por cache compartilhado somente se o benchmark multi-instância
 demonstrar necessidade.
 
+Também foi criado `ops/bi_gateway_benchmark.py` para medir o caminho HTTP
+autenticado com concorrência controlada. Sem uma amostra real de canário, p95 e
+p99 continuam sendo desconhecidos; o script existe para fechar essa lacuna sem
+registrar token ou filtros.
+
 ### Fase 4 — frontend orientado a query reduction
 
 - botão **Aplicar filtros** para consultas pesadas;
