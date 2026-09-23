@@ -59,6 +59,7 @@ function rpcForPath(path: string): string {
     "/acoes/detalhe": "rpc_acoes_detalhe",
     "/acoes/funil": "rpc_acoes_funil_gestao_periodo",
     "/acoes/mapa": "rpc_acoes_mapa_oportunidades",
+    "/acoes/batch": "rpc_acoes_bi_periodo,rpc_acoes_funil_gestao_periodo",
   };
   return names[path] ?? "unknown";
 }
@@ -68,6 +69,7 @@ function canonicalRoute(path: string): string {
 }
 
 function endpointForPath(path: string): string {
+  if (path === "/acoes/batch") return "acoes.batch";
   return path.replace(/^\/+|\/+$/g, "").replaceAll("/", ".");
 }
 

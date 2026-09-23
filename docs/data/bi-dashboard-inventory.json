@@ -120,11 +120,11 @@
       "sections": ["core", "detalhe", "funil", "mapa", "gestao", "termometro", "pedidos_ganhos", "negocios_perdidos", "em_andamento"],
       "hooks": ["useAcoesBIRpc", "useAcoesDetalheRpc", "useAcoesFunilPeriodoRpc", "useAcoesMapaRpc", "useAcoesFunilRpc", "useAcoesGestaoListasRpc", "useAcoesTermometroFechamentoRpc", "usePedidosGanhosRpc", "useNegociosPerdidosRpc", "useEmAndamentoRpc"],
       "rpc_or_endpoints": ["rpc_acoes_bi_periodo", "rpc_acoes_detalhe", "rpc_acoes_funil_gestao_periodo", "rpc_acoes_mapa_oportunidades", "rpc_acoes_funil_gestao", "rpc_acoes_gestao_listas", "rpc_acoes_termometro_fechamento", "rpc_acoes_pedidos_ganhos", "rpc_acoes_negocios_perdidos", "rpc_acoes_em_andamento"],
-      "api_endpoints": ["/api/bi/acoes/core", "/api/bi/acoes/detalhe", "/api/bi/acoes/funil", "/api/bi/acoes/mapa"],
+      "api_endpoints": ["/api/bi/acoes/core", "/api/bi/acoes/batch", "/api/bi/acoes/detalhe", "/api/bi/acoes/funil", "/api/bi/acoes/mapa"],
       "source_tables": ["mirror.crm_acoes", "mirror.crm_negocios", "mirror.crm_pedidos", "mirror.crm_carteira_clientes", "mirror.usuarios"],
       "filters": ["date_range", "vendedor", "cidade", "tipoAcao", "statusNegocio", "limit", "offset"],
       "status": "gateway_ready_flag_off",
-      "gaps": ["Canário autenticado e role PostgreSQL dedicada ainda pendentes.", "Gestão/termómetro/drill-downs adicionais ainda usam PostgREST legado."]
+      "gaps": ["Canário autenticado e role PostgreSQL dedicada ainda pendentes.", "Batch core/funil foi implementado localmente, mas ainda precisa de benchmark autenticado antes de habilitar a flag.", "Gestão/termómetro/drill-downs adicionais ainda usam PostgREST legado."]
     },
     {
       "dashboard_id": "bi_inteligencia",

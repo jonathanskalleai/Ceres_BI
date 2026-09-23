@@ -257,6 +257,14 @@ Ações.
 **Aceite:** mesma saída visual, mesmos valores e redução comprovada de requests,
 p95 e bytes.
 
+**Implementação local concluída:** a rota autenticada
+`GET /api/bi/acoes/batch` executa core e funil em paralelo e retorna um envelope
+`ok`, `partial` ou `error` sem fabricar zeros. O scheduler do frontend coalesce
+as chamadas core/funil da mesma onda de filtros; quando só um bloco é solicitado,
+mantém a rota individual para não dobrar a carga do banco. A flag continua
+desligada por padrão e a redução de requests só será habilitada no canário após
+paridade autenticada.
+
 ### WP3 — mapa de Ações
 
 **Mudança:** reduzir o payload de pinos, avaliar projeção mínima, coordenada

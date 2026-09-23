@@ -5,6 +5,7 @@ import logging
 
 from auth import CurrentUser
 from fastapi.testclient import TestClient
+import main as main_module
 from main import app, database, require_bi_user
 
 
@@ -75,3 +76,52 @@ def test_query_validation_rejects_invalid_period_and_oversized_filter() -> None:
 
     assert invalid_period.status_code == 422
     assert oversized_city.status_code == 422
+
+
+def test_batch_runs_primary_blocks_and_emits_one_canonical_event(monkeypatch, caplog) -> None:
+    async def fake_user() -> CurrentUser:
+        return CurrentUser(id="00000000-0000-0000-0000-000000000001", role="admin")
+
+    app.dependency_overrides[require_bi_user] = fake_user
+    monkeypatch.setattr(main_module, "fetch_core", lambda database, filters: {"kpis": {"totalAcoes": 3}})
+    monkeypatch.setattr(main_module, "fetch_funil", lambda database, filters: {"funil": {"visitas": 2}})
+    caplog.set_level(logging.INFO, logger="ceresbi.bi")
+    try:
+        response = TestClient(app).get(
+            "/api/bi/acoes/batch?from=2026-01-01&to=2026-01-31",
+            headers={"X-Request-ID": "req:batch-1"},
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "ok"
+    assert payload["data"] == {"core": {"kpis": {"totalAcoes": 3}}, "funil": {"funil": {"visitas": 2}}}
+    events = [json.loads(record.message) for record in caplog.records if record.message.startswith('{"')]
+    query_event = next(event for event in events if event.get("event") == "bi_query" and event.get("endpoint") == "acoes.batch")
+    assert query_event["request_id"] == "req:batch-1"
+    assert query_event["status"] == "ok"
+
+
+def test_batch_reports_partial_without_fabricating_failed_block(monkeypatch) -> None:
+    async def fake_user() -> CurrentUser:
+        return CurrentUser(id="00000000-0000-0000-0000-000000000001", role="admin")
+
+    app.dependency_overrides[require_bi_user] = fake_user
+    monkeypatch.setattr(main_module, "fetch_core", lambda database, filters: {"kpis": {"totalAcoes": 3}})
+
+    def fail_funil(database, filters):
+        raise TimeoutError("database timeout")
+
+    monkeypatch.setattr(main_module, "fetch_funil", fail_funil)
+    try:
+        response = TestClient(app).get("/api/bi/acoes/batch?from=2026-01-01&to=2026-01-31")
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "partial"
+    assert payload["data"] == {"core": {"kpis": {"totalAcoes": 3}}}
+    assert payload["issues"][0]["code"] == "BI_BATCH_FUNIL_FAILED"

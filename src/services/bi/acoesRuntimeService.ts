@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { fetchBiApi, isBiApiEnabled } from "@/services/bi/biApiTransport";
+import { fetchAcoesBatchBlock } from "@/services/bi/acoesBatchScheduler";
 import { logClientError, logClientWarning } from "@/lib/logger";
 import {
   isBiAbortError,
@@ -117,6 +118,18 @@ async function callRpc(rpcName: string, params: RpcParams, signal?: AbortSignal)
   }
 }
 
+async function callBatchBlock(
+  block: "core" | "funil",
+  rpcName: string,
+  params: AcoesBIParams,
+): Promise<unknown> {
+  try {
+    return await fetchAcoesBatchBlock(block, params, params.signal);
+  } catch (error) {
+    throw withErrorContext(error, rpcName);
+  }
+}
+
 function requireNumericFields(record: Record<string, unknown>, fields: string[], path: string): void {
   for (const field of fields) requireFiniteNumber(record[field], `${path}.${field}`);
 }
@@ -217,7 +230,9 @@ function sanitizeMapPins(payload: unknown): RpcAcoesMapaOportunidades {
 }
 
 export async function fetchAcoesRuntime(params: AcoesBIParams): Promise<RpcAcoesBI> {
-  const payload = await callRpc("rpc_acoes_bi_periodo", withFilters(params), params.signal);
+  const payload = isBiApiEnabled()
+    ? await callBatchBlock("core", "rpc_acoes_bi_periodo", params)
+    : await callRpc("rpc_acoes_bi_periodo", withFilters(params), params.signal);
   try {
     return validateAcoesBI(payload);
   } catch (error) {
@@ -239,7 +254,9 @@ export async function fetchAcoesDetalheRuntime(params: AcoesDetalheParams): Prom
 }
 
 export async function fetchAcoesFunilPeriodoRuntime(params: AcoesBIParams): Promise<RpcAcoesFunilGestao> {
-  const payload = await callRpc("rpc_acoes_funil_gestao_periodo", withFilters(params), params.signal);
+  const payload = isBiApiEnabled()
+    ? await callBatchBlock("funil", "rpc_acoes_funil_gestao_periodo", params)
+    : await callRpc("rpc_acoes_funil_gestao_periodo", withFilters(params), params.signal);
   try {
     return validateFunil(payload);
   } catch (error) {
