@@ -17,6 +17,10 @@ def test_health_reports_missing_configuration_without_exposing_secrets() -> None
     assert payload["service"] == "ceresbi-bi"
     assert "databaseUrl" not in payload
 
+    public_response = TestClient(app).get("/api/bi/health")
+    assert public_response.status_code == 200
+    assert public_response.json() == payload
+
 
 def test_protected_endpoint_requires_bearer_token() -> None:
     response = TestClient(app).get("/api/bi/acoes/core")

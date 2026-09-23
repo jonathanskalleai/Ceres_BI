@@ -252,6 +252,7 @@ async def execute_acoes_batch(
 
 
 @app.get("/health")
+@app.get("/api/bi/health")
 async def health() -> dict[str, object]:
     database_ok = False
     if database.configured:
