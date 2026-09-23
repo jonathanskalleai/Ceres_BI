@@ -61,16 +61,27 @@ CERESBI_AI_JOB_TOKEN="$(read_env_value CERESBI_AI_JOB_TOKEN)"
 CERESBI_AI_YA_AGENT_V2_ENABLED="$(read_env_value CERESBI_AI_YA_AGENT_V2_ENABLED)"
 CERESBI_AI_YA_AGENT_V2_ENABLED="${CERESBI_AI_YA_AGENT_V2_ENABLED:-false}"
 VITE_YA_AGENT_V2_ENABLED="$(read_env_value VITE_YA_AGENT_V2_ENABLED)"
+VITE_BI_API_ENABLED="$(read_env_value VITE_BI_API_ENABLED)"
+VITE_BI_API_ENABLED="${VITE_BI_API_ENABLED:-false}"
+VITE_BI_API_BASE_URL="$(read_env_value VITE_BI_API_BASE_URL)"
+VITE_BI_API_BASE_URL="${VITE_BI_API_BASE_URL:-/api/bi}"
 VITE_ERROR_TRACKING_ENDPOINT="${VITE_ERROR_TRACKING_ENDPOINT:-$(read_env_value VITE_ERROR_TRACKING_ENDPOINT)}"
 VITE_ERROR_TRACKING_ENDPOINT="${VITE_ERROR_TRACKING_ENDPOINT:-https://ceresbi.vouxconsultoria.com.br/api/ai/telemetry}"
 VITE_SUPABASE_URL="$(read_env_value VITE_SUPABASE_URL)"
 VITE_SUPABASE_PUBLISHABLE_KEY="$(read_env_value VITE_SUPABASE_PUBLISHABLE_KEY)"
 VITE_SUPABASE_SERVICE_ROLE_KEY="$(read_env_value VITE_SUPABASE_SERVICE_ROLE_KEY)"
+CERESBI_BI_DATABASE_URL="$(read_env_value CERESBI_BI_DATABASE_URL)"
+CERESBI_BI_DATABASE_POOL_MIN="$(read_env_value CERESBI_BI_DATABASE_POOL_MIN)"
+CERESBI_BI_DATABASE_POOL_MAX="$(read_env_value CERESBI_BI_DATABASE_POOL_MAX)"
+CERESBI_BI_STATEMENT_TIMEOUT_MS="$(read_env_value CERESBI_BI_STATEMENT_TIMEOUT_MS)"
+CERESBI_BI_LOCK_TIMEOUT_MS="$(read_env_value CERESBI_BI_LOCK_TIMEOUT_MS)"
+CERESBI_BI_CORS_ORIGINS="$(read_env_value CERESBI_BI_CORS_ORIGINS)"
 SUPABASE_JWT_SECRET="${SUPABASE_JWT_SECRET:-$(read_env_value SUPABASE_JWT_SECRET)}"
 if [ -z "${SUPABASE_JWT_SECRET}" ] && command -v docker >/dev/null 2>&1; then
   SUPABASE_JWT_SECRET="$(docker service inspect ceresbi_ai --format '{{range .Spec.TaskTemplate.ContainerSpec.Env}}{{println .}}{{end}}' 2>/dev/null | sed -n 's/^SUPABASE_JWT_SECRET=//p' | tail -n 1)"
 fi
 export CERESBI_AI_OPENROUTER_API_KEY CERESBI_AI_DATABASE_URL CERESBI_AI_JOB_TOKEN CERESBI_AI_YA_AGENT_V2_ENABLED SUPABASE_JWT_SECRET
+export CERESBI_BI_DATABASE_URL CERESBI_BI_DATABASE_POOL_MIN CERESBI_BI_DATABASE_POOL_MAX CERESBI_BI_STATEMENT_TIMEOUT_MS CERESBI_BI_LOCK_TIMEOUT_MS CERESBI_BI_CORS_ORIGINS
 
 for required in CERESBI_AI_OPENROUTER_API_KEY CERESBI_AI_DATABASE_URL CERESBI_AI_JOB_TOKEN SUPABASE_JWT_SECRET; do
   if [ -z "${!required:-}" ]; then
@@ -78,6 +89,16 @@ for required in CERESBI_AI_OPENROUTER_API_KEY CERESBI_AI_DATABASE_URL CERESBI_AI
     exit 1
   fi
 done
+
+if [ -z "${CERESBI_BI_DATABASE_URL}" ]; then
+  echo "ERROR: CERESBI_BI_DATABASE_URL is missing from .env; provision the dedicated ceres_bi_api role before deploying the BI service" >&2
+  exit 1
+fi
+
+case "${VITE_BI_API_ENABLED}" in
+  true|false) ;;
+  *) echo "ERROR: VITE_BI_API_ENABLED must be true or false" >&2; exit 1 ;;
+esac
 
 for required in VITE_SUPABASE_URL VITE_SUPABASE_PUBLISHABLE_KEY; do
   if [ -z "${!required:-}" ]; then
@@ -119,7 +140,9 @@ git checkout -B "${DEPLOY_BRANCH}" "origin/${DEPLOY_BRANCH}"
 GIT_SHA="$(git rev-parse --short=12 HEAD)"
 CERESBI_WEB_IMAGE="ceresbi:${GIT_SHA}"
 CERESBI_AI_IMAGE="ceresbi-ai:${GIT_SHA}"
+CERESBI_BI_IMAGE="ceresbi-bi:${GIT_SHA}"
 export CERESBI_WEB_IMAGE CERESBI_AI_IMAGE
+export CERESBI_BI_IMAGE
 
 echo "==> Building web image ${CERESBI_WEB_IMAGE}..."
 docker build \
@@ -127,6 +150,8 @@ docker build \
   --build-arg "VITE_SUPABASE_PUBLISHABLE_KEY=${VITE_SUPABASE_PUBLISHABLE_KEY}" \
   --build-arg "VITE_YA_AGENT_V2_ENABLED=${VITE_YA_AGENT_V2_ENABLED}" \
   --build-arg "VITE_ERROR_TRACKING_ENDPOINT=${VITE_ERROR_TRACKING_ENDPOINT}" \
+  --build-arg "VITE_BI_API_ENABLED=${VITE_BI_API_ENABLED}" \
+  --build-arg "VITE_BI_API_BASE_URL=${VITE_BI_API_BASE_URL}" \
   -t "${CERESBI_WEB_IMAGE}" .
 
 if [ "${CERESBI_AI_YA_AGENT_V2_ENABLED}" = "true" ] && ! docker run --rm --entrypoint sh "${CERESBI_WEB_IMAGE}" -c 'grep -R -F -q "/api/ai/v2/chat/stream" /usr/share/nginx/html'; then
@@ -137,6 +162,9 @@ fi
 echo "==> Building AI image ${CERESBI_AI_IMAGE}..."
 docker build -t "${CERESBI_AI_IMAGE}" ai-service
 
+echo "==> Building BI image ${CERESBI_BI_IMAGE}..."
+docker build -t "${CERESBI_BI_IMAGE}" bi-service
+
 echo "==> Deploying stack ${STACK_NAME}..."
 docker stack deploy --detach=false -c docker-stack.yml "${STACK_NAME}"
 
@@ -145,10 +173,11 @@ docker stack deploy --detach=false -c docker-stack.yml "${STACK_NAME}"
 # race the stack reconciliation and return `update out of sequence`.
 echo "==> Stack services converged; verifying immutable images..."
 
-for service in web ai; do
+for service in web ai bi; do
   actual_image="$(docker service inspect --format '{{.Spec.TaskTemplate.ContainerSpec.Image}}' "${STACK_NAME}_${service}")"
   expected_image="${CERESBI_WEB_IMAGE}"
   [ "${service}" = "ai" ] && expected_image="${CERESBI_AI_IMAGE}"
+  [ "${service}" = "bi" ] && expected_image="${CERESBI_BI_IMAGE}"
   if [ "${actual_image}" != "${expected_image}" ]; then
     echo "ERROR: ${STACK_NAME}_${service} is using ${actual_image}, expected ${expected_image}" >&2
     exit 1
@@ -164,6 +193,7 @@ fi
 echo "==> Smoke checks..."
 smoke_check https://ceresbi.vouxconsultoria.com.br/ "Web"
 smoke_check https://ceresbi.vouxconsultoria.com.br/api/ai/health "AI"
+smoke_check https://ceresbi.vouxconsultoria.com.br/api/bi/health "BI"
 
 if [ "${CERESBI_AI_YA_AGENT_V2_ENABLED}" = "true" ]; then
   v2_health="$(curl --fail --silent --show-error --max-time 20 https://ceresbi.vouxconsultoria.com.br/api/ai/v2/health)"
@@ -181,4 +211,4 @@ if [ "${CERESBI_AI_YA_AGENT_V2_ENABLED}" = "true" ]; then
   fi
 fi
 
-echo "==> Done: ${GIT_SHA} is running in web and AI."
+echo "==> Done: ${GIT_SHA} is running in web, AI and BI (flag=${VITE_BI_API_ENABLED})."
