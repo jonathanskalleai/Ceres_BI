@@ -6,8 +6,10 @@ as RPCs existentes.
 
 ## Configuração
 
-- `BI_DATABASE_URL`: URL privada do PostgreSQL para a role read-only do BI.
-- `BI_SUPABASE_JWT_SECRET`: segredo HS256 usado para validar tokens Supabase.
+- `BI_DATABASE_URL` ou `BI_DATABASE_URL_FILE`: URL privada do PostgreSQL para
+  a role read-only do BI. Em produção, use o arquivo montado por Docker Secret.
+- `BI_SUPABASE_JWT_SECRET` ou `BI_SUPABASE_JWT_SECRET_FILE`: segredo HS256
+  usado para validar tokens Supabase. Em produção, use Docker Secret.
 - `BI_SUPABASE_JWT_AUDIENCE`: audience esperada (padrão: `authenticated`).
 - `BI_DATABASE_POOL_MIN`: conexões mínimas (padrão: `1`).
 - `BI_DATABASE_POOL_MAX`: conexões máximas (padrão: `8`).
@@ -24,7 +26,7 @@ as RPCs existentes.
   somente `https://ceresbi.vouxconsultoria.com.br`; desenvolvimento local deve
   declarar `http://localhost:5173` explicitamente.
 
-O serviço falha fechado: sem `BI_DATABASE_URL` ou segredo JWT, as rotas
+O serviço falha fechado: sem URL do banco ou segredo JWT, as rotas
 protegidas não executam consultas. Nenhum usuário `postgres` é embutido no
 código.
 

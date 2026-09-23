@@ -64,9 +64,12 @@ services:
       - no-new-privileges:true
     networks:
       - redeinterna
+    secrets:
+      - bi_database_url
+      - bi_jwt_secret
     environment:
-      BI_DATABASE_URL: ${CERESBI_BI_DATABASE_URL:?CERESBI_BI_DATABASE_URL is required}
-      BI_SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:?SUPABASE_JWT_SECRET is required}
+      BI_DATABASE_URL_FILE: /run/secrets/bi_database_url
+      BI_SUPABASE_JWT_SECRET_FILE: /run/secrets/bi_jwt_secret
       BI_SUPABASE_JWT_AUDIENCE: ${SUPABASE_JWT_AUDIENCE:-authenticated}
       BI_DATABASE_POOL_MIN: ${CERESBI_BI_DATABASE_POOL_MIN:-1}
       BI_DATABASE_POOL_MAX: ${CERESBI_BI_DATABASE_POOL_MAX:-8}
@@ -106,3 +109,11 @@ networks:
 volumes:
   ceresbi_web_assets:
     driver: local
+
+secrets:
+  bi_database_url:
+    external: true
+    name: ${CERESBI_BI_DATABASE_URL_SECRET:-ceresbi_bi_database_url_v1}
+  bi_jwt_secret:
+    external: true
+    name: ${CERESBI_BI_JWT_SECRET:-ceresbi_bi_jwt_secret_v1}

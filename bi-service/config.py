@@ -4,6 +4,34 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from pathlib import Path
+
+
+def _secret_env(name: str, *fallback_names: str) -> str:
+    """Read a secret from an env var or its Docker ``_FILE`` equivalent.
+
+    File-backed secrets take precedence only when the direct variable is not
+    present. Rejecting both forms avoids silently deploying a stale credential.
+    """
+
+    for candidate in (name, *fallback_names):
+        direct = os.getenv(candidate, "").strip()
+        file_path = os.getenv(f"{candidate}_FILE", "").strip()
+        if direct and file_path:
+            raise RuntimeError(
+                f"configure somente {candidate} ou {candidate}_FILE, nunca ambos"
+            )
+        if file_path:
+            try:
+                value = Path(file_path).read_text(encoding="utf-8").strip()
+            except OSError as exc:
+                raise RuntimeError(f"não foi possível ler {candidate}_FILE") from exc
+            if not value:
+                raise RuntimeError(f"{candidate}_FILE está vazio")
+            return value
+        if direct:
+            return direct
+    return ""
 
 
 def _int_env(name: str, default: int, *, minimum: int = 1) -> int:
@@ -61,11 +89,11 @@ class Settings:
             if origin.strip()
         )
         return cls(
-            database_url=os.getenv("BI_DATABASE_URL", "").strip(),
-            jwt_secret=(
-                os.getenv("BI_SUPABASE_JWT_SECRET", "")
-                or os.getenv("SUPABASE_JWT_SECRET", "")
-            ).strip(),
+            database_url=_secret_env("BI_DATABASE_URL"),
+            jwt_secret=_secret_env(
+                "BI_SUPABASE_JWT_SECRET",
+                "SUPABASE_JWT_SECRET",
+            ),
             jwt_audience=os.getenv("BI_SUPABASE_JWT_AUDIENCE", "authenticated").strip(),
             pool_min=pool_min,
             pool_max=pool_max,

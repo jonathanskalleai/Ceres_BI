@@ -44,6 +44,27 @@ coloque senha em migration, `.env` versionado, log, shell history ou neste
 runbook. O DSN do serviço deve apontar para `ceres_bi_api`, nunca para
 `postgres`.
 
+Em Docker Swarm, a release espera estes secrets externos (os nomes podem ser
+versionados por rotação via `CERESBI_BI_DATABASE_URL_SECRET` e
+`CERESBI_BI_JWT_SECRET` no `.env` privado do deploy):
+
+```text
+ceresbi_bi_database_url_v1
+ceresbi_bi_jwt_secret_v1
+```
+
+Crie-os somente no VPS, em uma sessão administrativa, sem colocar o valor na
+linha de comando ou no histórico. O primeiro valor é o DSN completo da role
+`ceres_bi_api`; o segundo é o segredo JWT já usado pelo Supabase Auth. A
+interface de criação deve receber o valor por entrada padrão/interativa. Depois
+confirme apenas a existência com `docker secret inspect NOME` — nunca mostre o
+conteúdo com `docker secret inspect --pretty`, logs ou `docker service inspect`.
+
+O serviço BI lê `/run/secrets/bi_database_url` e
+`/run/secrets/bi_jwt_secret`; as variáveis diretas `BI_DATABASE_URL` e
+`BI_SUPABASE_JWT_SECRET` ficam reservadas para desenvolvimento local. Não
+configure simultaneamente uma variável direta e sua variante `_FILE`.
+
 ## Grants mínimos do canário
 
 Conceda somente as assinaturas que a API usa hoje. Os grants são separados por
