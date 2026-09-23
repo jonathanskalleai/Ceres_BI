@@ -1,5 +1,5 @@
 const TRANSIENT_STATUS_CODES = new Set([408, 425, 429, 500, 502, 503, 504]);
-const TRANSIENT_ERROR = /failed to fetch|networkerror|network error|load failed|timeout|timed out|tempo esgotado|tempo excedido|temporarily unavailable|bad gateway|gateway timeout|service unavailable|upstream/i;
+const TRANSIENT_ERROR = /failed to fetch|networkerror|network error|network failed|load failed|timeout|timed out|tempo esgotado|tempo excedido|temporarily unavailable|bad gateway|gateway timeout|service unavailable|upstream/i;
 
 export interface ResilientFetchOptions {
   /** Maximum number of attempts, including the first request. */

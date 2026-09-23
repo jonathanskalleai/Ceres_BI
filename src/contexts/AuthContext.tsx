@@ -10,7 +10,7 @@ import {
 import type { Session, User } from '@supabase/supabase-js';
 import { clearPersistedAuthSession, supabase } from '@/integrations/supabase/client';
 import type { Profile } from '@/types/auth';
-import { retryTransient } from '@/lib/network/resilientFetch';
+import { isTransientNetworkError, retryTransient } from '@/lib/network/resilientFetch';
 
 const AUTH_REQUEST_TIMEOUT_MS = 12_000;
 const AUTH_LOGIN_REQUEST_TIMEOUT_MS = 17_000;
@@ -173,8 +173,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('[AuthContext] Failed to initialize session:', error);
-      await clearLocalSession(false);
-      setAuthError('Não foi possível verificar sua sessão. Confira a conexão e tente novamente.');
+      // A falha de transporte não prova que o refresh token foi revogado. A
+      // versão anterior apagava o token persistido aqui e transformava uma
+      // queda momentânea em logout obrigatório. Só limpe a sessão quando o
+      // servidor devolver um erro definitivo (token inválido/expirado).
+      const transient = isTransientNetworkError(error);
+      if (!transient) {
+        await clearLocalSession(false);
+      }
+      setAuthError(transient
+        ? 'Não foi possível validar sua sessão agora. Sua sessão foi preservada; tente novamente.'
+        : 'Não foi possível verificar sua sessão. Confira a conexão e tente novamente.');
     } finally {
       setIsLoading(false);
     }

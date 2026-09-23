@@ -31,6 +31,7 @@ describe("resilient network requests", () => {
 
     await expect(retryTransient(operation, { retryDelayMs: 0 })).resolves.toBe("ok");
     expect(isTransientNetworkError(new Error("invalid BI contract"))).toBe(false);
+    expect(isTransientNetworkError(new Error("network failed"))).toBe(true);
     expect(isTransientNetworkError(Object.assign(new Error("Tempo esgotado ao carregar os dados."), { name: "TimeoutError" }))).toBe(true);
     expect(operation).toHaveBeenCalledTimes(2);
   });

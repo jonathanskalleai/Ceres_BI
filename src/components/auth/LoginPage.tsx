@@ -3,11 +3,29 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 
+const REMEMBERED_EMAIL_KEY = 'ceresbi.remembered-email';
+
+function readRememberedEmail(): string {
+  try {
+    return localStorage.getItem(REMEMBERED_EMAIL_KEY) ?? '';
+  } catch {
+    return '';
+  }
+}
+
+function rememberEmail(email: string): void {
+  try {
+    localStorage.setItem(REMEMBERED_EMAIL_KEY, email.trim());
+  } catch {
+    // Storage bloqueado não pode impedir o login.
+  }
+}
+
 export function LoginPage() {
   const navigate = useNavigate();
   const { signIn, session, isLoading: authLoading, authError, retrySession } = useAuth();
 
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(readRememberedEmail);
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -36,6 +54,9 @@ export function LoginPage() {
         return;
       }
 
+      // Lembrar apenas o identificador. Senha e tokens continuam sob o
+      // controle do Supabase; nunca persistimos credencial no navegador.
+      rememberEmail(email);
       navigate('/', { replace: true });
     } catch (error) {
       console.error('[LoginPage] Unexpected sign-in failure:', error);

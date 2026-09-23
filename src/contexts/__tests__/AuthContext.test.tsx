@@ -6,13 +6,14 @@ const authMocks = vi.hoisted(() => ({
   onAuthStateChange: vi.fn(),
   signInWithPassword: vi.fn(),
   signOut: vi.fn(),
+  clearPersistedAuthSession: vi.fn(),
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     auth: authMocks,
   },
-  clearPersistedAuthSession: vi.fn(),
+  clearPersistedAuthSession: authMocks.clearPersistedAuthSession,
 }));
 
 import { AuthProvider, useAuthContext } from '../AuthContext';
@@ -36,6 +37,7 @@ describe('AuthProvider', () => {
       data: { subscription: { unsubscribe: vi.fn() } },
     });
     authMocks.signOut.mockResolvedValue({ error: null });
+    authMocks.clearPersistedAuthSession.mockClear();
   });
 
   it('sai do carregamento quando a leitura da sessão falha', async () => {
@@ -49,7 +51,8 @@ describe('AuthProvider', () => {
     );
 
     expect(await screen.findByText('pronto')).toBeInTheDocument();
-    expect(screen.getByText(/Não foi possível verificar sua sessão/)).toBeInTheDocument();
+    expect(screen.getByText(/Não foi possível validar sua sessão/)).toBeInTheDocument();
+    expect(authMocks.clearPersistedAuthSession).not.toHaveBeenCalled();
   });
 
   it('permite outra tentativa quando o login falha por erro de rede', async () => {
