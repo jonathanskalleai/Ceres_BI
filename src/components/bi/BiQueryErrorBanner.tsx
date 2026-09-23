@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { getBiQueryLabel } from "@/lib/bi/queryLabels";
 
 /** Persistent warning for failed, currently observed BI queries. */
 export function BiQueryErrorBanner() {
@@ -19,6 +20,8 @@ export function BiQueryErrorBanner() {
       query.getObserversCount() > 0
       && query.state.status === "error"
     ));
+
+  const failedSources = [...new Set(failedQueries.map((query) => getBiQueryLabel(query.queryKey)))];
 
   if (failedQueries.length === 0) return null;
 
@@ -41,6 +44,9 @@ export function BiQueryErrorBanner() {
           <strong>Dados incompletos.</strong>{" "}
           {failedQueries.length === 1 ? "Uma consulta falhou" : `${failedQueries.length} consultas falharam`}.
           Os campos vazios não significam zero.
+          <span className="mt-1 block text-xs text-[var(--voux-text-muted)]">
+            Fontes: {failedSources.join(", ")}.
+          </span>
         </p>
       </div>
       <Button variant="outline" size="sm" onClick={retry} className="h-8 gap-1.5">

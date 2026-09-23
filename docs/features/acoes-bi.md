@@ -211,6 +211,7 @@ mesma resposta. Os 4 negocios com `ngo_conclusao` divergente sao resolvidos por
   - `OportunidadeMarkers.render.test.tsx` conta `L.Marker.prototype.setIcon` / `setLatLng` com o pai re-renderizando 3x sem mudar dados → deve ser **0**. Antes do fix dava **15** (5 pinos x 3 renders). Se voltar a ser > 0, a cascata de re-render voltou
   - `MapView.modos.test.tsx` e o smoke do VIZINHO `/crm/mapa`: modo `clientes` com 2 pinos e `var(--voux-champagne-400)` CRU no html, modo `regioes` com as cores de cada nivel, fullscreen montando 2 `.leaflet-container`
 - `/bi/acoes` no ambiente vivo: pinos aparecem na primeira carga (azul em andamento / verde ganho / vermelho perdido), hover e clique abrem o conteudo certo, cluster com badge numerico
+- Falha transitória de transporte é retentada automaticamente (até 2 vezes, com atraso); se persistir, o alerta "Dados incompletos" lista as fontes que falharam e mantém campos vazios distintos de zero
 - `/crm/mapa` no ambiente vivo: alternar Clientes ↔ Regioes, pinos champagne e por nivel, popup ok
 - Abrir e fechar TELA CHEIA nas duas telas → sem pino fantasma
 - **Nenhum numero da tela muda com este fix.** Se um indicador se mover, nao e performance: e regressao

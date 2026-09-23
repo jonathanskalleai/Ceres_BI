@@ -1,6 +1,6 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { fetchAcoesFunilPeriodoRuntime } from "@/services/bi/acoesRuntimeService";
-import { isBiAbortError } from "@/lib/bi/runtime";
+import { shouldRetryAcoesQuery, biQueryRetryDelay } from "@/lib/bi/queryRetry";
 import type { RpcAcoesFunilGestao } from "@/types/biRpc";
 
 const STALE_TIME = 5 * 60_000;
@@ -27,6 +27,7 @@ export function useAcoesFunilPeriodoRpc({
     staleTime: STALE_TIME,
     placeholderData: keepPreviousData,
     enabled,
-    retry: (failureCount, error) => failureCount < 1 && !isBiAbortError(error) && error.name !== "BiContractError",
+    retry: shouldRetryAcoesQuery,
+    retryDelay: biQueryRetryDelay,
   });
 }

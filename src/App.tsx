@@ -14,6 +14,8 @@ import BiLayout from "./components/bi/BiLayout";
 import CrmLayout from "./components/crm/CrmLayout";
 import NotFound from "./pages/NotFound";
 import { reportClientError } from "@/lib/logger";
+import { biQueryRetryDelay, shouldRetryBiQuery } from "@/lib/bi/queryRetry";
+import { getBiQueryLabel } from "@/lib/bi/queryLabels";
 
 // CRM pages load after navigation. Some of their detail views include charting
 // libraries, so keeping the whole CRM tree out of the bootstrap makes login
@@ -54,7 +56,10 @@ const AdminProfile = lazy(() => import("./pages/admin/AdminProfile"));
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error, query) => {
-      reportClientError("data_query_failed", error, { query_hash: query.queryHash });
+      reportClientError("data_query_failed", error, {
+        query_hash: query.queryHash,
+        query_family: getBiQueryLabel(query.queryKey),
+      });
       toast.error("Não foi possível carregar parte dos dados.", {
         id: `bi-query-${query.queryHash}`,
         description: "Os números incompletos não devem ser interpretados como zero. Tente novamente.",
@@ -66,11 +71,10 @@ const queryClient = new QueryClient({
       staleTime: 5 * 60_000, // 5 min "fresco" — não refetch ao trocar de aba
       gcTime: 30 * 60_000,
       refetchOnWindowFocus: false,
-      // BI RPCs are expensive analytical reads. A generic second attempt can
-      // duplicate a query that is still running upstream after a client-side
-      // timeout, worsening contention for every user. Opt in to retries only
-      // for specific lightweight/idempotent queries.
-      retry: false,
+      // BI RPCs are expensive analytical reads. Only transport failures get
+      // bounded, delayed retries; contract and SQL errors remain visible.
+      retry: shouldRetryBiQuery,
+      retryDelay: biQueryRetryDelay,
     },
   },
 });

@@ -23,6 +23,7 @@ describe("BiQueryErrorBanner", () => {
     );
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Dados incompletos");
+    expect(screen.getByRole("alert")).toHaveTextContent("bi operacional rpc");
     fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
     await waitFor(() => expect(queryFn).toHaveBeenCalledTimes(2));
   });
