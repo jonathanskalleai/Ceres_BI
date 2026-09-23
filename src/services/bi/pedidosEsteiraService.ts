@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { invokeBiRpc } from "@/services/bi/biRpcGateway";
 
 export interface PedidoEsteiraItem {
   codigoInterno: string;
@@ -57,7 +57,7 @@ export async function fetchPedidosEsteira(
   if (options.cidade) params.p_cidade = options.cidade;
   if (options.funis && options.funis.length > 0) params.p_funis = options.funis;
 
-  const { data, error } = await supabase.rpc("rpc_pedidos_pendentes_esteira", params);
+  const { data, error } = await invokeBiRpc("rpc_pedidos_pendentes_esteira", params);
   if (error) {
     console.error("Erro ao buscar esteira de pedidos pendentes:", error);
     throw error;

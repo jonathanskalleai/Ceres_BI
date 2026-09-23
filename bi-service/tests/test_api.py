@@ -125,3 +125,53 @@ def test_batch_reports_partial_without_fabricating_failed_block(monkeypatch) -> 
     assert payload["status"] == "partial"
     assert payload["data"] == {"core": {"kpis": {"totalAcoes": 3}}}
     assert payload["issues"][0]["code"] == "BI_BATCH_FUNIL_FAILED"
+
+
+def test_generic_rpc_gateway_validates_args_and_emits_dashboard_event(monkeypatch, caplog) -> None:
+    monkeypatch.setattr(
+        main_module,
+        "authenticate_bi_user",
+        lambda *args, **kwargs: CurrentUser(
+            id="00000000-0000-0000-0000-000000000001",
+            role="admin",
+        ),
+    )
+    calls = []
+
+    def fake_execute(name, args):
+        calls.append((name, args))
+        return {"kpis": {"total": 7}}
+
+    monkeypatch.setattr(database, "execute_rpc", fake_execute)
+    caplog.set_level(logging.INFO, logger="ceresbi.bi")
+    response = TestClient(app).post(
+        "/api/bi/rpc/rpc_pedidos_bi",
+        json={"params": {"p_from": "2026-01-01", "p_to": "2026-01-31"}},
+        headers={"X-Request-ID": "req:generic-1"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["data"] == {"kpis": {"total": 7}}
+    assert calls[0][0] == "rpc_pedidos_bi"
+    assert str(calls[0][1][0]) == "2026-01-01"
+    assert str(calls[0][1][1]) == "2026-01-31"
+    events = [json.loads(record.message) for record in caplog.records if record.message.startswith('{"')]
+    query_event = next(event for event in events if event.get("event") == "bi_query")
+    assert query_event["dashboard_id"] == "bi.pedidos"
+    assert query_event["rpc"] == "rpc_pedidos_bi"
+    assert query_event["case"] == "monthly"
+
+
+def test_generic_rpc_gateway_rejects_unknown_rpc_and_invalid_params(monkeypatch) -> None:
+    auth_mock = lambda *args, **kwargs: CurrentUser(
+        id="00000000-0000-0000-0000-000000000001",
+        role="admin",
+    )
+    monkeypatch.setattr(main_module, "authenticate_bi_user", auth_mock)
+    unknown = TestClient(app).post("/api/bi/rpc/rpc_not_allowed", json={"params": {}})
+    invalid = TestClient(app).post(
+        "/api/bi/rpc/rpc_pedidos_bi",
+        json={"params": {"p_from": "2026-02-01", "p_to": "2026-01-01", "p_unknown": "x"}},
+    )
+    assert unknown.status_code == 404
+    assert invalid.status_code == 422

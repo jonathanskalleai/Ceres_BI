@@ -33,6 +33,19 @@ def period_case(filters: object) -> str:
 
     start = getattr(filters, "from_", None)
     end = getattr(filters, "to", None)
+    if isinstance(filters, dict):
+        start = filters.get("from") or filters.get("p_from")
+        end = filters.get("to") or filters.get("p_to")
+        if isinstance(start, str):
+            try:
+                start = date.fromisoformat(start)
+            except ValueError:
+                start = None
+        if isinstance(end, str):
+            try:
+                end = date.fromisoformat(end)
+            except ValueError:
+                end = None
     if not isinstance(start, date) or not isinstance(end, date):
         return "custom"
     if start.year == end.year and start.month == end.month:
@@ -50,7 +63,7 @@ def filter_hash(filters: object) -> str:
     try:
         values = filters.model_dump(mode="json", by_alias=True, exclude_none=True)
     except AttributeError:
-        values = {}
+        values = filters if isinstance(filters, dict) else {}
     encoded = json.dumps(values, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()[:16]
 

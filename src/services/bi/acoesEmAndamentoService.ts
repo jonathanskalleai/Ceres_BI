@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { invokeBiRpc } from "@/services/bi/biRpcGateway";
 
 /** Unwrap Supabase RPC response — single-JSON RPCs may return wrapped in array. */
 function unwrapRpc<T>(data: unknown): T {
@@ -53,7 +53,7 @@ export async function fetchAcoesEmAndamento(params: {
     if (params.limit != null) rpcParams.p_limit = params.limit;
     if (params.offset != null) rpcParams.p_offset = params.offset;
 
-    const { data, error } = await supabase.rpc("rpc_acoes_em_andamento", rpcParams);
+    const { data, error } = await invokeBiRpc("rpc_acoes_em_andamento", rpcParams);
     if (error) throw new Error(error.message);
 
     const raw = unwrapRpc<Partial<RpcEmAndamento> | null>(data);

@@ -11,7 +11,7 @@ vi.mock("@/integrations/supabase/client", () => ({
 }));
 vi.mock("@/lib/logger", () => ({ logClientMetric: metricMock, logClientWarning: warningMock }));
 
-import { fetchBiApi, isBiApiEnabled } from "@/services/bi/biApiTransport";
+import { fetchBiApi, fetchBiRpc, isBiApiEnabled } from "@/services/bi/biApiTransport";
 
 beforeEach(() => {
   vi.unstubAllEnvs();
@@ -83,6 +83,38 @@ describe("biApiTransport", () => {
       }), { status: 200 }),
     );
     await expect(fetchBiApi("/acoes/core", {})).rejects.toThrow("Bloco indisponível");
+    fetchMock.mockRestore();
+  });
+
+  it("posts every generic BI RPC through the backend gateway", async () => {
+    vi.stubEnv("VITE_BI_API_ENABLED", "true");
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({
+        status: "ok",
+        data: { rows: [], total: 0 },
+        requestId: "req-rpc-1",
+        fetchedAt: "2026-09-23T00:00:00Z",
+        metrics: { query_ms: 3, api_ms: 4, payload_bytes: 30 },
+      }), { status: 200, headers: { "Content-Type": "application/json" } }),
+    );
+
+    await expect(fetchBiRpc("rpc_pedidos_bi", { p_from: "2026-01-01", p_to: "2026-01-31" }))
+      .resolves.toEqual({ rows: [], total: 0 });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/bi/rpc/rpc_pedidos_bi",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ params: { p_from: "2026-01-01", p_to: "2026-01-31" } }),
+        headers: expect.objectContaining({
+          "Content-Type": "application/json",
+          Authorization: "Bearer test-token",
+        }),
+      }),
+    );
+    expect(metricMock).toHaveBeenCalledWith("bi_query", expect.objectContaining({
+      rpc: "rpc_pedidos_bi",
+      endpoint: "rpc.rpc_pedidos_bi",
+    }));
     fetchMock.mockRestore();
   });
 });

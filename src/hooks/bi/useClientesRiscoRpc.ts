@@ -1,5 +1,5 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { fetchClientesRisco } from "@/services/bi/biRpcService";
+import { fetchClientesRisco } from "@/services/bi/clientesRiscoService";
 import type { RpcClientesRisco } from "@/types/biRpc";
 
 const STALE_TIME = 5 * 60_000; // 5 minutes

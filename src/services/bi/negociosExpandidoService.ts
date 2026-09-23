@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { invokeBiRpc } from "@/services/bi/biRpcGateway";
 import type { NegociosExpandidoResponse } from "@/types/bi/negociosExpandido";
 
 interface FetchOptions {
@@ -14,7 +14,7 @@ export async function fetchNegociosExpandido({
   pVendedor,
   pCidade,
 }: FetchOptions): Promise<NegociosExpandidoResponse> {
-  const { data, error } = await supabase.rpc("rpc_negocios_bi_expandido", {
+  const { data, error } = await invokeBiRpc("rpc_negocios_bi_expandido", {
     p_from: pFrom,
     p_to: pTo,
     p_vendedor: pVendedor ?? null,

@@ -2,7 +2,7 @@
 
 **Status:** proposta para execução por fases  
 **Data:** 2026-09-23  
-**Escopo:** dashboards do Ceres BI, começando por Ações  
+**Escopo:** todas as dashboards do Ceres BI, com Ações como primeiro canário
 
 ## Decisão executiva
 
@@ -65,7 +65,9 @@ Não haverá um segundo banco nesta etapa.
 - O ETL Python alimenta o schema `mirror`; não devemos duplicar esse banco.
 - O frontend ainda usa várias RPCs/PostgREST e mantém caminhos legados que
   precisam ser inventariados antes de qualquer remoção.
-- O gateway FastAPI de Ações está implementado localmente e protegido por
+- O gateway FastAPI possui uma borda genérica allow-listada para todas as RPCs
+  das dashboards inventariadas. Ações também mantém endpoints especializados
+  para o batch dos blocos críticos. Tudo está protegido por
   `VITE_BI_API_ENABLED=false`; ainda não foi colocado em canário.
 - A medição anual aquecida das quatro RPCs principais de Ações ficou em cerca
   de 1,72 s se executada em série: core ~0,78 s, detalhe ~0,34 s, funil ~0,30 s
@@ -287,6 +289,25 @@ acima da meta após WP2/WP3.
 **Rollback:** consulta canônica direta enquanto o snapshot é reconstruído.  
 **Aceite:** paridade, versão/freshness expostos, atualização retroativa e
 dashboard disponível durante refresh.
+
+### WP5 — migração comum de todas as dashboards
+
+**Mudança:** usar `POST /api/bi/rpc/{rpc_name}` como borda única para as RPCs
+  read-only de Painel, Comercial, Pedidos, Produtos, Serviços, Operacional,
+  Admin, Ações, Inteligência, ETL Monitor e Desempenho. O catálogo no backend
+  valida nome, parâmetros, limites e datas; o módulo de permissão é resolvido
+  antes da execução. `invokeBiRpc` no frontend mantém a chamada Supabase apenas
+  como fallback até o canário passar.
+**Arquivos afetados:** `bi-service/catalog.py`, `bi-service/main.py`,
+  `src/services/bi/biRpcService.ts`, serviços/hooks de BI, inventário e runbook.
+**Risco:** uma assinatura incorreta ou grant ausente pode afetar mais de uma
+  tela; por isso a flag fica desligada e os parâmetros seguem as assinaturas
+  introspectadas no PostgreSQL de produção.
+**Rollback:** desligar `VITE_BI_API_ENABLED`; o fallback legado permanece sem
+  alteração de contrato visual.
+**Aceite:** cada rota inventariada tem uma RPC catalogada, envelope estável,
+  telemetria e teste de validação; depois, canário autenticado comprova
+  paridade por dashboard antes de habilitar a flag.
 
 ## Riscos que precisam permanecer explícitos
 

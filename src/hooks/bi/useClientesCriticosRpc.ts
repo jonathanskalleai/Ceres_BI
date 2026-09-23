@@ -1,5 +1,5 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { fetchClientesCriticos } from "@/services/bi/biRpcService";
+import { fetchClientesCriticos } from "@/services/bi/clientesRiscoService";
 import type { RpcClientesCriticosBI } from "@/types/biRpc";
 
 interface UseClientesCriticosOptions {

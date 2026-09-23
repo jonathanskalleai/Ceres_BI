@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { invokeBiRpc } from "@/services/bi/biRpcGateway";
 import type { RpcAcoesTermometroFechamento } from "@/types/biRpc";
 
 const DEFAULTS: RpcAcoesTermometroFechamento = {
@@ -39,7 +39,7 @@ export async function fetchAcoesTermometroFechamento(params: {
     if (params.vendedor) rpcParams.p_vendedor = params.vendedor;
     if (params.cidade) rpcParams.p_cidade = params.cidade;
 
-    const { data, error } = await supabase.rpc("rpc_acoes_termometro_fechamento", rpcParams);
+    const { data, error } = await invokeBiRpc("rpc_acoes_termometro_fechamento", rpcParams);
     if (error) throw new Error(error.message);
 
     const raw = unwrapRpc<Partial<RpcAcoesTermometroFechamento> | null>(data);

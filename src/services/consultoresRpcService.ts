@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { invokeBiRpc } from "@/services/bi/biRpcGateway";
 import type { RpcConsultorResumoAcoes, RpcConsultorNegocioPipeline } from "@/types/consultoresRpc";
 
 export interface ConsultoresResumoParams {
@@ -21,7 +21,7 @@ export async function fetchConsultoresResumoAcoes({
   tipoAcao,
 }: ConsultoresResumoParams): Promise<RpcConsultorResumoAcoes[]> {
   try {
-    const { data, error } = await supabase.rpc("rpc_consultores_resumo_acoes", {
+    const { data, error } = await invokeBiRpc("rpc_consultores_resumo_acoes", {
       p_from: from,
       p_to: to,
       p_vendedor: vendedor || null,
@@ -45,7 +45,7 @@ export async function fetchConsultorNegociosPipeline(
   limite: number = 100,
 ): Promise<RpcConsultorNegocioPipeline[]> {
   try {
-    const { data, error } = await supabase.rpc("rpc_consultor_negocios_pipeline", {
+    const { data, error } = await invokeBiRpc("rpc_consultor_negocios_pipeline", {
       p_consultor: consultor,
       p_limite: limite,
     });

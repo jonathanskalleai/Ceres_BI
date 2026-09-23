@@ -9,10 +9,11 @@ from time import perf_counter
 from typing import Annotated
 from uuid import uuid4
 
-from auth import CurrentUser, make_bi_user_dependency
+from auth import CurrentUser, authenticate_bi_user, make_bi_user_dependency
+from catalog import build_args, get_spec
 from config import Settings
 from db import ReadOnlyDatabase
-from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from observability import (
     emit_bi_query,
@@ -23,7 +24,7 @@ from observability import (
     safe_request_id,
 )
 from rpc import fetch_core, fetch_detalhe, fetch_funil, fetch_mapa
-from schemas import AcoesDetalheFilters, AcoesFilters, BiEnvelope, BiMetrics
+from schemas import AcoesDetalheFilters, AcoesFilters, BiEnvelope, BiMetrics, BiRpcRequest
 
 logger = logging.getLogger("ceresbi.bi")
 settings = Settings.from_env()
@@ -45,7 +46,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=list(settings.cors_origins),
     allow_credentials=True,
-    allow_methods=["GET", "OPTIONS"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
 )
 
@@ -72,6 +73,8 @@ async def execute_rpc(
     request: Request,
     filters: object,
     route_started_at: float,
+    *,
+    dashboard_id: str = "bi_acoes",
 ) -> BiEnvelope:
     rid = request_id(request)
     query_started_at = perf_counter()
@@ -84,7 +87,7 @@ async def execute_rpc(
         metrics.payload_bytes = envelope_size(response)
         emit_bi_query(
             request_id=rid,
-            dashboard_id="bi_acoes",
+            dashboard_id=dashboard_id,
             route=request.url.path,
             endpoint=endpoint,
             rpc=rpc_name,
@@ -112,7 +115,7 @@ async def execute_rpc(
         metrics.payload_bytes = envelope_size(response)
         emit_bi_query(
             request_id=rid,
-            dashboard_id="bi_acoes",
+            dashboard_id=dashboard_id,
             route=request.url.path,
             endpoint=endpoint,
             rpc=rpc_name,
@@ -288,4 +291,34 @@ async def acoes_mapa(
     validate_period(filters)
     return await execute_rpc(
         "acoes.mapa", "rpc_acoes_mapa_oportunidades", lambda: fetch_mapa(database, filters), request, filters, route_started_at
+    )
+
+
+@app.post("/api/bi/rpc/{rpc_name}", response_model=BiEnvelope)
+async def bi_rpc(
+    request: Request,
+    rpc_name: str,
+    payload: BiRpcRequest,
+    authorization: Annotated[str | None, Header()] = None,
+) -> BiEnvelope:
+    """Execute one allow-listed read-only RPC for any BI dashboard.
+
+    The browser sends only a named RPC and validated parameters.  The
+    database connection, statement timeout and authorization stay in this
+    service, so adding a dashboard does not reintroduce direct PostgREST
+    queries in the frontend.
+    """
+
+    spec = get_spec(rpc_name)
+    authenticate_bi_user(authorization, settings, database, spec.modules)
+    _, args = build_args(rpc_name, payload.params)
+    route_started_at = perf_counter()
+    return await execute_rpc(
+        f"rpc.{rpc_name}",
+        rpc_name,
+        lambda: database.execute_rpc(rpc_name, args),
+        request,
+        payload.params,
+        route_started_at,
+        dashboard_id=spec.modules[0],
     )

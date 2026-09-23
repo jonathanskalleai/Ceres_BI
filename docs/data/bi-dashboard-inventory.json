@@ -5,7 +5,7 @@
   "coverage_notes": [
     "Rotas e páginas foram confirmadas no roteador React.",
     "RPCs e tabelas são apenas as evidentes nos hooks/services e documentação; joins internos das RPCs permanecem pendentes até inspeção SQL.",
-    "Apenas Ações possui gateway FastAPI instrumentado neste ciclo; as demais rotas permanecem legacy_pending."
+    "Todas as rotas BI possuem agora uma borda comum POST /api/bi/rpc/{rpc_name} com catálogo allow-listado, validação, autorização por módulo e envelope/telemetria; a flag permanece desligada até role PostgreSQL e canário autenticado."
   ],
   "routes": [
     {
@@ -28,11 +28,12 @@
       "page": "src/pages/bi/BiPainel.tsx",
       "sections": ["negocios", "valores", "cross", "pedidos", "clientes", "servicos", "acoes", "evolucao_gpo", "crm_evolucao"],
       "hooks": ["usePainelKPIsRpc", "usePedidosKPIsRpc", "useClientesKPIsRpc", "useServicosKPIsRpc", "useCrossKPIsRpc", "useEvolucaoGPO"],
-      "rpc_or_endpoints": ["rpc_negocios_bi", "rpc_acoes_bi_periodo", "rpc_acoes_funil_gestao_periodo", "rpc_pedidos_bi", "rpc_admin_bi", "rpc_produtos_bi", "rpc_operacional_bi", "rpc_evolucao_ganhos_perdidos_12m"],
+      "rpc_or_endpoints": ["rpc_negocios_bi", "rpc_acoes_bi_periodo", "rpc_acoes_funil_gestao_periodo", "rpc_pedidos_bi", "rpc_admin_bi", "rpc_produtos_bi", "rpc_operacional_bi", "rpc_evolucao_ganhos_perdidos_12m", "rpc_evolucao_mensal", "rpc_evolucao_negocios_12m", "rpc_evolucao_tipos_acao_12m", "rpc_listas_filtros"],
       "source_tables": ["mirror.crm_acoes", "mirror.crm_negocios", "mirror.crm_pedidos", "mirror.crm_carteira_clientes", "mirror.crm_pedidos_item", "mirror.ordens_servico"],
       "filters": ["date_range", "categoria", "funil", "vendedor", "cidade"],
-      "status": "legacy_pending",
-      "gaps": ["Fan-out e contratos por seção ainda não medidos ponta a ponta.", "Join interno de cada RPC não confirmado."]
+      "api_endpoints": ["/api/bi/rpc/{rpc_name}"],
+      "status": "gateway_catalog_ready_flag_off",
+      "gaps": ["Role PostgreSQL, canário autenticado e benchmark p95 ainda pendentes.", "Join interno de cada RPC não confirmado."]
     },
     {
       "dashboard_id": "bi_comercial",
@@ -44,8 +45,9 @@
       "rpc_or_endpoints": ["rpc_negocios_bi", "rpc_resultados_negocios_bi", "rpc_negocios_bi_expandido", "rpc_pedidos_bi", "rpc_admin_bi", "rpc_inteligencia_esforco_bi"],
       "source_tables": ["mirror.crm_negocios", "mirror.crm_funil_etapa", "mirror.crm_pedidos", "mirror.crm_pedidos_item", "mirror.crm_carteira_clientes"],
       "filters": ["date_range", "vendedor", "cidade", "tab"],
-      "status": "legacy_pending",
-      "gaps": ["A aba mercado usa retrato atual em parte dos dados; freshness ainda não exposta."]
+      "api_endpoints": ["/api/bi/rpc/{rpc_name}"],
+      "status": "gateway_catalog_ready_flag_off",
+      "gaps": ["A aba mercado usa retrato atual em parte dos dados; freshness ainda não exposta.", "Role PostgreSQL, canário autenticado e benchmark p95 ainda pendentes."]
     },
     {
       "dashboard_id": "bi_pedidos",
@@ -57,8 +59,9 @@
       "rpc_or_endpoints": ["rpc_pedidos_bi"],
       "source_tables": ["mirror.crm_pedidos", "mirror.crm_pedidos_item", "mirror.crm_negocios"],
       "filters": ["date_range"],
-      "status": "legacy_pending",
-      "gaps": ["Payload e paginação do detalhe ainda não catalogados."]
+      "api_endpoints": ["/api/bi/rpc/{rpc_name}"],
+      "status": "gateway_catalog_ready_flag_off",
+      "gaps": ["Payload e paginação do detalhe ainda não catalogados.", "Role PostgreSQL, canário autenticado e benchmark p95 ainda pendentes."]
     },
     {
       "dashboard_id": "bi_produtos",
@@ -70,8 +73,9 @@
       "rpc_or_endpoints": ["rpc_produtos_bi"],
       "source_tables": ["mirror.produtos", "mirror.produtos_grupo", "mirror.produtos_marca", "mirror.produtos_modelo", "mirror.crm_cliente_parque_maquinas"],
       "filters": ["date_range"],
-      "status": "legacy_pending",
-      "gaps": ["A consulta de parque é posição atual e não necessariamente responde ao período."]
+      "api_endpoints": ["/api/bi/rpc/{rpc_name}"],
+      "status": "gateway_catalog_ready_flag_off",
+      "gaps": ["A consulta de parque é posição atual e não necessariamente responde ao período.", "Role PostgreSQL, canário autenticado e benchmark p95 ainda pendentes."]
     },
     {
       "dashboard_id": "bi_servicos",
@@ -83,8 +87,9 @@
       "rpc_or_endpoints": ["rpc_servicos_bi", "rpc_produtos_bi", "rpc_inteligencia_esforco_bi"],
       "source_tables": ["mirror.ordens_servico", "mirror.agenda_servico", "mirror.tecnico_tempo", "mirror.crm_cliente_parque_maquinas"],
       "filters": ["date_range", "tab"],
-      "status": "legacy_pending",
-      "gaps": ["Parte da operação usa retrato atual; fontes legadas e grão temporal precisam confirmação."]
+      "api_endpoints": ["/api/bi/rpc/{rpc_name}"],
+      "status": "gateway_catalog_ready_flag_off",
+      "gaps": ["Parte da operação usa retrato atual; fontes legadas e grão temporal precisam confirmação.", "Role PostgreSQL, canário autenticado e benchmark p95 ainda pendentes."]
     },
     {
       "dashboard_id": "bi_operacional",
@@ -96,8 +101,9 @@
       "rpc_or_endpoints": ["rpc_operacional_bi"],
       "source_tables": ["mirror.ordens_servico", "mirror.agenda_servico", "mirror.tecnico_tempo", "mirror.ocorrencias_os"],
       "filters": ["date_range"],
-      "status": "legacy_pending",
-      "gaps": ["Fonte legada SQL Server pode continuar em edge function; confirmar no inventário de runtime."]
+      "api_endpoints": ["/api/bi/rpc/{rpc_name}"],
+      "status": "gateway_catalog_ready_flag_off",
+      "gaps": ["Fonte legada SQL Server pode continuar em edge function; confirmar no inventário de runtime.", "Role PostgreSQL, canário autenticado e benchmark p95 ainda pendentes."]
     },
     {
       "dashboard_id": "bi_admin",
@@ -109,8 +115,9 @@
       "rpc_or_endpoints": ["rpc_admin_bi"],
       "source_tables": ["mirror.crm_carteira_clientes", "mirror.usuarios", "mirror.empresas"],
       "filters": ["date_range"],
-      "status": "legacy_pending",
-      "gaps": ["Dados são posição atual em partes; endpoint sem contrato semântico versionado."]
+      "api_endpoints": ["/api/bi/rpc/{rpc_name}"],
+      "status": "gateway_catalog_ready_flag_off",
+      "gaps": ["Dados são posição atual em partes; endpoint sem contrato semântico versionado.", "Role PostgreSQL, canário autenticado e benchmark p95 ainda pendentes."]
     },
     {
       "dashboard_id": "bi_acoes",
@@ -124,7 +131,7 @@
       "source_tables": ["mirror.crm_acoes", "mirror.crm_negocios", "mirror.crm_pedidos", "mirror.crm_carteira_clientes", "mirror.usuarios"],
       "filters": ["date_range", "vendedor", "cidade", "tipoAcao", "statusNegocio", "limit", "offset"],
       "status": "gateway_ready_flag_off",
-      "gaps": ["Canário autenticado e role PostgreSQL dedicada ainda pendentes.", "Batch core/funil foi implementado localmente, mas ainda precisa de benchmark autenticado antes de habilitar a flag.", "Gestão/termómetro/drill-downs adicionais ainda usam PostgREST legado."]
+      "gaps": ["Canário autenticado e role PostgreSQL dedicada ainda pendentes.", "Batch core/funil foi implementado localmente, mas ainda precisa de benchmark autenticado antes de habilitar a flag.", "Ações auxiliares já estão no catálogo genérico, mas só passam para produção após paridade autenticada."]
     },
     {
       "dashboard_id": "bi_inteligencia",
@@ -136,8 +143,9 @@
       "rpc_or_endpoints": ["rpc_inteligencia_esforco_bi", "rpc_resultados_negocios_bi"],
       "source_tables": ["mirror.crm_acoes", "mirror.crm_negocios", "mirror.crm_funil_etapa", "mirror.crm_pedidos"],
       "filters": ["date_range", "categoria", "funil"],
-      "status": "legacy_pending",
-      "gaps": ["Sem rota FastAPI equivalente; composição dos indicadores precisa de contrato e benchmark."]
+      "api_endpoints": ["/api/bi/rpc/{rpc_name}"],
+      "status": "gateway_catalog_ready_flag_off",
+      "gaps": ["Composição dos indicadores precisa de contrato e benchmark.", "Role PostgreSQL, canário autenticado e benchmark p95 ainda pendentes."]
     },
     {
       "dashboard_id": "bi_etl_monitor",
@@ -149,8 +157,9 @@
       "rpc_or_endpoints": ["rpc_etl_status", "rpc_etl_log"],
       "source_tables": ["mirror.sync_metadata", "mirror.sync_log"],
       "filters": ["table_name"],
-      "status": "legacy_pending",
-      "gaps": ["É monitor operacional, não dashboard analítico; precisa de política própria de latência/freshness."]
+      "api_endpoints": ["/api/bi/rpc/{rpc_name}"],
+      "status": "gateway_catalog_ready_flag_off",
+      "gaps": ["É monitor operacional, não dashboard analítico; precisa de política própria de latência/freshness.", "Role PostgreSQL, canário autenticado e benchmark p95 ainda pendentes."]
     },
     {
       "dashboard_id": "bi_desempenho",
@@ -162,8 +171,9 @@
       "rpc_or_endpoints": ["rpc_desempenho_vendas_bi", "rpc_pedidos_pendentes_esteira", "rpc_acoes_pedidos_ganhos", "rpc_acoes_negocios_perdidos"],
       "source_tables": ["mirror.crm_pedidos", "mirror.crm_pedidos_item", "mirror.crm_negocios", "mirror.crm_acoes", "mirror.crm_funil_etapa"],
       "filters": ["date_range", "ano", "vendedor", "cidade", "funis", "produto", "origem", "banco", "motivoPerda"],
-      "status": "legacy_pending",
-      "gaps": ["Consulta anual e modais de drill-down ainda não possuem métricas de API semântica."]
+      "api_endpoints": ["/api/bi/rpc/{rpc_name}"],
+      "status": "gateway_catalog_ready_flag_off",
+      "gaps": ["Consulta anual e modais de drill-down ainda não possuem métricas de API semântica.", "Role PostgreSQL, canário autenticado e benchmark p95 ainda pendentes."]
     }
   ]
 }

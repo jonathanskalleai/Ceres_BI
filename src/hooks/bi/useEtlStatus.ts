@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeBiRpc } from "@/services/bi/biRpcGateway";
 import type { EtlSyncStatus } from "@/types/biRpc";
 
 async function fetchEtlStatus(): Promise<EtlSyncStatus[]> {
-  const { data, error } = await supabase.rpc("rpc_etl_status");
+  const { data, error } = await invokeBiRpc("rpc_etl_status");
 
   if (error) throw new Error(error.message);
 

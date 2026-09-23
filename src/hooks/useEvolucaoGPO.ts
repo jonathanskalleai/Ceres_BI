@@ -1,5 +1,5 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeBiRpc } from "@/services/bi/biRpcGateway";
 
 export interface RpcEvolucaoGPO {
   mes: string;
@@ -22,7 +22,7 @@ async function fetchEvolucaoGPO(
     p_to: to ?? null,
   };
 
-  const { data, error } = await supabase.rpc("rpc_evolucao_ganhos_perdidos_12m", params);
+  const { data, error } = await invokeBiRpc("rpc_evolucao_ganhos_perdidos_12m", params);
   if (error) throw new Error(`[useEvolucaoGPO] ${error.message}`);
   return (data ?? []) as RpcEvolucaoGPO[];
 }

@@ -1,5 +1,5 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { invokeBiRpc } from "@/services/bi/biRpcGateway";
 
 const STALE_TIME = 5 * 60_000; // 5 minutes
 
@@ -20,7 +20,7 @@ export function useBIRpc<T>(
     queryKey: ["rpc", rpcName, params],
     queryFn: async () => {
       try {
-        const { data, error } = await supabase.rpc(rpcName, params);
+        const { data, error } = await invokeBiRpc<T>(rpcName, params);
         if (error) throw new Error(error.message);
         return data as T;
       } catch (err) {

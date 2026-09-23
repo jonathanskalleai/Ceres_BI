@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { invokeBiRpc } from "@/services/bi/biRpcGateway";
 import type {
   EquipeDesempenhoData,
   MetaConsultorMensal,
@@ -15,7 +16,7 @@ export async function fetchEquipeDesempenho({
   consultor,
   cidade,
 }: EquipeDesempenhoParams): Promise<EquipeDesempenhoData> {
-  const { data, error } = await supabase.rpc("rpc_equipe_desempenho_mensal_v2", {
+  const { data, error } = await invokeBiRpc("rpc_equipe_desempenho_mensal_v2", {
     p_ano: ano,
     p_consultor: consultor || null,
     p_cidade: cidade || null,

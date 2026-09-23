@@ -49,7 +49,7 @@ def _decode_token(authorization: str | None, settings: Settings) -> str:
         raise _unauthorized() from exc
 
 
-def _load_dashboard_user(database: ReadOnlyDatabase, user_id: str) -> CurrentUser:
+def _load_dashboard_user(database: ReadOnlyDatabase, user_id: str, modules: tuple[str, ...]) -> CurrentUser:
     try:
         with database.connection() as conn:
             with conn.cursor() as cursor:
@@ -59,12 +59,12 @@ def _load_dashboard_user(database: ReadOnlyDatabase, user_id: str) -> CurrentUse
                            EXISTS (
                              SELECT 1 FROM public.user_permissions up
                              WHERE up.user_id = p.id
-                               AND up.module_id = 'bi.acoes'
+                               AND up.module_id = ANY(%s)
                            ) AS can_use_dashboard
                     FROM public.profiles p
                     WHERE p.id = %s::uuid AND p.is_active = true
                     """,
-                    (user_id,),
+                    (user_id, list(modules)),
                 )
                 row = cursor.fetchone()
     except psycopg2.Error as exc:
@@ -73,15 +73,28 @@ def _load_dashboard_user(database: ReadOnlyDatabase, user_id: str) -> CurrentUse
         raise _unauthorized()
     role, can_use_dashboard = row
     if role != "admin" and not can_use_dashboard:
-        raise HTTPException(status_code=403, detail="Você não tem acesso à dashboard Ações")
+        raise HTTPException(status_code=403, detail="Você não tem acesso a esta dashboard BI")
     return CurrentUser(id=user_id, role=role)
 
 
-def make_bi_user_dependency(settings: Settings, database: ReadOnlyDatabase):
+def authenticate_bi_user(
+    authorization: str | None,
+    settings: Settings,
+    database: ReadOnlyDatabase,
+    modules: tuple[str, ...] = ("bi.acoes",),
+) -> CurrentUser:
+    user_id = _decode_token(authorization, settings)
+    return _load_dashboard_user(database, user_id, modules)
+
+
+def make_bi_user_dependency(
+    settings: Settings,
+    database: ReadOnlyDatabase,
+    modules: tuple[str, ...] = ("bi.acoes",),
+):
     async def require_bi_user(
         authorization: Annotated[str | None, Header()] = None,
     ) -> CurrentUser:
-        user_id = _decode_token(authorization, settings)
-        return _load_dashboard_user(database, user_id)
+        return authenticate_bi_user(authorization, settings, database, modules)
 
     return require_bi_user

@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { invokeBiRpc } from "@/services/bi/biRpcGateway";
 import type {
   RpcNegociosBI,
   RpcPedidosBI,
@@ -8,8 +8,6 @@ import type {
   RpcAdminBI,
   RpcAcoesBI,
   RpcAcoesDetalhe,
-  RpcClientesRisco,
-  RpcClientesCriticosBI,
   RpcInteligenciaEsforcoBI,
   RpcParqueRenovacaoBI,
   RpcOperacionalBI,
@@ -64,7 +62,7 @@ export async function fetchNegociosBI(
     if (vendedor) params.p_vendedor = vendedor;
     if (cidade) params.p_cidade = cidade;
 
-    const { data, error } = await supabase.rpc("rpc_negocios_bi", params);
+    const { data, error } = await invokeBiRpc("rpc_negocios_bi", params);
     if (error) throw new Error(error.message);
     const raw = unwrapRpc<Partial<RpcNegociosBI>>(data);
     return {
@@ -92,7 +90,7 @@ export async function fetchResultadosNegociosBI(
     if (vendedor) params.p_vendedor = vendedor;
     if (cidade) params.p_cidade = cidade;
 
-    const { data, error } = await supabase.rpc("rpc_resultados_negocios_bi", params);
+    const { data, error } = await invokeBiRpc("rpc_resultados_negocios_bi", params);
     if (error) throw new Error(error.message);
     return unwrapRpc<RpcResultadosNegociosBI>(data);
   } catch (err) {
@@ -133,7 +131,7 @@ export async function fetchPedidosBI(
     if (vendedor) params.p_vendedor = vendedor;
     if (cidade) params.p_cidade = cidade;
 
-    const { data, error } = await supabase.rpc("rpc_pedidos_bi", params);
+    const { data, error } = await invokeBiRpc("rpc_pedidos_bi", params);
     if (error) throw new Error(error.message);
     const raw = unwrapRpc<
       Partial<RpcPedidosBI> & {
@@ -165,7 +163,7 @@ export async function fetchServicosBI(
     const params: Record<string, unknown> = { p_from: from, p_to: to };
     if (cidade) params.p_cidade = cidade;
 
-    const { data, error } = await supabase.rpc("rpc_servicos_bi", params);
+    const { data, error } = await invokeBiRpc("rpc_servicos_bi", params);
     if (error) throw new Error(error.message);
     return unwrapRpc<RpcServicosBI>(data);
   } catch (err) {
@@ -182,7 +180,7 @@ export async function fetchAdminBI(cidade?: string): Promise<RpcAdminBI> {
     const params: Record<string, unknown> = {};
     if (cidade) params.p_cidade = cidade;
 
-    const { data, error } = await supabase.rpc("rpc_admin_bi", params);
+    const { data, error } = await invokeBiRpc("rpc_admin_bi", params);
     if (error) throw new Error(error.message);
     return unwrapRpc<RpcAdminBI>(data);
   } catch (err) {
@@ -209,7 +207,7 @@ export async function fetchAcoesBI(params: {
     if (params.tipoAcao) rpcParams.p_tipo_acao = params.tipoAcao;
     if (params.cidade) rpcParams.p_cidade = params.cidade;
 
-    const { data, error } = await supabase.rpc("rpc_acoes_bi_periodo", rpcParams);
+    const { data, error } = await invokeBiRpc("rpc_acoes_bi_periodo", rpcParams);
     if (error) throw new Error(error.message);
     return unwrapRpc<RpcAcoesBI>(data);
   } catch (err) {
@@ -237,7 +235,7 @@ export async function fetchAcoesVisitasMensal(params: {
     if (params.tipoAcao) rpcParams.p_tipo_acao = params.tipoAcao;
     if (params.cidade) rpcParams.p_cidade = params.cidade;
 
-    const { data, error } = await supabase.rpc("rpc_acoes_visitas_mensal", rpcParams);
+    const { data, error } = await invokeBiRpc("rpc_acoes_visitas_mensal", rpcParams);
     if (error) throw new Error(error.message);
     // Esta RPC RETORNA um JSON array. Ao contrario das RPCs que retornam um
     // objeto JSON, nao podemos usar `unwrapRpc`: ele pegaria apenas o primeiro
@@ -264,7 +262,7 @@ export async function fetchAcoesEvolucaoMensalAnoCorrente(params: {
     if (params.tipoAcao) rpcParams.p_tipo_acao = params.tipoAcao;
     if (params.cidade) rpcParams.p_cidade = params.cidade;
 
-    const { data, error } = await supabase.rpc("rpc_acoes_evolucao_mensal_ano_corrente", rpcParams);
+    const { data, error } = await invokeBiRpc("rpc_acoes_evolucao_mensal_ano_corrente", rpcParams);
     if (error) throw new Error(error.message);
     // Esta RPC retorna diretamente uma lista JSON, sem o wrapper de objeto
     // usado pelas demais agregacoes de BI.
@@ -303,7 +301,7 @@ export async function fetchAcoesDetalhe(params: {
     if (params.limit != null) rpcParams.p_limit = params.limit;
     if (params.offset != null) rpcParams.p_offset = params.offset;
 
-    const { data, error } = await supabase.rpc("rpc_acoes_detalhe", rpcParams);
+    const { data, error } = await invokeBiRpc("rpc_acoes_detalhe", rpcParams);
     if (error) throw new Error(error.message);
 
     const raw = unwrapRpc<Partial<RpcAcoesDetalhe> | null>(data);
@@ -326,7 +324,7 @@ export async function fetchInteligenciaEsforcoBI(
     const params: Record<string, unknown> = { p_from: from, p_to: to };
     if (funis && funis.length > 0) params.p_funis = funis;
 
-    const { data, error } = await supabase.rpc("rpc_inteligencia_esforco_bi", params);
+    const { data, error } = await invokeBiRpc("rpc_inteligencia_esforco_bi", params);
     if (error) throw new Error(error.message);
     return unwrapRpc<RpcInteligenciaEsforcoBI>(data);
   } catch (err) {
@@ -341,7 +339,7 @@ export async function fetchParqueRenovacaoBI(
   cutoffAnos?: number,
 ): Promise<RpcParqueRenovacaoBI> {
   try {
-    const { data, error } = await supabase.rpc("rpc_parque_renovacao_bi", {
+    const { data, error } = await invokeBiRpc("rpc_parque_renovacao_bi", {
       p_cutoff_anos: cutoffAnos ?? 5,
     });
     if (error) throw new Error(error.message);
@@ -356,7 +354,7 @@ export async function fetchParqueRenovacaoBI(
  */
 export async function fetchOperacionalBI(): Promise<RpcOperacionalBI> {
   try {
-    const { data, error } = await supabase.rpc("rpc_operacional_bi");
+    const { data, error } = await invokeBiRpc("rpc_operacional_bi");
     if (error) throw new Error(error.message);
     return unwrapRpc<RpcOperacionalBI>(data);
   } catch (err) {
@@ -369,73 +367,10 @@ export async function fetchOperacionalBI(): Promise<RpcOperacionalBI> {
  */
 export async function fetchProdutosBI(): Promise<RpcProdutosBI> {
   try {
-    const { data, error } = await supabase.rpc("rpc_produtos_bi");
+    const { data, error } = await invokeBiRpc("rpc_produtos_bi");
     if (error) throw new Error(error.message);
     return unwrapRpc<RpcProdutosBI>(data);
   } catch (err) {
     throw new Error(`[biRpcService.fetchProdutosBI] ${err instanceof Error ? err.message : "Unknown error"}`);
-  }
-}
-
-/**
- * Calls rpc_acoes_clientes_risco — returns client risk distribution by days-since-last-action.
- */
-export async function fetchClientesRisco(params: {
-  vendedor?: string;
-  cidade?: string;
-}): Promise<RpcClientesRisco> {
-  try {
-    const rpcParams: Record<string, unknown> = {};
-    if (params.vendedor) rpcParams.p_vendedor = params.vendedor;
-    if (params.cidade) rpcParams.p_cidade = params.cidade;
-
-    const { data, error } = await supabase.rpc("rpc_acoes_clientes_risco", rpcParams);
-    if (error) throw new Error(error.message);
-
-    const raw = unwrapRpc<Partial<RpcClientesRisco> | null>(data);
-    return {
-      faixas: raw?.faixas ?? [],
-      totalCarteira: raw?.totalCarteira ?? 0,
-      clientesComAcao: raw?.clientesComAcao ?? 0,
-      clientesSemAcao: raw?.clientesSemAcao ?? 0,
-    };
-  } catch (err) {
-    throw new Error(`[biRpcService.fetchClientesRisco] ${err instanceof Error ? err.message : "Unknown error"}`);
-  }
-}
-
-/**
- * Clients with a completed action older than the chosen threshold. This is a
- * lifetime contact signal and intentionally differs from current-year buckets.
- */
-export async function fetchClientesCriticos(params: {
-  vendedor?: string;
-  cidade?: string;
-  diasMin?: number;
-  limit?: number;
-}): Promise<RpcClientesCriticosBI> {
-  try {
-    // Send the complete function signature, including explicit null filters.
-    // Besides documenting the intended lifetime-contact query, this prevents a
-    // stale PostgREST function cache from trying to resolve a partial overload.
-    const rpcParams = {
-      p_vendedor: params.vendedor ?? null,
-      p_cidade: params.cidade ?? null,
-      p_dias_min: params.diasMin ?? 365,
-      p_limit: params.limit ?? 5,
-    };
-
-    const { data, error } = await supabase.rpc("rpc_clientes_criticos_bi", rpcParams);
-    if (error) throw new Error(error.message);
-
-    const raw = unwrapRpc<Partial<RpcClientesCriticosBI> | null>(data);
-    return {
-      totalCriticos: Number(raw?.totalCriticos ?? 0),
-      semAcaoRegistrada: Number(raw?.semAcaoRegistrada ?? 0),
-      valorEmRisco: Number(raw?.valorEmRisco ?? 0),
-      rows: raw?.rows ?? [],
-    };
-  } catch (err) {
-    throw new Error(`[biRpcService.fetchClientesCriticos] ${err instanceof Error ? err.message : "Unknown error"}`);
   }
 }

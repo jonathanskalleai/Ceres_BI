@@ -38,8 +38,10 @@ function safeMetricRequestId(value: string | undefined): string {
 }
 
 function inferCase(params: Record<string, unknown>): "monthly" | "annual" | "custom" {
-  const from = typeof params.from === "string" ? params.from : "";
-  const to = typeof params.to === "string" ? params.to : "";
+  const fromValue = params.from ?? params.p_from;
+  const toValue = params.to ?? params.p_to;
+  const from = typeof fromValue === "string" ? fromValue : "";
+  const to = typeof toValue === "string" ? toValue : "";
   const fromMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(from);
   const toMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(to);
   if (!fromMatch || !toMatch) return "custom";
@@ -89,24 +91,19 @@ function responseError(response: Response, payload: unknown): Error {
   return Object.assign(new Error(detail), { status: response.status, code: "BI_API_HTTP_ERROR" });
 }
 
-export async function fetchBiApi<T>(
-  path: string,
-  params: Record<string, unknown>,
-  signal?: AbortSignal,
-): Promise<T> {
-  const frontendStartedAt = typeof performance !== "undefined" ? performance.now() : Date.now();
-  const { data: { session } } = await supabase.auth.getSession();
-  const requestId = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
-  const headers: Record<string, string> = { Accept: "application/json" };
-  if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
-  headers["X-Request-Id"] = requestId;
+interface BiTelemetryContext {
+  dashboardId: string;
+  route: string;
+  endpoint: string;
+  rpc: string;
+}
 
-  const response = await resilientFetch(
-    `${apiBaseUrl()}${path}${buildQuery(params)}`,
-    { headers, signal },
-    // Do not duplicate an expensive RPC when the BI API is already handling it.
-    { maxAttempts: 1, timeoutMs: 35_000 },
-  );
+async function parseBiResponse<T>(
+  response: Response,
+  context: BiTelemetryContext,
+  params: Record<string, unknown>,
+  frontendStartedAt: number,
+): Promise<T> {
   let payload: unknown;
   try {
     payload = await response.json();
@@ -129,10 +126,10 @@ export async function fetchBiApi<T>(
   );
   logClientMetric("bi_query", {
     request_id: safeMetricRequestId(envelope.requestId),
-    dashboard_id: "bi_acoes",
-    route: canonicalRoute(path),
-    endpoint: endpointForPath(path),
-    rpc: rpcForPath(path),
+    dashboard_id: context.dashboardId,
+    route: context.route,
+    endpoint: context.endpoint,
+    rpc: context.rpc,
     case: inferCase(params),
     status: envelope.status,
     query_ms: envelope.metrics?.query_ms ?? null,
@@ -151,7 +148,7 @@ export async function fetchBiApi<T>(
     logClientWarning("bi.api_partial", new Error("Resposta parcial da API BI"), {
       requestId: envelope.requestId,
       issueCount: envelope.issues?.length ?? 0,
-      path,
+      path: context.route,
     });
   }
   if (envelope.data === undefined) {
@@ -162,4 +159,64 @@ export async function fetchBiApi<T>(
     );
   }
   return envelope.data;
+}
+
+export async function fetchBiApi<T>(
+  path: string,
+  params: Record<string, unknown>,
+  signal?: AbortSignal,
+): Promise<T> {
+  const frontendStartedAt = typeof performance !== "undefined" ? performance.now() : Date.now();
+  const { data: { session } } = await supabase.auth.getSession();
+  const requestId = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
+  const headers: Record<string, string> = { Accept: "application/json" };
+  if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
+  headers["X-Request-Id"] = requestId;
+
+  const response = await resilientFetch(
+    `${apiBaseUrl()}${path}${buildQuery(params)}`,
+    { headers, signal },
+    // Do not duplicate an expensive RPC when the BI API is already handling it.
+    { maxAttempts: 1, timeoutMs: 35_000 },
+  );
+  return parseBiResponse(response, {
+    dashboardId: "bi_acoes",
+    route: canonicalRoute(path),
+    endpoint: endpointForPath(path),
+    rpc: rpcForPath(path),
+  }, params, frontendStartedAt);
+}
+
+/** Execute an allow-listed BI RPC through the backend gateway. */
+export async function fetchBiRpc<T>(
+  rpcName: string,
+  params: Record<string, unknown>,
+  signal?: AbortSignal,
+): Promise<T> {
+  const frontendStartedAt = typeof performance !== "undefined" ? performance.now() : Date.now();
+  const { data: { session } } = await supabase.auth.getSession();
+  const requestId = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    "X-Request-Id": requestId,
+  };
+  if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
+
+  const response = await resilientFetch(
+    `${apiBaseUrl()}/rpc/${encodeURIComponent(rpcName)}`,
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ params }),
+      signal,
+    },
+    { maxAttempts: 1, timeoutMs: 35_000 },
+  );
+  return parseBiResponse(response, {
+    dashboardId: "bi.gateway",
+    route: `/api/bi/rpc/${rpcName}`,
+    endpoint: `rpc.${rpcName}`,
+    rpc: rpcName,
+  }, params, frontendStartedAt);
 }

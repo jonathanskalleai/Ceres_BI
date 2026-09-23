@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { invokeBiRpc } from "@/services/bi/biRpcGateway";
 
 export interface ListasFiltrosResult {
   vendedores: string[];
@@ -14,7 +14,7 @@ export async function fetchListasFiltros(
   to: string,
 ): Promise<ListasFiltrosResult> {
   try {
-    const { data, error } = await supabase.rpc("rpc_listas_filtros", {
+    const { data, error } = await invokeBiRpc("rpc_listas_filtros", {
       p_from: from,
       p_to: to,
     });

@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { invokeBiRpc } from "@/services/bi/biRpcGateway";
 import type {
   AcoesGestaoListaRow,
   AcoesGestaoListaTipo,
@@ -80,7 +80,7 @@ export async function fetchAcoesFunilGestao(params: {
     if (params.vendedor) rpcParams.p_vendedor = params.vendedor;
     if (params.cidade) rpcParams.p_cidade = params.cidade;
 
-    const { data, error } = await supabase.rpc("rpc_acoes_funil_gestao", rpcParams);
+    const { data, error } = await invokeBiRpc("rpc_acoes_funil_gestao", rpcParams);
     if (error) throw new Error(error.message);
 
     const raw = unwrapRpc<Partial<RpcAcoesFunilGestao> | null>(data);
@@ -115,7 +115,7 @@ export async function fetchAcoesFunilGestaoPeriodo(params: {
     if (params.vendedor) rpcParams.p_vendedor = params.vendedor;
     if (params.cidade) rpcParams.p_cidade = params.cidade;
 
-    const { data, error } = await supabase.rpc("rpc_acoes_funil_gestao_periodo", rpcParams);
+    const { data, error } = await invokeBiRpc("rpc_acoes_funil_gestao_periodo", rpcParams);
     if (error) throw new Error(error.message);
 
     const raw = unwrapRpc<Partial<RpcAcoesFunilGestao> | null>(data);
@@ -149,7 +149,7 @@ export async function fetchAcoesTaxaGanhoNegocios(params: {
     if (params.vendedor) rpcParams.p_vendedor = params.vendedor;
     if (params.cidade) rpcParams.p_cidade = params.cidade;
 
-    const { data, error } = await supabase.rpc("rpc_acoes_taxa_ganho_negocios", rpcParams);
+    const { data, error } = await invokeBiRpc("rpc_acoes_taxa_ganho_negocios", rpcParams);
     if (error) throw new Error(error.message);
 
     return { ...TAXA_GANHO_DEFAULTS, ...unwrapRpc<Partial<AcoesTaxaGanhoNegocios> | null>(data) };
@@ -208,7 +208,7 @@ export async function fetchAcoesGestaoListas<TRow extends AcoesGestaoListaRow>(
     if (!isDesperdicioAno && params.diasMin != null) rpcParams.p_dias_min = params.diasMin;
     if (!isDesperdicioAno && params.diasMax != null) rpcParams.p_dias_max = params.diasMax;
 
-    const { data, error } = await supabase.rpc(rpcName, rpcParams);
+    const { data, error } = await invokeBiRpc(rpcName, rpcParams);
     if (error) throw new Error(error.message);
 
     const raw = unwrapRpc<Partial<AcoesGestaoListas<TRow>> | null>(data);
@@ -252,7 +252,7 @@ export async function fetchAcoesMapaOportunidades(params: {
     if (params.from) rpcParams.p_from = params.from;
     if (params.to) rpcParams.p_to = params.to;
 
-    const { data, error } = await supabase.rpc("rpc_acoes_mapa_oportunidades", rpcParams);
+    const { data, error } = await invokeBiRpc("rpc_acoes_mapa_oportunidades", rpcParams);
     if (error) throw new Error(error.message);
 
     const raw = unwrapRpc<Partial<RpcAcoesMapaOportunidades> | null>(data);

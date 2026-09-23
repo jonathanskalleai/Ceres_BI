@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { invokeBiRpc } from "@/services/bi/biRpcGateway";
 import type {
   DesempenhoVendasData,
   DesempenhoVendasFilterOptions,
@@ -52,7 +52,7 @@ export async function fetchDesempenhoVendas(
   // of falling back to the legacy overload.
   params.p_funis = options.funis && options.funis.length > 0 ? options.funis : null;
 
-  const { data, error } = await supabase.rpc("rpc_desempenho_vendas_bi", params);
+  const { data, error } = await invokeBiRpc("rpc_desempenho_vendas_bi", params);
   if (error) throw error;
   if (!data) return EMPTY_DESEMPENHO_DATA;
 

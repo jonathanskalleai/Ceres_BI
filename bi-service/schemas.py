@@ -85,3 +85,7 @@ class AcoesDetalheFilters(AcoesFilters):
     statusNegocio: str | None = Field(default=None, max_length=80)
     limit: int = Field(default=50, ge=1, le=5000)
     offset: int = Field(default=0, ge=0)
+
+
+class BiRpcRequest(BaseModel):
+    params: dict[str, Any] = Field(default_factory=dict)

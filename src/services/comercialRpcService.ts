@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { invokeBiRpc } from "@/services/bi/biRpcGateway";
 import type {
   RpcKpisComercial,
   RpcRankingVendedor,
@@ -23,7 +23,7 @@ export async function fetchKpisComercial(
     const params: Record<string, unknown> = { p_from: from, p_to: to };
     if (vendedor) params.p_vendedor = vendedor;
 
-    const { data, error } = await supabase.rpc("rpc_kpis_comercial", params);
+    const { data, error } = await invokeBiRpc("rpc_kpis_comercial", params);
     if (error) throw new Error(error.message);
 
     const raw = Array.isArray(data) ? data[0] : data;
@@ -45,7 +45,7 @@ export async function fetchRankingVendedores(
     const params: Record<string, unknown> = { p_from: from, p_to: to };
     if (limit != null) params.p_limit = limit;
 
-    const { data, error } = await supabase.rpc("rpc_ranking_vendedores", params);
+    const { data, error } = await invokeBiRpc("rpc_ranking_vendedores", params);
     if (error) throw new Error(error.message);
     return (data ?? []) as RpcRankingVendedor[];
   } catch (err) {
@@ -65,7 +65,7 @@ export async function fetchEvolucaoMensal(
     const params: Record<string, unknown> = { p_from: from, p_to: to };
     if (vendedor) params.p_vendedor = vendedor;
 
-    const { data, error } = await supabase.rpc("rpc_evolucao_mensal", params);
+    const { data, error } = await invokeBiRpc("rpc_evolucao_mensal", params);
     if (error) throw new Error(error.message);
     return (data ?? []) as RpcEvolucaoMensal[];
   } catch (err) {
@@ -85,7 +85,7 @@ export async function fetchRankingRegioes(
     const params: Record<string, unknown> = { p_from: from, p_to: to };
     if (limit != null) params.p_limit = limit;
 
-    const { data, error } = await supabase.rpc("rpc_ranking_regioes", params);
+    const { data, error } = await invokeBiRpc("rpc_ranking_regioes", params);
     if (error) throw new Error(error.message);
     return (data ?? []) as RpcRankingRegiao[];
   } catch (err) {
@@ -102,7 +102,7 @@ export async function fetchClientesPorVendedor(
   to: string,
 ): Promise<RpcClienteVendedor[]> {
   try {
-    const { data, error } = await supabase.rpc("rpc_clientes_por_vendedor", {
+    const { data, error } = await invokeBiRpc("rpc_clientes_por_vendedor", {
       p_vendedor: vendedor,
       p_from: from,
       p_to: to,
@@ -126,7 +126,7 @@ export async function fetchRankingVendedoresV2(
     const params: Record<string, unknown> = { p_from: from, p_to: to };
     if (limit != null) params.p_limit = limit;
 
-    const { data, error } = await supabase.rpc("rpc_ranking_vendedores_v2", params);
+    const { data, error } = await invokeBiRpc("rpc_ranking_vendedores_v2", params);
     if (error) throw new Error(error.message);
     return (data ?? []) as RpcRankingVendedorV2[];
   } catch (err) {
@@ -153,7 +153,7 @@ export async function fetchRegistrosRecentes(
     if (cidade) params.p_cidade = cidade;
     if (limit != null) params.p_limit = limit;
 
-    const { data, error } = await supabase.rpc("rpc_registros_recentes", params);
+    const { data, error } = await invokeBiRpc("rpc_registros_recentes", params);
     if (error) throw new Error(error.message);
     return (data ?? []) as RpcRegistroRecente[];
   } catch (err) {
@@ -170,7 +170,7 @@ export async function fetchEvolucaoNegocios12m(
   try {
     const params: Record<string, unknown> = { p_vendedor: vendedor ?? null };
 
-    const { data, error } = await supabase.rpc("rpc_evolucao_negocios_12m", params);
+    const { data, error } = await invokeBiRpc("rpc_evolucao_negocios_12m", params);
     if (error) throw new Error(error.message);
     return (data ?? []) as RpcEvolucaoNegocios12m[];
   } catch (err) {
@@ -191,7 +191,7 @@ export async function fetchEvolucaoTiposAcao12m(
       p_limit: limit,
     };
 
-    const { data, error } = await supabase.rpc("rpc_evolucao_tipos_acao_12m", params);
+    const { data, error } = await invokeBiRpc("rpc_evolucao_tipos_acao_12m", params);
     if (error) throw new Error(error.message);
     return (data ?? []) as RpcEvolucaoTiposAcao12m[];
   } catch (err) {
