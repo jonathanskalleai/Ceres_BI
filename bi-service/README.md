@@ -17,6 +17,9 @@ as RPCs existentes.
 - `BI_CACHE_MAX_ITEMS`: máximo de resultados mantidos por processo (padrão:
   `512`). O cache é isolado por usuário, RPC e parâmetros e não substitui
   read models nem a invalidação do ETL.
+- `BI_CACHE_MAX_ENTRY_BYTES`: tamanho máximo de um resultado armazenado (padrão:
+  `1000000`). Respostas maiores continuam sendo entregues, mas não ficam em
+  memória no cache.
 - `BI_CORS_ORIGINS`: origens permitidas, separadas por vírgula. O padrão aceita
   somente `https://ceresbi.vouxconsultoria.com.br`; desenvolvimento local deve
   declarar `http://localhost:5173` explicitamente.

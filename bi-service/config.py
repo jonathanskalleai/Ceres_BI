@@ -43,6 +43,7 @@ class Settings:
     lock_timeout_ms: int
     cache_ttl_seconds: float
     cache_max_items: int
+    cache_max_entry_bytes: int
     cors_origins: tuple[str, ...]
 
     @classmethod
@@ -72,5 +73,6 @@ class Settings:
             lock_timeout_ms=_int_env("BI_LOCK_TIMEOUT_MS", 5_000),
             cache_ttl_seconds=_float_env("BI_CACHE_TTL_SECONDS", 5.0),
             cache_max_items=_int_env("BI_CACHE_MAX_ITEMS", 512),
+            cache_max_entry_bytes=_int_env("BI_CACHE_MAX_ENTRY_BYTES", 1_000_000),
             cors_origins=origins,
         )

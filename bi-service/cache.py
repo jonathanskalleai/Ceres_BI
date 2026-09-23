@@ -34,9 +34,10 @@ class _Entry:
 class QueryCache:
     """A small async-safe TTL cache with single-flight computation."""
 
-    def __init__(self, max_items: int, ttl_seconds: float) -> None:
+    def __init__(self, max_items: int, ttl_seconds: float, max_entry_bytes: int = 1_000_000) -> None:
         self.max_items = max(1, max_items)
         self.ttl_seconds = max(0.0, ttl_seconds)
+        self.max_entry_bytes = max(1, max_entry_bytes)
         self._entries: OrderedDict[str, _Entry] = OrderedDict()
         self._inflight: dict[str, asyncio.Future[Any]] = {}
         self._lock = asyncio.Lock()
@@ -84,11 +85,17 @@ class QueryCache:
                     pending.exception()
             raise
 
+        try:
+            entry_bytes = len(json.dumps(value, default=str, separators=(",", ":")).encode("utf-8"))
+        except (TypeError, ValueError):
+            entry_bytes = self.max_entry_bytes + 1
+
         async with self._lock:
-            self._entries[key] = _Entry(value=value, expires_at=time.monotonic() + self.ttl_seconds)
-            self._entries.move_to_end(key)
-            while len(self._entries) > self.max_items:
-                self._entries.popitem(last=False)
+            if entry_bytes <= self.max_entry_bytes:
+                self._entries[key] = _Entry(value=value, expires_at=time.monotonic() + self.ttl_seconds)
+                self._entries.move_to_end(key)
+                while len(self._entries) > self.max_items:
+                    self._entries.popitem(last=False)
             pending = self._inflight.pop(key, None)
             if pending and not pending.done():
                 pending.set_result(value)

@@ -36,7 +36,11 @@ from schemas import (
 logger = logging.getLogger("ceresbi.bi")
 settings = Settings.from_env()
 database = ReadOnlyDatabase(settings)
-query_cache = QueryCache(settings.cache_max_items, settings.cache_ttl_seconds)
+query_cache = QueryCache(
+    settings.cache_max_items,
+    settings.cache_ttl_seconds,
+    settings.cache_max_entry_bytes,
+)
 require_bi_user = make_bi_user_dependency(settings, database)
 
 

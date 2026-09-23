@@ -49,3 +49,23 @@ def test_cache_can_be_disabled_without_storing_results() -> None:
         assert first.hit is False and second.hit is False
 
     asyncio.run(scenario())
+
+
+def test_cache_does_not_retain_oversized_payloads() -> None:
+    async def scenario() -> None:
+        cache = QueryCache(max_items=4, ttl_seconds=30, max_entry_bytes=8)
+        calls = 0
+
+        async def compute() -> dict[str, str]:
+            nonlocal calls
+            calls += 1
+            return {"payload": "too large"}
+
+        first = await cache.get_or_compute("large", compute)
+        second = await cache.get_or_compute("large", compute)
+
+        assert first.value == second.value
+        assert first.hit is False and second.hit is False
+        assert calls == 2
+
+    asyncio.run(scenario())
