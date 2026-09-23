@@ -1,5 +1,6 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { fetchAcoesMapaOportunidades } from "@/services/bi/acoesGestaoService";
+import { fetchAcoesMapaRuntime } from "@/services/bi/acoesRuntimeService";
+import { isBiAbortError } from "@/lib/bi/runtime";
 import type { RpcAcoesMapaOportunidades } from "@/types/biRpc";
 
 const STALE_TIME = 5 * 60_000; // 5 minutes
@@ -22,9 +23,10 @@ interface UseAcoesMapaOptions {
 export function useAcoesMapaRpc({ vendedor, cidade, from, to, enabled = true }: UseAcoesMapaOptions) {
   return useQuery<RpcAcoesMapaOportunidades, Error>({
     queryKey: ["rpc", "acoes-mapa-oportunidades", vendedor ?? null, cidade ?? null, from ?? null, to ?? null],
-    queryFn: () => fetchAcoesMapaOportunidades({ vendedor, cidade, from, to }),
+    queryFn: ({ signal }) => fetchAcoesMapaRuntime({ vendedor, cidade, from, to, signal }),
     staleTime: STALE_TIME,
     placeholderData: keepPreviousData,
     enabled,
+    retry: (failureCount, error) => failureCount < 1 && !isBiAbortError(error) && error.name !== "BiContractError",
   });
 }

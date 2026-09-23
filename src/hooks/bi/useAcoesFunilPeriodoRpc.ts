@@ -1,5 +1,6 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { fetchAcoesFunilGestaoPeriodo } from "@/services/bi/acoesGestaoService";
+import { fetchAcoesFunilPeriodoRuntime } from "@/services/bi/acoesRuntimeService";
+import { isBiAbortError } from "@/lib/bi/runtime";
 import type { RpcAcoesFunilGestao } from "@/types/biRpc";
 
 const STALE_TIME = 5 * 60_000;
@@ -22,9 +23,10 @@ export function useAcoesFunilPeriodoRpc({
 }: UseAcoesFunilPeriodoOptions) {
   return useQuery<RpcAcoesFunilGestao, Error>({
     queryKey: ["rpc", "acoes-funil-gestao-periodo", from ?? null, to ?? null, vendedor ?? null, cidade ?? null],
-    queryFn: () => fetchAcoesFunilGestaoPeriodo({ from, to, vendedor, cidade }),
+    queryFn: ({ signal }) => fetchAcoesFunilPeriodoRuntime({ from, to, vendedor, cidade, signal }),
     staleTime: STALE_TIME,
     placeholderData: keepPreviousData,
     enabled,
+    retry: (failureCount, error) => failureCount < 1 && !isBiAbortError(error) && error.name !== "BiContractError",
   });
 }

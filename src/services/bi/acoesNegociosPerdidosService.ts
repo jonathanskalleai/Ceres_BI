@@ -47,7 +47,10 @@ export async function fetchAcoesNegociosPerdidos(params: {
     if (params.cidade) rpcParams.p_cidade = params.cidade;
     if (params.limit != null) rpcParams.p_limit = params.limit;
     if (params.offset != null) rpcParams.p_offset = params.offset;
-    if (params.funis && params.funis.length > 0) rpcParams.p_funis = params.funis;
+    // Keep the named argument explicit so PostgREST can resolve the canonical
+    // overload even when no funnel filter is active. An empty selection means
+    // "all funnels" and is represented by SQL NULL, not an omitted argument.
+    rpcParams.p_funis = params.funis && params.funis.length > 0 ? params.funis : null;
 
     const { data, error } = await supabase.rpc("rpc_acoes_negocios_perdidos", rpcParams);
     if (error) throw new Error(error.message);

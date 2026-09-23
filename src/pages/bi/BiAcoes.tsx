@@ -1,6 +1,7 @@
 import { Suspense, lazy } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useNegociosFilter } from '@/contexts/NegociosFilterContext';
+import { WidgetErrorBoundary } from '@/components/bi/WidgetErrorBoundary';
 
 const AcoesSection = lazy(() => import('@/components/bi/sections/AcoesSection'));
 
@@ -24,7 +25,9 @@ export default function BiAcoes() {
   return (
     <div className="p-8 space-y-5">
       <Suspense fallback={<SectionFallback />}>
-        <AcoesSection active dateRange={dateRange} />
+        <WidgetErrorBoundary widgetName="a seção de Ações">
+          <AcoesSection active dateRange={dateRange} />
+        </WidgetErrorBoundary>
       </Suspense>
     </div>
   );

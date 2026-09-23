@@ -1,5 +1,6 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { fetchAcoesDetalhe } from "@/services/bi/biRpcService";
+import { fetchAcoesDetalheRuntime } from "@/services/bi/acoesRuntimeService";
+import { isBiAbortError } from "@/lib/bi/runtime";
 import type { RpcAcoesDetalhe } from "@/types/biRpc";
 
 const STALE_TIME = 5 * 60_000; // 5 minutes
@@ -40,9 +41,10 @@ export function useAcoesDetalheRpc({
 
   return useQuery<RpcAcoesDetalhe, Error>({
     queryKey: ["rpc", "acoes-detalhe", from ?? null, to ?? null, vendedor ?? null, tipoAcao ?? null, cidade ?? null, statusNegocio ?? null, page],
-    queryFn: () => fetchAcoesDetalhe({ from, to, vendedor, tipoAcao, cidade, statusNegocio, limit, offset }),
+    queryFn: ({ signal }) => fetchAcoesDetalheRuntime({ from, to, vendedor, tipoAcao, cidade, statusNegocio, limit, offset, signal }),
     staleTime: STALE_TIME,
     placeholderData: keepPreviousData,
     enabled,
+    retry: (failureCount, error) => failureCount < 1 && !isBiAbortError(error) && error.name !== "BiContractError",
   });
 }

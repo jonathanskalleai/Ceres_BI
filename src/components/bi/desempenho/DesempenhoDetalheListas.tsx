@@ -54,7 +54,7 @@ export function DesempenhoDetalheListas({
     cidade: cidadeParam,
     funis: funisParam,
     page: pedidosPage,
-    enabled: true,
+    enabled: tab === "ganhos",
   });
 
   const {
@@ -68,7 +68,7 @@ export function DesempenhoDetalheListas({
     cidade: cidadeParam,
     funis: funisParam,
     page: perdidosPage,
-    enabled: true,
+    enabled: tab === "perdidos",
   });
 
   return (

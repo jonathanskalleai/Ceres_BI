@@ -2,6 +2,7 @@ import { type ReactNode, useState } from "react";
 import { CircleHelp } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { WidgetErrorBoundary } from "@/components/bi/WidgetErrorBoundary";
 
 interface ChartCardProps {
   title: string;
@@ -115,7 +116,7 @@ export function ChartCard({
           className="w-full min-w-0"
           style={height ? { minHeight: height } : undefined}
         >
-          {children}
+          <WidgetErrorBoundary widgetName={title}>{children}</WidgetErrorBoundary>
         </div>
       )}
 

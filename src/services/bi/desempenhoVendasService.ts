@@ -46,7 +46,11 @@ export async function fetchDesempenhoVendas(
   if (options.origem) params.p_origem = options.origem;
   if (options.banco) params.p_banco = options.banco;
   if (options.motivoPerda) params.p_motivo_perda = options.motivoPerda;
-  if (options.funis && options.funis.length > 0) params.p_funis = options.funis;
+  // Keep the named argument present even when no funnel filter is active. The
+  // production database exposes an overloaded RPC; an explicit null lets
+  // PostgREST resolve the canonical signature that includes p_funis instead
+  // of falling back to the legacy overload.
+  params.p_funis = options.funis && options.funis.length > 0 ? options.funis : null;
 
   const { data, error } = await supabase.rpc("rpc_desempenho_vendas_bi", params);
   if (error) throw error;

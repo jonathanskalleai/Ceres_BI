@@ -3,6 +3,7 @@ import { AlertTriangle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isBiDebugEnabled } from "@/components/bi/debug/isBiDebugEnabled";
 import { cn } from "@/lib/utils";
+import { WidgetErrorBoundary } from "@/components/bi/WidgetErrorBoundary";
 
 const CARD = "rounded-xl border border-[var(--voux-card-border)] bg-[var(--voux-card-from)] p-4";
 
@@ -125,7 +126,7 @@ export function BiTableCard({
         <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--voux-text-muted)]">{title}</h3>
         {actions}
       </div>
-      {children}
+      <WidgetErrorBoundary widgetName={typeof title === "string" ? title : "esta tabela"}>{children}</WidgetErrorBoundary>
       {footer}
     </div>
   );

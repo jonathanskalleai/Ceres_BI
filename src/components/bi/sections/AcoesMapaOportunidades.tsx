@@ -5,8 +5,8 @@ import { BiGestaoErro } from "@/components/bi/BiGestaoErro";
 import { OPORTUNIDADE_ABERTA_PIN_COLOR } from "@/components/dashboard/mapa/constants";
 import { useAcoesMapaRpc } from "@/hooks/bi/useAcoesMapaRpc";
 import { fmtNum } from "@/lib/formatters";
+import { clusterByCoord, toPoints } from "@/components/bi/sections/acoesMapaRuntime";
 import type { OportunidadePoint } from "@/components/dashboard/mapa/types";
-import type { AcoesMapaPino } from "@/types/biRpc";
 
 const LazyAcoesMapaCanvas = lazy(() => import("./AcoesMapaCanvas"));
 
@@ -14,35 +14,6 @@ const CARD =
   "rounded-2xl border border-[var(--voux-card-border)] bg-[var(--surface-raised)] shadow-[var(--voux-card-shadow)]";
 
 /** Transforma o payload da RPC no ponto do mapa (`lon` -> `lng` do Leaflet). */
-function toPoints(pinos: AcoesMapaPino[]): OportunidadePoint[] {
-  return pinos.map((p) => ({
-    negocio: p.negocio,
-    cliente: p.cliente,
-    cidade: p.cidade,
-    etapa: p.etapa,
-    valor: p.valor,
-    consultor: p.consultor,
-    situacao: p.situacao,
-    acoesNoPeriodo: p.acoesNoPeriodo,
-    ultimaAcaoPeriodo: p.ultimaAcaoPeriodo,
-    lat: p.lat,
-    lng: p.lon,
-    diasParado: p.diasParado,
-  }));
-}
-
-/** Agrupa pinos por coordenada arredondada em 4 decimais (~11m de resolucao). */
-function clusterByCoord(points: OportunidadePoint[]): Map<string, OportunidadePoint[]> {
-  const map = new Map<string, OportunidadePoint[]>();
-  for (const p of points) {
-    const key = `${p.lat.toFixed(4)},${p.lng.toFixed(4)}`;
-    const arr = map.get(key);
-    if (arr) arr.push(p);
-    else map.set(key, [p]);
-  }
-  return map;
-}
-
 interface Props {
   vendedor?: string;
   cidade?: string;
@@ -77,6 +48,7 @@ export function AcoesMapaOportunidades({ vendedor, cidade, from, to, active = tr
 
   const points = useMemo(() => toPoints(data?.pinos ?? []), [data]);
   const clusters = useMemo(() => clusterByCoord(points), [points]);
+  const invalidPins = Math.max(0, (data?.pinos?.length ?? 0) - points.length);
 
   // Separa pinos isolados (grupo.length === 1) dos clusters reais (> 1)
   const { singlePoints, clusterGroups } = useMemo(() => {
@@ -125,6 +97,11 @@ export function AcoesMapaOportunidades({ vendedor, cidade, from, to, active = tr
             <span><i className="mr-1 inline-block h-2 w-2 rounded-full" style={{ backgroundColor: OPORTUNIDADE_ABERTA_PIN_COLOR }} />Em andamento: {fmtNum(data?.meta.abertos ?? 0)}</span>
             <span><i className="mr-1 inline-block h-2 w-2 rounded-full bg-[var(--voux-success)]" />Ganhos (pedidos): {fmtNum(data?.meta.ganhos ?? 0)}</span>
             <span><i className="mr-1 inline-block h-2 w-2 rounded-full bg-[var(--voux-danger)]" />Perdidos: {fmtNum(data?.meta.perdidos ?? 0)}</span>
+            {invalidPins > 0 && (
+              <span role="status" className="text-[var(--voux-danger)]">
+                {fmtNum(invalidPins)} localização{invalidPins === 1 ? "" : "ões"} inválida{invalidPins === 1 ? "" : "s"} ignorada{invalidPins === 1 ? "" : "s"}
+              </span>
+            )}
           </div>
 
           {!shouldLoad && (

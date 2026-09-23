@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { fetchDesempenhoVendas, EMPTY_DESEMPENHO_DATA } from "@/services/bi/desempenhoVendasService";
 import type { DesempenhoVendasFilterOptions, DesempenhoVendasData } from "@/types/desempenhoVendas";
 
@@ -20,6 +20,7 @@ export function useDesempenhoVendas(options: DesempenhoVendasFilterOptions = {})
     ],
     queryFn: () => fetchDesempenhoVendas(options),
     staleTime: 5 * 60_000,
+    placeholderData: keepPreviousData,
   });
 
   return {
