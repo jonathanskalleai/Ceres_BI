@@ -84,7 +84,7 @@ async def execute_rpc(
         metrics.payload_bytes = envelope_size(response)
         emit_bi_query(
             request_id=rid,
-            dashboard_id="acoes",
+            dashboard_id="bi_acoes",
             route=request.url.path,
             endpoint=endpoint,
             rpc=rpc_name,
@@ -111,7 +111,7 @@ async def execute_rpc(
         metrics.payload_bytes = envelope_size(response)
         emit_bi_query(
             request_id=rid,
-            dashboard_id="acoes",
+            dashboard_id="bi_acoes",
             route=request.url.path,
             endpoint=endpoint,
             rpc=rpc_name,

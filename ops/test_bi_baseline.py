@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from io import StringIO
+
 from bi_baseline import metric_summary, summarize_events
 
 
@@ -50,3 +52,11 @@ def test_empty_input_is_valid() -> None:
     report = summarize_events([])
     assert report["sample_count"] == 0
     assert report["groups"] == []
+
+
+def test_scalar_json_input_is_rejected_with_exit_code_two(monkeypatch, capsys) -> None:
+    import bi_baseline
+
+    monkeypatch.setattr(bi_baseline.sys, "stdin", StringIO("1\n"))
+    assert bi_baseline.main(["-"]) == 2
+    assert "input inválido" in capsys.readouterr().err

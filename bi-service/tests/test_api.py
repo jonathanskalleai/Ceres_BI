@@ -52,7 +52,7 @@ def test_core_returns_stable_envelope_and_redacted_query_event(monkeypatch, capl
     events = [json.loads(record.message) for record in caplog.records if record.message.startswith('{"')]
     query_event = next(event for event in events if event.get("event") == "bi_query")
     assert query_event["request_id"] == "req:monthly-1"
-    assert query_event["dashboard_id"] == "acoes"
+    assert query_event["dashboard_id"] == "bi_acoes"
     assert query_event["case"] == "monthly"
     assert query_event["rpc"] == "rpc_acoes_bi_periodo"
     assert all("Não registrar" not in record.message for record in caplog.records)

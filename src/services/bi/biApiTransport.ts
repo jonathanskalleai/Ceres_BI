@@ -63,6 +63,14 @@ function rpcForPath(path: string): string {
   return names[path] ?? "unknown";
 }
 
+function canonicalRoute(path: string): string {
+  return path.startsWith("/api/bi/") ? path : `/api/bi${path.startsWith("/") ? path : `/${path}`}`;
+}
+
+function endpointForPath(path: string): string {
+  return path.replace(/^\/+|\/+$/g, "").replaceAll("/", ".");
+}
+
 function buildQuery(params: Record<string, unknown>): string {
   const query = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
@@ -119,9 +127,9 @@ export async function fetchBiApi<T>(
   );
   logClientMetric("bi_query", {
     request_id: safeMetricRequestId(envelope.requestId),
-    dashboard_id: path.split("/").filter(Boolean)[0] ?? "unknown",
-    route: path,
-    endpoint: path,
+    dashboard_id: "bi_acoes",
+    route: canonicalRoute(path),
+    endpoint: endpointForPath(path),
     rpc: rpcForPath(path),
     case: inferCase(params),
     status: envelope.status,

@@ -149,7 +149,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         input_format = args.input_format or ("csv" if str(args.input).lower().endswith(".csv") else "jsonl")
         report = summarize_events(read_records(stream, input_format))
-    except (OSError, ValueError, json.JSONDecodeError) as exc:
+    except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
         print(f"bi_baseline: input inválido: {exc}", file=sys.stderr)
         return 2
     finally:
