@@ -18,7 +18,8 @@ Host: `178.238.235.203` (`ceres-prod`, porta administrativa `2222`).
 
 ## Estado final publicado
 
-- Commit publicado e executado: `c5e5d3b18caa` (`c5e5d3b18caadeafe3fcb5687071f89d10eeabd5`).
+- Commit publicado e executado: `2bca6c0296a9` (`2bca6c0`), contendo a
+  implementação funcional de `c5e5d3b18caa` e o registro desta auditoria.
 - `ceresbi_web`, `ceresbi_ai` e `ceresbi_bi`: `1/1` no Swarm.
 - `/api/bi/health`: `status=ok`, banco alcançável e JWT configurado.
 - `ceres_bi_api`: `LOGIN`, `NOSUPERUSER`, `NOCREATEDB`, `NOCREATEROLE`,
