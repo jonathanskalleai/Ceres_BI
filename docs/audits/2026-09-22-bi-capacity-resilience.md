@@ -395,14 +395,22 @@ janela controlada de produção:
 
 ## Estado desta auditoria
 
-- **Nenhuma alteração foi aplicada na VPS nesta etapa.**
-- **Nenhum deploy ou push foi feito.**
-- O SHA de produção continua `ead1742538d2`.
-- O commit local `6a25076` é uma preparação de transporte same-origin, ainda
-  não publicada.
-- Os arquivos e migrations não relacionados já existentes no working tree não
-  foram tocados.
+- As duas migrations de remoção de overloads foram aplicadas na VPS de
+  produção com snapshot de rollback, validação SQL e reload controlado do
+  schema cache do PostgREST.
+- O commit `4c38c89b6b93bcb270246ef3bf147b1242565055` foi publicado na branch
+  `release/bi-consolidacao-fase-1`; a imagem web em produção é
+  `ceresbi:4c38c89b6b93` e o serviço `ceresbi_web` está `1/1`.
+- Boot, `/`, `/api/ai/health` e smoke HTTP das quatro RPCs críticas passaram.
+  O smoke visual autenticado do navegador ainda precisa ser executado com uma
+  sessão de usuário real.
+- O lint global continua com baseline legado (126 erros/25 warnings) fora do
+  escopo; TypeScript, 259 testes, build, lint direcionado e diff check passaram.
+- A consulta multi-ano continua sendo um item de performance aberto: não foi
+  declarada otimizada sem EXPLAIN/medição antes-depois.
+- Os arquivos não relacionados já existentes no working tree não foram
+  incluídos no commit.
 
-O próximo passo seguro é implementar P0 em uma branch/preview, rodar os gates
-FULL (reviewer, security condicional e QA com smoke das rotas) e só então
-decidir se o proxy e as otimizações SQL devem ser publicados em produção.
+Próximos passos: executar smoke visual autenticado, medir p50/p95/p99 da visão
+anual e decidir separadamente o endurecimento das ACLs PUBLIC/anon das RPCs
+SECURITY DEFINER.

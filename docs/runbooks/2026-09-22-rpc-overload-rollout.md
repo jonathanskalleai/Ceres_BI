@@ -102,15 +102,26 @@ HTTP 200. Latências da primeira rodada: aproximadamente 1,55 s, 1,56 s, 3,18 s
 e 1,22 s, respectivamente. O container PostgreSQL permaneceu saudável e o
 serviço REST convergiu em 1/1.
 
-O smoke autenticado visual completo das rotas `/bi/acoes`, `/bi/desempenho` e
-do mapa ainda requer a publicação da imagem web local; nenhuma imagem web foi
-publicada nesta operação.
+## Publicação web e smoke pós-deploy (PASS)
+
+A imagem web foi publicada na VPS pela stack `ceresbi` com a tag imutável
+`ceresbi:4c38c89b6b93` (commit `4c38c89b6b93bcb270246ef3bf147b1242565055`).
+O serviço web e o AI convergiram em `1/1`, o repositório remoto e o checkout da
+VPS apontam para o mesmo SHA, `/` respondeu HTTP 200 e `/api/ai/health`
+respondeu HTTP 200. O smoke RPC autenticado com a chave pública retornou 200
+para Desempenho, Ações ganhos, Ações perdidos e GPO; para o GPO o contrato
+vigente usa `p_vendedor`, não `p_tipo`.
+
+O smoke visual autenticado em navegador das rotas `/bi/acoes` e
+`/bi/desempenho` ainda precisa ser executado com uma sessão de usuário; a
+validação CLI não possui credenciais de usuário e não deve inventar esse PASS.
 
 ## Critério de saída
 
 - quatro overloads legados ausentes e quatro vigentes preservados — PASS;
 - SQL smoke retorna JSON/linhas, sem `PGRST203` — PASS;
 - HTTP/PostgREST com schema recarregado retorna 200 — PASS;
-- `/bi/acoes` e `/bi/desempenho` renderizam sem shell preso;
+- `/bi/acoes` e `/bi/desempenho` renderizam sem shell preso — pendente apenas
+  do smoke visual autenticado acima;
 - `pg_stat_statements`/`EXPLAIN` são recapturados depois, sem declarar ainda que
   a latência multi-ano foi otimizada.

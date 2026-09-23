@@ -193,9 +193,9 @@ paridade.
 - Carregar em fases: KPI/série → tabelas resumidas → detalhes, IA e mapa.
 - Virtualizar/truncar observações e abrir texto completo sob demanda.
 - Manter o mapa fechado ou lazy por viewport; clusterizar antes do render.
-- Só então avaliar o proxy same-origin preparado no commit local `6a25076`.
-  Ele pode reduzir variabilidade de transporte, mas não é substituto para F1/F2
-  e ainda não está publicado na produção.
+- O proxy same-origin preparado no commit `6a25076` foi publicado junto com o
+  endurecimento F1/F2 no release `4c38c89b6b93`; ele pode reduzir variabilidade
+  de transporte, mas não substitui as medições de F3.
 
 **Gate F3:** primeiro KPI ≤2 s, tela útil mensal ≤4 s, anual útil ≤4 s com
 detalhes fora do caminho crítico, payload inicial agregado <250 KB.
