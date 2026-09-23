@@ -18,7 +18,7 @@ Host: `178.238.235.203` (`ceres-prod`, porta administrativa `2222`).
 
 ## Estado final publicado
 
-- Commit publicado e executado: `2c8e636cbd7e`.
+- Commit publicado e executado: `d3cbdd33239d`.
 - `ceresbi_web`, `ceresbi_ai` e `ceresbi_bi`: `1/1` no Swarm.
 - `/api/bi/health`: `status=ok`, banco alcançável e JWT configurado.
 - `ceres_bi_api`: `LOGIN`, `NOSUPERUSER`, `NOCREATEDB`, `NOCREATEROLE`,
@@ -75,11 +75,11 @@ FastAPI, autorização e PostgreSQL com a role dedicada:
 
 | RPC / rota | amostras | sucesso | p95 HTTP | p95 API | cache hit | payload |
 |---|---:|---:|---:|---:|---:|---:|
-| `rpc_acoes_bi_periodo` | 20 | 20/20 | 1.271 s | 1.091 s | 95% | 9,6 KB |
-| `rpc_acoes_funil_gestao_periodo` | 20 | 20/20 | 0.621 s | 0.428 s | 95% | 5,6 KB |
-| `rpc_acoes_mapa_oportunidades` | 20 | 20/20 | 0.653 s | 0.421 s | 95% | 213 KB |
-| `rpc_desempenho_vendas_bi` | 20 | 20/20 | 1.556 s | 1.254 s | 95% | 40 KB |
-| `rpc_resultados_negocios_bi` | 20 | 20/20 | 2.361 s | 2.211 s | 95% | 6 KB |
+| `rpc_acoes_bi_periodo` | 20 | 20/20 | 1.240 s | 0.956 s | 95% | 9,6 KB |
+| `rpc_acoes_funil_gestao_periodo` | 20 | 20/20 | 0.605 s | 0.382 s | 95% | 5,6 KB |
+| `rpc_acoes_mapa_oportunidades` | 20 | 20/20 | 0.801 s | 0.562 s | 95% | 213 KB |
+| `rpc_desempenho_vendas_bi` | 20 | 20/20 | 1.711 s | 1.535 s | 95% | 40 KB |
+| `rpc_resultados_negocios_bi` | 20 | 20/20 | 1.505 s | 1.352 s | 95% | 6 KB |
 
 Também passaram as rotas específicas de Ações (`core`, `detalhe`, `funil`,
 `mapa` e `batch`), todas com envelope `ok`. A comparação estrutural do payload
@@ -88,6 +88,9 @@ de `rpc_acoes_bi_periodo` entre a API e a chamada direta PostgreSQL foi `PASS`.
 Os testes de contrato retornaram: período inválido `422`, RPC não permitida
 `404`, chamada anônima `401` e usuário inexistente `401`. Nenhuma falha HTTP ou
 erro de envelope ocorreu no benchmark.
+
+A validação de qualidade da release também passou: 23 testes Python do gateway
+e baseline, 276 testes Vitest, `npx tsc --noEmit` e o build Vite de produção.
 
 ## Critérios e limitações residuais
 
