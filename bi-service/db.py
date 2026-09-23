@@ -29,6 +29,10 @@ class ReadOnlyDatabase:
             self.settings.database_url,
             connect_timeout=5,
             application_name="ceresbi-bi-api",
+            options=(
+                f"-c statement_timeout={self.settings.statement_timeout_ms} "
+                f"-c lock_timeout={self.settings.lock_timeout_ms}"
+            ),
         )
 
     def close(self) -> None:
@@ -53,10 +57,6 @@ class ReadOnlyDatabase:
             conn.set_session(
                 autocommit=True,
                 readonly=True,
-                options=(
-                    f"-c statement_timeout={self.settings.statement_timeout_ms} "
-                    f"-c lock_timeout={self.settings.lock_timeout_ms}"
-                ),
             )
             yield conn
         finally:
