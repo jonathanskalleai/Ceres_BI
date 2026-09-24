@@ -69,6 +69,11 @@ O worker recebe `BI_REFRESH_DATABASE_URL_FILE`, `BI_REFRESH_INTERVAL_SECONDS` e
 `BI_REFRESH_LOOKBACK_DAYS`. Ele usa uma role separada, limitada a executar a
 função de refresh; a role da API continua somente leitura.
 
+As respostas dos modelos são paginadas por `limit` e `offset`. Quando ainda há
+linhas, o envelope retorna `status=partial` com `BI_READ_MODEL_TRUNCATED`; o
+cliente deve avançar o `offset`, nunca interpretar uma página limitada como
+um resultado completo.
+
 O container executa como usuário sem privilégios, com healthcheck próprio. Na
 stack de produção ele também usa filesystem somente leitura, sem capabilities e
 com limites de CPU/memória.

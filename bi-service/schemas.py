@@ -121,6 +121,7 @@ class ReadModelFilters(BaseModel):
     vendedor: str | None = Field(default=None, max_length=160)
     cidade: str | None = Field(default=None, max_length=160)
     limit: int = Field(default=5000, ge=1, le=10000)
+    offset: int = Field(default=0, ge=0, le=100000)
 
     model_config = {"populate_by_name": True}
 

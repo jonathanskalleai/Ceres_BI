@@ -25,12 +25,14 @@ def test_build_read_model_query_allowlists_table_and_binds_filters() -> None:
     assert "FROM bi.acoes_daily" in query
     assert "vendedor = %s" in query
     assert "cidade = %s" in query
-    assert args == (date(2026, 1, 1), date(2026, 1, 31), "Ana", "São Paulo", 100)
+    assert args == (date(2026, 1, 1), date(2026, 1, 31), "Ana", "São Paulo", 100, 0)
 
 
 def test_build_read_model_query_rejects_unlisted_model() -> None:
     with pytest.raises(HTTPException) as error:
-        build_read_model_query("mirror.crm_acoes", date(2026, 1, 1), date(2026, 1, 31), None, None, 10)
+        build_read_model_query(
+            "mirror.crm_acoes", date(2026, 1, 1), date(2026, 1, 31), None, None, 10
+        )
 
     assert error.value.status_code == 404
 
@@ -58,6 +60,7 @@ def test_fetch_read_model_returns_rows_and_manifest() -> None:
     assert result["model"] == "acoes_daily"
     assert result["rows"] == [{"day": date(2026, 1, 1), "total_acoes": 3}]
     assert result["manifest"] == {"model_name": "acoes_daily", "status": "ready", "data_version": 1}
+    assert result["pagination"] == {"limit": 50, "offset": 0, "has_more": False}
 
 
 def test_fetch_read_model_status_requires_all_quality_checks_ready() -> None:

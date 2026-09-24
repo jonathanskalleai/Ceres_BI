@@ -39,6 +39,7 @@ def build_read_model_query(
     vendedor: str | None,
     cidade: str | None,
     limit: int,
+    offset: int = 0,
 ) -> tuple[str, tuple[Any, ...]]:
     if model_name not in _MODEL_COLUMNS:
         raise HTTPException(status_code=404, detail="Read model não permitido")
@@ -54,9 +55,10 @@ def build_read_model_query(
         args.append(cidade)
     query = (
         f"SELECT {columns} FROM bi.{model_name} "
-        f"WHERE {' AND '.join(conditions)} ORDER BY day ASC LIMIT %s"
+        f"WHERE {' AND '.join(conditions)} ORDER BY day ASC LIMIT %s OFFSET %s"
     )
     args.append(limit)
+    args.append(offset)
     return query, tuple(args)
 
 
@@ -68,16 +70,26 @@ def fetch_read_model(
     vendedor: str | None,
     cidade: str | None,
     limit: int,
+    offset: int = 0,
 ) -> dict[str, object]:
-    query, args = build_read_model_query(model_name, from_date, to_date, vendedor, cidade, limit)
-    rows = database.execute_query(query, args)
+    query, args = build_read_model_query(
+        model_name, from_date, to_date, vendedor, cidade, limit + 1, offset
+    )
+    fetched_rows = database.execute_query(query, args)
+    has_more = len(fetched_rows) > limit
+    rows = fetched_rows[:limit]
     manifest_rows = database.execute_query(
         "SELECT model_name, status, data_version, source_from, source_to, row_count, "
         "last_completed_at, last_error_code FROM bi.refresh_manifest WHERE model_name = %s",
         (model_name,),
     )
     manifest = manifest_rows[0] if manifest_rows else None
-    return {"model": model_name, "rows": rows, "manifest": manifest}
+    return {
+        "model": model_name,
+        "rows": rows,
+        "manifest": manifest,
+        "pagination": {"limit": limit, "offset": offset, "has_more": has_more},
+    }
 
 
 def fetch_read_model_status(database: ReadOnlyDatabase) -> dict[str, object]:

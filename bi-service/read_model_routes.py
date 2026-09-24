@@ -16,7 +16,7 @@ from auth import CurrentUser
 from db import ReadOnlyDatabase
 from observability import emit_bi_query, filter_hash, payload_size, safe_request_id
 from read_models import fetch_read_model, fetch_read_model_status
-from schemas import BiEnvelope, BiMetrics, ReadModelFilters
+from schemas import BiEnvelope, BiIssue, BiMetrics, ReadModelFilters
 
 logger = logging.getLogger("ceresbi.bi.read_models")
 
@@ -72,6 +72,7 @@ def create_read_model_router(
                 filters.vendedor,
                 filters.cidade,
                 filters.limit,
+                filters.offset,
             )
             elapsed_ms = round((perf_counter() - started_at) * 1000, 3)
             metrics = BiMetrics(
@@ -80,7 +81,23 @@ def create_read_model_router(
                 payload_bytes=payload_size(data),
                 cache_hit=False,
             )
-            response = BiEnvelope.success(data, request_id, metrics)
+            has_more = bool(data.get("pagination", {}).get("has_more"))
+            response = BiEnvelope(
+                status="partial" if has_more else "ok",
+                data=data,
+                issues=(
+                    [BiIssue(
+                        code="BI_READ_MODEL_TRUNCATED",
+                        message="Resultado limitado; use offset para carregar a próxima página.",
+                        source=model_name,
+                    )]
+                    if has_more
+                    else []
+                ),
+                requestId=request_id,
+                fetchedAt=BiEnvelope.success(data, request_id).fetchedAt,
+                metrics=metrics,
+            )
             metrics.payload_bytes = len(response.model_dump_json().encode("utf-8"))
             emit_bi_query(
                 request_id=request_id,
