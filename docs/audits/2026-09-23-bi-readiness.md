@@ -18,9 +18,9 @@ Host: `178.238.235.203` (`ceres-prod`, porta administrativa `2222`).
 
 ## Estado final publicado
 
-- Commit publicado e executado: `2bca6c0296a9` (`2bca6c0`), contendo a
-  implementação funcional de `c5e5d3b18caa` e o registro desta auditoria.
-- `ceresbi_web`, `ceresbi_ai` e `ceresbi_bi`: `1/1` no Swarm.
+- Commit publicado e executado: `950d3a9861cc` (`950d3a9`), contendo a camada
+  física de read models, paginação bounded e o worker de refresh.
+- `ceresbi_web`, `ceresbi_ai`, `ceresbi_bi` e `ceresbi_bi_refresh`: `1/1` no Swarm.
 - `/api/bi/health`: `status=ok`, banco alcançável e JWT configurado.
 - `ceres_bi_api`: `LOGIN`, `NOSUPERUSER`, `NOCREATEDB`, `NOCREATEROLE`,
   `NOINHERIT`, `NOBYPASSRLS`, transação read-only e limites de timeout.
@@ -81,8 +81,34 @@ O PostgreSQL já faz joins e agregações server-side. A camada nova adiciona:
 - envelope parcial sem transformar erro em zero;
 - benchmark HTTP autenticado para fechar p50/p95/p99.
 
-Isso é uma fundação backend-first inspirada nos princípios do Power BI, não uma
-prova de que a produção já foi migrada nem um substituto para read models.
+Isso é uma fundação backend-first inspirada nos princípios do Power BI. O
+gateway continua atendendo os contratos legados enquanto a camada física é
+adotada por tela com paridade comprovada.
+
+### Read models publicados
+
+O schema `bi` agora está publicado no PostgreSQL de produção. A execução do
+worker recompõe uma janela de 730 dias fora do request e publica a versão no
+manifesto. A última execução validada retornou `status=ready`, com 13.964
+linhas agregadas e sem segredo nos logs.
+
+| Modelo | Linhas de origem | Linhas representadas | Delta | EXPLAIN (ANALYZE) |
+|---|---:|---:|---:|---:|
+| `acoes_daily` | 18.533 | 18.533 | 0 | 4,588 ms |
+| `negocios_daily` | 3.696 | 3.696 | 0 | 2,182 ms |
+| `pedidos_daily` | 1.224 | 1.224 | 0 | 1,218 ms |
+| `servicos_daily` | 105 | 105 | 0 | 0,162 ms |
+
+`GET /api/bi/model-status` retornou os quatro modelos como `ready` com delta
+zero. `GET /api/bi/models/acoes_daily` percorreu HTTPS, autenticação, API e
+PostgreSQL com `HTTP 200`; a paginação foi validada com `limit=1`, retornando
+`status=partial` e `BI_READ_MODEL_TRUNCATED` em vez de ocultar a existência de
+linhas adicionais. As tentativas sem token, modelo não allowlisted e limite
+acima do máximo retornaram respectivamente `401`, `404` e `422`.
+
+A camada física é a base comum para todas as dashboards. As RPCs legadas ainda
+permanecem como caminho de compatibilidade até que cada contrato visual tenha
+paridade comprovada; não foi feita uma troca cega que pudesse alterar números.
 
 ## Evidência do canário autenticado
 
@@ -113,9 +139,11 @@ Os testes de contrato retornaram: período inválido `422`, RPC não permitida
 `404`, chamada anônima `401` e usuário inexistente `401`. Nenhuma falha HTTP ou
 erro de envelope ocorreu no benchmark.
 
-A validação de qualidade da release também passou: 19 testes Python do serviço
+A validação de qualidade da release também passou: 24 testes Python do serviço
 BI, 276 testes Vitest, `npx tsc --noEmit`, `ruff check bi-service` e o build
-Vite de produção.
+Vite de produção. O `npm audit --omit=dev --audit-level=high` não encontrou
+HIGH/CRITICAL; permanecem dois advisories MEDIUM preexistentes de
+`react-router`, cuja correção automática exigiria upgrade major.
 
 ## Critérios e limitações residuais
 
