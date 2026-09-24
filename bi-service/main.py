@@ -17,6 +17,7 @@ from cache import QueryCache, make_cache_key
 from catalog import build_args, get_spec
 from config import Settings
 from db import ReadOnlyDatabase
+from logging_config import configure_application_logging
 from observability import (
     emit_bi_query,
     error_code,
@@ -38,6 +39,7 @@ from schemas import (
     PanelFilters,
 )
 
+configure_application_logging()
 logger = logging.getLogger("ceresbi.bi")
 settings = Settings.from_env()
 database = ReadOnlyDatabase(settings)

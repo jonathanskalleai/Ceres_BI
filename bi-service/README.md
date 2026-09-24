@@ -16,6 +16,9 @@ as RPCs existentes.
 - `BI_POOL_WAIT_TIMEOUT_MS`: tempo máximo que uma requisição aguarda uma
   conexão livre antes de retornar falha explícita (padrão: `10000`). O limite
   evita `PoolError` instantâneo em picos e não aumenta o timeout da consulta.
+- `BI_LOG_LEVEL`: nível dos eventos estruturados do gateway (padrão: `INFO`).
+  Mantenha `INFO` em produção para registrar latência, cache e status sem
+  incluir filtros, payloads ou credenciais.
 - `BI_STATEMENT_TIMEOUT_MS`: limite de cada RPC (padrão: `30000`).
 - `BI_CACHE_TTL_SECONDS`: TTL do cache L1 e da coalescência de consultas
   idênticas (padrão: `5`; `0` desliga).
