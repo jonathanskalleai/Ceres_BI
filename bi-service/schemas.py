@@ -25,6 +25,21 @@ class BiMetrics(BaseModel):
     cache_hit: bool | None = None
 
 
+class BiSnapshot(BaseModel):
+    """Publication metadata shared by Import/Hybrid dashboard responses.
+
+    The fields are optional so existing RPC responses remain wire-compatible
+    while read-model-backed dashboards are migrated incrementally.
+    """
+
+    model: str | None = None
+    version: str | None = None
+    snapshot_at: str | None = None
+    status: Literal["ready", "refreshing", "stale", "error"] | None = None
+    is_stale: bool | None = None
+    source: Literal["read_model", "direct_query", "rpc"] | None = None
+
+
 class BiEnvelope(BaseModel):
     status: Literal["ok", "partial", "error"]
     data: Any = None
@@ -32,6 +47,7 @@ class BiEnvelope(BaseModel):
     requestId: str
     fetchedAt: str
     metrics: BiMetrics | None = None
+    snapshot: BiSnapshot | None = None
 
     @classmethod
     def success(

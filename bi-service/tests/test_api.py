@@ -112,6 +112,14 @@ def test_read_model_routes_are_protected_bounded_and_enveloped(monkeypatch) -> N
     assert status_response.json()["data"]["status"] == "ready"
     assert model_response.status_code == 200
     assert model_response.json()["data"]["rows"][0]["total_acoes"] == 4
+    assert model_response.json()["snapshot"] == {
+        "model": "acoes_daily",
+        "version": "etl-3",
+        "snapshot_at": None,
+        "status": "ready",
+        "is_stale": False,
+        "source": "read_model",
+    }
     assert invalid_model.status_code == 404
     assert oversized_limit.status_code == 422
 
@@ -147,6 +155,31 @@ def test_read_model_route_exposes_stale_and_outside_coverage(monkeypatch) -> Non
         "BI_READ_MODEL_NOT_READY",
         "BI_READ_MODEL_OUTSIDE_COVERAGE",
     }
+
+
+def test_read_model_route_marks_never_run_snapshot_as_stale(monkeypatch) -> None:
+    async def fake_user() -> CurrentUser:
+        return CurrentUser(id="00000000-0000-0000-0000-000000000001", role="admin")
+
+    def fake_query(query, args=()):
+        if "refresh_manifest" in query:
+            return [{"model_name": "acoes_daily", "status": "never_run", "data_version": 0}]
+        return [{"day": "2026-01-01", "total_acoes": 0}]
+
+    app.dependency_overrides[require_bi_user] = fake_user
+    monkeypatch.setattr(database, "execute_query", fake_query)
+    try:
+        response = TestClient(app).get(
+            "/api/bi/models/acoes_daily?from=2026-01-01&to=2026-01-31&limit=10",
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    payload = response.json()
+    assert response.status_code == 200
+    assert payload["snapshot"]["status"] == "stale"
+    assert payload["snapshot"]["is_stale"] is True
+    assert payload["status"] == "partial"
 
 
 def test_batch_runs_primary_blocks_and_emits_one_canonical_event(monkeypatch, caplog) -> None:

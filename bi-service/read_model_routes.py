@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from collections.abc import Callable
+from datetime import datetime, timezone
 from time import perf_counter
 from typing import Annotated
 from uuid import uuid4
@@ -16,7 +17,7 @@ from auth import CurrentUser
 from db import ReadOnlyDatabase
 from observability import emit_bi_query, filter_hash, payload_size, safe_request_id
 from read_models import fetch_read_model, fetch_read_model_status
-from schemas import BiEnvelope, BiIssue, BiMetrics, ReadModelFilters
+from schemas import BiEnvelope, BiIssue, BiMetrics, BiSnapshot, ReadModelFilters
 
 logger = logging.getLogger("ceresbi.bi.read_models")
 
@@ -24,6 +25,7 @@ logger = logging.getLogger("ceresbi.bi.read_models")
 def create_read_model_router(
     database: ReadOnlyDatabase,
     require_user: Callable[..., CurrentUser],
+    max_age_seconds: int = 3600,
 ) -> APIRouter:
     router = APIRouter()
 
@@ -117,6 +119,45 @@ def create_read_model_router(
                         message="O período solicitado excede a janela publicada deste snapshot.",
                         source=model_name,
                     ))
+                completed_at = manifest.get("last_completed_at")
+                if completed_at:
+                    if isinstance(completed_at, str):
+                        completed_at = datetime.fromisoformat(completed_at.replace("Z", "+00:00"))
+                    if completed_at.tzinfo is None:
+                        completed_at = completed_at.replace(tzinfo=timezone.utc)
+                    age_seconds = (datetime.now(timezone.utc) - completed_at).total_seconds()
+                    if age_seconds > max_age_seconds:
+                        issues.append(BiIssue(
+                            code="BI_READ_MODEL_STALE",
+                            message="O snapshot excedeu a idade máxima de publicação.",
+                            source=model_name,
+                        ))
+            snapshot = None
+            if isinstance(manifest, dict):
+                completed_at = manifest.get("last_completed_at")
+                if hasattr(completed_at, "isoformat"):
+                    completed_at = completed_at.isoformat()
+                elif completed_at:
+                    completed_at = str(completed_at)
+                manifest_status = manifest.get("status")
+                if manifest_status == "never_run":
+                    manifest_status = "stale"
+                snapshot = BiSnapshot(
+                    model=model_name,
+                    version=(
+                        f"etl-{manifest.get('data_version')}"
+                        if manifest.get("data_version") is not None
+                        else None
+                    ),
+                    snapshot_at=completed_at,
+                    status=(
+                        str(manifest_status)
+                        if manifest_status in {"ready", "refreshing", "stale", "error"}
+                        else None
+                    ),
+                    is_stale=bool(issues),
+                    source="read_model",
+                )
             response = BiEnvelope(
                 status="partial" if has_more or issues else "ok",
                 data=data,
@@ -128,6 +169,7 @@ def create_read_model_router(
                 requestId=request_id,
                 fetchedAt=BiEnvelope.success(data, request_id).fetchedAt,
                 metrics=metrics,
+                snapshot=snapshot,
             )
             metrics.payload_bytes = len(response.model_dump_json().encode("utf-8"))
             emit_bi_query(

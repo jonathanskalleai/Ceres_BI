@@ -73,7 +73,7 @@ app.add_middleware(
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
 )
-app.include_router(create_read_model_router(database, require_bi_user))
+app.include_router(create_read_model_router(database, require_bi_user, settings.read_model_max_age_seconds))
 
 
 def request_id(request: Request) -> str:
