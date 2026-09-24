@@ -194,8 +194,9 @@ export async function fetchBiApi<T>(
   if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
   headers["X-Request-Id"] = requestId;
 
+  const apiPath = path === "/painel/kpis" ? `/v1${path}` : path;
   const response = await resilientFetch(
-    `${apiBaseUrl()}${path}${buildQuery(params)}`,
+    `${apiBaseUrl()}${apiPath}${buildQuery(params)}`,
     { headers, signal },
     // Do not duplicate an expensive RPC when the BI API is already handling it.
     { maxAttempts: 1, timeoutMs: 35_000 },
@@ -225,7 +226,7 @@ export async function fetchBiRpc<T>(
   if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
 
   const response = await resilientFetch(
-    `${apiBaseUrl()}/rpc/${encodeURIComponent(rpcName)}`,
+    `${apiBaseUrl()}/v1/query/${encodeURIComponent(rpcName)}`,
     {
       method: "POST",
       headers,
@@ -236,8 +237,37 @@ export async function fetchBiRpc<T>(
   );
   return parseBiResponse(response, {
     dashboardId: "bi.gateway",
-    route: `/api/bi/rpc/${rpcName}`,
-    endpoint: `rpc.${rpcName}`,
+    route: `/api/bi/v1/query/${rpcName}`,
+    endpoint: `semantic.${rpcName}`,
     rpc: rpcName,
+  }, params, frontendStartedAt);
+}
+
+/** Execute a versioned semantic dashboard query through the Python API. */
+export async function fetchBiSemantic<T>(
+  dashboard: string,
+  params: Record<string, unknown>,
+  signal?: AbortSignal,
+): Promise<T> {
+  const frontendStartedAt = typeof performance !== "undefined" ? performance.now() : Date.now();
+  const { data: { session } } = await supabase.auth.getSession();
+  const requestId = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    "X-Request-Id": requestId,
+  };
+  if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
+  const route = `/api/bi/v1/${dashboard}`;
+  const response = await resilientFetch(
+    `${apiBaseUrl()}/v1/${encodeURIComponent(dashboard)}`,
+    { method: "POST", headers, body: JSON.stringify({ params }), signal },
+    { maxAttempts: 1, timeoutMs: 35_000 },
+  );
+  return parseBiResponse(response, {
+    dashboardId: `bi.${dashboard}`,
+    route,
+    endpoint: `semantic.${dashboard}`,
+    rpc: `semantic.${dashboard}`,
   }, params, frontendStartedAt);
 }

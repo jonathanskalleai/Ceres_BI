@@ -48,6 +48,28 @@ def refresh_once(database_url: str, lookback_days: int, heartbeat_path: str | No
             raise RuntimeError(
                 f"refresh não publicado; código={result.get('error_code', 'unknown')}"
             )
+        # Publish the bounded semantic snapshot slice after the physical read
+        # models commit. A snapshot failure is fail-open: DirectQuery remains
+        # available and must not roll back the already healthy read models.
+        connection.commit()
+        try:
+            cursor.execute(
+                "SELECT bi.refresh_semantic_snapshots()",
+            )
+            semantic_result = cursor.fetchone()[0]
+            if semantic_result.get("status") != "ready":
+                logger.warning(
+                    "bi_semantic_refresh_degraded code=%s",
+                    semantic_result.get("error_code", "unknown"),
+                )
+            else:
+                logger.info(
+                    "bi_semantic_refresh_completed snapshots=%s",
+                    semantic_result.get("snapshots", 0),
+                )
+        except Exception:
+            connection.rollback()
+            logger.exception("bi_semantic_refresh_failed")
         logger.info(
             "bi_refresh_completed status=%s run_id=%s rows=%s",
             result.get("status"),

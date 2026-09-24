@@ -1,4 +1,5 @@
 import { invokeBiRpc } from "@/services/bi/biRpcGateway";
+import { fetchBiSemantic, isBiApiEnabled } from "@/services/bi/biApiTransport";
 import type {
   DesempenhoVendasData,
   DesempenhoVendasFilterOptions,
@@ -52,8 +53,14 @@ export async function fetchDesempenhoVendas(
   // of falling back to the legacy overload.
   params.p_funis = options.funis && options.funis.length > 0 ? options.funis : null;
 
-  const { data, error } = await invokeBiRpc("rpc_desempenho_vendas_bi", params);
-  if (error) throw error;
+  let data: unknown;
+  if (isBiApiEnabled()) {
+    data = await fetchBiSemantic("desempenho", params);
+  } else {
+    const legacy = await invokeBiRpc("rpc_desempenho_vendas_bi", params);
+    if (legacy.error) throw legacy.error;
+    data = legacy.data;
+  }
   if (!data) return EMPTY_DESEMPENHO_DATA;
 
   const raw = (Array.isArray(data) ? data[0] : data) as Partial<DesempenhoVendasData>;

@@ -8,6 +8,7 @@ from datetime import date
 from fastapi.testclient import TestClient
 
 import main as main_module
+import semantic_query_routes as semantic_query_routes_module
 from auth import CurrentUser
 from main import app, database, query_cache, require_bi_user
 
@@ -310,3 +311,27 @@ def test_generic_rpc_gateway_reports_cache_hit_without_repeating_query(monkeypat
     assert first.json()["metrics"]["cache_hit"] is False
     assert second.json()["metrics"]["cache_hit"] is True
     assert calls == 1
+
+
+def test_versioned_semantic_gateway_uses_direct_query_when_snapshot_is_absent(monkeypatch) -> None:
+    monkeypatch.setattr(
+        semantic_query_routes_module,
+        "authenticate_bi_user",
+        lambda *args, **kwargs: CurrentUser(
+            id="00000000-0000-0000-0000-000000000100",
+            role="admin",
+        ),
+    )
+    monkeypatch.setattr(database, "execute_query", lambda query, args=(): [])
+    monkeypatch.setattr(database, "execute_rpc", lambda name, args: {"total": 9})
+    asyncio.run(query_cache.clear())
+
+    response = TestClient(app).post(
+        "/api/bi/v1/query/rpc_pedidos_bi",
+        json={"params": {"p_from": "2026-03-01", "p_to": "2026-03-31"}},
+        headers={"X-Request-ID": "req:semantic-1"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["data"] == {"total": 9}
+    assert response.json()["snapshot"]["source"] == "rpc"

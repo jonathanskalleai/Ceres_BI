@@ -38,6 +38,8 @@ from schemas import (
     BiRpcRequest,
     PanelFilters,
 )
+from semantic_query_routes import create_semantic_query_router
+from semantic_routes import create_semantic_router
 
 configure_application_logging()
 logger = logging.getLogger("ceresbi.bi")
@@ -54,7 +56,6 @@ require_panel_user = make_bi_user_dependency(
     database,
     ("bi.painel", "bi.comercial", "bi.desempenho", "bi.operacional"),
 )
-
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
@@ -74,11 +75,11 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
 )
 app.include_router(create_read_model_router(database, require_bi_user, settings.read_model_max_age_seconds))
-
+app.include_router(create_semantic_router(database, settings, query_cache))
+app.include_router(create_semantic_query_router(database, settings, query_cache))
 
 def request_id(request: Request) -> str:
     return safe_request_id(request.headers.get("x-request-id") or str(uuid4()))
-
 
 def validate_period(filters: AcoesFilters) -> None:
     # FastAPI's class-based query dependency validates individual fields but

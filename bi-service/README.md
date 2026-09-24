@@ -1,8 +1,9 @@
 # Ceres BI API
 
-Serviço FastAPI isolável para o caminho de dados das dashboards. A primeira
-fatia expõe os contratos da tela **Ações** sem alterar o resultado visual nem
-as RPCs existentes.
+Serviço FastAPI isolável para o caminho de dados de todas as dashboards. O
+frontend fala com o contrato semântico versionado; o PostgreSQL continua sendo
+responsável por filtros, joins e agregações, e as RPCs ficam somente como
+fonte DirectQuery compatível durante a publicação dos snapshots.
 
 ## Configuração
 
@@ -48,6 +49,9 @@ código.
 - `GET /api/bi/acoes/detalhe`
 - `GET /api/bi/acoes/funil`
 - `GET /api/bi/acoes/mapa`
+- `GET /api/bi/v1/painel/kpis`
+- `POST /api/bi/v1/desempenho`
+- `POST /api/bi/v1/query/{rpc_name}` (catálogo completo, autenticado e limitado)
 - `GET /api/bi/models/{acoes_daily|negocios_daily|pedidos_daily|servicos_daily}`
 
 As quatro rotas retornam o envelope `{status, data, issues, requestId,
@@ -74,7 +78,15 @@ O schema `bi` é a camada física de leitura no estilo Import/Composite:
 - `bi.*_daily` contém agregações por data e dimensões usadas pelos filtros;
 - `bi.refresh_manifest` informa versão, idade e qualidade de cada modelo;
 - `bi.refresh_read_models(date, date)` recompõe a janela com lock transacional;
+- `bi.refresh_semantic_snapshots()` publica os contratos de Desempenho e Ações
+  para o período quente;
 - `refresh_worker.py` publica os modelos periodicamente, fora da requisição do usuário.
+
+O caminho semântico é híbrido: tenta primeiro um snapshot pronto e dentro da
+janela de cobertura; quando ele não existe, executa a consulta parametrizada no
+PostgreSQL e devolve o mesmo envelope. Falha no refresh do snapshot é fail-open:
+o último snapshot continua disponível e a rota DirectQuery mantém a tela
+operacional. Nenhuma resposta incompleta é convertida em zero.
 
 O worker recebe `BI_REFRESH_DATABASE_URL_FILE`, `BI_REFRESH_INTERVAL_SECONDS` e
 `BI_REFRESH_LOOKBACK_DAYS`. Ele usa uma role separada, limitada a executar a

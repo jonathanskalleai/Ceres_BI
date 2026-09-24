@@ -11,7 +11,7 @@ vi.mock("@/integrations/supabase/client", () => ({
 }));
 vi.mock("@/lib/logger", () => ({ logClientMetric: metricMock, logClientWarning: warningMock }));
 
-import { fetchBiApi, fetchBiRpc, isBiApiEnabled } from "@/services/bi/biApiTransport";
+import { fetchBiApi, fetchBiRpc, fetchBiSemantic, isBiApiEnabled } from "@/services/bi/biApiTransport";
 import { biQuality } from "@/lib/bi/biQualityStore";
 
 beforeEach(() => {
@@ -103,7 +103,7 @@ describe("biApiTransport", () => {
     await expect(fetchBiRpc("rpc_pedidos_bi", { p_from: "2026-01-01", p_to: "2026-01-31" }))
       .resolves.toEqual({ rows: [], total: 0 });
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/bi/rpc/rpc_pedidos_bi",
+      "/api/bi/v1/query/rpc_pedidos_bi",
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({ params: { p_from: "2026-01-01", p_to: "2026-01-31" } }),
@@ -115,8 +115,30 @@ describe("biApiTransport", () => {
     );
     expect(metricMock).toHaveBeenCalledWith("bi_query", expect.objectContaining({
       rpc: "rpc_pedidos_bi",
-      endpoint: "rpc.rpc_pedidos_bi",
+      endpoint: "semantic.rpc_pedidos_bi",
     }));
+    fetchMock.mockRestore();
+  });
+
+  it("posts a dashboard semantic query through the versioned API", async () => {
+    vi.stubEnv("VITE_BI_API_ENABLED", "true");
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({
+        status: "ok",
+        data: { total: 4 },
+        requestId: "req-semantic-1",
+        fetchedAt: "2026-09-23T00:00:00Z",
+      }), { status: 200 }),
+    );
+
+    await expect(fetchBiSemantic("desempenho", { p_ano: 2026 })).resolves.toEqual({ total: 4 });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/bi/v1/desempenho",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ params: { p_ano: 2026 } }),
+      }),
+    );
     fetchMock.mockRestore();
   });
 });
