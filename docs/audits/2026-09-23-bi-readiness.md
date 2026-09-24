@@ -18,8 +18,9 @@ Host: `178.238.235.203` (`ceres-prod`, porta administrativa `2222`).
 
 ## Estado final publicado
 
-- Commit publicado e executado: `950d3a9861cc` (`950d3a9`), contendo a camada
-  física de read models, paginação bounded e o worker de refresh.
+- Commit publicado e executado: `df994fa45e0f` (`df994fa`), contendo a camada
+  física de read models, paginação bounded, o worker de refresh e a
+  normalização defensiva dos contratos RPC consumidos por todas as dashboards.
 - `ceresbi_web`, `ceresbi_ai`, `ceresbi_bi` e `ceresbi_bi_refresh`: `1/1` no Swarm.
 - `/api/bi/health`: `status=ok`, banco alcançável e JWT configurado.
 - `ceres_bi_api`: `LOGIN`, `NOSUPERUSER`, `NOCREATEDB`, `NOCREATEROLE`,
@@ -140,7 +141,7 @@ Os testes de contrato retornaram: período inválido `422`, RPC não permitida
 erro de envelope ocorreu no benchmark.
 
 A validação de qualidade da release também passou: 24 testes Python do serviço
-BI, 276 testes Vitest, `npx tsc --noEmit`, `ruff check bi-service` e o build
+BI, 278 testes Vitest, `npx tsc --noEmit`, `ruff check bi-service` e o build
 Vite de produção. O `npm audit --omit=dev --audit-level=high` não encontrou
 HIGH/CRITICAL; permanecem dois advisories MEDIUM preexistentes de
 `react-router`, cuja correção automática exigiria upgrade major.
