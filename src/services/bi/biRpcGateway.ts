@@ -6,7 +6,7 @@ export interface BiRpcResult<T> {
   error: { message: string } | null;
 }
 
-/** Shared gateway seam with a safe Supabase fallback while canary is pending. */
+/** Shared gateway seam; production BI never bypasses the Python API. */
 export async function invokeBiRpc<T = unknown>(
   rpcName: string,
   params: Record<string, unknown> = {},
@@ -22,5 +22,11 @@ export async function invokeBiRpc<T = unknown>(
       };
     }
   }
-  return await supabase.rpc(rpcName, params) as BiRpcResult<T>;
+  const legacyFallback = import.meta.env.DEV
+    || String(import.meta.env.VITE_BI_LEGACY_RPC_FALLBACK ?? "").toLowerCase() === "true";
+  if (legacyFallback) return await supabase.rpc(rpcName, params) as BiRpcResult<T>;
+  return {
+    data: null,
+    error: { message: "A API BI está desabilitada para este build; habilite o gateway Python." },
+  };
 }
