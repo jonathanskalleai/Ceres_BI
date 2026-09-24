@@ -56,6 +56,12 @@ def refresh_once(database_url: str, lookback_days: int, heartbeat_path: str | No
             with connection.cursor() as semantic_cursor:
                 semantic_cursor.execute("SELECT bi.refresh_semantic_snapshots()")
                 semantic_result = semantic_cursor.fetchone()[0]
+            # The semantic publisher runs after the read-model transaction and
+            # therefore needs its own commit.  Without this explicit boundary
+            # psycopg2 rolls the successful snapshot writes back when the
+            # worker closes the connection, making the log look healthy while
+            # the published snapshot remains stale.
+            connection.commit()
             if semantic_result.get("status") != "ready":
                 logger.warning(
                     "bi_semantic_refresh_degraded code=%s",
