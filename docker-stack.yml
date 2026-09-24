@@ -56,8 +56,12 @@ services:
   bi:
     image: ${CERESBI_BI_IMAGE:?CERESBI_BI_IMAGE is required}
     read_only: true
-    tmpfs:
-      - /tmp
+    volumes:
+      - type: tmpfs
+        target: /tmp
+        tmpfs:
+          mode: 1777
+          size: 1048576
     cap_drop:
       - ALL
     security_opt:
@@ -119,8 +123,12 @@ services:
       start_period: 120s
       retries: 3
     read_only: true
-    tmpfs:
-      - /tmp
+    volumes:
+      - type: tmpfs
+        target: /tmp
+        tmpfs:
+          mode: 1777
+          size: 1048576
     cap_drop:
       - ALL
     security_opt:
