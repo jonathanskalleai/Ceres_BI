@@ -108,5 +108,28 @@ class PanelFilters(BaseModel):
         return self
 
 
+def _default_read_model_from() -> date:
+    current = datetime.now(timezone.utc).date()
+    return current.replace(year=current.year - 2)
+
+
+class ReadModelFilters(BaseModel):
+    """Bounded filters for the physical dashboard read-model endpoint."""
+
+    from_: date = Field(default_factory=_default_read_model_from, alias="from")
+    to: date = Field(default_factory=lambda: datetime.now(timezone.utc).date())
+    vendedor: str | None = Field(default=None, max_length=160)
+    cidade: str | None = Field(default=None, max_length=160)
+    limit: int = Field(default=5000, ge=1, le=10000)
+
+    model_config = {"populate_by_name": True}
+
+    @model_validator(mode="after")
+    def validate_period(self) -> ReadModelFilters:
+        if self.from_ > self.to:
+            raise ValueError("from não pode ser posterior a to")
+        return self
+
+
 class BiRpcRequest(BaseModel):
     params: dict[str, Any] = Field(default_factory=dict)

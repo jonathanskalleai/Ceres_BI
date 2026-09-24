@@ -7,8 +7,9 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import Any
 
-from config import Settings
 from psycopg2 import pool
+
+from config import Settings
 
 
 class ReadOnlyDatabase:
@@ -76,6 +77,13 @@ class ReadOnlyDatabase:
         if isinstance(value, str):
             return json.loads(value)
         return value
+
+    def execute_query(self, query: str, args: tuple[Any, ...] = ()) -> list[dict[str, Any]]:
+        """Execute a parameterized read-model query and return named rows."""
+        with self.connection() as conn, conn.cursor() as cursor:
+            cursor.execute(query, args)
+            columns = [description[0] for description in cursor.description or ()]
+            return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
     def ping(self) -> bool:
         with self.connection() as conn, conn.cursor() as cursor:

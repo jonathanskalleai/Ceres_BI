@@ -102,6 +102,37 @@ services:
         - "traefik.http.middlewares.ceresbi-bi-compress.compress=true"
         - "traefik.http.services.ceresbi-bi.loadbalancer.server.port=8100"
 
+  bi_refresh:
+    image: ${CERESBI_BI_IMAGE:?CERESBI_BI_IMAGE is required}
+    healthcheck:
+      disable: true
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - redeinterna
+    secrets:
+      - bi_refresh_database_url
+    environment:
+      BI_REFRESH_DATABASE_URL_FILE: /run/secrets/bi_refresh_database_url
+      BI_REFRESH_INTERVAL_SECONDS: ${CERESBI_BI_REFRESH_INTERVAL_SECONDS:-900}
+      BI_REFRESH_LOOKBACK_DAYS: ${CERESBI_BI_REFRESH_LOOKBACK_DAYS:-730}
+    command: ["python", "refresh_worker.py"]
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+        reservations:
+          memory: 64M
+
 networks:
   redeinterna:
     external: true
@@ -117,3 +148,6 @@ secrets:
   bi_jwt_secret:
     external: true
     name: ${CERESBI_BI_JWT_SECRET:-ceresbi_bi_jwt_secret_v1}
+  bi_refresh_database_url:
+    external: true
+    name: ${CERESBI_BI_REFRESH_DATABASE_URL_SECRET:-ceresbi_bi_refresh_database_url_v2}

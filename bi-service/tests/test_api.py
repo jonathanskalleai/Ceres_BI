@@ -4,9 +4,10 @@ import asyncio
 import json
 import logging
 
+from fastapi.testclient import TestClient
+
 import main as main_module
 from auth import CurrentUser
-from fastapi.testclient import TestClient
 from main import app, database, query_cache, require_bi_user
 
 
@@ -81,6 +82,37 @@ def test_query_validation_rejects_invalid_period_and_oversized_filter() -> None:
 
     assert invalid_period.status_code == 422
     assert oversized_city.status_code == 422
+
+
+def test_read_model_routes_are_protected_bounded_and_enveloped(monkeypatch) -> None:
+    async def fake_user() -> CurrentUser:
+        return CurrentUser(id="00000000-0000-0000-0000-000000000001", role="admin")
+
+    def fake_query(query, args=()):
+        if "read_model_quality" in query:
+            return [{"model_name": "acoes_daily", "status": "ready", "delta": 0}]
+        if "refresh_manifest" in query:
+            return [{"model_name": "acoes_daily", "status": "ready", "data_version": 3}]
+        return [{"day": "2026-01-01", "total_acoes": 4}]
+
+    app.dependency_overrides[require_bi_user] = fake_user
+    monkeypatch.setattr(database, "execute_query", fake_query)
+    try:
+        status_response = TestClient(app).get("/api/bi/model-status")
+        model_response = TestClient(app).get(
+            "/api/bi/models/acoes_daily?from=2026-01-01&to=2026-01-31&limit=10",
+        )
+        invalid_model = TestClient(app).get("/api/bi/models/mirror.crm_acoes")
+        oversized_limit = TestClient(app).get("/api/bi/models/acoes_daily?limit=10001")
+    finally:
+        app.dependency_overrides.clear()
+
+    assert status_response.status_code == 200
+    assert status_response.json()["data"]["status"] == "ready"
+    assert model_response.status_code == 200
+    assert model_response.json()["data"]["rows"][0]["total_acoes"] == 4
+    assert invalid_model.status_code == 404
+    assert oversized_limit.status_code == 422
 
 
 def test_batch_runs_primary_blocks_and_emits_one_canonical_event(monkeypatch, caplog) -> None:

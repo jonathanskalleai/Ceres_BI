@@ -74,6 +74,8 @@ CERESBI_BI_DATABASE_URL_SECRET="$(read_env_value CERESBI_BI_DATABASE_URL_SECRET)
 CERESBI_BI_DATABASE_URL_SECRET="${CERESBI_BI_DATABASE_URL_SECRET:-ceresbi_bi_database_url_v1}"
 CERESBI_BI_JWT_SECRET="$(read_env_value CERESBI_BI_JWT_SECRET)"
 CERESBI_BI_JWT_SECRET="${CERESBI_BI_JWT_SECRET:-ceresbi_bi_jwt_secret_v1}"
+CERESBI_BI_REFRESH_DATABASE_URL_SECRET="$(read_env_value CERESBI_BI_REFRESH_DATABASE_URL_SECRET)"
+CERESBI_BI_REFRESH_DATABASE_URL_SECRET="${CERESBI_BI_REFRESH_DATABASE_URL_SECRET:-ceresbi_bi_refresh_database_url_v2}"
 CERESBI_BI_DATABASE_POOL_MIN="$(read_env_value CERESBI_BI_DATABASE_POOL_MIN)"
 CERESBI_BI_DATABASE_POOL_MAX="$(read_env_value CERESBI_BI_DATABASE_POOL_MAX)"
 CERESBI_BI_STATEMENT_TIMEOUT_MS="$(read_env_value CERESBI_BI_STATEMENT_TIMEOUT_MS)"
@@ -87,7 +89,7 @@ if [ -z "${SUPABASE_JWT_SECRET}" ] && command -v docker >/dev/null 2>&1; then
   SUPABASE_JWT_SECRET="$(docker service inspect ceresbi_ai --format '{{range .Spec.TaskTemplate.ContainerSpec.Env}}{{println .}}{{end}}' 2>/dev/null | sed -n 's/^SUPABASE_JWT_SECRET=//p' | tail -n 1)"
 fi
 export CERESBI_AI_OPENROUTER_API_KEY CERESBI_AI_DATABASE_URL CERESBI_AI_JOB_TOKEN CERESBI_AI_YA_AGENT_V2_ENABLED SUPABASE_JWT_SECRET
-export CERESBI_BI_DATABASE_URL_SECRET CERESBI_BI_JWT_SECRET CERESBI_BI_DATABASE_POOL_MIN CERESBI_BI_DATABASE_POOL_MAX CERESBI_BI_STATEMENT_TIMEOUT_MS CERESBI_BI_LOCK_TIMEOUT_MS CERESBI_BI_CACHE_TTL_SECONDS CERESBI_BI_CACHE_MAX_ITEMS CERESBI_BI_CACHE_MAX_ENTRY_BYTES CERESBI_BI_CORS_ORIGINS
+export CERESBI_BI_DATABASE_URL_SECRET CERESBI_BI_JWT_SECRET CERESBI_BI_REFRESH_DATABASE_URL_SECRET CERESBI_BI_DATABASE_POOL_MIN CERESBI_BI_DATABASE_POOL_MAX CERESBI_BI_STATEMENT_TIMEOUT_MS CERESBI_BI_LOCK_TIMEOUT_MS CERESBI_BI_CACHE_TTL_SECONDS CERESBI_BI_CACHE_MAX_ITEMS CERESBI_BI_CACHE_MAX_ENTRY_BYTES CERESBI_BI_CORS_ORIGINS
 
 for required in CERESBI_AI_OPENROUTER_API_KEY CERESBI_AI_DATABASE_URL CERESBI_AI_JOB_TOKEN SUPABASE_JWT_SECRET; do
   if [ -z "${!required:-}" ]; then
@@ -96,7 +98,7 @@ for required in CERESBI_AI_OPENROUTER_API_KEY CERESBI_AI_DATABASE_URL CERESBI_AI
   fi
 done
 
-for required_secret in "${CERESBI_BI_DATABASE_URL_SECRET}" "${CERESBI_BI_JWT_SECRET}"; do
+for required_secret in "${CERESBI_BI_DATABASE_URL_SECRET}" "${CERESBI_BI_JWT_SECRET}" "${CERESBI_BI_REFRESH_DATABASE_URL_SECRET}"; do
   if ! docker secret inspect "${required_secret}" >/dev/null 2>&1; then
     echo "ERROR: required Docker secret ${required_secret} does not exist; provision the dedicated BI credentials before deploying" >&2
     exit 1
@@ -181,15 +183,37 @@ docker stack deploy --detach=false -c docker-stack.yml "${STACK_NAME}"
 # race the stack reconciliation and return `update out of sequence`.
 echo "==> Stack services converged; verifying immutable images..."
 
-for service in web ai bi; do
+for service in web ai bi bi_refresh; do
   actual_image="$(docker service inspect --format '{{.Spec.TaskTemplate.ContainerSpec.Image}}' "${STACK_NAME}_${service}")"
   expected_image="${CERESBI_WEB_IMAGE}"
   [ "${service}" = "ai" ] && expected_image="${CERESBI_AI_IMAGE}"
   [ "${service}" = "bi" ] && expected_image="${CERESBI_BI_IMAGE}"
+  [ "${service}" = "bi_refresh" ] && expected_image="${CERESBI_BI_IMAGE}"
   if [ "${actual_image}" != "${expected_image}" ]; then
     echo "ERROR: ${STACK_NAME}_${service} is using ${actual_image}, expected ${expected_image}" >&2
     exit 1
   fi
+done
+
+echo "==> Waiting for web, AI, BI and refresh tasks..."
+for attempt in $(seq 1 30); do
+  all_ready=true
+  for service in web ai bi bi_refresh; do
+    replicas="$(docker service ls --filter "name=${STACK_NAME}_${service}" --format '{{.Replicas}}' | head -n 1)"
+    if [ "${replicas}" != "1/1" ]; then
+      all_ready=false
+      break
+    fi
+  done
+  if [ "${all_ready}" = true ]; then
+    break
+  fi
+  if [ "${attempt}" -eq 30 ]; then
+    echo "ERROR: stack tasks did not converge to 1/1" >&2
+    docker service ls --filter "name=${STACK_NAME}_" >&2 || true
+    exit 1
+  fi
+  sleep 2
 done
 
 actual_v2_flag="$(docker service inspect --format '{{range .Spec.TaskTemplate.ContainerSpec.Env}}{{println .}}{{end}}' "${STACK_NAME}_ai" | sed -n 's/^YA_AGENT_V2_ENABLED=//p' | tail -n 1)"
@@ -219,4 +243,4 @@ if [ "${CERESBI_AI_YA_AGENT_V2_ENABLED}" = "true" ]; then
   fi
 fi
 
-echo "==> Done: ${GIT_SHA} is running in web, AI and BI (flag=${VITE_BI_API_ENABLED})."
+echo "==> Done: ${GIT_SHA} is running in web, AI, BI and BI refresh (flag=${VITE_BI_API_ENABLED})."

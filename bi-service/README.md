@@ -37,6 +37,7 @@ código.
 - `GET /api/bi/acoes/detalhe`
 - `GET /api/bi/acoes/funil`
 - `GET /api/bi/acoes/mapa`
+- `GET /api/bi/models/{acoes_daily|negocios_daily|pedidos_daily|servicos_daily}`
 
 As quatro rotas retornam o envelope `{status, data, issues, requestId,
 fetchedAt}`. A autorização exige usuário ativo e `bi.acoes` em
@@ -53,6 +54,20 @@ uvicorn main:app --reload --port 8100
 
 O serviço usa a conexão PostgreSQL diretamente. O PostgREST não participa da
 consulta do BI.
+
+## Read models e refresh
+
+O schema `bi` é a camada física de leitura no estilo Import/Composite:
+
+- `mirror` continua recebendo os dados brutos sincronizados;
+- `bi.*_daily` contém agregações por data e dimensões usadas pelos filtros;
+- `bi.refresh_manifest` informa versão, idade e qualidade de cada modelo;
+- `bi.refresh_read_models(date, date)` recompõe a janela com lock transacional;
+- `refresh_worker.py` publica os modelos periodicamente, fora da requisição do usuário.
+
+O worker recebe `BI_REFRESH_DATABASE_URL_FILE`, `BI_REFRESH_INTERVAL_SECONDS` e
+`BI_REFRESH_LOOKBACK_DAYS`. Ele usa uma role separada, limitada a executar a
+função de refresh; a role da API continua somente leitura.
 
 O container executa como usuário sem privilégios, com healthcheck próprio. Na
 stack de produção ele também usa filesystem somente leitura, sem capabilities e

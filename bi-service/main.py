@@ -9,13 +9,14 @@ from time import perf_counter
 from typing import Annotated
 from uuid import uuid4
 
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
+from fastapi.middleware.cors import CORSMiddleware
+
 from auth import CurrentUser, authenticate_bi_user, make_bi_user_dependency
 from cache import QueryCache, make_cache_key
 from catalog import build_args, get_spec
 from config import Settings
 from db import ReadOnlyDatabase
-from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
-from fastapi.middleware.cors import CORSMiddleware
 from observability import (
     emit_bi_query,
     error_code,
@@ -25,6 +26,7 @@ from observability import (
     safe_request_id,
 )
 from panel_runtime import execute_panel_kpis
+from read_model_routes import create_read_model_router
 from rpc import fetch_core, fetch_detalhe, fetch_funil, fetch_mapa
 from schemas import (
     AcoesDetalheFilters,
@@ -68,6 +70,7 @@ app.add_middleware(
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
 )
+app.include_router(create_read_model_router(database, require_bi_user))
 
 
 def request_id(request: Request) -> str:

@@ -8,9 +8,10 @@ from typing import Annotated
 
 import jwt
 import psycopg2
+from fastapi import Header, HTTPException, status
+
 from config import Settings
 from db import ReadOnlyDatabase
-from fastapi import Header, HTTPException, status
 
 
 @dataclass(frozen=True)

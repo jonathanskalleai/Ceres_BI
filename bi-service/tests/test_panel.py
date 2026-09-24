@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import asyncio
 
-from auth import CurrentUser
 from fastapi.testclient import TestClient
+
+from auth import CurrentUser
 from main import app, database, query_cache, require_panel_user
 from panel import compose_panel_kpis
 
