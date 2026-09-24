@@ -22,9 +22,7 @@ export async function invokeBiRpc<T = unknown>(
       };
     }
   }
-  const legacyFallback = import.meta.env.DEV
-    || String(import.meta.env.VITE_BI_LEGACY_RPC_FALLBACK ?? "").toLowerCase() === "true";
-  if (legacyFallback) return await supabase.rpc(rpcName, params) as BiRpcResult<T>;
+  if (import.meta.env.DEV) return await supabase.rpc(rpcName, params) as BiRpcResult<T>;
   return {
     data: null,
     error: { message: "A API BI está desabilitada para este build; habilite o gateway Python." },
