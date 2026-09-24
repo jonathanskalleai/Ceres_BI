@@ -27,6 +27,7 @@ from observability import (
 )
 from panel_runtime import execute_panel_kpis
 from read_model_routes import create_read_model_router
+from read_models import fetch_read_model_health
 from rpc import fetch_core, fetch_detalhe, fetch_funil, fetch_mapa
 from schemas import (
     AcoesDetalheFilters,
@@ -265,17 +266,30 @@ async def execute_acoes_batch(
 @app.get("/api/bi/health")
 async def health() -> dict[str, object]:
     database_ok = False
+    read_model_health: dict[str, object] = {"status": "unknown"}
     if database.configured:
         try:
             database_ok = await asyncio.to_thread(database.ping)
         except Exception:
             logger.exception("bi_health_database_failed")
+        if database_ok:
+            try:
+                read_model_health = await asyncio.to_thread(
+                    fetch_read_model_health,
+                    database,
+                    settings.read_model_max_age_seconds,
+                )
+            except Exception:
+                logger.exception("bi_health_read_models_failed")
+                read_model_health = {"status": "degraded", "staleModels": ["unknown"]}
+    service_ok = database_ok and bool(settings.jwt_secret) and read_model_health.get("status") in {"ready", "unknown"}
     return {
-        "status": "ok" if database_ok and bool(settings.jwt_secret) else "degraded",
+        "status": "ok" if service_ok else "degraded",
         "service": "ceresbi-bi",
         "databaseConfigured": database.configured,
         "databaseReachable": database_ok,
         "jwtConfigured": bool(settings.jwt_secret),
+        "readModels": read_model_health,
     }
 
 
@@ -364,13 +378,7 @@ async def bi_rpc(
     payload: BiRpcRequest,
     authorization: Annotated[str | None, Header()] = None,
 ) -> BiEnvelope:
-    """Execute one allow-listed read-only RPC for any BI dashboard.
-
-    The browser sends only a named RPC and validated parameters.  The
-    database connection, statement timeout and authorization stay in this
-    service, so adding a dashboard does not reintroduce direct PostgREST
-    queries in the frontend.
-    """
+    """Execute an allow-listed RPC with server-side auth, timeout and DB access."""
 
     spec = get_spec(rpc_name)
     user = authenticate_bi_user(authorization, settings, database, spec.modules)

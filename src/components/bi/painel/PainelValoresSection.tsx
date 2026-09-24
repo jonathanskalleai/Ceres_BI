@@ -16,7 +16,7 @@ export function PainelValoresSection({ kpis, loading, comparisonReady }: Props) 
         <KPICard
           title="Valor Ganho"
           value={fmtBRLKpi(kpis.valorGanho.value)}
-          rawValue={kpis.valorGanho.value}
+          rawValue={kpis.valorGanho.value ?? undefined}
           icon={DollarSign}
           previousValue={comparisonReady ? fmtBRLKpi(kpis.valorGanho.previousValue) : undefined}
           trend={kpis.valorGanho.trend}
@@ -30,7 +30,7 @@ export function PainelValoresSection({ kpis, loading, comparisonReady }: Props) 
         <KPICard
           title="Valor Perdido"
           value={fmtBRLKpi(kpis.valorPerdido.value)}
-          rawValue={kpis.valorPerdido.value}
+          rawValue={kpis.valorPerdido.value ?? undefined}
           icon={TrendingDown}
           previousValue={comparisonReady ? fmtBRLKpi(kpis.valorPerdido.previousValue) : undefined}
           trend={kpis.valorPerdido.trend}
@@ -45,7 +45,7 @@ export function PainelValoresSection({ kpis, loading, comparisonReady }: Props) 
         <KPICard
           title="Pipeline Aberto"
           value={fmtBRLKpi(kpis.pipelineAberto.value)}
-          rawValue={kpis.pipelineAberto.value}
+          rawValue={kpis.pipelineAberto.value ?? undefined}
           icon={Briefcase}
           previousValue={comparisonReady ? fmtBRLKpi(kpis.pipelineAberto.previousValue) : undefined}
           trend={kpis.pipelineAberto.trend}
@@ -58,7 +58,7 @@ export function PainelValoresSection({ kpis, loading, comparisonReady }: Props) 
         <KPICard
           title="Ticket Medio"
           value={fmtBRLKpi(kpis.ticketMedio.value)}
-          rawValue={kpis.ticketMedio.value}
+          rawValue={kpis.ticketMedio.value ?? undefined}
           icon={Ticket}
           previousValue={comparisonReady ? fmtBRLKpi(kpis.ticketMedio.previousValue) : undefined}
           trend={kpis.ticketMedio.trend}

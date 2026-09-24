@@ -8,6 +8,7 @@ client receives the same KPI result and an explicit data-quality signal.
 from __future__ import annotations
 
 from collections.abc import Mapping
+from math import isfinite
 from typing import Any
 
 Trend = str
@@ -30,14 +31,17 @@ def _number(value: Any) -> float | int | None:
     if isinstance(value, bool) or value is None:
         return None
     if isinstance(value, (int, float)):
-        return value
+        return value if isfinite(value) else None
     try:
-        return float(value)
+        parsed = float(value)
+        return parsed if isfinite(parsed) else None
     except (TypeError, ValueError):
         return None
 
 
-def _trend(current: float, previous: float, *, inverted: bool = False) -> Trend:
+def _trend(current: float | None, previous: float | None, *, inverted: bool = False) -> Trend:
+    if current is None or previous is None:
+        return "neutral"
     if current == previous:
         return "neutral"
     higher_is_up = current > previous
@@ -53,31 +57,34 @@ def _kpi(
     name: str,
     *,
     inverted: bool = False,
+    previous_available: bool = True,
 ) -> dict[str, Any]:
     current_number = _number(current)
     previous_number = _number(previous)
     current_missing = current_number is None
-    previous_missing = previous_number is None
+    previous_missing = previous_available and previous_number is None
     if current_missing:
         missing.append(f"current.{name}")
     if previous_missing:
         missing.append(f"previous.{name}")
-    current_value = current_number if current_number is not None else 0
-    previous_value = previous_number if previous_number is not None else 0
+    current_value = current_number
+    previous_value = previous_number
     return {
         "value": current_value,
         "previousValue": previous_value,
         "trend": _trend(current_value, previous_value, inverted=inverted),
         "valueStatus": "missing" if current_missing else "ready",
-        "previousValueStatus": "missing" if previous_missing else "ready",
+        "previousValueStatus": (
+            "missing" if previous_missing else "ready" if previous_available else "not_available"
+        ),
     }
 
 
-def _field(record: Any, path: tuple[str, ...], missing: list[str], name: str) -> float | int:
+def _field(record: Any, path: tuple[str, ...], missing: list[str], name: str) -> float | int | None:
     value = _number(_nested(record, *path))
     if value is None:
         missing.append(name)
-        return 0
+        return None
     return value
 
 
@@ -150,8 +157,16 @@ def compose_panel_kpis(
     current_gain_value = _field(ac_current_kpis, ("valorGanho",), missing, "acoes.valorGanho")
     previous_gain_value = _field(ac_previous_kpis, ("valorGanho",), missing, "previous.acoes.valorGanho")
 
-    current_ticket = current_gain_value / current_gain_count if current_gain_count else 0
-    previous_ticket = previous_gain_value / previous_gain_count if previous_gain_count else 0
+    current_ticket = (
+        current_gain_value / current_gain_count
+        if current_gain_value is not None and current_gain_count
+        else None
+    )
+    previous_ticket = (
+        previous_gain_value / previous_gain_count
+        if previous_gain_value is not None and previous_gain_count
+        else None
+    )
 
     current_actions = _field(ac_current_kpis, ("totalAcoes",), missing, "acoes.totalAcoes")
     previous_actions = _field(ac_previous_kpis, ("totalAcoes",), missing, "previous.acoes.totalAcoes")
@@ -163,19 +178,17 @@ def compose_panel_kpis(
     previous_stalled = _number(fun_previous_stalled.get("mediana"))
     if current_stalled is None:
         missing.append("funil.diasParados.mediana")
-        current_stalled = 0
     if previous_stalled is None:
         missing.append("previous.funil.diasParados.mediana")
-        previous_stalled = 0
 
-    current_type = {str(item.get("name")): _number(item.get("value")) or 0 for item in _array_items(ac_current, ("porTipoAcao",))}
-    previous_type = {str(item.get("name")): _number(item.get("value")) or 0 for item in _array_items(ac_previous, ("porTipoAcao",))}
+    current_type = {str(item.get("name")): _number(item.get("value")) for item in _array_items(ac_current, ("porTipoAcao",))}
+    previous_type = {str(item.get("name")): _number(item.get("value")) for item in _array_items(ac_previous, ("porTipoAcao",))}
     por_tipo = [
         {
             "name": name,
             "value": value,
-            "previousValue": previous_type.get(name, 0),
-            "trend": _trend(value, previous_type.get(name, 0)),
+            "previousValue": previous_type.get(name),
+            "trend": _trend(value, previous_type.get(name)),
         }
         for name, value in current_type.items()
     ]
@@ -192,7 +205,13 @@ def compose_panel_kpis(
         "ticketMedio": _kpi(current_ticket, previous_ticket, missing, "ticketMedio"),
         "totalAcoes": _kpi(current_actions, previous_actions, missing, "acoes.totalAcoes"),
         "totalVisitas": _kpi(current_visits, previous_visits, missing, "acoes.visitas"),
-        "totalOS": _kpi(op_current_kpis.get("eventosAgenda"), 0, missing, "operacional.eventosAgenda"),
+        "totalOS": _kpi(
+            op_current_kpis.get("eventosAgenda"),
+            None,
+            missing,
+            "operacional.eventosAgenda",
+            previous_available=False,
+        ),
         "porTipoAcao": por_tipo,
         "oportunidadesAbertas": funnel_pair("oportunidades"),
         "visitasPorOportunidade": funnel_pair("visitasPorOportunidade"),

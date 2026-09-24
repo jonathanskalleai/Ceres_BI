@@ -39,7 +39,23 @@ def create_read_model_router(
             data = await asyncio.to_thread(fetch_read_model_status, database)
             elapsed_ms = round((perf_counter() - started_at) * 1000, 3)
             metrics = BiMetrics(query_ms=elapsed_ms, api_ms=elapsed_ms, cache_hit=False)
-            response = BiEnvelope.success(data, request_id, metrics)
+            degraded = data.get("status") != "ready"
+            response = BiEnvelope(
+                status="partial" if degraded else "ok",
+                data=data,
+                issues=(
+                    [BiIssue(
+                        code="BI_READ_MODEL_DEGRADED",
+                        message="Um ou mais read models estão atrasados ou divergentes.",
+                        source="bi.refresh_manifest",
+                    )]
+                    if degraded
+                    else []
+                ),
+                requestId=request_id,
+                fetchedAt=BiEnvelope.success(data, request_id).fetchedAt,
+                metrics=metrics,
+            )
             metrics.payload_bytes = len(response.model_dump_json().encode("utf-8"))
             return response
         except (PsycopgError, RuntimeError, ValueError):
@@ -82,18 +98,33 @@ def create_read_model_router(
                 cache_hit=False,
             )
             has_more = bool(data.get("pagination", {}).get("has_more"))
-            response = BiEnvelope(
-                status="partial" if has_more else "ok",
-                data=data,
-                issues=(
-                    [BiIssue(
-                        code="BI_READ_MODEL_TRUNCATED",
-                        message="Resultado limitado; use offset para carregar a próxima página.",
+            issues: list[BiIssue] = []
+            manifest = data.get("manifest")
+            if isinstance(manifest, dict):
+                if manifest.get("status") != "ready":
+                    issues.append(BiIssue(
+                        code="BI_READ_MODEL_NOT_READY",
+                        message="O snapshot consultado está desatualizado ou em refresh.",
                         source=model_name,
-                    )]
-                    if has_more
-                    else []
-                ),
+                    ))
+                source_from = manifest.get("source_from")
+                source_to = manifest.get("source_to")
+                if source_from and source_to and (
+                    filters.from_ < source_from or filters.to > source_to
+                ):
+                    issues.append(BiIssue(
+                        code="BI_READ_MODEL_OUTSIDE_COVERAGE",
+                        message="O período solicitado excede a janela publicada deste snapshot.",
+                        source=model_name,
+                    ))
+            response = BiEnvelope(
+                status="partial" if has_more or issues else "ok",
+                data=data,
+                issues=issues + ([BiIssue(
+                    code="BI_READ_MODEL_TRUNCATED",
+                    message="Resultado limitado; use offset para carregar a próxima página.",
+                    source=model_name,
+                )] if has_more else []),
                 requestId=request_id,
                 fetchedAt=BiEnvelope.success(data, request_id).fetchedAt,
                 metrics=metrics,
@@ -107,7 +138,7 @@ def create_read_model_router(
                 rpc="bi.refresh_read_models",
                 case="read_model",
                 filters_hash=filter_hash(filters),
-                status="ok",
+                status=response.status,
                 query_ms=elapsed_ms,
                 api_ms=elapsed_ms,
                 payload_bytes=metrics.payload_bytes,

@@ -12,12 +12,14 @@ vi.mock("@/integrations/supabase/client", () => ({
 vi.mock("@/lib/logger", () => ({ logClientMetric: metricMock, logClientWarning: warningMock }));
 
 import { fetchBiApi, fetchBiRpc, isBiApiEnabled } from "@/services/bi/biApiTransport";
+import { biQuality } from "@/lib/bi/biQualityStore";
 
 beforeEach(() => {
   vi.unstubAllEnvs();
   getSessionMock.mockReset();
   warningMock.mockReset();
   metricMock.mockReset();
+  biQuality.clearAll();
   getSessionMock.mockResolvedValue({ data: { session: { access_token: "test-token" } } });
 });
 

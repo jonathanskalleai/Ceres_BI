@@ -30,7 +30,7 @@ def positive_int(name: str, default: int) -> int:
     return value
 
 
-def refresh_once(database_url: str, lookback_days: int) -> None:
+def refresh_once(database_url: str, lookback_days: int, heartbeat_path: str | None = None) -> None:
     connection = psycopg2.connect(
         database_url,
         connect_timeout=5,
@@ -54,6 +54,8 @@ def refresh_once(database_url: str, lookback_days: int) -> None:
             result.get("run_id"),
             result.get("row_count"),
         )
+        if heartbeat_path:
+            Path(heartbeat_path).write_text(str(time.time()), encoding="utf-8")
     finally:
         connection.close()
 
@@ -68,10 +70,11 @@ def main() -> None:
         raise RuntimeError("BI_REFRESH_DATABASE_URL não configurada")
     interval_seconds = positive_int("BI_REFRESH_INTERVAL_SECONDS", 900)
     lookback_days = positive_int("BI_REFRESH_LOOKBACK_DAYS", 730)
+    heartbeat_path = os.getenv("BI_REFRESH_HEARTBEAT_FILE", "/tmp/bi-refresh-heartbeat").strip()
 
     while True:
         try:
-            refresh_once(database_url, lookback_days)
+            refresh_once(database_url, lookback_days, heartbeat_path or None)
         except Exception:
             logger.exception("bi_refresh_failed")
         time.sleep(interval_seconds)

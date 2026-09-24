@@ -2,27 +2,34 @@ import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { type DateRange } from "react-day-picker";
 import { type CategoriaFilter, resolveFunis } from "@/lib/categoriaFunil";
 import { toISODate, type Trend } from "@/lib/dateUtils";
-import type { KPIWithPrev } from "@/lib/kpiUtils";
 import { fetchPainelKPIs } from "@/services/bi/painelService";
 
+export interface PainelKPI {
+  value: number | null;
+  previousValue: number | null;
+  trend: Trend;
+  valueStatus?: "ready" | "missing";
+  previousValueStatus?: "ready" | "missing" | "not_available";
+}
+
 export interface PainelKPIs {
-  totalNegocios: KPIWithPrev;
-  ganhos: KPIWithPrev;
-  perdidos: KPIWithPrev;
-  andamento: KPIWithPrev;
-  taxaConversao: KPIWithPrev;
-  valorGanho: KPIWithPrev;
-  valorPerdido: KPIWithPrev;
-  pipelineAberto: KPIWithPrev;
-  ticketMedio: KPIWithPrev;
-  totalAcoes: KPIWithPrev;
-  totalVisitas: KPIWithPrev;
-  totalOS: KPIWithPrev;
-  porTipoAcao: Array<{ name: string; value: number; previousValue: number; trend: Trend }>;
-  oportunidadesAbertas: KPIWithPrev;
-  visitasPorOportunidade: KPIWithPrev;
-  diasParados: KPIWithPrev;
-  negociosOutrosStatus: number;
+  totalNegocios: PainelKPI;
+  ganhos: PainelKPI;
+  perdidos: PainelKPI;
+  andamento: PainelKPI;
+  taxaConversao: PainelKPI;
+  valorGanho: PainelKPI;
+  valorPerdido: PainelKPI;
+  pipelineAberto: PainelKPI;
+  ticketMedio: PainelKPI;
+  totalAcoes: PainelKPI;
+  totalVisitas: PainelKPI;
+  totalOS: PainelKPI;
+  porTipoAcao: Array<{ name: string; value: number | null; previousValue: number | null; trend: Trend }>;
+  oportunidadesAbertas: PainelKPI;
+  visitasPorOportunidade: PainelKPI;
+  diasParados: PainelKPI;
+  negociosOutrosStatus: number | null;
   ignoresFunilFilter: Record<string, boolean>;
   dataQuality?: {
     status: "ready" | "partial";
@@ -42,7 +49,13 @@ export interface UsePainelResult {
   comparisonReady: boolean;
 }
 
-const EMPTY_KPI: KPIWithPrev = { value: 0, previousValue: 0, trend: "neutral" };
+const EMPTY_KPI: PainelKPI = {
+  value: null,
+  previousValue: null,
+  trend: "neutral",
+  valueStatus: "missing",
+  previousValueStatus: "missing",
+};
 
 const EMPTY_KPIS: PainelKPIs = {
   totalNegocios: EMPTY_KPI,

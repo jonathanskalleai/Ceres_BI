@@ -52,6 +52,7 @@ export async function fetchNegociosBI(
       NEGOCIOS_BI_DEFAULTS,
       ["kpis"],
       ["funilPorEtapa", "porOrigem", "motivosPerda", "evolucaoMensal", "rankingConsultor", "velocidadeFunil"],
+      "rpc_negocios_bi",
     );
   } catch (err) {
     throw new Error(`[biRpcService.fetchNegociosBI] ${err instanceof Error ? err.message : "Unknown error"}`);
@@ -80,6 +81,7 @@ export async function fetchResultadosNegociosBI(
       RESULTADOS_NEGOCIOS_DEFAULTS,
       ["kpis", "saudeCarteira"],
       ["funilPorEtapa", "projecaoAnual", "prioridadesFechamento", "motivosPerda"],
+      "rpc_resultados_negocios_bi",
     );
   } catch (err) {
     throw new Error(`[biRpcService.fetchResultadosNegociosBI] ${err instanceof Error ? err.message : "Unknown error"}`);
@@ -122,6 +124,7 @@ export async function fetchPedidosBI(
       PEDIDOS_BI_DEFAULTS,
       ["kpis"],
       ["evolucaoMensal", "porSituacao", "mixPagamento", "porVendedor", "porCidade", "porGrupoProduto", "porMarcaProduto"],
+      "rpc_pedidos_bi",
     );
   } catch (err) {
     throw new Error(`[biRpcService.fetchPedidosBI] ${err instanceof Error ? err.message : "Unknown error"}`);
@@ -147,6 +150,7 @@ export async function fetchServicosBI(
       SERVICOS_BI_DEFAULTS,
       ["kpis"],
       ["porStatus", "faixasResolucao", "evolucaoAberturas", "situacaoOcorrencias", "motivosPausa", "causasAtendimento"],
+      "rpc_servicos_bi",
     );
   } catch (err) {
     throw new Error(`[biRpcService.fetchServicosBI] ${err instanceof Error ? err.message : "Unknown error"}`);
@@ -169,6 +173,7 @@ export async function fetchAdminBI(cidade?: string): Promise<RpcAdminBI> {
       ADMIN_BI_DEFAULTS,
       ["kpis"],
       ["prospectVsAtivo", "porTipoCliente", "porUF", "porConsultor"],
+      "rpc_admin_bi",
     );
   } catch (err) {
     throw new Error(`[biRpcService.fetchAdminBI] ${err instanceof Error ? err.message : "Unknown error"}`);
@@ -200,7 +205,7 @@ export async function fetchAcoesBI(params: {
       data,
       ACOES_BI_DEFAULTS,
       ["kpis"],
-      ["porVendedor", "porCidade", "porMes", "porDiaSemana", "porTipoAcao", "porTipoContato", "listaAnos", "porVendedorCidade", "clientesMaisAtendidos"],
+      ["porVendedor", "porCidade", "porMes", "porDiaSemana", "porTipoAcao", "porTipoContato", "listaAnos", "porVendedorCidade", "clientesMaisAtendidos"], "rpc_acoes_bi_periodo",
     );
   } catch (err) {
     throw new Error(`[biRpcService.fetchAcoesBI] ${err instanceof Error ? err.message : "Unknown error"}`);
@@ -326,6 +331,7 @@ export async function fetchInteligenciaEsforcoBI(
       INTELIGENCIA_BI_DEFAULTS,
       [],
       ["winRatePorVendedor", "visitasPorNegocioGanho"],
+      "rpc_inteligencia_esforco_bi",
     );
   } catch (err) {
     throw new Error(`[biRpcService.fetchInteligenciaEsforcoBI] ${err instanceof Error ? err.message : "Unknown error"}`);
@@ -348,6 +354,7 @@ export async function fetchParqueRenovacaoBI(
       PARQUE_BI_DEFAULTS,
       [],
       ["frotaRenovacao"],
+      "rpc_parque_renovacao_bi",
     );
   } catch (err) {
     throw new Error(`[biRpcService.fetchParqueRenovacaoBI] ${err instanceof Error ? err.message : "Unknown error"}`);
@@ -366,6 +373,7 @@ export async function fetchOperacionalBI(): Promise<RpcOperacionalBI> {
       OPERACIONAL_BI_DEFAULTS,
       ["kpis"],
       ["kmPorTecnico", "utilizacaoPorTecnico", "agendaPorStatus", "agendaPorTipo"],
+      "rpc_operacional_bi",
     );
   } catch (err) {
     throw new Error(`[biRpcService.fetchOperacionalBI] ${err instanceof Error ? err.message : "Unknown error"}`);
@@ -384,6 +392,7 @@ export async function fetchProdutosBI(): Promise<RpcProdutosBI> {
       PRODUTOS_BI_DEFAULTS,
       ["kpis"],
       ["porGrupo", "porMarca", "topModelos"],
+      "rpc_produtos_bi",
     );
   } catch (err) {
     throw new Error(`[biRpcService.fetchProdutosBI] ${err instanceof Error ? err.message : "Unknown error"}`);

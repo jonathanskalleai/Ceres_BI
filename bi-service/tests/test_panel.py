@@ -56,6 +56,9 @@ def test_compose_panel_moves_ticket_and_trend_calculations_to_server() -> None:
     }
     assert data["totalNegocios"]["trend"] == "up"
     assert data["dataQuality"] == {"status": "ready", "missing": []}
+    assert data["totalOS"]["value"] == 7
+    assert data["totalOS"]["previousValue"] is None
+    assert data["totalOS"]["previousValueStatus"] == "not_available"
 
 
 def test_compose_panel_marks_missing_sources_as_partial_instead_of_silent_zero() -> None:
@@ -63,6 +66,24 @@ def test_compose_panel_marks_missing_sources_as_partial_instead_of_silent_zero()
 
     assert missing
     assert data["dataQuality"]["status"] == "partial"
+    assert "current.totalNegocios" in missing
+    assert data["totalNegocios"]["value"] is None
+    assert data["totalNegocios"]["previousValue"] is None
+    assert data["totalNegocios"]["trend"] == "neutral"
+
+
+def test_compose_panel_rejects_non_finite_numbers_as_missing() -> None:
+    data, missing = compose_panel_kpis(
+        {"kpis": {"totalNegocios": float("nan")}},
+        {},
+        {},
+        {},
+        {},
+        {},
+        {},
+    )
+
+    assert data["totalNegocios"]["value"] is None
     assert "current.totalNegocios" in missing
 
 

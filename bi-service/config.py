@@ -72,6 +72,7 @@ class Settings:
     cache_ttl_seconds: float
     cache_max_items: int
     cache_max_entry_bytes: int
+    read_model_max_age_seconds: int
     cors_origins: tuple[str, ...]
 
     @classmethod
@@ -102,5 +103,6 @@ class Settings:
             cache_ttl_seconds=_float_env("BI_CACHE_TTL_SECONDS", 5.0),
             cache_max_items=_int_env("BI_CACHE_MAX_ITEMS", 512),
             cache_max_entry_bytes=_int_env("BI_CACHE_MAX_ENTRY_BYTES", 1_000_000),
+            read_model_max_age_seconds=_int_env("BI_READ_MODEL_MAX_AGE_SECONDS", 3_600),
             cors_origins=origins,
         )

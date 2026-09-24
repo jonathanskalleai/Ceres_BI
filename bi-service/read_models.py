@@ -101,3 +101,31 @@ def fetch_read_model_status(database: ReadOnlyDatabase) -> dict[str, object]:
     quality = database.execute_query("SELECT * FROM bi.read_model_quality()")
     ready = bool(quality) and all(row.get("status") == "ready" for row in quality)
     return {"status": "ready" if ready else "degraded", "manifest": manifest, "quality": quality}
+
+
+def fetch_read_model_health(database: ReadOnlyDatabase, max_age_seconds: int) -> dict[str, object]:
+    """Return a cheap readiness check for the API health endpoint.
+
+    This intentionally reads only publication metadata. Full parity checks stay
+    on the protected model-status route and are not performed on every probe.
+    """
+
+    rows = database.execute_query(
+        "SELECT model_name, status, last_completed_at, "
+        "EXTRACT(EPOCH FROM (now() - last_completed_at)) AS age_seconds "
+        "FROM bi.refresh_manifest ORDER BY model_name"
+    )
+    expected = {"acoes_daily", "negocios_daily", "pedidos_daily", "servicos_daily"}
+    by_name = {str(row.get("model_name")): row for row in rows}
+    stale: list[str] = []
+    for model_name in sorted(expected):
+        row = by_name.get(model_name)
+        age = row.get("age_seconds") if row else None
+        if not row or row.get("status") != "ready" or age is None or float(age) > max_age_seconds:
+            stale.append(model_name)
+    return {
+        "status": "ready" if not stale else "degraded",
+        "checkedModels": len(by_name),
+        "staleModels": stale,
+        "maxAgeSeconds": max_age_seconds,
+    }

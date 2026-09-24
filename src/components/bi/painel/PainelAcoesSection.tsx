@@ -12,7 +12,7 @@ interface Props {
 }
 
 export function PainelAcoesSection({ kpis, loading, comparisonReady }: Props) {
-  const num = (v: number) => v.toLocaleString("pt-BR");
+  const num = (v: number | null) => v == null ? "—" : v.toLocaleString("pt-BR");
 
   return (
     <>
@@ -66,7 +66,7 @@ export function PainelAcoesSection({ kpis, loading, comparisonReady }: Props) {
             previousValue={comparisonReady ? fmtNum(kpis.oportunidadesAbertas.previousValue) : undefined}
             trend={kpis.oportunidadesAbertas.trend}
             loading={loading}
-            hint={kpis.pipelineAberto.value > 0 ? fmtBRLKpi(kpis.pipelineAberto.value) : undefined}
+            hint={kpis.pipelineAberto.value != null && kpis.pipelineAberto.value > 0 ? fmtBRLKpi(kpis.pipelineAberto.value) : undefined}
             formula="Negocios trabalhados (com pelo menos 1 acao concluida) no periodo que CONTINUAM Em Andamento. Nao representa a etapa CRM 'Oportunidade'; e uma foto do estoque de negocios abertos."
             dataSource="rpc_acoes_funil_gestao · negocios canonicos DISTINTOS tocados por acao no periodo (aco_dthconclusao) com ngo_conclusao='Em Andamento'"
           />

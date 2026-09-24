@@ -1,11 +1,14 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { arrayOrEmpty, normalizeRpcObject } from "@/services/bi/biResponseNormalize";
+import { biQuality } from "@/lib/bi/biQualityStore";
+
+beforeEach(() => biQuality.clearAll());
 
 describe("BI response normalization", () => {
-  it("keeps a complete safe shape when the backend returns null", () => {
+  it("fails closed when the backend returns null instead of inventing zeros", () => {
     const defaults = { kpis: { total: 0 }, rows: [] as number[] };
 
-    expect(normalizeRpcObject(null, defaults, ["kpis"], ["rows"])).toEqual(defaults);
+    expect(() => normalizeRpcObject(null, defaults, ["kpis"], ["rows"])).toThrow("Resposta vazia");
   });
 
   it("does not let malformed nested values reach chart consumers", () => {
@@ -20,5 +23,9 @@ describe("BI response normalization", () => {
     expect(normalized.kpis).toEqual({ total: 4 });
     expect(normalized.rows).toEqual([]);
     expect(arrayOrEmpty({ invalid: true })).toEqual([]);
+    expect(biQuality.getSnapshot()[0]).toMatchObject({
+      source: "bi.rpc",
+      status: "partial",
+    });
   });
 });

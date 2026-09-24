@@ -1,13 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { getBiQueryLabel } from "@/lib/bi/queryLabels";
+import { biQuality } from "@/lib/bi/biQualityStore";
 
 /** Persistent warning for failed, currently observed BI queries. */
 export function BiQueryErrorBanner() {
   const queryClient = useQueryClient();
   const [, setRevision] = useState(0);
+  const qualityEvents = useSyncExternalStore(biQuality.subscribe, biQuality.getSnapshot, biQuality.getSnapshot);
 
   useEffect(() => queryClient.getQueryCache().subscribe(() => {
     setRevision((current) => current + 1);
@@ -22,8 +24,9 @@ export function BiQueryErrorBanner() {
     ));
 
   const failedSources = [...new Set(failedQueries.map((query) => getBiQueryLabel(query.queryKey)))];
+  const partialSources = [...new Set(qualityEvents.map((event) => event.source))];
 
-  if (failedQueries.length === 0) return null;
+  if (failedQueries.length === 0 && qualityEvents.length === 0) return null;
 
   const retry = () => {
     const failedHashes = new Set(failedQueries.map((query) => query.queryHash));
@@ -31,6 +34,9 @@ export function BiQueryErrorBanner() {
       type: "active",
       predicate: (query) => failedHashes.has(query.queryHash),
     });
+    if (qualityEvents.length > 0) {
+      void queryClient.refetchQueries({ type: "active" });
+    }
   };
 
   return (
@@ -42,10 +48,15 @@ export function BiQueryErrorBanner() {
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" aria-hidden="true" />
         <p>
           <strong>Dados incompletos.</strong>{" "}
-          {failedQueries.length === 1 ? "Uma consulta falhou" : `${failedQueries.length} consultas falharam`}.
+          {failedQueries.length > 0 && (
+            <>{failedQueries.length === 1 ? "Uma consulta falhou" : `${failedQueries.length} consultas falharam`}.</>
+          )}
+          {qualityEvents.length > 0 && (
+            <>{failedQueries.length > 0 ? " " : "Uma ou mais fontes retornaram apenas parte dos dados."}</>
+          )}
           Os campos vazios não significam zero.
           <span className="mt-1 block text-xs text-[var(--voux-text-muted)]">
-            Fontes: {failedSources.join(", ")}.
+            Fontes: {[...failedSources, ...partialSources].join(", ")}.
           </span>
         </p>
       </div>

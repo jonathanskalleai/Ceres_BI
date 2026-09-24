@@ -22,6 +22,9 @@ as RPCs existentes.
 - `BI_CACHE_MAX_ENTRY_BYTES`: tamanho máximo de um resultado armazenado (padrão:
   `1000000`). Respostas maiores continuam sendo entregues, mas não ficam em
   memória no cache.
+- `BI_READ_MODEL_MAX_AGE_SECONDS`: idade máxima aceita no health check para um
+  read model publicado (padrão: `3600`). Modelos atrasados deixam o serviço em
+  estado `degraded`, sem apagar o último snapshot válido.
 - `BI_CORS_ORIGINS`: origens permitidas, separadas por vírgula. O padrão aceita
   somente `https://ceresbi.vouxconsultoria.com.br`; desenvolvimento local deve
   declarar `http://localhost:5173` explicitamente.
@@ -32,7 +35,9 @@ código.
 
 ## Rotas
 
-- `GET /health`: estado da aplicação e da configuração (não expõe segredos).
+- `GET /health`: estado da aplicação, banco, JWT e frescor dos read models (não
+  expõe segredos). O campo `readModels.status` fica `degraded` quando falta um
+  modelo, o refresh falhou ou o último snapshot ultrapassou a idade máxima.
 - `GET /api/bi/acoes/core`
 - `GET /api/bi/acoes/detalhe`
 - `GET /api/bi/acoes/funil`

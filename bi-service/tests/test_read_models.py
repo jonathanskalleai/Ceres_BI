@@ -8,6 +8,7 @@ from fastapi import HTTPException
 from read_models import (
     build_read_model_query,
     fetch_read_model,
+    fetch_read_model_health,
     fetch_read_model_status,
 )
 
@@ -68,3 +69,22 @@ def test_fetch_read_model_status_requires_all_quality_checks_ready() -> None:
 
     assert status["status"] == "ready"
     assert status["quality"] == [{"model_name": "acoes_daily", "status": "ready", "delta": 0}]
+
+
+def test_fetch_read_model_health_flags_missing_or_stale_models() -> None:
+    class HealthDatabase(FakeDatabase):
+        def execute_query(self, query: str, args: tuple[object, ...] = ()) -> list[dict[str, object]]:
+            if "EXTRACT(EPOCH" in query:
+                return [{
+                    "model_name": "acoes_daily",
+                    "status": "ready",
+                    "last_completed_at": "2026-09-23T20:00:00Z",
+                    "age_seconds": 7200,
+                }]
+            return super().execute_query(query, args)
+
+    health = fetch_read_model_health(HealthDatabase(), 3600)
+
+    assert health["status"] == "degraded"
+    assert "acoes_daily" in health["staleModels"]
+    assert len(health["staleModels"]) == 4

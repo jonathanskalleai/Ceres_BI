@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { resilientFetch } from "@/lib/network/resilientFetch";
 import { BiContractError, issue } from "@/types/biRuntime";
 import { logClientMetric, logClientWarning } from "@/lib/logger";
+import { biQuality } from "@/lib/bi/biQualityStore";
 
 export interface BiApiIssue {
   code: string;
@@ -152,12 +153,25 @@ async function parseBiResponse<T>(
     );
   }
   if (envelope.status === "partial") {
+    biQuality.record({
+      source: context.rpc,
+      route: context.route,
+      requestId: envelope.requestId,
+      status: "partial",
+      issues: (envelope.issues ?? []).map((item) => ({
+        code: item.code,
+        message: item.message,
+        ...(item.source ? { source: item.source } : {}),
+      })),
+      occurredAt: new Date().toISOString(),
+    });
     logClientWarning("bi.api_partial", new Error("Resposta parcial da API BI"), {
       requestId: envelope.requestId,
       issueCount: envelope.issues?.length ?? 0,
       path: context.route,
     });
   }
+  if (envelope.status === "ok") biQuality.clear(context.rpc);
   if (envelope.data === undefined) {
     throw new BiContractError(
       "Resposta do serviço BI não possui dados",

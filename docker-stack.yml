@@ -78,6 +78,7 @@ services:
       BI_CACHE_TTL_SECONDS: ${CERESBI_BI_CACHE_TTL_SECONDS:-5}
       BI_CACHE_MAX_ITEMS: ${CERESBI_BI_CACHE_MAX_ITEMS:-512}
       BI_CACHE_MAX_ENTRY_BYTES: ${CERESBI_BI_CACHE_MAX_ENTRY_BYTES:-1000000}
+      BI_READ_MODEL_MAX_AGE_SECONDS: ${CERESBI_BI_READ_MODEL_MAX_AGE_SECONDS:-3600}
       BI_CORS_ORIGINS: ${CERESBI_BI_CORS_ORIGINS:-https://ceresbi.vouxconsultoria.com.br}
     deploy:
       replicas: 1
@@ -105,7 +106,18 @@ services:
   bi_refresh:
     image: ${CERESBI_BI_IMAGE:?CERESBI_BI_IMAGE is required}
     healthcheck:
-      disable: true
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import os,sys,time;
+          path='/tmp/bi-refresh-heartbeat';
+          sys.exit(0 if os.path.exists(path) and time.time()-os.path.getmtime(path) < 1800 else 1)
+      interval: 60s
+      timeout: 5s
+      start_period: 120s
+      retries: 3
     read_only: true
     tmpfs:
       - /tmp
@@ -121,6 +133,7 @@ services:
       BI_REFRESH_DATABASE_URL_FILE: /run/secrets/bi_refresh_database_url
       BI_REFRESH_INTERVAL_SECONDS: ${CERESBI_BI_REFRESH_INTERVAL_SECONDS:-900}
       BI_REFRESH_LOOKBACK_DAYS: ${CERESBI_BI_REFRESH_LOOKBACK_DAYS:-730}
+      BI_REFRESH_HEARTBEAT_FILE: /tmp/bi-refresh-heartbeat
     command: ["python", "refresh_worker.py"]
     deploy:
       replicas: 1
