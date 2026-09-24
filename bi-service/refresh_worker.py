@@ -53,10 +53,9 @@ def refresh_once(database_url: str, lookback_days: int, heartbeat_path: str | No
         # available and must not roll back the already healthy read models.
         connection.commit()
         try:
-            cursor.execute(
-                "SELECT bi.refresh_semantic_snapshots()",
-            )
-            semantic_result = cursor.fetchone()[0]
+            with connection.cursor() as semantic_cursor:
+                semantic_cursor.execute("SELECT bi.refresh_semantic_snapshots()")
+                semantic_result = semantic_cursor.fetchone()[0]
             if semantic_result.get("status") != "ready":
                 logger.warning(
                     "bi_semantic_refresh_degraded code=%s",
