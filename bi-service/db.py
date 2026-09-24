@@ -92,16 +92,39 @@ class ReadOnlyDatabase:
         # Function names are selected only from the internal allow-list in
         # rpc.py; do not interpolate user input here.
         placeholders = ", ".join(["%s"] * len(args))
-        query = f"SELECT public.{function_name}({placeholders})"
+        # `SELECT function(...)` only fetches the first composite row for a
+        # SETOF/TABLE function.  That was invisible for JSONB RPCs but broke
+        # the GPO evolution chart: psycopg returned the first row as a string
+        # like ``(2026-01,156,...)`` and json.loads then raised.  Expanding the
+        # function in the FROM clause preserves the complete result for table
+        # functions while keeping scalar/JSON RPCs compatible.
+        query = f"SELECT * FROM public.{function_name}({placeholders})"
         with self.connection() as conn, conn.cursor() as cursor:
             cursor.execute(query, args)
-            row = cursor.fetchone()
-        if not row:
+            rows = cursor.fetchall()
+            columns = [description[0] for description in cursor.description or ()]
+        if not rows:
             raise RuntimeError(f"RPC {function_name} não retornou dados")
-        value = row[0]
-        if isinstance(value, str):
-            return json.loads(value)
-        return value
+
+        def decode(value: Any) -> Any:
+            if isinstance(value, str):
+                try:
+                    return json.loads(value)
+                except json.JSONDecodeError:
+                    return value
+            return value
+
+        # A JSON/scalar function has one result column.  Preserve its old
+        # contract (the value itself) and return a list only when the function
+        # genuinely returned multiple rows.
+        if len(columns) == 1:
+            values = [decode(row[0]) for row in rows]
+            return values[0] if len(values) == 1 else values
+
+        # TABLE/SETOF functions expose named columns.  Returning dictionaries
+        # keeps the API payload stable and avoids leaking psycopg composite
+        # tuples to Pydantic/JSON serialization.
+        return [dict(zip(columns, row)) for row in rows]
 
     def execute_query(self, query: str, args: tuple[Any, ...] = ()) -> list[dict[str, Any]]:
         """Execute a parameterized read-model query and return named rows."""
