@@ -67,6 +67,7 @@ class Settings:
     jwt_audience: str
     pool_min: int
     pool_max: int
+    pool_wait_timeout_ms: int
     statement_timeout_ms: int
     lock_timeout_ms: int
     cache_ttl_seconds: float
@@ -98,6 +99,7 @@ class Settings:
             jwt_audience=os.getenv("BI_SUPABASE_JWT_AUDIENCE", "authenticated").strip(),
             pool_min=pool_min,
             pool_max=pool_max,
+            pool_wait_timeout_ms=_int_env("BI_POOL_WAIT_TIMEOUT_MS", 10_000),
             statement_timeout_ms=_int_env("BI_STATEMENT_TIMEOUT_MS", 30_000),
             lock_timeout_ms=_int_env("BI_LOCK_TIMEOUT_MS", 5_000),
             cache_ttl_seconds=_float_env("BI_CACHE_TTL_SECONDS", 5.0),

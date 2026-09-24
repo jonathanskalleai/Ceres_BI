@@ -40,6 +40,7 @@ def test_settings_read_docker_secret_files(
 
     assert settings.database_url == "postgresql://ceres_bi_api:secret@db/postgres"
     assert settings.jwt_secret == "jwt-secret"
+    assert settings.pool_wait_timeout_ms == 10_000
 
 
 def test_settings_reject_ambiguous_direct_and_file_secret(

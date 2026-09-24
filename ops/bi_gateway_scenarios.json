@@ -1,0 +1,85 @@
+{
+  "schema_version": "1.0",
+  "scenarios": [
+    {
+      "label": "acoes_month",
+      "rpc": "rpc_acoes_bi_periodo",
+      "params": {"p_from": "2026-09-01", "p_to": "2026-09-30"}
+    },
+    {
+      "label": "acoes_year",
+      "rpc": "rpc_acoes_bi_periodo",
+      "params": {"p_from": "2026-01-01", "p_to": "2026-12-31"}
+    },
+    {
+      "label": "acoes_history",
+      "rpc": "rpc_acoes_bi_periodo",
+      "params": {"p_from": "2024-09-24", "p_to": "2026-09-24"}
+    },
+    {
+      "label": "funil_year",
+      "rpc": "rpc_acoes_funil_gestao_periodo",
+      "params": {"p_from": "2026-01-01", "p_to": "2026-12-31"}
+    },
+    {
+      "label": "mapa_year",
+      "rpc": "rpc_acoes_mapa_oportunidades",
+      "params": {"p_from": "2026-01-01", "p_to": "2026-12-31"}
+    },
+    {
+      "label": "negocios_month",
+      "rpc": "rpc_negocios_bi",
+      "params": {"p_from": "2026-09-01", "p_to": "2026-09-30", "p_funis": null}
+    },
+    {
+      "label": "negocios_history",
+      "rpc": "rpc_negocios_bi",
+      "params": {"p_from": "2024-09-24", "p_to": "2026-09-24", "p_funis": null}
+    },
+    {
+      "label": "resultados_year",
+      "rpc": "rpc_resultados_negocios_bi",
+      "params": {"p_from": "2026-01-01", "p_to": "2026-12-31"}
+    },
+    {
+      "label": "resultados_history",
+      "rpc": "rpc_resultados_negocios_bi",
+      "params": {"p_from": "2023-01-01", "p_to": "2026-09-24"}
+    },
+    {
+      "label": "desempenho_year",
+      "rpc": "rpc_desempenho_vendas_bi",
+      "params": {"p_from": "2026-01-01", "p_to": "2026-12-31", "p_funis": null}
+    },
+    {
+      "label": "desempenho_history",
+      "rpc": "rpc_desempenho_vendas_bi",
+      "params": {"p_from": "2024-09-24", "p_to": "2026-09-24", "p_funis": null}
+    },
+    {
+      "label": "pedidos_year",
+      "rpc": "rpc_pedidos_bi",
+      "params": {"p_from": "2026-01-01", "p_to": "2026-12-31"}
+    },
+    {
+      "label": "servicos_year",
+      "rpc": "rpc_servicos_bi",
+      "params": {"p_from": "2026-01-01", "p_to": "2026-12-31"}
+    },
+    {
+      "label": "inteligencia_year",
+      "rpc": "rpc_inteligencia_esforco_bi",
+      "params": {"p_from": "2026-01-01", "p_to": "2026-12-31", "p_funis": null}
+    },
+    {
+      "label": "pedidos_ganhos_year",
+      "rpc": "rpc_acoes_pedidos_ganhos",
+      "params": {"p_from": "2026-01-01", "p_to": "2026-12-31", "p_limit": 50, "p_offset": 0}
+    },
+    {
+      "label": "negocios_perdidos_year",
+      "rpc": "rpc_acoes_negocios_perdidos",
+      "params": {"p_from": "2026-01-01", "p_to": "2026-12-31", "p_limit": 50, "p_offset": 0}
+    }
+  ]
+}

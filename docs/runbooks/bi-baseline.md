@@ -39,6 +39,21 @@ payload, status, códigos de erro e taxa de `cache_hit`. O script retorna códig
 2 quando existe erro HTTP, erro de envelope ou falha de transporte. Ele não
 altera dados nem ativa a feature flag.
 
+Para exercitar filtros variados em várias telas, use o cenário versionado:
+
+```bash
+BI_BENCHMARK_TOKEN="$TOKEN" \
+  python ops/bi_gateway_scenario_benchmark.py \
+  --url https://ceresbi.vouxconsultoria.com.br \
+  --scenario-file ops/bi_gateway_scenarios.json \
+  --requests 64 --concurrency 16
+```
+
+Esse runner distribui as requisições entre cenários e agrupa o resultado por
+RPC e por label, sem imprimir os parâmetros. Ele é o teste adequado para
+detectar saturação do pool que um benchmark repetindo uma única chave de cache
+não revela.
+
 O agregador agrupa por `dashboard_id`, `route`, `endpoint` e `case` (`monthly`,
 `annual` ou `custom`). Ele calcula p50 sempre que houver amostras e só publica
 p95/p99 quando o grupo tiver pelo menos 20 amostras. Percentis usam interpolação
@@ -65,6 +80,11 @@ Metas de engenharia:
 - payload padrão preferencialmente abaixo de 200 KB;
 - nenhuma consulta normal dependente de timeout elevado;
 - erro e timeout analisados separadamente.
+
+O gateway também possui `BI_POOL_WAIT_TIMEOUT_MS` (padrão `10000`). Quando o
+pool estiver cheio, a requisição aguarda uma conexão por esse intervalo em vez
+de falhar imediatamente em `PoolError`; se o limite for atingido, a falha é
+registrada e permanece explícita no envelope/health, sem fabricar dados.
 
 ## Segurança e privacidade
 
