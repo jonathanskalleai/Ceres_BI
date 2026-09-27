@@ -1,8 +1,8 @@
-import { supabase } from "@/integrations/supabase/client";
 import { resilientFetch } from "@/lib/network/resilientFetch";
 import { BiContractError, issue } from "@/types/biRuntime";
 import { logClientMetric, logClientWarning } from "@/lib/logger";
 import { biQuality } from "@/lib/bi/biQualityStore";
+import { getBiAccessToken } from "@/services/bi/biApiClient";
 
 export interface BiApiIssue {
   code: string;
@@ -192,10 +192,10 @@ export async function fetchBiApi<T>(
   signal?: AbortSignal,
 ): Promise<T> {
   const frontendStartedAt = typeof performance !== "undefined" ? performance.now() : Date.now();
-  const { data: { session } } = await supabase.auth.getSession();
+  const accessToken = await getBiAccessToken();
   const requestId = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
   const headers: Record<string, string> = { Accept: "application/json" };
-  if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
+  if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
   headers["X-Request-Id"] = requestId;
 
   const apiPath = path === "/painel/kpis" || path === "/model-status" ? `/v1${path}` : path;
@@ -220,14 +220,14 @@ export async function fetchBiRpc<T>(
   signal?: AbortSignal,
 ): Promise<T> {
   const frontendStartedAt = typeof performance !== "undefined" ? performance.now() : Date.now();
-  const { data: { session } } = await supabase.auth.getSession();
+  const accessToken = await getBiAccessToken();
   const requestId = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
   const headers: Record<string, string> = {
     Accept: "application/json",
     "Content-Type": "application/json",
     "X-Request-Id": requestId,
   };
-  if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
+  if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
 
   const response = await resilientFetch(
     `${apiBaseUrl()}/v1/query/${encodeURIComponent(rpcName)}`,
@@ -254,14 +254,14 @@ export async function fetchBiSemantic<T>(
   signal?: AbortSignal,
 ): Promise<T> {
   const frontendStartedAt = typeof performance !== "undefined" ? performance.now() : Date.now();
-  const { data: { session } } = await supabase.auth.getSession();
+  const accessToken = await getBiAccessToken();
   const requestId = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
   const headers: Record<string, string> = {
     Accept: "application/json",
     "Content-Type": "application/json",
     "X-Request-Id": requestId,
   };
-  if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
+  if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
   const route = `/api/bi/v1/${dashboard}`;
   const response = await resilientFetch(
     `${apiBaseUrl()}/v1/${encodeURIComponent(dashboard)}`,
