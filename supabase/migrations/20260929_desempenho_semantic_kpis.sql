@@ -77,15 +77,10 @@ ALTER FUNCTION public.rpc_desempenho_vendas_bi(
 
 REVOKE ALL ON FUNCTION public.rpc_desempenho_vendas_bi(
   date, date, integer, text, text, text, text, text, text, text, text[]
-) FROM PUBLIC, anon;
+) FROM PUBLIC, anon, authenticated;
 
 DO $$
 BEGIN
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
-    GRANT EXECUTE ON FUNCTION public.rpc_desempenho_vendas_bi(
-      date, date, integer, text, text, text, text, text, text, text, text[]
-    ) TO authenticated;
-  END IF;
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'service_role') THEN
     GRANT EXECUTE ON FUNCTION public.rpc_desempenho_vendas_bi(
       date, date, integer, text, text, text, text, text, text, text, text[]

@@ -24,3 +24,5 @@ def test_desempenho_kpi_migration_is_additive_and_does_not_drop_the_rpc() -> Non
     assert "DROP FUNCTION" not in sql
     assert "DROP TABLE" not in sql
     assert "REVOKE ALL" in sql
+    assert "FROM PUBLIC, anon, authenticated" in sql
+    assert ") TO authenticated;" not in sql

@@ -333,12 +333,12 @@ $$;
 REVOKE ALL ON FUNCTION public.rpc_acoes_pedidos_ganhos_filtrado(date, date, text, text, integer, integer, text[], text, text, text, text)
   FROM PUBLIC, anon, authenticated, service_role, ceres_bi_api;
 GRANT EXECUTE ON FUNCTION public.rpc_acoes_pedidos_ganhos_filtrado(date, date, text, text, integer, integer, text[], text, text, text, text)
-  TO authenticated, service_role, ceres_bi_api;
+  TO service_role, ceres_bi_api;
 
 REVOKE ALL ON FUNCTION public.rpc_acoes_negocios_perdidos_filtrado(date, date, text, text, integer, integer, text[], text, text, text, text)
   FROM PUBLIC, anon, authenticated, service_role, ceres_bi_api;
 GRANT EXECUTE ON FUNCTION public.rpc_acoes_negocios_perdidos_filtrado(date, date, text, text, integer, integer, text[], text, text, text, text)
-  TO authenticated, service_role, ceres_bi_api;
+  TO service_role, ceres_bi_api;
 
 COMMENT ON FUNCTION public.rpc_acoes_pedidos_ganhos_filtrado(date, date, text, text, integer, integer, text[], text, text, text, text) IS
   'Drill-down de pedidos ganhos com a mesma coorte de funil e filtros cruzados de produto, origem, banco e condição.';

@@ -85,15 +85,10 @@ ALTER FUNCTION public.rpc_acoes_bi_periodo(
 ) OWNER TO supabase_admin;
 REVOKE ALL ON FUNCTION public.rpc_acoes_bi_periodo(
   date, date, text, text, text
-) FROM PUBLIC, anon;
+) FROM PUBLIC, anon, authenticated;
 
 DO $$
 BEGIN
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
-    GRANT EXECUTE ON FUNCTION public.rpc_acoes_bi_periodo(
-      date, date, text, text, text
-    ) TO authenticated;
-  END IF;
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'service_role') THEN
     GRANT EXECUTE ON FUNCTION public.rpc_acoes_bi_periodo(
       date, date, text, text, text
@@ -184,15 +179,10 @@ ALTER FUNCTION public.rpc_acoes_funil_gestao_periodo(
 ) OWNER TO supabase_admin;
 REVOKE ALL ON FUNCTION public.rpc_acoes_funil_gestao_periodo(
   date, date, text, text
-) FROM PUBLIC, anon;
+) FROM PUBLIC, anon, authenticated;
 
 DO $$
 BEGIN
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
-    GRANT EXECUTE ON FUNCTION public.rpc_acoes_funil_gestao_periodo(
-      date, date, text, text
-    ) TO authenticated;
-  END IF;
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'service_role') THEN
     GRANT EXECUTE ON FUNCTION public.rpc_acoes_funil_gestao_periodo(
       date, date, text, text

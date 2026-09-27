@@ -20,3 +20,11 @@ def test_legacy_service_hooks_keep_the_gateway_boundary() -> None:
     sync_hook = (ROOT / "src/hooks/bi/useSyncStatus.ts").read_text(encoding="utf-8")
     assert "fetchOrdensServico" not in servicos_hook
     assert 'supabase.schema("mirror")' not in sync_hook
+
+
+def test_cross_filter_drilldowns_are_gateway_only() -> None:
+    migration = (ROOT / "supabase/migrations/20260927_desempenho_drilldown_cross_filters.sql").read_text(
+        encoding="utf-8"
+    )
+    assert "FROM PUBLIC, anon, authenticated, service_role, ceres_bi_api" in migration
+    assert ") TO authenticated;" not in migration
