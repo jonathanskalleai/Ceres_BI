@@ -163,7 +163,12 @@ async def execute_rpc(
             rows_returned=None,
             cache_hit=cache_hit,
         )
-        logger.exception("bi_rpc_failed endpoint=%s request_id=%s", endpoint, rid)
+        logger.error(
+            "bi_rpc_failed endpoint=%s request_id=%s error_class=%s",
+            endpoint,
+            rid,
+            type(exc).__name__,
+        )
         response = BiEnvelope.failure(
             rid,
             message="Não foi possível carregar este bloco de dados.",
@@ -199,8 +204,8 @@ async def health() -> dict[str, object]:
     if database.configured:
         try:
             database_ok = await asyncio.to_thread(database.ping)
-        except Exception:
-            logger.exception("bi_health_database_failed")
+        except Exception as exc:
+            logger.error("bi_health_database_failed error_class=%s", type(exc).__name__)
         if database_ok:
             try:
                 read_model_health = await asyncio.to_thread(
@@ -208,8 +213,8 @@ async def health() -> dict[str, object]:
                     database,
                     settings.read_model_max_age_seconds,
                 )
-            except Exception:
-                logger.exception("bi_health_read_models_failed")
+            except Exception as exc:
+                logger.error("bi_health_read_models_failed error_class=%s", type(exc).__name__)
                 read_model_health = {"status": "degraded", "staleModels": ["unknown"]}
     service_ok = database_ok and bool(settings.jwt_secret) and read_model_health.get("status") in {"ready", "unknown"}
     return {

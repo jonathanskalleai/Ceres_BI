@@ -119,7 +119,12 @@ async def execute_semantic_rpc(
         query_ms = round((perf_counter() - query_started_at) * 1000, 3)
         api_ms = round((perf_counter() - route_started_at) * 1000, 3)
         code = error_code(exc)
-        LOGGER.exception("bi_semantic_query_failed rpc=%s request_id=%s", rpc_name, rid)
+        LOGGER.error(
+            "bi_semantic_query_failed rpc=%s request_id=%s error_class=%s",
+            rpc_name,
+            rid,
+            type(exc).__name__,
+        )
         metrics = BiMetrics(query_ms=query_ms, db_ms=None, api_ms=api_ms, payload_bytes=0, rows_returned=None, cache_hit=False)
         response = BiEnvelope.failure(
             rid,

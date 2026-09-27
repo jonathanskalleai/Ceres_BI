@@ -14,6 +14,11 @@ services:
       # Hashed Vite assets are retained across rolling image replacements so
       # open tabs can finish importing chunks from the previous release.
       - ceresbi_web_assets:/usr/share/nginx/html/assets
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     deploy:
       replicas: 1
       restart_policy:
@@ -30,6 +35,11 @@ services:
     image: ${CERESBI_AI_IMAGE:?CERESBI_AI_IMAGE is required}
     networks:
       - redeinterna
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     environment:
       OPENROUTER_API_KEY: ${CERESBI_AI_OPENROUTER_API_KEY:?CERESBI_AI_OPENROUTER_API_KEY is required}
       DATABASE_URL: ${CERESBI_AI_DATABASE_URL:?CERESBI_AI_DATABASE_URL is required}
@@ -72,6 +82,11 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       - redeinterna
     secrets:
@@ -147,6 +162,11 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       - redeinterna
     secrets:
