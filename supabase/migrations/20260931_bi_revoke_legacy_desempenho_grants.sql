@@ -46,10 +46,6 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.rpc_desempenho_vendas_bi(
-  date, date, integer, text, text, text, text, text, text, text, text[]
-) IS 'Contrato semântico de desempenho; acesso de produção somente pelo gateway ceres_bi_api.';
-
 NOTIFY pgrst, 'reload schema';
 
 COMMIT;
