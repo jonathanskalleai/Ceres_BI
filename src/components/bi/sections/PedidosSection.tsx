@@ -6,7 +6,8 @@ import { ChartCard } from "@/components/bi/ChartCard";
 import { VouxBarH, VouxLine, VouxDonut } from '@/components/charts/voux';
 import { formatBRL, formatMonthYear, toISODate, getPreviousPeriod, calcTrend } from "@/lib/dateUtils";
 import { fmtBRLKpi } from "@/lib/formatters";
-import { PEDIDOS_BI_DEFAULTS } from "@/services/bi/biRpcService";
+import { PEDIDOS_BI_DEFAULTS } from "@/services/bi/biRpcDefaults";
+import { BiErrorState } from "@/components/bi/BiErrorState";
 
 interface Props {
   active: boolean;
@@ -21,13 +22,14 @@ export default function PedidosSection({ active, dateRange, vendedor, cidade }: 
   const from = toISODate(dateRange?.from);
   const to = toISODate(dateRange?.to ?? dateRange?.from);
 
-  const { data: agg = EMPTY_AGG, isLoading } = usePedidosBIRpc({
+  const { data, isLoading, error, refetch } = usePedidosBIRpc({
     from,
     to,
     vendedor,
     cidade,
     enabled: active && !!from && !!to,
   });
+  const agg = data ?? EMPTY_AGG;
   const { kpis } = agg;
 
   // Periodo anterior (mesmo intervalo, 1 ano atras) para analise comparativa
@@ -42,6 +44,15 @@ export default function PedidosSection({ active, dateRange, vendedor, cidade }: 
     enabled: active && !!fromPrev && !!toPrev,
   });
   const kpisPrev = aggPrev?.kpis ?? EMPTY_AGG.kpis;
+
+  if (error && !data) {
+    return (
+      <BiErrorState
+        message="Não foi possível carregar os pedidos. Os valores não foram substituídos por zero."
+        onRetry={() => void refetch()}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6 pt-4">
@@ -60,6 +71,11 @@ export default function PedidosSection({ active, dateRange, vendedor, cidade }: 
         <KPICard title="Valor Cancelado" value={fmtBRLKpi(kpis.valorCancelado)} icon={XCircle} loading={isLoading} hint="pedidos cancelados"
           previousValue={fmtBRLKpi(kpisPrev.valorCancelado)} trend={calcTrend(kpis.valorCancelado, kpisPrev.valorCancelado)} invertTrend dataSource="mirror.crm_pedidos · SUM(pdo_vlrpedido) WHERE cancelado" />
       </div>
+      {error && data && (
+        <p role="status" className="rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs text-muted-foreground">
+          A última resposta válida continua visível; a atualização mais recente falhou.
+        </p>
+      )}
 
       {/* Desempenho section */}
       <div>

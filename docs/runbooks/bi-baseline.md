@@ -7,9 +7,12 @@ negócio; `filters_hash` é apenas um agrupador não reversível.
 
 ## Coleta
 
-O gateway registra `query_ms` ao redor da RPC e `api_ms` no handler. O navegador
-mede `frontend_ms` do início da chamada até o envelope ser parseado. O campo
-`payload_bytes` é o tamanho UTF-8 do envelope JSON no gateway.
+O gateway registra `query_ms` ao redor da RPC e `api_ms` no handler. `db_ms` é
+o tempo medido no acesso ao PostgreSQL/snapshot; em cache quente fica zero por
+design. O navegador mede `frontend_ms` do início da chamada até o envelope ser
+parseado. `payload_bytes` é o tamanho UTF-8 do envelope JSON e
+`rows_returned` é preenchido apenas quando o contrato expõe uma lista de linhas
+sem inspecionar dados ou PII.
 
 O coletor deve preservar uma linha por evento. Não agregue nem reescreva as
 linhas antes do baseline. Em produção, encaminhe stdout para o coletor de logs
@@ -35,7 +38,7 @@ BI_BENCHMARK_TOKEN="$TOKEN" \
 ```
 
 O relatório mostra latência de rede (`wall_ms`), latência do banco/API,
-payload, status, códigos de erro e taxa de `cache_hit`. O script retorna código
+linhas retornadas, payload, status, códigos de erro e taxa de `cache_hit`. O script retorna código
 2 quando existe erro HTTP, erro de envelope ou falha de transporte. Ele não
 altera dados nem ativa a feature flag.
 

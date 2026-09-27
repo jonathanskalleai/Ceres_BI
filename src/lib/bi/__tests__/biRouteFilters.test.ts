@@ -7,8 +7,12 @@ describe("shouldHideCategoryFunil", () => {
     (pathname) => expect(shouldHideCategoryFunil(pathname)).toBe(true),
   );
 
-  it.each(["/bi/painel", "/bi/inteligencia", "/bi/pedidos"])(
+  it.each(["/bi/painel", "/bi/inteligencia"])(
     "keeps filters on routes that consume them: %s",
     (pathname) => expect(shouldHideCategoryFunil(pathname)).toBe(false),
   );
+
+  it("hides category/funnel controls on pedidos because that page has no query consumer", () => {
+    expect(shouldHideCategoryFunil("/bi/pedidos")).toBe(true);
+  });
 });

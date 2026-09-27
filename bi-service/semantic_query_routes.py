@@ -4,13 +4,12 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Header, Request
-
 from auth import authenticate_bi_user
 from cache import QueryCache
 from catalog import build_args, get_spec
 from config import Settings
 from db import ReadOnlyDatabase
+from fastapi import APIRouter, Header, Request
 from schemas import BiEnvelope, BiRpcRequest
 from semantic_runtime import execute_semantic_rpc
 

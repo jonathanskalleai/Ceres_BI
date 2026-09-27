@@ -8,9 +8,14 @@ export interface DesempenhoDonutItem {
   name: string;
   qtd: number;
   valor: number;
-  ticketMedio?: number;
+  ticketMedio?: number | null;
   percent?: number;
   color?: string;
+}
+
+export interface DesempenhoDonutSummary {
+  totalQtd: number;
+  totalValor: number;
 }
 
 interface DesempenhoDonutCardProps {
@@ -21,6 +26,7 @@ interface DesempenhoDonutCardProps {
   emptyMessage?: string;
   selectedItemName?: string | null;
   onItemClick?: (item: DesempenhoDonutItem) => void;
+  summary?: DesempenhoDonutSummary;
   className?: string;
 }
 
@@ -55,31 +61,34 @@ export const DesempenhoDonutCard: React.FC<DesempenhoDonutCardProps> = ({
   emptyMessage = "Nenhum registro no período.",
   selectedItemName,
   onItemClick,
+  summary,
   className,
 }) => {
   const uid = useId().replace(/:/g, "");
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   const validItems = items.filter((i) => i.valor > 0 || i.qtd > 0);
-  const totalValor = validItems.reduce((acc, i) => acc + i.valor, 0);
-  const totalQtd = validItems.reduce((acc, i) => acc + i.qtd, 0);
+  const totalQtd = summary?.totalQtd ?? null;
 
   const itemsWithColor = validItems.map((item, idx) => {
-    const calcPercent = totalValor > 0 ? (item.valor / totalValor) * 100 : 0;
-    const calcTicket = item.ticketMedio ?? (item.qtd > 0 ? item.valor / item.qtd : 0);
+    const calcPercent = typeof item.percent === "number" && Number.isFinite(item.percent)
+      ? item.percent
+      : null;
 
     return {
       ...item,
       color: item.color || PALETTE[idx % PALETTE.length],
       calculatedPercent: calcPercent,
-      ticketMedio: calcTicket,
+      ticketMedio: item.ticketMedio ?? null,
     };
   });
 
   // Arcos SVG
   let cumAngle = 0;
   const arcs = itemsWithColor.map((item) => {
-    const angle = item.calculatedPercent > 0 ? (item.calculatedPercent / 100) * 360 : 0;
+    const angle = item.calculatedPercent != null && item.calculatedPercent > 0
+      ? (item.calculatedPercent / 100) * 360
+      : 0;
     const startAngle = cumAngle;
     cumAngle += angle;
     const endAngle = cumAngle;
@@ -205,8 +214,8 @@ export const DesempenhoDonutCard: React.FC<DesempenhoDonutCardProps> = ({
                 </span>
                 <span className="text-[13px] font-bold font-mono text-[var(--voux-text-primary)]">
                   {hoveredItem
-                    ? `${hoveredItem.calculatedPercent.toFixed(1)}%`
-                    : `${totalQtd.toLocaleString("pt-BR")} ped`}
+                    ? hoveredItem.calculatedPercent == null ? "—" : `${hoveredItem.calculatedPercent.toFixed(1)}%`
+                    : totalQtd == null ? "—" : `${totalQtd.toLocaleString("pt-BR")} ped`}
                 </span>
               </div>
             </div>
@@ -260,7 +269,7 @@ export const DesempenhoDonutCard: React.FC<DesempenhoDonutCardProps> = ({
 
                     <div className="flex items-center gap-3 font-mono shrink-0 tabular-nums">
                       <span className="text-[12px] text-[var(--voux-text-muted)]">
-                        {item.calculatedPercent.toFixed(1)}%
+                        {item.calculatedPercent == null ? "—" : `${item.calculatedPercent.toFixed(1)}%`}
                       </span>
                       <span className="text-[13px] font-bold text-emerald-700 dark:text-emerald-400">
                         {formatBRL(item.valor)}

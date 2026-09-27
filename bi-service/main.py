@@ -9,14 +9,14 @@ from time import perf_counter
 from typing import Annotated
 from uuid import uuid4
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
-from fastapi.middleware.cors import CORSMiddleware
-
+from acoes_batch_runtime import execute_acoes_batch
 from auth import CurrentUser, authenticate_bi_user, make_bi_user_dependency
 from cache import QueryCache, make_cache_key
 from catalog import build_args, get_spec
 from config import Settings
 from db import ReadOnlyDatabase
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
+from fastapi.middleware.cors import CORSMiddleware
 from logging_config import configure_application_logging
 from observability import (
     emit_bi_query,
@@ -24,6 +24,7 @@ from observability import (
     filter_hash,
     payload_size,
     period_case,
+    rows_returned,
     safe_request_id,
 )
 from panel_runtime import execute_panel_kpis
@@ -109,21 +110,25 @@ async def execute_rpc(
     cache_hit = False
     try:
         async def compute():
-            return await asyncio.to_thread(call)
+            db_started_at = perf_counter()
+            data = await asyncio.to_thread(call)
+            return data, round((perf_counter() - db_started_at) * 1000, 3)
 
         if cacheable and user is not None:
             cache_key = make_cache_key(endpoint, user.id, rpc_name, (filter_hash(filters),))
             cached = await query_cache.get_or_compute(cache_key, compute)
-            data = cached.value
+            data, measured_db_ms = cached.value
             cache_hit = cached.hit
         else:
-            data = await compute()
+            data, measured_db_ms = await compute()
         query_ms = 0.0 if cache_hit else round((perf_counter() - query_started_at) * 1000, 3)
         api_ms = round((perf_counter() - route_started_at) * 1000, 3)
         metrics = BiMetrics(
             query_ms=query_ms,
+            db_ms=0.0 if cache_hit else measured_db_ms,
             api_ms=api_ms,
             payload_bytes=payload_size(data),
+            rows_returned=rows_returned(data),
             cache_hit=cache_hit,
         )
         response = BiEnvelope.success(data, rid, metrics)
@@ -138,8 +143,10 @@ async def execute_rpc(
             filters_hash=filter_hash(filters),
             status="ok",
             query_ms=query_ms,
+            db_ms=metrics.db_ms,
             api_ms=api_ms,
             payload_bytes=metrics.payload_bytes,
+            rows_returned=metrics.rows_returned,
             cache_hit=cache_hit,
         )
         return response
@@ -148,7 +155,14 @@ async def execute_rpc(
         query_ms = round((perf_counter() - query_started_at) * 1000, 3)
         api_ms = round((perf_counter() - route_started_at) * 1000, 3)
         code = error_code(exc)
-        metrics = BiMetrics(query_ms=query_ms, api_ms=api_ms, payload_bytes=0, cache_hit=cache_hit)
+        metrics = BiMetrics(
+            query_ms=query_ms,
+            db_ms=None,
+            api_ms=api_ms,
+            payload_bytes=0,
+            rows_returned=None,
+            cache_hit=cache_hit,
+        )
         logger.exception("bi_rpc_failed endpoint=%s request_id=%s", endpoint, rid)
         response = BiEnvelope.failure(
             rid,
@@ -167,102 +181,14 @@ async def execute_rpc(
             filters_hash=filter_hash(filters),
             status="error",
             query_ms=query_ms,
+            db_ms=None,
             api_ms=api_ms,
             payload_bytes=metrics.payload_bytes,
+            rows_returned=None,
             cache_hit=cache_hit,
             error_code=code,
         )
         return response
-
-
-async def execute_acoes_batch(
-    request: Request,
-    filters: AcoesFilters,
-    route_started_at: float,
-    user: CurrentUser,
-) -> BiEnvelope:
-    """Run the two primary Ações blocks concurrently with one API round trip.
-
-    The blocks intentionally remain independent: a failure in one RPC does not
-    turn the successful block into a fabricated empty value.  The response
-    contains only blocks that actually completed and reports the missing ones
-    through the stable envelope issues list.
-    """
-
-    rid = request_id(request)
-    async def run_block(block: str, rpc_name: str, call):
-        started_at = perf_counter()
-        try:
-            cache_key = make_cache_key("acoes.batch", user.id, rpc_name, (filter_hash(filters),))
-            cached = await query_cache.get_or_compute(cache_key, lambda: asyncio.to_thread(call))
-            elapsed_ms = 0.0 if cached.hit else round((perf_counter() - started_at) * 1000, 3)
-            return block, cached.value, None, elapsed_ms, cached.hit
-        except Exception as exc:
-            logger.exception("bi_batch_rpc_failed block=%s request_id=%s", block, rid)
-            return block, None, (rpc_name, error_code(exc)), round((perf_counter() - started_at) * 1000, 3), False
-
-    results = await asyncio.gather(
-        run_block("core", "rpc_acoes_bi_periodo", lambda: fetch_core(database, filters)),
-        run_block("funil", "rpc_acoes_funil_gestao_periodo", lambda: fetch_funil(database, filters)),
-    )
-    data: dict[str, object] = {}
-    issues = []
-    query_ms = 0.0
-    error_codes: list[str] = []
-    cache_hit = False
-    for block, value, failure, elapsed_ms, block_cache_hit in results:
-        query_ms = max(query_ms, elapsed_ms)
-        cache_hit = cache_hit or block_cache_hit
-        if failure is None:
-            data[block] = value
-            continue
-        rpc_name, code = failure
-        error_codes.append(code)
-        issues.append({
-            "code": f"BI_BATCH_{block.upper()}_FAILED",
-            "message": f"O bloco {block} não pôde ser carregado.",
-            "source": rpc_name,
-        })
-
-    api_ms = round((perf_counter() - route_started_at) * 1000, 3)
-    status = "ok" if len(data) == 2 else ("partial" if data else "error")
-    metrics = BiMetrics(query_ms=query_ms, api_ms=api_ms, payload_bytes=0, cache_hit=cache_hit)
-    if status == "error":
-        response = BiEnvelope(
-            status="error",
-            issues=issues,
-            requestId=rid,
-            fetchedAt=BiEnvelope.success(None, rid).fetchedAt,
-            metrics=metrics,
-        )
-    elif status == "partial":
-        response = BiEnvelope(
-            status="partial",
-            data=data,
-            issues=issues,
-            requestId=rid,
-            fetchedAt=BiEnvelope.success(None, rid).fetchedAt,
-            metrics=metrics,
-        )
-    else:
-        response = BiEnvelope.success(data, rid, metrics)
-    metrics.payload_bytes = envelope_size(response)
-    emit_bi_query(
-        request_id=rid,
-        dashboard_id="bi_acoes",
-        route=request.url.path,
-        endpoint="acoes.batch",
-        rpc="rpc_acoes_bi_periodo,rpc_acoes_funil_gestao_periodo",
-        case=period_case(filters),
-        filters_hash=filter_hash(filters),
-        status=status,
-        query_ms=query_ms,
-        api_ms=api_ms,
-        payload_bytes=metrics.payload_bytes,
-        cache_hit=cache_hit,
-        **({"error_code": error_codes[0]} if error_codes else {}),
-    )
-    return response
 
 
 @app.get("/health")
@@ -329,7 +255,15 @@ async def acoes_batch(
 ) -> BiEnvelope:
     route_started_at = perf_counter()
     validate_period(filters)
-    return await execute_acoes_batch(request, filters, route_started_at, user)
+    return await execute_acoes_batch(
+        request,
+        filters,
+        route_started_at,
+        user,
+        database,
+        settings,
+        query_cache,
+    )
 
 
 @app.get("/api/bi/acoes/detalhe", response_model=BiEnvelope)

@@ -56,7 +56,7 @@ export default function PedidosGanhosSection({ active, dateRange, vendedor, cida
   });
 
   const kpis = acoesData?.kpis ?? EMPTY_KPIS;
-  const ticketMedio = kpis.negociosGanho > 0 ? kpis.valorGanho / kpis.negociosGanho : 0;
+  const ticketMedio = kpis.ticketMedioGanho;
 
   return (
     <div className="space-y-6 pt-4">
@@ -84,7 +84,7 @@ export default function PedidosGanhosSection({ active, dateRange, vendedor, cida
         />
         <KPICard
           title="Ticket Médio"
-          value={fmtBRLKpi(ticketMedio)}
+          value={ticketMedio == null ? "—" : fmtBRLKpi(ticketMedio)}
           icon={TrendingUp}
           loading={kpisLoading}
           hint="por pedido aprovado"

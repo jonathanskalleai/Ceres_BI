@@ -19,6 +19,8 @@ export interface AcoesBIKpis {
    */
   valorGanho: number;
   negociosGanho: number;
+  /** Valor ganho dividido por pedidos ganhos, calculado no PostgreSQL. */
+  ticketMedioGanho?: number;
   /**
    * PERDIDO — regua de NEGOCIO, DIFERENTE da regua do ganho (rpc_acoes_bi v9).
    *   fonte:      mirror.crm_negocios canonizado por `ngo_numero`

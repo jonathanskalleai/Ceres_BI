@@ -10,12 +10,17 @@ from time import perf_counter
 from typing import Annotated
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from psycopg2 import Error as PsycopgError
-
 from auth import CurrentUser
 from db import ReadOnlyDatabase
-from observability import emit_bi_query, filter_hash, payload_size, safe_request_id
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from observability import (
+    emit_bi_query,
+    filter_hash,
+    payload_size,
+    rows_returned,
+    safe_request_id,
+)
+from psycopg2 import Error as PsycopgError
 from read_models import fetch_read_model, fetch_read_model_status
 from schemas import BiEnvelope, BiIssue, BiMetrics, BiSnapshot, ReadModelFilters
 
@@ -29,7 +34,12 @@ def create_read_model_router(
 ) -> APIRouter:
     router = APIRouter()
 
+    # Keep the unversioned route for existing operational probes and expose the
+    # versioned alias used by the frontend transport. Both paths execute the
+    # same authenticated read-only handler so status cannot silently degrade to
+    # a permanent "stale" state after the gateway migration.
     @router.get("/api/bi/model-status", response_model=BiEnvelope)
+    @router.get("/api/bi/v1/model-status", response_model=BiEnvelope)
     async def model_status(
         request: Request,
         user: CurrentUser = Depends(require_user),  # noqa: B008
@@ -40,7 +50,7 @@ def create_read_model_router(
         try:
             data = await asyncio.to_thread(fetch_read_model_status, database)
             elapsed_ms = round((perf_counter() - started_at) * 1000, 3)
-            metrics = BiMetrics(query_ms=elapsed_ms, api_ms=elapsed_ms, cache_hit=False)
+            metrics = BiMetrics(query_ms=elapsed_ms, db_ms=elapsed_ms, api_ms=elapsed_ms, cache_hit=False)
             degraded = data.get("status") != "ready"
             response = BiEnvelope(
                 status="partial" if degraded else "ok",
@@ -67,7 +77,7 @@ def create_read_model_router(
                 request_id,
                 message="Não foi possível consultar o estado dos read models.",
                 code="BI_READ_MODEL_STATUS_FAILED",
-                metrics=BiMetrics(query_ms=elapsed_ms, api_ms=elapsed_ms),
+                metrics=BiMetrics(query_ms=elapsed_ms, db_ms=None, api_ms=elapsed_ms),
             )
 
     @router.get("/api/bi/models/{model_name}", response_model=BiEnvelope)
@@ -95,8 +105,10 @@ def create_read_model_router(
             elapsed_ms = round((perf_counter() - started_at) * 1000, 3)
             metrics = BiMetrics(
                 query_ms=elapsed_ms,
+                db_ms=elapsed_ms,
                 api_ms=elapsed_ms,
                 payload_bytes=payload_size(data),
+                rows_returned=rows_returned(data),
                 cache_hit=False,
             )
             has_more = bool(data.get("pagination", {}).get("has_more"))
@@ -182,8 +194,10 @@ def create_read_model_router(
                 filters_hash=filter_hash(filters),
                 status=response.status,
                 query_ms=elapsed_ms,
+                db_ms=metrics.db_ms,
                 api_ms=elapsed_ms,
                 payload_bytes=metrics.payload_bytes,
+                rows_returned=metrics.rows_returned,
                 cache_hit=False,
             )
             return response
@@ -196,7 +210,7 @@ def create_read_model_router(
                 request_id,
                 message="Não foi possível carregar o read model.",
                 code="BI_READ_MODEL_FAILED",
-                metrics=BiMetrics(query_ms=elapsed_ms, api_ms=elapsed_ms),
+                metrics=BiMetrics(query_ms=elapsed_ms, db_ms=None, api_ms=elapsed_ms),
             )
             emit_bi_query(
                 request_id=request_id,
@@ -208,8 +222,10 @@ def create_read_model_router(
                 filters_hash=filter_hash(filters),
                 status="error",
                 query_ms=elapsed_ms,
+                db_ms=None,
                 api_ms=elapsed_ms,
                 payload_bytes=len(response.model_dump_json().encode("utf-8")),
+                rows_returned=None,
                 cache_hit=False,
                 error_code=type(exc).__name__,
             )

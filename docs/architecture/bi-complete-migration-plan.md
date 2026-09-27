@@ -1,7 +1,8 @@
 # Plano fechado — migração completa do Ceres BI para arquitetura Power BI-like
 
-**Status:** implementação da borda semântica concluída; publicação progressiva
-dos read models continua por dashboard
+**Status:** borda semântica, filtros canônicos, tratamento de falhas e
+telemetria `db_ms`/`rows_returned` implementados; publicação progressiva dos
+read models continua por dashboard
 **Escopo:** todas as dashboards BI e todas as RPCs usadas por elas
 **Objetivo:** substituir as RPCs pesadas como caminho normal de leitura, sem
 alterar o resultado visual ou os números
@@ -37,8 +38,9 @@ alterar o resultado visual ou os números
   recentes); `painel.kpis` já chegou a ~1,04 s.
 - O cache atual é L1, process-local, com TTL curto; não há invalidação por
   publicação de snapshot nem cache compartilhado.
-- `query_ms` e `api_ms` existem, mas linhas lidas, `db_ms`, temporários e
-  p95/p99 de carga real ainda não estão fechados.
+- `query_ms`, `db_ms`, `api_ms`, payload e linhas retornadas são emitidos no
+  evento `bi_query`; linhas lidas, temporários e p95/p99 de carga real ainda
+  dependem de volume autenticado suficiente.
 
 ## 3. Arquitetura alvo
 
@@ -218,6 +220,10 @@ payload, cache hit, idade do snapshot, smoke de erro e rollback testado.
 - O caminho de produção do frontend permanece no FastAPI e agora usa
   `POST /api/bi/v1/query/{rpc_name}` para todo o catálogo; `/api/bi/rpc` fica
   como rota de compatibilidade e rollback.
+- O refresh semântico passa a publicar contratos Import para Ações, Negócios,
+  Resultados, Pedidos, Serviços, Inteligência, Admin, Operacional, Produtos e
+  Parque, além de Desempenho. Combinações filtradas continuam no DirectQuery
+  parametrizado e uma falha de uma fonte não remove snapshots anteriores.
 - Desempenho ganhou `POST /api/bi/v1/desempenho`, com snapshot quente e
   fallback DirectQuery sem mudança do DTO visual.
 - Painel ganhou `GET /api/bi/v1/painel/kpis`, mantendo composição server-side e
@@ -227,6 +233,12 @@ payload, cache hit, idade do snapshot, smoke de erro e rollback testado.
 - O frontend continua tratando envelopes `ok`, `partial` e `error`; dados
   ausentes não são preenchidos com zero e o erro de um bloco não derruba os
   demais.
+
+- Filtros de dashboards e drill-downs usam chaves normalizadas; controles que
+  não são consumidos por um read model são ocultados ou sinalizados como
+  posição atual, evitando um filtro visual sem efeito.
+- O mapa de Ações é lazy e os dois drill-downs filtrados de Desempenho têm
+  funções PostgreSQL aditivas com ACL restrita e smoke de paridade em produção.
 
 Essa execução fecha a migração de transporte e contrato para as dashboards. A
 matriz de read models específicos por indicador permanece uma etapa de

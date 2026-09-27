@@ -109,6 +109,12 @@ async function callRpc(rpcName: string, params: RpcParams, signal?: AbortSignal)
       if (!endpoint) throw new Error(`RPC sem rota BI API: ${rpcName}`);
       return await fetchBiApi(endpoint, toBiApiParams(params), signal);
     }
+    // The direct RPC path exists only for local development/rollback testing.
+    // A production build must fail closed when the Python gateway is disabled;
+    // otherwise the browser would silently bypass the semantic API again.
+    if (!import.meta.env.DEV) {
+      throw new Error("A API BI está desabilitada para este build; habilite o gateway Python.");
+    }
     const request = rpcClient.rpc(rpcName, params);
     const response = signal ? await request.abortSignal(signal) : await request;
     if (response.error) throw response.error;
@@ -152,6 +158,9 @@ function validateAcoesBI(payload: unknown): RpcAcoesBI {
     "valorGanho", "negociosGanho", "valorPerdido", "negociosPerdido", "negociosOutrosStatus",
     "tempoMedioContato",
   ], "rpc_acoes_bi_periodo.kpis");
+  if ("ticketMedioGanho" in kpis) {
+    requireFiniteNumber(kpis.ticketMedioGanho, "rpc_acoes_bi_periodo.kpis.ticketMedioGanho");
+  }
   requireArrayFields(root, [
     "porVendedor", "porCidade", "porMes", "porDiaSemana", "porTipoAcao", "porTipoContato",
     "listaAnos", "porVendedorCidade", "clientesMaisAtendidos",
@@ -182,6 +191,9 @@ function validateFunil(payload: unknown): RpcAcoesFunilGestao {
     "entradasEtapaOportunidade", "emEtapaOportunidade", "ganhos", "perdidos", "valorPerdido",
   ], "rpc_acoes_funil_gestao_periodo.funil");
   requireNullableNumericFields(funil, ["visitasPorOportunidade", "oportPorFechamento"], "rpc_acoes_funil_gestao_periodo.funil");
+  if ("taxaGanho" in funil && funil.taxaGanho !== null) {
+    requireFiniteNumber(funil.taxaGanho, "rpc_acoes_funil_gestao_periodo.funil.taxaGanho");
+  }
 
   const ranking = requireArray(root.rankingConsultores, "rpc_acoes_funil_gestao_periodo.rankingConsultores");
   ranking.forEach((row, index) => {

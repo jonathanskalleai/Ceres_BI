@@ -8,7 +8,6 @@ import { useClientesCriticosRpc } from "@/hooks/bi/useClientesCriticosRpc";
 import { useAcoesSinaisSemanaIA } from "@/hooks/bi/useAcoesSinaisSemanaIA";
 import { useAcoesFunilPeriodoRpc } from "@/hooks/bi/useAcoesFunilPeriodoRpc";
 import { useNegociosFilter } from "@/contexts/NegociosFilterContext";
-import { ChartCard } from "@/components/bi/ChartCard";
 import { AcoesRankingTable } from "@/components/bi/AcoesRankingTable";
 import { AcoesClientesTable } from "@/components/bi/AcoesClientesTable";
 import { AcoesDetailWithFilter } from "@/components/bi/sections/AcoesDetailWithFilter";
@@ -24,12 +23,10 @@ import { AcoesGestaoCarteira, type CarteiraDrill } from "@/components/bi/section
 import { AcoesMapaOportunidades } from "@/components/bi/sections/AcoesMapaOportunidades";
 import { AcoesClientesCriticos } from "@/components/bi/sections/AcoesClientesCriticos";
 import { AcoesSinaisSemanaIA } from "@/components/bi/sections/AcoesSinaisSemanaIA";
-import { HorizontalBarChart, VerticalBarChart, type BarChartData } from "@/components/bi/charts/BarChart";
-import LineChart from "@/components/bi/charts/LineChart";
-import { PieChartWithLabels } from "@/components/bi/charts/PieChart";
-import { CHART_COLORS } from "@/lib/chartPalette";
+import { AcoesChartsGrid } from "@/components/bi/sections/AcoesChartsGrid";
+import type { BarChartData } from "@/components/bi/charts/BarChart";
 import { faixaToDiasRange } from "@/lib/bi/acoesGestaoUtils";
-import { toISODate, getPreviousPeriod, formatMonthYear, formatDateBR } from "@/lib/dateUtils";
+import { toISODate, getPreviousPeriod, formatDateBR } from "@/lib/dateUtils";
 import { useDelayedReady } from "@/hooks/useDelayedReady";
 import { useAlturaColunaEsquerda } from "@/hooks/bi/useAlturaColunaEsquerda";
 import type { AcoesFunil, AcoesFunilMeta, RpcAcoesBI } from "@/types/biRpc";
@@ -99,7 +96,7 @@ export default function AcoesSection({ active, dateRange }: Props) {
     setDetalhePage(1);
   }, [from, to, vendedor, cidade, tipoAcao, statusNegocio]);
 
-  const { data, isLoading, error } = useAcoesBIRpc({
+  const { data, isLoading, isError, error } = useAcoesBIRpc({
     from,
     to,
     vendedor: vendedor || undefined,
@@ -107,6 +104,7 @@ export default function AcoesSection({ active, dateRange }: Props) {
     cidade: cidade || undefined,
     enabled: active,
   });
+  const coreError = isError && !data ? error : null;
 
   // Os dois graficos de evolucao mantem a leitura anual, de janeiro ate o
   // mes atual. O calendario continua valendo para todos os demais visuais.
@@ -134,7 +132,7 @@ export default function AcoesSection({ active, dateRange }: Props) {
   const detalheTotalPages = Math.max(1, Math.ceil(detalheTotal / ACOES_PAGE_SIZE));
 
   // Clientes em risco — distribuicao por faixa de dias sem acao
-  const { data: riscoData, isLoading: riscoLoading } = useClientesRiscoRpc({
+  const { data: riscoData, isLoading: riscoLoading, error: riscoError } = useClientesRiscoRpc({
     vendedor: vendedor || undefined,
     cidade: cidade || undefined,
     enabled: active && carregarPesados,
@@ -205,10 +203,15 @@ export default function AcoesSection({ active, dateRange }: Props) {
   });
 
   const { kpis, porVendedor, porCidade, porTipoAcao, porTipoContato, porVendedorCidade, clientesMaisAtendidos } = data ?? EMPTY;
-  const kpisPrev = (dataPrev ?? EMPTY).kpis;
+  const kpisPrev = dataPrev?.kpis;
 
   return (
     <div className="space-y-6 pt-2">
+      {tipoAcao && (
+        <p role="note" className="rounded-md border border-sky-500/25 bg-sky-500/5 px-3 py-2 text-xs text-muted-foreground">
+          <strong className="text-foreground">Filtro de tipo de ação ativo:</strong> aplicado aos blocos cujo fato é uma ação (`crm_acoes`) e à tabela de ações. Ganhos, perdas, termômetro, risco, mapa e esteira são fatos de negócio/pedido/carteira e não recebem esse atributo; eles permanecem com a regra de origem para não afirmar uma relação inexistente.
+        </p>
+      )}
 
       <AcoesKpiGrid
         kpis={kpis}
@@ -218,6 +221,7 @@ export default function AcoesSection({ active, dateRange }: Props) {
         funilPrev={gestaoPrev?.funil}
         diasParados={gestao?.diasParados}
         gestaoLoading={gestaoLoading}
+        error={coreError}
         onOpenDiasSemAcao={() => setDiasSemAcaoAberto(true)}
       />
 
@@ -262,6 +266,7 @@ export default function AcoesSection({ active, dateRange }: Props) {
             description="Distribuição dos canais"
             dataSource="mirror.crm_acoes · aco_tipocontato, COUNT(*)"
             loading={isLoading}
+            error={coreError}
             height={250}
           >
             <PieChartWithLabels
@@ -308,91 +313,19 @@ export default function AcoesSection({ active, dateRange }: Props) {
       {/* Ranking table */}
       <AcoesRankingTable data={porVendedorCidade} loading={isLoading} error={error} />
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <ChartCard title="Acoes por Consultor" description="Top 15 por volume" dataSource="mirror.crm_acoes · aco_vendedor, COUNT(*)" loading={isLoading}>
-          <HorizontalBarChart
-            data={porVendedor.map((d) => ({ name: d.name, acoes: d.acoes }))}
-            keys={["acoes"]}
-            seriesLabels={{ acoes: "Ações" }}
-            title=""
-            colors={[CHART_COLORS[0]]}
-          />
-        </ChartCard>
-
-        <ChartCard
-          title="Evolucao Mensal de Acoes"
-          description="Janeiro ate o mes atual (ano corrente)"
-          dataSource="mirror.crm_acoes · aco_dthconclusao→YYYY-MM, COUNT(*) · independente do calendario"
-          loading={evolucaoMensalLoading}
-        >
-          <LineChart
-            data={evolucaoMensal.map((d) => ({ x: formatMonthYear(d.name), y: d.acoes }))}
-            seriesName="Ações"
-            color={CHART_COLORS[0]}
-          />
-        </ChartCard>
-
-        <ChartCard title="Acoes por Cidade" description="Top 15 cidades" dataSource="mirror.crm_acoes · cli_cidade (cidade do CLIENTE), COUNT(*)" loading={isLoading}>
-          <HorizontalBarChart
-            data={porCidade.map((d) => ({ name: d.name, acoes: d.acoes }))}
-            keys={["acoes"]}
-            seriesLabels={{ acoes: "Ações" }}
-            title=""
-            colors={[CHART_COLORS[2]]}
-          />
-        </ChartCard>
-
-        <ChartCard
-          title="Distribuicao por Tipo de Acao"
-          description="Todos os tipos"
-          dataSource="mirror.crm_acoes · aco_tipoacao, COUNT(*)"
-          loading={isLoading}
-        >
-          <HorizontalBarChart
-            data={[...porTipoAcao].sort((a, b) => b.value - a.value).map((d) => ({ name: d.name, acoes: d.value }))}
-            keys={["acoes"]}
-            seriesLabels={{ acoes: "Ações" }}
-            title=""
-            colors={[CHART_COLORS[0]]}
-          />
-        </ChartCard>
-
-        <ChartCard
-          title="Evolucao Mensal de Visitas"
-          description="Janeiro ate o mes atual (ano corrente)"
-          dataSource="mirror.crm_acoes · aco_tipocontato LIKE '%visita%' por aco_dthconclusao→YYYY-MM · independente do calendario"
-          loading={evolucaoMensalLoading}
-        >
-          <LineChart
-            data={evolucaoMensal.map((d) => ({ x: formatMonthYear(d.name), y: d.visitas }))}
-            seriesName="Visitas"
-            color={CHART_COLORS[4]}
-            tooltipFormatter={(value) => value.toLocaleString("pt-BR")}
-          />
-        </ChartCard>
-
-        <ChartCard
-          title="Clientes em Risco — Dias sem Acao Comercial"
-          description="Dias sem acao comercial (toda a carteira)"
-          dataSource="rpc_acoes_clientes_risco · faixas de dias sem contato"
-          loading={riscoLoading}
-          footer={
-            <p className="text-[11px] text-[var(--voux-text-muted)]">
-              Clique numa faixa para abrir a lista de clientes dela em "Gestao da Carteira".
-            </p>
-          }
-        >
-          <VerticalBarChart
-            data={(riscoData?.faixas ?? []).map((f) => ({ name: f.faixa, clientes: f.clientes }))}
-            keys={["clientes"]}
-            seriesLabels={{ clientes: "Clientes" }}
-            title=""
-            itemColors={["#C9A96E80", "#C9A96E", "#D4956A", "#B8603A", "#8B3A22"]}
-            onBarClick={handleFaixaClick}
-          />
-        </ChartCard>
-      </div>
+      <AcoesChartsGrid
+        porVendedor={porVendedor}
+        porCidade={porCidade}
+        porTipoAcao={porTipoAcao}
+        evolucaoMensal={evolucaoMensal}
+        riscoData={riscoData}
+        isLoading={isLoading}
+        evolucaoMensalLoading={evolucaoMensalLoading}
+        riscoLoading={riscoLoading}
+        coreError={coreError}
+        riscoError={riscoError}
+        onFaixaClick={handleFaixaClick}
+      />
 
       {/* Tabelas */}
       <AcoesClientesTable data={clientesMaisAtendidos} loading={isLoading} error={error} />
@@ -408,8 +341,8 @@ export default function AcoesSection({ active, dateRange }: Props) {
         onClearDrill={() => setDrill(null)}
       />
 
-      {/* Mapa de negocios abertos — inicia aberto, mas a consulta entra na
-          segunda onda para nao bloquear os cards e graficos principais. */}
+      {/* Mapa de negocios abertos — começa recolhido; a consulta entra na
+          segunda onda e só é executada quando o usuário abre o bloco. */}
       <AcoesMapaOportunidades
         vendedor={vendedor || undefined}
         cidade={cidade || undefined}

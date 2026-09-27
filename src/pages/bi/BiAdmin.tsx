@@ -1,7 +1,6 @@
-import { useState, Suspense, lazy } from 'react';
-import { type DateRange } from 'react-day-picker';
-import { DateRangePicker } from '@/components/ui/date-range-picker';
+import { Suspense, lazy } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useNegociosFilter } from '@/contexts/NegociosFilterContext';
 
 const AdminSection = lazy(() => import('@/components/bi/sections/AdminSection'));
 
@@ -18,15 +17,12 @@ function SectionFallback() {
 }
 
 export default function BiAdmin() {
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const { dateRange, cidade } = useNegociosFilter();
 
   return (
     <div className="p-8 space-y-5">
-      <div className="flex items-center gap-3">
-        <DateRangePicker value={dateRange} onChange={setDateRange} />
-      </div>
       <Suspense fallback={<SectionFallback />}>
-        <AdminSection active dateRange={dateRange} />
+        <AdminSection active dateRange={dateRange} cidade={cidade || undefined} />
       </Suspense>
     </div>
   );

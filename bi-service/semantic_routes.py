@@ -7,19 +7,19 @@ import logging
 from time import perf_counter
 from typing import Annotated
 
-from fastapi import APIRouter, Header, Query, Request
-
 from auth import authenticate_bi_user
 from cache import QueryCache
 from catalog import build_args, get_spec
 from config import Settings
 from db import ReadOnlyDatabase
+from fastapi import APIRouter, Header, Query, Request
 from observability import (
     emit_bi_query,
     error_code,
     filter_hash,
     payload_size,
     period_case,
+    rows_returned,
     safe_request_id,
 )
 from panel_runtime import execute_panel_kpis
@@ -87,13 +87,33 @@ def create_semantic_router(
                 elapsed_ms = round((perf_counter() - started_at) * 1000, 3)
                 metrics = BiMetrics(
                     query_ms=elapsed_ms,
+                    db_ms=elapsed_ms,
                     api_ms=elapsed_ms,
                     payload_bytes=payload_size(data),
+                    rows_returned=rows_returned(data),
                     cache_hit=False,
                 )
-                response = BiEnvelope.success(data, safe_request_id(request.headers.get("x-request-id")), metrics)
+                rid = safe_request_id(request.headers.get("x-request-id"))
+                response = BiEnvelope.success(data, rid, metrics)
                 response.snapshot = metadata
                 metrics.payload_bytes = len(response.model_dump_json().encode("utf-8"))
+                emit_bi_query(
+                    request_id=rid,
+                    dashboard_id="bi.painel",
+                    route=request.url.path,
+                    endpoint="semantic.painel.kpis",
+                    rpc="panel.kpis",
+                    case=period_case(values),
+                    filters_hash=filter_hash(values),
+                    status="ok",
+                    query_ms=metrics.query_ms,
+                    db_ms=metrics.db_ms,
+                    api_ms=metrics.api_ms,
+                    payload_bytes=metrics.payload_bytes,
+                    rows_returned=metrics.rows_returned,
+                    cache_hit=False,
+                    source="read_model",
+                )
                 return response
 
             response = await execute_panel_kpis(request, filters, user, database, query_cache)
@@ -108,7 +128,7 @@ def create_semantic_router(
                 rid,
                 message="Não foi possível carregar este painel.",
                 code=code,
-                metrics=BiMetrics(query_ms=elapsed_ms, api_ms=elapsed_ms),
+                metrics=BiMetrics(query_ms=elapsed_ms, db_ms=None, api_ms=elapsed_ms),
             )
             emit_bi_query(
                 request_id=rid,
@@ -120,8 +140,10 @@ def create_semantic_router(
                 filters_hash=filter_hash(values),
                 status="error",
                 query_ms=elapsed_ms,
+                db_ms=None,
                 api_ms=elapsed_ms,
                 payload_bytes=len(response.model_dump_json().encode("utf-8")),
+                rows_returned=None,
                 cache_hit=False,
                 error_code=code,
             )

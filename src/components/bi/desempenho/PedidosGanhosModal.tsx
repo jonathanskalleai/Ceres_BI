@@ -22,6 +22,9 @@ interface PedidosGanhosModalProps {
   vendedor?: string | null;
   cidade?: string | null;
   funis?: string[] | null;
+  produto?: string | null;
+  origem?: string | null;
+  banco?: string | null;
   periodoLabel?: string;
 }
 
@@ -33,6 +36,9 @@ export function PedidosGanhosModal({
   vendedor,
   cidade,
   funis,
+  produto,
+  origem,
+  banco,
   periodoLabel,
 }: PedidosGanhosModalProps) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -43,11 +49,14 @@ export function PedidosGanhosModal({
     vendedor: vendedor ?? undefined,
     cidade: cidade ?? undefined,
     funis: funis && funis.length > 0 ? funis : undefined,
+    produto: produto ?? undefined,
+    origem: origem ?? undefined,
+    banco: banco ?? undefined,
     page: 1,
     enabled: open,
   });
 
-  const rows = data?.rows ?? [];
+  const rows = useMemo(() => data?.rows ?? [], [data?.rows]);
   const totalCount = data?.total ?? 0;
 
   const filtered = useMemo(() => {

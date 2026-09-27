@@ -6,6 +6,7 @@ import { ChartCard } from "@/components/bi/ChartCard";
 import { HorizontalBarChart, PieChartWithLabels, BrazilHeatmap } from "@/components/bi/charts";
 import { CHART_COLORS, POSITIVE_COLOR } from "@/lib/chartPalette";
 import type { RpcAdminBI } from "@/types/biRpc";
+import { BiErrorState } from "@/components/bi/BiErrorState";
 
 const EMPTY: RpcAdminBI = {
   kpis: { totalClientes: 0, prospects: 0, ativos: 0, ufsCobertas: 0, consultoresCarteira: 0, empresas: 0 },
@@ -15,15 +16,29 @@ const EMPTY: RpcAdminBI = {
 interface Props {
   active: boolean;
   dateRange?: DateRange;
+  cidade?: string;
 }
 
-export default function AdminSection({ active, dateRange }: Props) {
-  const { data, isLoading } = useAdminBIRpc({ enabled: active });
+export default function AdminSection({ active, dateRange: _dateRange, cidade }: Props) {
+  const { data, isLoading, error, refetch } = useAdminBIRpc({ cidade, enabled: active });
+  if (error && !data) {
+    return (
+      <BiErrorState
+        message="Não foi possível carregar a carteira de clientes. Os valores não foram substituídos por zero."
+        onRetry={() => void refetch()}
+      />
+    );
+  }
   const agg = data ?? EMPTY;
   const { kpis } = agg;
 
   return (
     <div className="space-y-6 pt-4">
+      {error && data && (
+        <p role="status" className="rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs text-muted-foreground">
+          A última resposta válida continua visível; a atualização mais recente falhou.
+        </p>
+      )}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <KPICard title="Clientes na Carteira" value={kpis.totalClientes.toLocaleString("pt-BR")} icon={Users} loading={isLoading} />
         <KPICard title="Clientes Ativos" value={kpis.ativos.toLocaleString("pt-BR")} icon={UserCheck} loading={isLoading} />

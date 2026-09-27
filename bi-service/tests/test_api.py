@@ -5,11 +5,11 @@ import json
 import logging
 from datetime import date
 
-from fastapi.testclient import TestClient
-
+import acoes_batch_runtime as batch_module
 import main as main_module
 import semantic_query_routes as semantic_query_routes_module
 from auth import CurrentUser
+from fastapi.testclient import TestClient
 from main import app, database, query_cache, require_bi_user
 
 
@@ -101,6 +101,7 @@ def test_read_model_routes_are_protected_bounded_and_enveloped(monkeypatch) -> N
     monkeypatch.setattr(database, "execute_query", fake_query)
     try:
         status_response = TestClient(app).get("/api/bi/model-status")
+        versioned_status_response = TestClient(app).get("/api/bi/v1/model-status")
         model_response = TestClient(app).get(
             "/api/bi/models/acoes_daily?from=2026-01-01&to=2026-01-31&limit=10",
         )
@@ -111,6 +112,8 @@ def test_read_model_routes_are_protected_bounded_and_enveloped(monkeypatch) -> N
 
     assert status_response.status_code == 200
     assert status_response.json()["data"]["status"] == "ready"
+    assert versioned_status_response.status_code == 200
+    assert versioned_status_response.json()["data"]["status"] == "ready"
     assert model_response.status_code == 200
     assert model_response.json()["data"]["rows"][0]["total_acoes"] == 4
     assert model_response.json()["snapshot"] == {
@@ -188,8 +191,8 @@ def test_batch_runs_primary_blocks_and_emits_one_canonical_event(monkeypatch, ca
         return CurrentUser(id="00000000-0000-0000-0000-000000000001", role="admin")
 
     app.dependency_overrides[require_bi_user] = fake_user
-    monkeypatch.setattr(main_module, "fetch_core", lambda database, filters: {"kpis": {"totalAcoes": 3}})
-    monkeypatch.setattr(main_module, "fetch_funil", lambda database, filters: {"funil": {"visitas": 2}})
+    monkeypatch.setattr(batch_module, "fetch_core", lambda database, filters: {"kpis": {"totalAcoes": 3}})
+    monkeypatch.setattr(batch_module, "fetch_funil", lambda database, filters: {"funil": {"visitas": 2}})
     caplog.set_level(logging.INFO, logger="ceresbi.bi")
     try:
         response = TestClient(app).get(
@@ -209,18 +212,50 @@ def test_batch_runs_primary_blocks_and_emits_one_canonical_event(monkeypatch, ca
     assert query_event["status"] == "ok"
 
 
+def test_batch_uses_published_snapshots_before_direct_query(monkeypatch) -> None:
+    async def fake_user() -> CurrentUser:
+        return CurrentUser(id="00000000-0000-0000-0000-000000000009", role="admin")
+
+    def snapshot(database, dashboard_id, filters, max_age_seconds):
+        if dashboard_id.endswith("rpc_acoes_bi_periodo"):
+            return ({"kpis": {"totalAcoes": 9}}, object())
+        if dashboard_id.endswith("rpc_acoes_funil_gestao_periodo"):
+            return ({"funil": {"visitas": 8}}, object())
+        return None
+
+    app.dependency_overrides[require_bi_user] = fake_user
+    asyncio.run(query_cache.clear())
+    monkeypatch.setattr(batch_module, "fetch_semantic_snapshot", snapshot)
+    monkeypatch.setattr(batch_module, "fetch_core", lambda *_: (_ for _ in ()).throw(AssertionError("RPC core chamada")))
+    monkeypatch.setattr(batch_module, "fetch_funil", lambda *_: (_ for _ in ()).throw(AssertionError("RPC funil chamada")))
+    try:
+        response = TestClient(app).get(
+            "/api/bi/acoes/batch?from=2026-02-01&to=2026-02-28",
+        )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "ok"
+    assert payload["data"] == {
+        "core": {"kpis": {"totalAcoes": 9}},
+        "funil": {"funil": {"visitas": 8}},
+    }
+
+
 def test_batch_reports_partial_without_fabricating_failed_block(monkeypatch) -> None:
     async def fake_user() -> CurrentUser:
         return CurrentUser(id="00000000-0000-0000-0000-000000000001", role="admin")
 
     app.dependency_overrides[require_bi_user] = fake_user
     asyncio.run(query_cache.clear())
-    monkeypatch.setattr(main_module, "fetch_core", lambda database, filters: {"kpis": {"totalAcoes": 3}})
+    monkeypatch.setattr(batch_module, "fetch_core", lambda database, filters: {"kpis": {"totalAcoes": 3}})
 
     def fail_funil(database, filters):
         raise TimeoutError("database timeout")
 
-    monkeypatch.setattr(main_module, "fetch_funil", fail_funil)
+    monkeypatch.setattr(batch_module, "fetch_funil", fail_funil)
     try:
         response = TestClient(app).get("/api/bi/acoes/batch?from=2026-01-01&to=2026-01-31")
     finally:

@@ -76,6 +76,13 @@ describe("acoesRuntimeService", () => {
     fetchMock.mockRestore();
   });
 
+  it("fails closed instead of bypassing the gateway in production", async () => {
+    vi.stubEnv("DEV", false);
+
+    await expect(fetchAcoesRuntime({})).rejects.toThrow("gateway Python");
+    expect(rpcMock).not.toHaveBeenCalled();
+  });
+
   it("accepts wrapped payloads but rejects NaN instead of defaulting to zero", async () => {
     rpcMock.mockResolvedValue({ data: [acoesPayload()], error: null });
     await expect(fetchAcoesRuntime({})).resolves.toMatchObject({ kpis: { clientes: 0 } });

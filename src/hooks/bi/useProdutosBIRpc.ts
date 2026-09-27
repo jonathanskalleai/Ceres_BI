@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchProdutosBI } from "@/services/bi/biRpcService";
+import { fetchProdutosBI } from "@/services/bi/biRpcStaticService";
 import type { RpcProdutosBI } from "@/types/biRpc";
 
 const DEFAULTS: RpcProdutosBI = {

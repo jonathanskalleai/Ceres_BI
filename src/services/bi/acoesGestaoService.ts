@@ -42,6 +42,7 @@ const FUNIL_DEFAULTS: RpcAcoesFunilGestao = {
     ganhos: 0,
     perdidos: 0,
     valorPerdido: 0,
+    taxaGanho: null,
     visitasPorOportunidade: null,
     oportPorFechamento: null,
   },

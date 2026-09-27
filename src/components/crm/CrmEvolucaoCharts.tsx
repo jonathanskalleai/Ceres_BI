@@ -19,7 +19,7 @@ const fmtShort = (ym: string) => formatMonthYear(ym).replace(/\/20(\d{2})$/, "/$
  * CrmEvolucaoCharts — 5 line charts for the "Graficos" tab.
  * Self-contained: fetches its own data via hooks.
  */
-export default function CrmEvolucaoCharts() {
+export default function CrmEvolucaoCharts({ vendedor }: { vendedor?: string }) {
   // 12-month rolling window
   const evoFrom = useMemo(
     () => format(subMonths(startOfMonth(new Date()), 11), "yyyy-MM-dd"),
@@ -31,14 +31,17 @@ export default function CrmEvolucaoCharts() {
   const { data: evolucao, isLoading: evolLoading } = useEvolucaoMensal({
     from: evoFrom,
     to: evoTo,
+    vendedor,
     enabled: true,
   });
 
   const { data: negocios, isLoading: negLoading } = useEvolucaoNegocios12m({
+    vendedor,
     enabled: true,
   });
 
   const { data: tiposRaw, isLoading: tiposLoading } = useEvolucaoTiposAcao12m({
+    vendedor,
     enabled: true,
   });
 

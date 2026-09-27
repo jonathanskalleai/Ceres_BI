@@ -4,23 +4,31 @@ import { HorizontalBarChart } from "@/components/bi/charts";
 import { CHART_COLORS } from "@/lib/chartPalette";
 import { formatBRL } from "@/lib/dateUtils";
 import { useInteligenciaBIRpc } from "@/hooks/bi/useInteligenciaBIRpc";
+import { BiErrorState } from "@/components/bi/BiErrorState";
 
 interface Props {
   active: boolean;
   dateRange?: DateRange;
+  vendedor?: string;
+  cidade?: string;
 }
 
 /** Recorte financeiro que complementa Carteira & Mercado sem duplicar Pedidos. */
-export function InteligenciaFinanceiraSection({ active, dateRange }: Props) {
-  const { sharePorBanco, isLoading } = useInteligenciaBIRpc(
+export function InteligenciaFinanceiraSection({ active, dateRange, vendedor, cidade }: Props) {
+  const { sharePorBanco, isLoading, errors } = useInteligenciaBIRpc(
     active,
     dateRange,
     undefined,
     undefined,
     ["financeiro"],
+    vendedor,
+    cidade,
   );
 
   const bancos = sharePorBanco.map((banco) => ({ name: banco.name, valor: banco.valor }));
+  if (bancos.length === 0 && !isLoading && errors.length > 0) {
+    return <BiErrorState message="Não foi possível carregar o bloco financeiro." />;
+  }
   if (bancos.length === 0 && !isLoading) return null;
 
   return (
@@ -44,7 +52,7 @@ export function InteligenciaFinanceiraSection({ active, dateRange }: Props) {
 
 /** Base instalada envelhecida é contexto de renovação e pós-venda, não de faturamento. */
 export function FrotaRenovacaoSection({ active, dateRange }: Props) {
-  const { frotaRenovacao, isLoading } = useInteligenciaBIRpc(
+  const { frotaRenovacao, isLoading, errors } = useInteligenciaBIRpc(
     active,
     dateRange,
     undefined,
@@ -57,6 +65,9 @@ export function FrotaRenovacaoSection({ active, dateRange }: Props) {
     totalMaquinas: item.totalMaquinas,
   }));
 
+  if (frota.length === 0 && !isLoading && errors.length > 0) {
+    return <BiErrorState message="Não foi possível carregar o bloco de renovação." />;
+  }
   if (frota.length === 0 && !isLoading) return null;
 
   return (
@@ -89,15 +100,20 @@ export function InteligenciaMercadoSection({ active, dateRange }: Props) {
 }
 
 /** Recorte de Inteligência que acrescenta os dois visuais de SLA à aba de serviços. */
-export function InteligenciaSlaSection({ active, dateRange }: Props) {
-  const { slaPorFilial, slaPorTipoOS, isLoading } = useInteligenciaBIRpc(
+export function InteligenciaSlaSection({ active, dateRange, cidade }: Props) {
+  const { slaPorFilial, slaPorTipoOS, isLoading, errors } = useInteligenciaBIRpc(
     active,
     dateRange,
     undefined,
     undefined,
     ["sla"],
+    undefined,
+    cidade,
   );
 
+  if (slaPorFilial.length === 0 && slaPorTipoOS.length === 0 && !isLoading && errors.length > 0) {
+    return <BiErrorState message="Não foi possível carregar os indicadores de SLA." />;
+  }
   if (slaPorFilial.length === 0 && slaPorTipoOS.length === 0 && !isLoading) return null;
 
   return (

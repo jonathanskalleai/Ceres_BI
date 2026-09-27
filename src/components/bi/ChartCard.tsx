@@ -3,6 +3,7 @@ import { CircleHelp } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { WidgetErrorBoundary } from "@/components/bi/WidgetErrorBoundary";
+import { BiErrorState } from "@/components/bi/BiErrorState";
 
 interface ChartCardProps {
   title: string;
@@ -12,6 +13,8 @@ interface ChartCardProps {
   /** Altura do conteúdo. Quando omitido o card se ajusta ao conteúdo. */
   height?: number;
   loading?: boolean;
+  /** A fonte falhou; nunca renderizar o gráfico com zeros fabricados. */
+  error?: Error | null;
   className?: string;
   children: ReactNode;
   label?: string;
@@ -28,6 +31,7 @@ export function ChartCard({
   infoTooltip,
   height,
   loading = false,
+  error = null,
   className,
   children,
   label,
@@ -110,6 +114,10 @@ export function ChartCard({
         <Skeleton
           className="w-full rounded-xl"
           style={{ height: height ?? 200, background: "var(--voux-skeleton)" }}
+        />
+      ) : error ? (
+        <BiErrorState
+          message="Este gráfico não pôde ser atualizado. Os demais blocos continuam disponíveis."
         />
       ) : (
         <div

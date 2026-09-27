@@ -1,6 +1,4 @@
-import { useState, Suspense, lazy } from 'react';
-import { type DateRange } from 'react-day-picker';
-import { DateRangePicker } from '@/components/ui/date-range-picker';
+import { Suspense, lazy } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const OperacionalSection = lazy(() => import('@/components/bi/sections/OperacionalSection'));
@@ -18,15 +16,13 @@ function SectionFallback() {
 }
 
 export default function BiOperacional() {
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  // O período é controlado pelo topbar global. A RPC operacional é snapshot,
+  // portanto não mantemos um DateRange local que divergiria dos demais painéis.
 
   return (
     <div className="p-8 space-y-5">
-      <div className="flex items-center gap-3">
-        <DateRangePicker value={dateRange} onChange={setDateRange} />
-      </div>
       <Suspense fallback={<SectionFallback />}>
-        <OperacionalSection active dateRange={dateRange} />
+        <OperacionalSection active />
       </Suspense>
     </div>
   );

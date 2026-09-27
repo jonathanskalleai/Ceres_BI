@@ -20,7 +20,12 @@ import {
 import { toISODate } from "@/lib/dateUtils";
 import { useListasFiltrosRpc } from "@/hooks/useListasFiltrosRpc";
 import { cn } from "@/lib/utils";
-import { shouldHideCategoryFunil } from "@/lib/bi/biRouteFilters";
+import {
+  shouldHideCategoryFunil,
+  shouldHideCidadeFilter,
+  shouldHideDateFilter,
+  shouldHideVendedorFilter,
+} from "@/lib/bi/biRouteFilters";
 
 /**
  * Renders BI filters inside the AppShell topbar via React Portal.
@@ -50,9 +55,12 @@ export function BiTopbarPortal() {
   // Categoria/funil não participam do contrato reconciliado de Negócios & Funil;
   // tipo de ação também não é filtro dessa visão. Escondê-los evita a falsa
   // impressão de que alteram KPIs calculados nas mesmas regras de /bi/acoes.
-  const isResultadosNegociosPage = location.pathname === "/bi/comercial";
+  const isAcoesPage = location.pathname === "/bi/acoes";
   const isDesempenhoPage = location.pathname.startsWith("/bi/desempenho");
   const hideFunilFilters = shouldHideCategoryFunil(location.pathname);
+  const hideDate = shouldHideDateFilter(location.pathname);
+  const hideVendedor = shouldHideVendedorFilter(location.pathname);
+  const hideCidade = shouldHideCidadeFilter(location.pathname);
 
   useEffect(() => {
     const el = document.getElementById("topbar-actions");
@@ -64,7 +72,12 @@ export function BiTopbarPortal() {
   // Fetch filter lists from server-side RPC (no client-side aggregation)
   const from = toISODate(dateRange?.from) ?? "";
   const to = toISODate(dateRange?.to ?? dateRange?.from) ?? "";
-  const { data: listas } = useListasFiltrosRpc({ from, to, enabled: !!from && !!to && !isDesempenhoPage });
+  const needsFilterLists = !hideVendedor || !hideCidade;
+  const { data: listas } = useListasFiltrosRpc({
+    from,
+    to,
+    enabled: !!from && !!to && !isDesempenhoPage && needsFilterLists,
+  });
 
   const vendedorOptions = listas?.vendedores ?? [];
   const cidadeOptions = listas?.cidades ?? [];
@@ -73,7 +86,9 @@ export function BiTopbarPortal() {
 
   return createPortal(
     <div className="flex items-center gap-2 flex-wrap">
-      <DateRangePicker value={dateRange} onChange={setDateRange} />
+      <div className={cn(hideDate && "hidden")}>
+        <DateRangePicker value={dateRange} onChange={setDateRange} />
+      </div>
 
       <Select
         value={categoria}
@@ -106,7 +121,7 @@ export function BiTopbarPortal() {
       </Select>
 
       <Select value={vendedor || "__all__"} onValueChange={(v) => setVendedor(v === "__all__" ? "" : v)} aria-label="Filtro de vendedor">
-        <SelectTrigger className="h-7 w-full sm:w-[150px] text-[11px] bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]">
+        <SelectTrigger className={cn("h-7 w-full sm:w-[150px] text-[11px] bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]", hideVendedor && "hidden")}>
           <SelectValue placeholder="Vendedor" />
         </SelectTrigger>
         <SelectContent>
@@ -118,7 +133,7 @@ export function BiTopbarPortal() {
       </Select>
 
       <Select value={cidade || "__all__"} onValueChange={(v) => setCidade(v === "__all__" ? "" : v)} aria-label="Filtro de cidade">
-        <SelectTrigger className="h-7 w-full sm:w-[150px] text-[11px] bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]">
+        <SelectTrigger className={cn("h-7 w-full sm:w-[150px] text-[11px] bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]", hideCidade && "hidden")}>
           <SelectValue placeholder="Cidade" />
         </SelectTrigger>
         <SelectContent>
@@ -130,7 +145,7 @@ export function BiTopbarPortal() {
       </Select>
 
       <Select value={tipoAcao || "__all__"} onValueChange={(v) => setTipoAcao(v === "__all__" ? "" : v)} aria-label="Filtro de tipo de acao">
-        <SelectTrigger className={cn("h-7 w-full sm:w-[160px] text-[11px] bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]", isResultadosNegociosPage && "hidden")}>
+        <SelectTrigger className={cn("h-7 w-full sm:w-[160px] text-[11px] bg-[var(--voux-card-from)] border-[var(--voux-card-border)] text-[var(--voux-text-primary)]", !isAcoesPage && "hidden")}>
           <SelectValue placeholder="Tipo de Acao" />
         </SelectTrigger>
         <SelectContent>

@@ -5,9 +5,9 @@ import {
   fetchInteligenciaEsforcoBI,
   fetchNegociosBI,
   fetchPedidosBI,
-  fetchParqueRenovacaoBI,
   fetchServicosBI,
 } from "@/services/bi/biRpcService";
+import { fetchParqueRenovacaoBI } from "@/services/bi/biRpcStaticService";
 import { toISODate } from "@/lib/dateUtils";
 import { resolveFunis, type CategoriaFilter } from "@/lib/categoriaFunil";
 
@@ -34,6 +34,7 @@ export interface InteligenciaBIResult {
   slaPorTipoOS: Array<{ tipo: string; mediaDias: number; totalOS: number }>;
 
   isLoading: boolean;
+  errors: Error[];
 }
 
 // ---------------------------------------------------------------------------
@@ -51,6 +52,8 @@ export function useInteligenciaBIRpc(
   categoria?: CategoriaFilter,
   funil?: string,
   scopes?: readonly InteligenciaScope[],
+  vendedor?: string,
+  cidade?: string,
 ): InteligenciaBIResult {
   const from = toISODate(dateRange?.from);
   const to = toISODate(dateRange?.to ?? dateRange?.from);
@@ -61,7 +64,7 @@ export function useInteligenciaBIRpc(
   const dateEnabled = active && !!from && !!to;
 
   // 1. Win rate + visitas/negocio ganho
-  const { data: esforcoData, isLoading: loadEsforco } = useQuery({
+  const { data: esforcoData, isLoading: loadEsforco, isError: esforcoError, error: esforcoQueryError } = useQuery({
     queryKey: ["rpc", "inteligencia-esforco", from, to, funis],
     queryFn: () => fetchInteligenciaEsforcoBI(from!, to!, funis),
     staleTime: STALE_TIME,
@@ -70,16 +73,16 @@ export function useInteligenciaBIRpc(
   });
 
   // 2. Pedidos (sharePorBanco + mixFaturamento + porCidade)
-  const { data: pedidosData, isLoading: loadPedidos } = useQuery({
-    queryKey: ["rpc", "pedidos-bi", from, to],
-    queryFn: () => fetchPedidosBI(from!, to!),
+  const { data: pedidosData, isLoading: loadPedidos, isError: pedidosError, error: pedidosQueryError } = useQuery({
+    queryKey: ["rpc", "pedidos-bi", from, to, vendedor ?? null, cidade ?? null],
+    queryFn: () => fetchPedidosBI(from!, to!, vendedor, cidade),
     staleTime: STALE_TIME,
     placeholderData: keepPreviousData,
     enabled: dateEnabled && includes("financeiro"),
   });
 
   // 3. Parque renovacao (no date filter)
-  const { data: parqueData, isLoading: loadParque } = useQuery({
+  const { data: parqueData, isLoading: loadParque, isError: parqueError, error: parqueQueryError } = useQuery({
     queryKey: ["rpc", "parque-renovacao"],
     queryFn: () => fetchParqueRenovacaoBI(),
     staleTime: STALE_TIME,
@@ -88,29 +91,40 @@ export function useInteligenciaBIRpc(
   });
 
   // 4. Servicos (slaPorFilial + slaPorTipoOS)
-  const { data: servicosData, isLoading: loadServicos } = useQuery({
-    queryKey: ["rpc", "servicos-bi", from, to],
-    queryFn: () => fetchServicosBI(from!, to!),
+  const { data: servicosData, isLoading: loadServicos, isError: servicosError, error: servicosQueryError } = useQuery({
+    queryKey: ["rpc", "servicos-bi", from, to, cidade ?? null],
+    queryFn: () => fetchServicosBI(from!, to!, cidade),
     staleTime: STALE_TIME,
     placeholderData: keepPreviousData,
     enabled: dateEnabled && includes("sla"),
   });
 
   // 5. Negocios (motivosPerda) — same queryKey used by ComercialSection = dedup
-  const { data: negociosData, isLoading: loadNegocios } = useQuery({
-    queryKey: ["rpc", "negocios-bi", from, to, funis ?? null],
-    queryFn: () => fetchNegociosBI(from!, to!, funis ?? undefined),
+  const { data: negociosData, isLoading: loadNegocios, isError: negociosError, error: negociosQueryError } = useQuery({
+    queryKey: ["rpc", "negocios-bi", from, to, funis ?? null, vendedor ?? null, cidade ?? null],
+    queryFn: () => fetchNegociosBI(from!, to!, funis ?? undefined, vendedor, cidade),
     staleTime: STALE_TIME,
     placeholderData: keepPreviousData,
     enabled: dateEnabled && includes("perdas"),
   });
 
   const isLoading = loadEsforco || loadPedidos || loadParque || loadServicos || loadNegocios;
+  const errors = [
+    esforcoError ? esforcoQueryError : null,
+    pedidosError ? pedidosQueryError : null,
+    parqueError ? parqueQueryError : null,
+    servicosError ? servicosQueryError : null,
+    negociosError ? negociosQueryError : null,
+  ].filter((error): error is Error => error instanceof Error);
 
   return {
     // BLOCO 1
     winRatePorVendedor: esforcoData?.winRatePorVendedor ?? [],
-    motivosPerda: negociosData?.motivosPerda ?? [],
+    motivosPerda: (negociosData?.motivosPerda ?? []).map((item) => ({
+      name: item.name,
+      valor: item.valor,
+      count: item.qtd,
+    })),
     visitasPorNegocioGanho: esforcoData?.visitasPorNegocioGanho ?? [],
 
     // BLOCO 2
@@ -126,5 +140,6 @@ export function useInteligenciaBIRpc(
     slaPorTipoOS: servicosData?.slaPorTipoOS ?? [],
 
     isLoading,
+    errors,
   };
 }

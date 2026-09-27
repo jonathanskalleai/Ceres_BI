@@ -38,6 +38,10 @@ export async function fetchAcoesNegociosPerdidos(params: {
   limit?: number;
   offset?: number;
   funis?: string[];
+  /** Filtros cruzados do modelo de Desempenho (aplicados no SQL). */
+  produto?: string;
+  origem?: string;
+  motivoPerda?: string;
 }): Promise<RpcNegociosPerdidos> {
   try {
     const rpcParams: Record<string, unknown> = {};
@@ -52,7 +56,14 @@ export async function fetchAcoesNegociosPerdidos(params: {
     // "all funnels" and is represented by SQL NULL, not an omitted argument.
     rpcParams.p_funis = params.funis && params.funis.length > 0 ? params.funis : null;
 
-    const { data, error } = await invokeBiRpc("rpc_acoes_negocios_perdidos", rpcParams);
+    if (params.produto) rpcParams.p_produto = params.produto;
+    if (params.origem) rpcParams.p_origem = params.origem;
+    if (params.motivoPerda) rpcParams.p_motivo_perda = params.motivoPerda;
+
+    const rpcName = params.produto || params.origem || params.motivoPerda
+      ? "rpc_acoes_negocios_perdidos_filtrado"
+      : "rpc_acoes_negocios_perdidos";
+    const { data, error } = await invokeBiRpc(rpcName, rpcParams);
     if (error) throw new Error(error.message);
 
     const raw = unwrapRpc<Partial<RpcNegociosPerdidos> | null>(data);

@@ -19,9 +19,11 @@ class BiMetrics(BaseModel):
     """Timing and payload metadata safe for client-side performance analysis."""
 
     query_ms: float | None = None
+    db_ms: float | None = None
     api_ms: float | None = None
     frontend_ms: float | None = None
     payload_bytes: int | None = None
+    rows_returned: int | None = None
     cache_hit: bool | None = None
 
 

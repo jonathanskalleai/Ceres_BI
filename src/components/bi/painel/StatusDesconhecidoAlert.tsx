@@ -2,7 +2,7 @@ import { AlertTriangle } from "lucide-react";
 
 interface StatusDesconhecidoAlertProps {
   /** Quantidade de negocios com status fora de Ganho/Perdido/Em Andamento */
-  count: number;
+  count: number | null;
 }
 
 /**
@@ -20,7 +20,7 @@ interface StatusDesconhecidoAlertProps {
  * status que a tela nao representa.
  */
 export function StatusDesconhecidoAlert({ count }: StatusDesconhecidoAlertProps) {
-  if (count <= 0) return null;
+  if (count == null || count <= 0) return null;
 
   const num = (v: number) => v.toLocaleString("pt-BR");
 

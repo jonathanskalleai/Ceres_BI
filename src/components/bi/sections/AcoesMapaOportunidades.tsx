@@ -32,7 +32,10 @@ interface Props {
  * Pinos no mesmo local (~11m) são agrupados com badge numérico.
  */
 export function AcoesMapaOportunidades({ vendedor, cidade, from, to, active = true }: Props) {
-  const [aberto, setAberto] = useState(true);
+  // O mapa pode retornar centenas de pinos e não faz parte do primeiro paint.
+  // Mantê-lo fechado por padrão evita que uma consulta de 200+ KB bloqueie os
+  // cards e gráficos que o usuário precisa primeiro.
+  const [aberto, setAberto] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   // Identidade estável: criado inline, este handler descia como prop nova a cada
   // render e desligava o `memo` do MapView (que é compartilhado com /crm/mapa).

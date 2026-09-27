@@ -9,8 +9,14 @@ export interface DesempenhoTableRow {
   subtitle?: string;
   qtd: number;
   percent?: number;
-  ticketMedio: number;
+  ticketMedio: number | null;
   valor: number;
+}
+
+export interface DesempenhoTableSummary {
+  totalQtd: number;
+  totalValor: number;
+  ticketMedio: number | null;
 }
 
 interface DesempenhoTableCardProps {
@@ -25,6 +31,7 @@ interface DesempenhoTableCardProps {
   unitLabel?: string;
   selectedItemName?: string | null;
   onRowClick?: (row: DesempenhoTableRow) => void;
+  summary?: DesempenhoTableSummary;
   className?: string;
 }
 
@@ -40,18 +47,17 @@ export const DesempenhoTableCard: React.FC<DesempenhoTableCardProps> = ({
   unitLabel,
   selectedItemName,
   onRowClick,
+  summary,
   className,
 }) => {
   const isRed = variant === "red";
 
   // Calcula limites para o Mapa de Calor (Heatmap) de Ticket Médio
-  const validTickets = rows.map((r) => r.ticketMedio).filter((v) => v > 0);
+  const validTickets = rows
+    .map((r) => r.ticketMedio)
+    .filter((value): value is number => typeof value === "number" && value > 0);
   const minTicket = validTickets.length > 0 ? Math.min(...validTickets) : 0;
-  const maxTicket = Math.max(...rows.map((r) => r.ticketMedio), 1);
-
-  const totalQtd = rows.reduce((acc, r) => acc + r.qtd, 0);
-  const totalValor = rows.reduce((acc, r) => acc + r.valor, 0);
-  const totalTicketMedio = totalQtd > 0 ? totalValor / totalQtd : 0;
+  const maxTicket = Math.max(...validTickets, 1);
 
   const defaultUnit = isRed ? "negócios perdidos" : "pedidos";
   const finalUnitLabel = unitLabel || defaultUnit;
@@ -124,7 +130,7 @@ export const DesempenhoTableCard: React.FC<DesempenhoTableCardProps> = ({
                 {rows.map((row, idx) => {
                   // Intensidade de calor de 0 a 1
                   const intensity =
-                    maxTicket > minTicket
+                    typeof row.ticketMedio === "number" && maxTicket > minTicket
                       ? Math.max(0, Math.min(1, (row.ticketMedio - minTicket) / (maxTicket - minTicket)))
                       : 0.5;
 
@@ -217,7 +223,7 @@ export const DesempenhoTableCard: React.FC<DesempenhoTableCardProps> = ({
                               : `rgba(45, 106, 79, ${bgAlpha})`,
                           }}
                         >
-                          <span>{formatBRL(row.ticketMedio)}</span>
+                          <span>{row.ticketMedio == null ? "—" : formatBRL(row.ticketMedio)}</span>
                         </div>
                       </td>
 
@@ -242,21 +248,21 @@ export const DesempenhoTableCard: React.FC<DesempenhoTableCardProps> = ({
       </div>
 
       {/* Footer com Totais Conciliados */}
-      {!loading && rows.length > 0 && (
+      {!loading && rows.length > 0 && summary && (
         <div className="mt-4 pt-3 border-t border-[var(--voux-card-border)] flex items-center justify-between text-[11px] text-[var(--voux-text-muted)]">
           <span className="font-medium">
-            Total ({totalQtd.toLocaleString("pt-BR")} {finalUnitLabel}):
+            Total ({summary.totalQtd.toLocaleString("pt-BR")} {finalUnitLabel}):
           </span>
           <div className="flex items-center gap-4 font-mono">
-            <span><strong>{totalQtd.toLocaleString("pt-BR")}</strong> un</span>
-            <span>Méd: <strong>{formatBRL(totalTicketMedio)}</strong></span>
+            <span><strong>{summary.totalQtd.toLocaleString("pt-BR")}</strong> un</span>
+            <span>Méd: <strong>{summary.ticketMedio == null ? "—" : formatBRL(summary.ticketMedio)}</strong></span>
             <span
               className={cn(
                 "font-semibold",
                 isRed ? "text-red-600 dark:text-red-400" : "text-emerald-700 dark:text-emerald-400"
               )}
             >
-              {formatBRL(totalValor)}
+              {formatBRL(summary.totalValor)}
             </span>
           </div>
         </div>

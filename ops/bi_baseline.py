@@ -22,7 +22,14 @@ from pathlib import Path
 from typing import Any, TextIO
 
 MIN_TAIL_SAMPLES = 20
-METRIC_FIELDS = ("query_ms", "api_ms", "frontend_ms", "payload_bytes")
+METRIC_FIELDS = (
+    "query_ms",
+    "db_ms",
+    "api_ms",
+    "frontend_ms",
+    "payload_bytes",
+    "rows_returned",
+)
 
 
 def _number(value: Any) -> float | None:

@@ -17,15 +17,31 @@ import CrmEvolucaoCharts from "@/components/crm/CrmEvolucaoCharts";
 import { ChartCard } from "@/components/bi/ChartCard";
 import EvolucaoGPOChart from "@/components/bi/charts/EvolucaoGPOChart";
 import { useEvolucaoGPO } from "@/hooks/useEvolucaoGPO";
+import { toISODate } from "@/lib/dateUtils";
+import { BiErrorState } from "@/components/bi/BiErrorState";
 
 export default function BiPainel() {
   const { dateRange, categoria, funil, vendedor, cidade } = useNegociosFilter();
-  const { kpis, loading: painelLoading, comparisonReady: painelComparisonReady } = usePainelKPIsRpc(dateRange, categoria, funil, vendedor || undefined, cidade || undefined);
+  const {
+    kpis,
+    loading: painelLoading,
+    comparisonReady: painelComparisonReady,
+    isError: painelError,
+    error: painelQueryError,
+    hasData: painelHasData,
+  } = usePainelKPIsRpc(dateRange, categoria, funil, vendedor || undefined, cidade || undefined);
   const { kpis: pedKpis, isLoading: pedLoading, comparisonReady: pedComparisonReady } = usePedidosKPIsRpc(dateRange, categoria, funil, vendedor || undefined, cidade || undefined);
   const { kpis: cliKpis, isLoading: cliLoading } = useClientesKPIsRpc(dateRange, cidade || undefined);
   const { kpis: svcKpis, isLoading: svcLoading, comparisonReady: svcComparisonReady } = useServicosKPIsRpc(dateRange, cidade || undefined);
   const { kpis: crossKpis, isLoading: crossLoading, comparisonReady: crossComparisonReady } = useCrossKPIsRpc(dateRange, categoria, funil, vendedor || undefined, cidade || undefined);
-  const { data: gpoData, isLoading: gpoLoading } = useEvolucaoGPO({ enabled: true });
+  const gpoFrom = toISODate(dateRange?.from);
+  const gpoTo = toISODate(dateRange?.to ?? dateRange?.from);
+  const { data: gpoData, isLoading: gpoLoading } = useEvolucaoGPO({
+    vendedor: vendedor || undefined,
+    from: gpoFrom,
+    to: gpoTo,
+    enabled: !!gpoFrom && !!gpoTo,
+  });
 
   // Preserve every card and chart, but let a finished domain render while an
   // unrelated analytical RPC is still running. Previously one slow endpoint
@@ -36,6 +52,11 @@ export default function BiPainel() {
 
   return (
     <section className="p-8 space-y-2" style={{ background: "var(--voux-bg)" }}>
+      {painelError && !painelHasData && (
+        <BiErrorState
+          message={painelQueryError?.message ?? "Não foi possível carregar os indicadores principais do painel."}
+        />
+      )}
       <Tabs defaultValue="cards" className="w-full">
         <TabsList>
           <TabsTrigger value="cards">Cards</TabsTrigger>
@@ -64,7 +85,7 @@ export default function BiPainel() {
         </TabsContent>
         <TabsContent value="graficos">
           <div className="space-y-4">
-            <CrmEvolucaoCharts />
+            <CrmEvolucaoCharts vendedor={vendedor || undefined} />
           </div>
         </TabsContent>
       </Tabs>

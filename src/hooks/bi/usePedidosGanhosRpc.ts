@@ -12,6 +12,9 @@ interface UsePedidosGanhosRpcOptions {
   vendedor?: string;
   cidade?: string;
   funis?: string[];
+  produto?: string;
+  origem?: string;
+  banco?: string;
   /** Pagina atual (1-based). Default 1. */
   page?: number;
   enabled?: boolean;
@@ -29,6 +32,9 @@ export function usePedidosGanhosRpc({
   vendedor,
   cidade,
   funis,
+  produto,
+  origem,
+  banco,
   page = 1,
   enabled = true,
 }: UsePedidosGanhosRpcOptions) {
@@ -39,10 +45,10 @@ export function usePedidosGanhosRpc({
     queryKey: [
       "rpc", "acoes-pedidos-ganhos",
       from ?? null, to ?? null, vendedor ?? null, cidade ?? null,
-      funis ?? null,
+      funis ?? null, produto ?? null, origem ?? null, banco ?? null,
       page,
     ],
-    queryFn: () => fetchAcoesPedidosGanhos({ from, to, vendedor, cidade, limit, offset, funis }),
+    queryFn: () => fetchAcoesPedidosGanhos({ from, to, vendedor, cidade, limit, offset, funis, produto, origem, banco }),
     staleTime: STALE_TIME,
     placeholderData: keepPreviousData,
     enabled,

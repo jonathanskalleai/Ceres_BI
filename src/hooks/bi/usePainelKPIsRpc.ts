@@ -40,6 +40,9 @@ export interface PainelKPIs {
 export interface UsePainelResult {
   kpis: PainelKPIs;
   isLoading: boolean;
+  isError: boolean;
+  error: Error | null;
+  hasData: boolean;
   loading: {
     negocios: boolean;
     acoes: boolean;
@@ -74,7 +77,7 @@ const EMPTY_KPIS: PainelKPIs = {
   oportunidadesAbertas: EMPTY_KPI,
   visitasPorOportunidade: EMPTY_KPI,
   diasParados: EMPTY_KPI,
-  negociosOutrosStatus: 0,
+  negociosOutrosStatus: null,
   ignoresFunilFilter: {},
   dataQuality: { status: "partial", missing: ["panel.kpis"] },
 };
@@ -107,6 +110,9 @@ export function usePainelKPIsRpc(
   return {
     kpis: query.data ?? EMPTY_KPIS,
     isLoading,
+    isError: query.isError,
+    error: query.error ?? null,
+    hasData: Boolean(query.data),
     loading: {
       negocios: isLoading,
       acoes: isLoading,

@@ -4,9 +4,9 @@ import { invokeBiRpc } from "@/services/bi/biRpcGateway";
 const STALE_TIME = 5 * 60_000; // 5 minutes
 
 /**
- * Generic factory hook for Supabase RPC calls.
+ * Generic factory hook for BI gateway RPC calls.
  * Reduces boilerplate across BI hooks by encapsulating the common pattern:
- * queryKey construction, supabase.rpc call, error handling, stale time.
+ * queryKey construction, gateway transport, error handling, stale time.
  *
  * For hooks with extra logic (transforms, complex enabled conditions),
  * use this as the inner fetcher and wrap with custom logic.

@@ -45,6 +45,8 @@ código.
 - `GET /health`: estado da aplicação, banco, JWT e frescor dos read models (não
   expõe segredos). O campo `readModels.status` fica `degraded` quando falta um
   modelo, o refresh falhou ou o último snapshot ultrapassou a idade máxima.
+- `GET /api/bi/v1/model-status`: estado autenticado do manifesto e da qualidade
+  dos read models (o alias `/api/bi/model-status` permanece para probes legados).
 - `GET /api/bi/acoes/core`
 - `GET /api/bi/acoes/detalhe`
 - `GET /api/bi/acoes/funil`
@@ -78,8 +80,9 @@ O schema `bi` é a camada física de leitura no estilo Import/Composite:
 - `bi.*_daily` contém agregações por data e dimensões usadas pelos filtros;
 - `bi.refresh_manifest` informa versão, idade e qualidade de cada modelo;
 - `bi.refresh_read_models(date, date)` recompõe a janela com lock transacional;
-- `bi.refresh_semantic_snapshots()` publica os contratos de Desempenho e Ações
-  para o período quente;
+- `bi.refresh_semantic_snapshots()` publica os contratos Import de Desempenho,
+  Ações, Negócios, Resultados, Pedidos, Serviços, Inteligência, Admin,
+  Operacional, Produtos e Parque para o período quente;
 - `refresh_worker.py` publica os modelos periodicamente, fora da requisição do usuário.
 
 O caminho semântico é híbrido: tenta primeiro um snapshot pronto e dentro da

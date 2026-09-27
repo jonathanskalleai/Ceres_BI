@@ -18,9 +18,11 @@ export interface BiApiEnvelope<T> {
   fetchedAt?: string;
   metrics?: {
     query_ms?: number;
+    db_ms?: number;
     api_ms?: number;
     frontend_ms?: number;
     payload_bytes?: number;
+    rows_returned?: number;
     cache_hit?: boolean;
   };
 }
@@ -140,9 +142,11 @@ async function parseBiResponse<T>(
     case: inferCase(params),
     status: envelope.status,
     query_ms: envelope.metrics?.query_ms ?? null,
+    db_ms: envelope.metrics?.db_ms ?? null,
     api_ms: envelope.metrics?.api_ms ?? null,
     frontend_ms: Number(frontendMs.toFixed(3)),
     payload_bytes: envelope.metrics?.payload_bytes ?? null,
+    rows_returned: envelope.metrics?.rows_returned ?? null,
     cache_hit: envelope.metrics?.cache_hit ?? null,
   });
   if (envelope.status === "error") {
@@ -194,7 +198,7 @@ export async function fetchBiApi<T>(
   if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
   headers["X-Request-Id"] = requestId;
 
-  const apiPath = path === "/painel/kpis" ? `/v1${path}` : path;
+  const apiPath = path === "/painel/kpis" || path === "/model-status" ? `/v1${path}` : path;
   const response = await resilientFetch(
     `${apiBaseUrl()}${apiPath}${buildQuery(params)}`,
     { headers, signal },

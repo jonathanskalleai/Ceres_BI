@@ -96,8 +96,10 @@ async def execute_panel_kpis(
     api_ms = round((perf_counter() - route_started_at) * 1000, 3)
     metrics = BiMetrics(
         query_ms=query_ms,
+        db_ms=query_ms,
         api_ms=api_ms,
         payload_bytes=0,
+        rows_returned=None,
         cache_hit=bool(cache_hits) and all(cache_hits),
     )
     response = BiEnvelope(
@@ -119,8 +121,10 @@ async def execute_panel_kpis(
         filters_hash=filter_hash(filters),
         status=status,
         query_ms=query_ms,
+        db_ms=metrics.db_ms,
         api_ms=api_ms,
         payload_bytes=metrics.payload_bytes,
+        rows_returned=metrics.rows_returned,
         cache_hit=metrics.cache_hit,
         **({"error_code": issues[0].code} if issues else {}),
     )

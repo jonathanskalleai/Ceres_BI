@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchOperacionalBI } from "@/services/bi/biRpcService";
+import { fetchOperacionalBI } from "@/services/bi/biRpcStaticService";
 import type { RpcOperacionalBI } from "@/types/biRpc";
 
 const DEFAULTS: RpcOperacionalBI = {

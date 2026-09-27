@@ -3,7 +3,7 @@ import { type DateRange } from "react-day-picker";
 import { toISODate, getPreviousPeriod } from "@/lib/dateUtils";
 import { makeKPI, makeKPIInverted } from "@/lib/kpiUtils";
 import { useServicosBIRpc } from "@/hooks/bi/useServicosBIRpc";
-import type { KPIWithPrev, ServicosKPIsResult, UseServicosKPIsReturn } from "@/hooks/bi/useServicosKPIs";
+import type { ServicosKPIsResult, UseServicosKPIsReturn } from "@/hooks/bi/useServicosKPIs";
 import { useDelayedReady } from "@/hooks/useDelayedReady";
 
 /**

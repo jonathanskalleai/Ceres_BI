@@ -7,11 +7,12 @@ export interface DesempenhoKPIs {
   percentFinanciado: number;
   percentRecursoProprio?: number;
   valorPerdido: number;
-  totalPerdido?: number;
-  qtdPerdido?: number;
-  ticketMedioPerdido?: number;
-  totalEmAndamento?: number;
-  valorEmAndamento?: number;
+  totalPerdido: number;
+  qtdPerdido: number;
+  ticketMedioPerdido: number;
+  taxaConversao: number;
+  totalEmAndamento: number;
+  valorEmAndamento: number;
   pipelineAberto?: number;
 }
 

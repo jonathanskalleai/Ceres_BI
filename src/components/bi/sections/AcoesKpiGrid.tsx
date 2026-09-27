@@ -1,5 +1,6 @@
 import { Briefcase, ClipboardList, MapPin, Users, Eye, UserCheck, Percent, Clock, Trophy, XCircle, AlertTriangle, Target, Gauge, PauseCircle } from "lucide-react";
 import { KPICard } from "@/components/bi/KPICard";
+import { BiErrorState } from "@/components/bi/BiErrorState";
 import { calcTrend } from "@/lib/dateUtils";
 import { funilRatios, fmtRatio, DASH } from "@/lib/bi/acoesGestaoUtils";
 import type { AcoesBIKpis, AcoesDiasParados, AcoesFunil } from "@/types/biRpc";
@@ -26,13 +27,14 @@ const num = (v: number) => v.toLocaleString("pt-BR");
 
 interface Props {
   kpis: AcoesBIKpis;
-  kpisPrev: AcoesBIKpis;
+  kpisPrev?: AcoesBIKpis;
   loading?: boolean;
   /** Números de coorte, pipeline e carteira da RPC de gestão do período. */
   funil?: AcoesFunil;
   funilPrev?: AcoesFunil;
   diasParados?: AcoesDiasParados;
   gestaoLoading?: boolean;
+  error?: Error | null;
   onOpenDiasSemAcao?: () => void;
 }
 
@@ -41,8 +43,7 @@ interface Props {
  * no funil VENDAS no mesmo periodo. Perdas nao fazem parte do denominador.
  */
 function taxaDeGanho(funil?: AcoesFunil): number | null {
-  if (!funil || funil.oportunidades <= 0) return null;
-  return Math.round((funil.ganhos * 1000) / funil.oportunidades) / 10;
+  return funil?.taxaGanho ?? null;
 }
 
 /**
@@ -188,43 +189,51 @@ function StatusDesconhecidoAlert({ kpis }: { kpis: AcoesBIKpis }) {
 
 /** Grid de KPIs da tela /bi/acoes — extraida de AcoesSection para conter o tamanho do arquivo. */
 export function AcoesKpiGrid({
-  kpis, kpisPrev, loading, funil, diasParados, gestaoLoading, onOpenDiasSemAcao,
+  kpis, kpisPrev, loading, funil, diasParados, gestaoLoading, onOpenDiasSemAcao, error,
   funilPrev,
 }: Props) {
+  if (error) {
+    return (
+      <BiErrorState
+        message="Os indicadores de ações não puderam ser atualizados. Os demais blocos continuam disponíveis."
+      />
+    );
+  }
+
   const taxaGanho = taxaDeGanho(funil);
-  const taxaGanhoPrev = taxaDeGanho(funilPrev);
+  const taxaGanhoPrev = kpisPrev ? taxaDeGanho(funilPrev) : null;
 
   return (
     <div className="space-y-4">
       <StatusDesconhecidoAlert kpis={kpis} />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       <KPICard title="Total de Acoes" value={num(kpis.totalAcoes)} icon={ClipboardList} loading={loading}
-        previousValue={num(kpisPrev.totalAcoes)} trend={calcTrend(kpis.totalAcoes, kpisPrev.totalAcoes)}
+        previousValue={kpisPrev ? num(kpisPrev.totalAcoes) : undefined} trend={kpisPrev ? calcTrend(kpis.totalAcoes, kpisPrev.totalAcoes) : undefined}
         formula="Total de acoes comerciais concluidas no periodo, independente do tipo de contato (visita, telefone, email, etc.)"
         dataSource="mirror.crm_acoes · COUNT(*) por aco_dthconclusao" />
 
       <KPICard title="Total de Visitas" value={num(kpis.visitas)} icon={Eye} loading={loading}
-        previousValue={num(kpisPrev.visitas)} trend={calcTrend(kpis.visitas, kpisPrev.visitas)}
+        previousValue={kpisPrev ? num(kpisPrev.visitas) : undefined} trend={kpisPrev ? calcTrend(kpis.visitas, kpisPrev.visitas) : undefined}
         formula="Quantidade de acoes do tipo 'visita' (presencial) registradas no periodo. Um mesmo cliente visitado 3 vezes conta 3"
         dataSource="mirror.crm_acoes · COUNT(*) WHERE aco_tipocontato LIKE '%visita%'" />
 
       <KPICard title="Cidades Atendidas" value={num(kpis.cidades)} icon={MapPin} loading={loading}
-        previousValue={num(kpisPrev.cidades)} trend={calcTrend(kpis.cidades, kpisPrev.cidades)}
+        previousValue={kpisPrev ? num(kpisPrev.cidades) : undefined} trend={kpisPrev ? calcTrend(kpis.cidades, kpisPrev.cidades) : undefined}
         formula="Quantas cidades diferentes tiveram clientes atendidos no periodo. Usa a cidade do cliente, nao da filial"
         dataSource="COUNT(DISTINCT cli_cidade) — cidade do CLIENTE (crm_carteira_clientes), nao da filial" />
 
       <KPICard title="Clientes Unicos" value={num(kpis.clientes)} icon={UserCheck} loading={loading}
-        previousValue={num(kpisPrev.clientes)} trend={calcTrend(kpis.clientes, kpisPrev.clientes)}
+        previousValue={kpisPrev ? num(kpisPrev.clientes) : undefined} trend={kpisPrev ? calcTrend(kpis.clientes, kpisPrev.clientes) : undefined}
         formula="Quantos clientes diferentes receberam pelo menos 1 acao (qualquer tipo de contato) no periodo. Cada cliente conta 1 vez"
         dataSource="mirror.crm_acoes · COUNT(DISTINCT cli_nome)" />
 
       <KPICard title="Consultores Ativos" value={num(kpis.consultores)} icon={Users} loading={loading}
-        previousValue={num(kpisPrev.consultores)} trend={calcTrend(kpis.consultores, kpisPrev.consultores)}
+        previousValue={kpisPrev ? num(kpisPrev.consultores) : undefined} trend={kpisPrev ? calcTrend(kpis.consultores, kpisPrev.consultores) : undefined}
         formula="Quantos vendedores/consultores registraram pelo menos 1 acao concluida no periodo selecionado"
         dataSource="mirror.crm_acoes · COUNT(DISTINCT aco_vendedor)" />
 
       <KPICard title="Duracao Media da Acao" value={`${kpis.tempoMedioContato} dias`} icon={Clock} loading={loading}
-        previousValue={`${kpisPrev.tempoMedioContato} dias`} trend={calcTrend(kpis.tempoMedioContato, kpisPrev.tempoMedioContato)}
+        previousValue={kpisPrev ? `${kpisPrev.tempoMedioContato} dias` : undefined} trend={kpisPrev ? calcTrend(kpis.tempoMedioContato, kpisPrev.tempoMedioContato) : undefined}
         invertTrend
         formula="Tempo medio em dias entre a abertura e a conclusao de uma acao. Mede quanto tempo o consultor leva para finalizar cada acao, nao o tempo ate o primeiro contato"
         dataSource="mirror.crm_acoes · AVG(aco_dthconclusao - aco_dthabertura) em dias — duracao da propria acao (abertura ate conclusao), NAO tempo ate o primeiro contato" />
@@ -232,14 +241,14 @@ export function AcoesKpiGrid({
       <OportunidadesKpis funil={funil} loading={gestaoLoading} taxaGanho={taxaGanho} taxaGanhoPrev={taxaGanhoPrev} />
 
       <KPICard title="Valor Ganho" value={brl(kpis.valorGanho)} icon={Trophy} loading={loading}
-        previousValue={brl(kpisPrev.valorGanho)} trend={calcTrend(kpis.valorGanho, kpisPrev.valorGanho)}
+        previousValue={kpisPrev ? brl(kpisPrev.valorGanho) : undefined} trend={kpisPrev ? calcTrend(kpis.valorGanho, kpisPrev.valorGanho) : undefined}
         rawValue={kpis.valorGanho}
         hint={`${num(kpis.negociosGanho)} pedidos aprovados`}
         formula="Soma em R$ dos PEDIDOS aprovados no periodo, contados pela data de aprovacao do pedido, cujo negocio esta Ganho. E receita de pedido faturavel — regua DIFERENTE da do card Valor Perdido, que mede valor negociado. Os dois nao se somam"
         dataSource={GANHO_SOURCE} />
 
       <KPICard title="Valor Perdido" value={brl(kpis.valorPerdido)} icon={XCircle} loading={loading}
-        previousValue={brl(kpisPrev.valorPerdido)} trend={calcTrend(kpis.valorPerdido, kpisPrev.valorPerdido)} invertTrend
+        previousValue={kpisPrev ? brl(kpisPrev.valorPerdido) : undefined} trend={kpisPrev ? calcTrend(kpis.valorPerdido, kpisPrev.valorPerdido) : undefined} invertTrend
         rawValue={kpis.valorPerdido}
         hint={`${num(kpis.negociosPerdido)} negocios`}
         formula="Valor POTENCIAL dos negocios marcados como Perdido que fecharam no periodo, contados pela data de fechamento do negocio. E o que estava negociado e nao virou venda — nao e pedido cancelado, e nao se soma ao Valor Ganho"

@@ -17,6 +17,8 @@ def test_summarize_reports_tail_latency_and_cache_rate() -> None:
     assert report["errors"] == 1
     assert report["wall_ms"]["p50"] == 200
     assert report["wall_ms"]["p95"] == 290
+    assert report["db_ms"]["count"] == 0
+    assert report["rows_returned"]["count"] == 0
     assert report["cache_hit_rate"] == 0.5
     assert report["error_codes"] == {"BI_QUERY_FAILED": 1}
 

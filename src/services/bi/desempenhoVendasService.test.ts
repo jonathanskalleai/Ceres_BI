@@ -8,11 +8,11 @@ vi.mock("@/integrations/supabase/client", () => ({
   supabase: { rpc: rpcMock },
 }));
 
-import { fetchDesempenhoVendas } from "@/services/bi/desempenhoVendasService";
+import { EMPTY_DESEMPENHO_DATA, fetchDesempenhoVendas } from "@/services/bi/desempenhoVendasService";
 
 describe("fetchDesempenhoVendas RPC contract", () => {
   beforeEach(() => {
-    rpcMock.mockReset().mockResolvedValue({ data: {}, error: null });
+    rpcMock.mockReset().mockResolvedValue({ data: EMPTY_DESEMPENHO_DATA, error: null });
   });
 
   it("sends p_funis explicitly as null when no funnel filter is active", async () => {
@@ -40,6 +40,63 @@ describe("fetchDesempenhoVendas RPC contract", () => {
 
     expect(rpcMock).toHaveBeenCalledWith("rpc_desempenho_vendas_bi", {
       p_funis: null,
+    });
+  });
+
+  it("rejects a missing payload instead of rendering an all-zero dashboard", async () => {
+    rpcMock.mockResolvedValueOnce({ data: null, error: null });
+
+    await expect(fetchDesempenhoVendas()).rejects.toMatchObject({
+      name: "BiContractError",
+      code: "BI_CONTRACT_MISSING",
+    });
+  });
+
+  it("rejects a KPI block with a missing field instead of filling it with zero", async () => {
+    rpcMock.mockResolvedValueOnce({ data: { kpis: { faturamento: 10 } }, error: null });
+
+    await expect(fetchDesempenhoVendas({ ano: 2026 })).rejects.toMatchObject({
+      name: "BiContractError",
+      code: "BI_CONTRACT_INVALID",
+    });
+  });
+
+  it("requires the server-computed conversion KPI", async () => {
+    const { taxaConversao: _taxaConversao, ...kpisWithoutConversion } = EMPTY_DESEMPENHO_DATA.kpis;
+    rpcMock.mockResolvedValueOnce({
+      data: { ...EMPTY_DESEMPENHO_DATA, kpis: kpisWithoutConversion },
+      error: null,
+    });
+
+    await expect(fetchDesempenhoVendas()).rejects.toMatchObject({
+      name: "BiContractError",
+      code: "BI_CONTRACT_INVALID",
+    });
+  });
+
+  it("rejects non-finite values before they reach a chart formatter", async () => {
+    const malformed = {
+      ...EMPTY_DESEMPENHO_DATA,
+      kpis: { ...EMPTY_DESEMPENHO_DATA.kpis, faturamento: Number.NaN },
+    };
+    rpcMock.mockResolvedValueOnce({ data: malformed, error: null });
+
+    await expect(fetchDesempenhoVendas()).rejects.toMatchObject({
+      name: "BiContractError",
+      code: "BI_CONTRACT_NUMBER",
+    });
+  });
+
+  it("rejects null or string KPIs instead of coercing them to zero", async () => {
+    const malformed = {
+      ...EMPTY_DESEMPENHO_DATA,
+      kpis: { ...EMPTY_DESEMPENHO_DATA.kpis, ticketMedio: null },
+    };
+    rpcMock.mockResolvedValueOnce({ data: malformed, error: null });
+
+    await expect(fetchDesempenhoVendas()).rejects.toMatchObject({
+      name: "BiContractError",
+      code: "BI_CONTRACT_NUMBER",
     });
   });
 });

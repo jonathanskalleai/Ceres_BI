@@ -19,7 +19,7 @@ export function PainelPedidosSection({ pedKpis, loading, comparisonReady }: Prop
           rawValue={pedKpis.faturamento.value}
           icon={DollarSign}
           previousValue={comparisonReady ? fmtBRLKpi(pedKpis.faturamento.previousValue) : undefined}
-          trend={pedKpis.faturamento.trend}
+          trend={comparisonReady ? pedKpis.faturamento.trend : undefined}
           loading={loading}
           accentColor="var(--voux-success)"
           formula="Valor total em R$ dos pedidos aprovados no periodo"
@@ -31,7 +31,7 @@ export function PainelPedidosSection({ pedKpis, loading, comparisonReady }: Prop
           value={fmtNum(pedKpis.totalPedidos.value)}
           icon={FileCheck}
           previousValue={comparisonReady ? fmtNum(pedKpis.totalPedidos.previousValue) : undefined}
-          trend={pedKpis.totalPedidos.trend}
+          trend={comparisonReady ? pedKpis.totalPedidos.trend : undefined}
           loading={loading}
           formula="Quantidade de pedidos emitidos no periodo"
         />
@@ -42,7 +42,7 @@ export function PainelPedidosSection({ pedKpis, loading, comparisonReady }: Prop
           value={fmtPct(pedKpis.taxaAprovacao.value)}
           icon={ShieldCheck}
           previousValue={comparisonReady ? fmtPct(pedKpis.taxaAprovacao.previousValue) : undefined}
-          trend={pedKpis.taxaAprovacao.trend}
+          trend={comparisonReady ? pedKpis.taxaAprovacao.trend : undefined}
           loading={loading}
           formula="De todos os pedidos, quantos % foram aprovados"
         />
@@ -53,7 +53,7 @@ export function PainelPedidosSection({ pedKpis, loading, comparisonReady }: Prop
           value={fmtPct(pedKpis.mixFinanciamento.value)}
           icon={Percent}
           previousValue={comparisonReady ? fmtPct(pedKpis.mixFinanciamento.previousValue) : undefined}
-          trend={pedKpis.mixFinanciamento.trend}
+          trend={comparisonReady ? pedKpis.mixFinanciamento.trend : undefined}
           loading={loading}
           formula="Quanto do valor total foi via financiamento (vs recurso proprio)"
         />

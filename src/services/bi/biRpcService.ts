@@ -5,10 +5,7 @@ import {
   ADMIN_BI_DEFAULTS,
   INTELIGENCIA_BI_DEFAULTS,
   NEGOCIOS_BI_DEFAULTS,
-  OPERACIONAL_BI_DEFAULTS,
-  PARQUE_BI_DEFAULTS,
   PEDIDOS_BI_DEFAULTS,
-  PRODUTOS_BI_DEFAULTS,
   RESULTADOS_NEGOCIOS_DEFAULTS,
   SERVICOS_BI_DEFAULTS,
 } from "@/services/bi/biRpcDefaults";
@@ -22,9 +19,6 @@ import type {
   RpcAcoesBI,
   RpcAcoesDetalhe,
   RpcInteligenciaEsforcoBI,
-  RpcParqueRenovacaoBI,
-  RpcOperacionalBI,
-  RpcProdutosBI,
   AcoesBIEvolucaoMensalAnoCorrente,
   RpcResultadosNegociosBI,
 } from "@/types/biRpc";
@@ -335,66 +329,5 @@ export async function fetchInteligenciaEsforcoBI(
     );
   } catch (err) {
     throw new Error(`[biRpcService.fetchInteligenciaEsforcoBI] ${err instanceof Error ? err.message : "Unknown error"}`);
-  }
-}
-
-/**
- * Calls rpc_parque_renovacao_bi — returns fleet renewal opportunity by brand.
- */
-export async function fetchParqueRenovacaoBI(
-  cutoffAnos?: number,
-): Promise<RpcParqueRenovacaoBI> {
-  try {
-    const { data, error } = await invokeBiRpc("rpc_parque_renovacao_bi", {
-      p_cutoff_anos: cutoffAnos ?? 5,
-    });
-    if (error) throw new Error(error.message);
-    return normalizeRpcObject(
-      data,
-      PARQUE_BI_DEFAULTS,
-      [],
-      ["frotaRenovacao"],
-      "rpc_parque_renovacao_bi",
-    );
-  } catch (err) {
-    throw new Error(`[biRpcService.fetchParqueRenovacaoBI] ${err instanceof Error ? err.message : "Unknown error"}`);
-  }
-}
-
-/**
- * Calls rpc_operacional_bi — returns aggregated technician productivity metrics.
- */
-export async function fetchOperacionalBI(): Promise<RpcOperacionalBI> {
-  try {
-    const { data, error } = await invokeBiRpc("rpc_operacional_bi");
-    if (error) throw new Error(error.message);
-    return normalizeRpcObject(
-      data,
-      OPERACIONAL_BI_DEFAULTS,
-      ["kpis"],
-      ["kmPorTecnico", "utilizacaoPorTecnico", "agendaPorStatus", "agendaPorTipo"],
-      "rpc_operacional_bi",
-    );
-  } catch (err) {
-    throw new Error(`[biRpcService.fetchOperacionalBI] ${err instanceof Error ? err.message : "Unknown error"}`);
-  }
-}
-
-/**
- * Calls rpc_produtos_bi — returns aggregated installed base (parque) metrics.
- */
-export async function fetchProdutosBI(): Promise<RpcProdutosBI> {
-  try {
-    const { data, error } = await invokeBiRpc("rpc_produtos_bi");
-    if (error) throw new Error(error.message);
-    return normalizeRpcObject(
-      data,
-      PRODUTOS_BI_DEFAULTS,
-      ["kpis"],
-      ["porGrupo", "porMarca", "topModelos"],
-      "rpc_produtos_bi",
-    );
-  } catch (err) {
-    throw new Error(`[biRpcService.fetchProdutosBI] ${err instanceof Error ? err.message : "Unknown error"}`);
   }
 }

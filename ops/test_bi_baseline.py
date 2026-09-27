@@ -25,8 +25,10 @@ def test_summary_separates_error_and_timeout_rates() -> None:
             "case": "monthly",
             "status": "ok",
             "query_ms": 10,
+            "db_ms": 8,
             "api_ms": 15,
             "payload_bytes": 100,
+            "rows_returned": 3,
             "cache_hit": False,
         },
         {
@@ -38,8 +40,10 @@ def test_summary_separates_error_and_timeout_rates() -> None:
             "status": "error",
             "error_code": "BI_QUERY_TIMEOUT",
             "query_ms": 100,
+            "db_ms": 90,
             "api_ms": 101,
             "payload_bytes": 200,
+            "rows_returned": 5,
             "cache_hit": True,
         },
     ]
@@ -48,6 +52,8 @@ def test_summary_separates_error_and_timeout_rates() -> None:
     assert group["error_rate"] == 0.5
     assert group["timeout_rate"] == 0.5
     assert group["query_ms"]["p50"] == 55.0
+    assert group["db_ms"]["p50"] == 49.0
+    assert group["rows_returned"]["p50"] == 4.0
     assert group["cache_hit_rate"] == 0.5
 
 

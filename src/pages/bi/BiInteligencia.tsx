@@ -17,12 +17,19 @@ function SectionFallback() {
 }
 
 export default function BiInteligencia() {
-  const { dateRange, categoria, funil } = useNegociosFilter();
+  const { dateRange, categoria, funil, vendedor, cidade } = useNegociosFilter();
 
   return (
     <div className="p-8 space-y-5">
       <Suspense fallback={<SectionFallback />}>
-        <InteligenciaSection active dateRange={dateRange} categoria={categoria} funil={funil} />
+        <InteligenciaSection
+          active
+          dateRange={dateRange}
+          categoria={categoria}
+          funil={funil}
+          vendedor={vendedor || undefined}
+          cidade={cidade || undefined}
+        />
       </Suspense>
     </div>
   );

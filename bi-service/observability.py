@@ -82,6 +82,23 @@ def payload_size(data: object) -> int:
         return 0
 
 
+def rows_returned(data: object) -> int | None:
+    """Return a conservative row count for telemetry without inspecting PII.
+
+    Most BI contracts expose either a top-level list or a paginated ``rows``
+    array.  When a response is a nested aggregate (cards/series), returning
+    ``None`` is more honest than inventing a count from every nested array.
+    """
+
+    if isinstance(data, list):
+        return len(data)
+    if isinstance(data, dict):
+        rows = data.get("rows")
+        if isinstance(rows, list):
+            return len(rows)
+    return None
+
+
 def emit_bi_query(**fields: Any) -> None:
     """Emit a redacted structured event through the service stdout logger."""
 

@@ -17,11 +17,16 @@ function SectionFallback() {
 }
 
 export default function BiPedidos() {
-  const { dateRange } = useNegociosFilter();
+  const { dateRange, vendedor, cidade } = useNegociosFilter();
   return (
     <div className="p-8 space-y-5">
       <Suspense fallback={<SectionFallback />}>
-        <PedidosSection active dateRange={dateRange} />
+        <PedidosSection
+          active
+          dateRange={dateRange}
+          vendedor={vendedor || undefined}
+          cidade={cidade || undefined}
+        />
       </Suspense>
     </div>
   );

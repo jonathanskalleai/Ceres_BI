@@ -21,6 +21,9 @@ interface NegociosPerdidosModalProps {
   vendedor?: string | null;
   cidade?: string | null;
   funis?: string[] | null;
+  produto?: string | null;
+  origem?: string | null;
+  motivoPerda?: string | null;
   periodoLabel?: string;
 }
 
@@ -32,6 +35,9 @@ export function NegociosPerdidosModal({
   vendedor,
   cidade,
   funis,
+  produto,
+  origem,
+  motivoPerda,
   periodoLabel,
 }: NegociosPerdidosModalProps) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -42,11 +48,14 @@ export function NegociosPerdidosModal({
     vendedor: vendedor ?? undefined,
     cidade: cidade ?? undefined,
     funis: funis && funis.length > 0 ? funis : undefined,
+    produto: produto ?? undefined,
+    origem: origem ?? undefined,
+    motivoPerda: motivoPerda ?? undefined,
     page: 1,
     enabled: open,
   });
 
-  const rows = data?.rows ?? [];
+  const rows = useMemo(() => data?.rows ?? [], [data?.rows]);
 
   const filtered = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();

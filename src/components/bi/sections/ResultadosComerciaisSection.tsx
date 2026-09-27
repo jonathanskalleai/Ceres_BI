@@ -82,7 +82,7 @@ export default function ResultadosComerciaisSection({ active, dateRange, vendedo
 
   const kpis = acoesData?.kpis ?? EMPTY_KPIS;
   const funil = gestaoData?.funil ?? EMPTY_FUNIL;
-  const taxaGanho = funil.oportunidades > 0 ? (funil.ganhos / funil.oportunidades) * 100 : null;
+  const taxaGanho = funil.taxaGanho ?? null;
   const loading = acoesLoading || gestaoLoading;
 
   return (

@@ -20,8 +20,8 @@ function zebra(i: number): string {
   return i % 2 === 1 ? "bg-foreground/[0.02]" : "";
 }
 
-/** Clientes ordenados por dias sem contato (drill-down do chart de risco). Mantido internamente — sem consumer apos Story 2-A. */
-function SemContatoTable({ rows }: { rows: AcoesSemContatoRow[] }) {
+/** Clientes ordenados por dias sem contato (drill-down do chart de risco). */
+export function SemContatoTable({ rows }: { rows: AcoesSemContatoRow[] }) {
   return (
     <Wrapper>
       <thead className="sticky top-0 z-10 bg-[var(--voux-card-from)]">

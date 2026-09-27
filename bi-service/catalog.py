@@ -67,6 +67,8 @@ RPC_CATALOG: dict[str, RpcSpec] = {
     "rpc_acoes_mapa_oportunidades": RpcSpec(("p_vendedor", "p_cidade", "p_from", "p_to"), _ACOES),
     "rpc_acoes_pedidos_ganhos": RpcSpec(("p_from", "p_to", "p_vendedor", "p_cidade", "p_limit", "p_offset", "p_funis"), _ACOES, ("p_from", "p_to")),
     "rpc_acoes_negocios_perdidos": RpcSpec(("p_from", "p_to", "p_vendedor", "p_cidade", "p_limit", "p_offset", "p_funis"), _ACOES, ("p_from", "p_to")),
+    "rpc_acoes_pedidos_ganhos_filtrado": RpcSpec(("p_from", "p_to", "p_vendedor", "p_cidade", "p_limit", "p_offset", "p_funis", "p_produto", "p_origem", "p_banco", "p_condicao"), _ACOES, ("p_from", "p_to")),
+    "rpc_acoes_negocios_perdidos_filtrado": RpcSpec(("p_from", "p_to", "p_vendedor", "p_cidade", "p_limit", "p_offset", "p_funis", "p_produto", "p_origem", "p_motivo_perda", "p_condicao"), _ACOES, ("p_from", "p_to")),
     "rpc_acoes_termometro_fechamento": RpcSpec(("p_from", "p_to", "p_vendedor", "p_cidade", "p_escopo"), _ACOES),
     "rpc_etl_status": RpcSpec((), ("bi.etl-monitor", "bi.admin")),
     "rpc_etl_log": RpcSpec(("p_table_name", "p_limit"), ("bi.etl-monitor", "bi.admin")),

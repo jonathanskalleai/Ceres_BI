@@ -62,7 +62,10 @@ CERESBI_AI_YA_AGENT_V2_ENABLED="$(read_env_value CERESBI_AI_YA_AGENT_V2_ENABLED)
 CERESBI_AI_YA_AGENT_V2_ENABLED="${CERESBI_AI_YA_AGENT_V2_ENABLED:-false}"
 VITE_YA_AGENT_V2_ENABLED="$(read_env_value VITE_YA_AGENT_V2_ENABLED)"
 VITE_BI_API_ENABLED="$(read_env_value VITE_BI_API_ENABLED)"
-VITE_BI_API_ENABLED="${VITE_BI_API_ENABLED:-false}"
+# The Python gateway is the production BI boundary.  A rollback uses the
+# previous immutable web image; disabling the flag would make this release
+# fail closed rather than returning to direct browser-to-Postgres reads.
+VITE_BI_API_ENABLED="${VITE_BI_API_ENABLED:-true}"
 VITE_BI_API_BASE_URL="$(read_env_value VITE_BI_API_BASE_URL)"
 VITE_BI_API_BASE_URL="${VITE_BI_API_BASE_URL:-/api/bi}"
 VITE_ERROR_TRACKING_ENDPOINT="${VITE_ERROR_TRACKING_ENDPOINT:-$(read_env_value VITE_ERROR_TRACKING_ENDPOINT)}"
@@ -107,10 +110,10 @@ for required_secret in "${CERESBI_BI_DATABASE_URL_SECRET}" "${CERESBI_BI_JWT_SEC
   fi
 done
 
-case "${VITE_BI_API_ENABLED}" in
-  true|false) ;;
-  *) echo "ERROR: VITE_BI_API_ENABLED must be true or false" >&2; exit 1 ;;
-esac
+if [ "${VITE_BI_API_ENABLED}" != "true" ]; then
+  echo "ERROR: production releases require VITE_BI_API_ENABLED=true; rollback with the previous immutable image" >&2
+  exit 1
+fi
 
 for required in VITE_SUPABASE_URL VITE_SUPABASE_PUBLISHABLE_KEY; do
   if [ -z "${!required:-}" ]; then

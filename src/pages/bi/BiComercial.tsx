@@ -93,8 +93,13 @@ export default function BiComercial() {
         <TabsContent value="mercado" className="space-y-6">
           <PositionCurrentNotice>Carteira de clientes representa o retrato mais recente disponível.</PositionCurrentNotice>
           <Suspense fallback={<SectionFallback />}>
-            <AdminSection active={tab === "mercado"} dateRange={dateRange} />
-            <InteligenciaFinanceiraSection active={tab === "mercado"} dateRange={dateRange} />
+            <AdminSection active={tab === "mercado"} dateRange={dateRange} cidade={cidade || undefined} />
+            <InteligenciaFinanceiraSection
+              active={tab === "mercado"}
+              dateRange={dateRange}
+              vendedor={vendedor || undefined}
+              cidade={cidade || undefined}
+            />
           </Suspense>
         </TabsContent>
       </Tabs>

@@ -8,6 +8,7 @@ import { HorizontalBarChart, VerticalBarChart, PieChartWithLabels } from "@/comp
 import { CHART_COLORS } from "@/lib/chartPalette";
 import { formatDias, formatMonthYear, toISODate, getPreviousPeriod, calcTrend } from "@/lib/dateUtils";
 import type { RpcServicosBI } from "@/types/biRpc";
+import { BiErrorState } from "@/components/bi/BiErrorState";
 
 const EMPTY: RpcServicosBI = {
   kpis: { totalOS: 0, abertas: 0, taxaFechamento: 0, tempoMedioResolucao: 0, tempoMedianoResolucao: 0, totalOcorrencias: 0 },
@@ -24,7 +25,7 @@ export default function ServicosSection({ active, dateRange }: Props) {
   const from = useMemo(() => toISODate(dateRange?.from), [dateRange?.from]);
   const to = useMemo(() => toISODate(dateRange?.to ?? dateRange?.from), [dateRange?.to, dateRange?.from]);
 
-  const { data, isLoading } = useServicosBIRpc({ from, to, enabled: active && !!from });
+  const { data, isLoading, error, refetch } = useServicosBIRpc({ from, to, enabled: active && !!from });
   const agg = data ?? EMPTY;
   const { kpis } = agg;
 
@@ -35,8 +36,22 @@ export default function ServicosSection({ active, dateRange }: Props) {
   const { data: dataPrev } = useServicosBIRpc({ from: fromPrev, to: toPrev, enabled: active && !!fromPrev });
   const kpisPrev = (dataPrev ?? EMPTY).kpis;
 
+  if (error && !data) {
+    return (
+      <BiErrorState
+        message="Não foi possível carregar os serviços. Os valores não foram substituídos por zero."
+        onRetry={() => void refetch()}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6 pt-4">
+      {error && data && (
+        <p role="status" className="rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs text-muted-foreground">
+          A última resposta válida continua visível; a atualização mais recente falhou.
+        </p>
+      )}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <KPICard title="Total OS" value={kpis.totalOS.toLocaleString("pt-BR")} icon={Wrench} loading={isLoading}
           previousValue={kpisPrev.totalOS.toLocaleString("pt-BR")} trend={calcTrend(kpis.totalOS, kpisPrev.totalOS)} dataSource="mirror.ordens_servico · COUNT(*) por os_dthabertura" />

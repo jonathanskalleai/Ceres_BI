@@ -14,6 +14,10 @@ interface DesempenhoDetalheListasProps {
   vendedor?: string | null;
   cidade?: string | null;
   funis?: string[] | null;
+  produto?: string | null;
+  origem?: string | null;
+  banco?: string | null;
+  motivoPerda?: string | null;
   defaultTab?: DetalheListTab;
   className?: string;
 }
@@ -24,6 +28,10 @@ export function DesempenhoDetalheListas({
   vendedor,
   cidade,
   funis,
+  produto,
+  origem,
+  banco,
+  motivoPerda,
   defaultTab = "ganhos",
   className,
 }: DesempenhoDetalheListasProps) {
@@ -35,7 +43,7 @@ export function DesempenhoDetalheListas({
   useEffect(() => {
     setPedidosPage(1);
     setPerdidosPage(1);
-  }, [from, to, vendedor, cidade, funis]);
+  }, [from, to, vendedor, cidade, funis, produto, origem, banco, motivoPerda]);
 
   const fromParam = from ?? undefined;
   const toParam = to ?? undefined;
@@ -53,6 +61,9 @@ export function DesempenhoDetalheListas({
     vendedor: vendedorParam,
     cidade: cidadeParam,
     funis: funisParam,
+    produto: produto ?? undefined,
+    origem: origem ?? undefined,
+    banco: banco ?? undefined,
     page: pedidosPage,
     enabled: tab === "ganhos",
   });
@@ -67,6 +78,9 @@ export function DesempenhoDetalheListas({
     vendedor: vendedorParam,
     cidade: cidadeParam,
     funis: funisParam,
+    produto: produto ?? undefined,
+    origem: origem ?? undefined,
+    motivoPerda: motivoPerda ?? undefined,
     page: perdidosPage,
     enabled: tab === "perdidos",
   });

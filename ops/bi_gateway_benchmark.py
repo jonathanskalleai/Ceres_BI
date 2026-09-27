@@ -39,6 +39,8 @@ class Sample:
     payload_bytes: int | None
     cache_hit: bool | None
     error_code: str | None
+    db_ms: float | None = None
+    rows_returned: int | None = None
 
 
 def _number(value: Any) -> float | None:
@@ -64,8 +66,10 @@ def _percentile(values: list[float], percentile: float) -> float | None:
 def summarize(samples: list[Sample]) -> dict[str, Any]:
     wall = [sample.wall_ms for sample in samples]
     query = [sample.query_ms for sample in samples if sample.query_ms is not None]
+    db = [sample.db_ms for sample in samples if sample.db_ms is not None]
     api = [sample.api_ms for sample in samples if sample.api_ms is not None]
     payload = [sample.payload_bytes for sample in samples if sample.payload_bytes is not None]
+    rows = [sample.rows_returned for sample in samples if sample.rows_returned is not None]
     successful = [sample for sample in samples if sample.envelope_status in {"ok", "partial"}]
     errors = [
         sample
@@ -83,8 +87,10 @@ def summarize(samples: list[Sample]) -> dict[str, Any]:
         "envelope_status_counts": _counts(sample.envelope_status or "transport_error" for sample in samples),
         "wall_ms": _summary(wall),
         "query_ms": _summary(query),
+        "db_ms": _summary(db),
         "api_ms": _summary(api),
         "payload_bytes": _summary(payload),
+        "rows_returned": _summary(rows),
         "cache_hit_rate": round(sum(cache_values) / len(cache_values), 6) if cache_values else None,
         "error_codes": _counts(sample.error_code for sample in errors if sample.error_code),
     }
@@ -155,6 +161,8 @@ def _request_once(url: str, rpc: str, params: dict[str, Any], token: str, timeou
         int(metrics["payload_bytes"]) if isinstance(metrics.get("payload_bytes"), (int, float)) else None,
         metrics.get("cache_hit") if isinstance(metrics.get("cache_hit"), bool) else None,
         str(error_code) if error_code else None,
+        _number(metrics.get("db_ms")),
+        int(metrics["rows_returned"]) if isinstance(metrics.get("rows_returned"), (int, float)) else None,
     )
 
 

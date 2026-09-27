@@ -67,6 +67,8 @@ export interface AcoesFunil {
   perdidos: number;
   /** SUM(ngo_vlrtotalnegociado) dos perdidos — valor POTENCIAL, nao faturado. */
   valorPerdido: number;
+  /** Ganhos / oportunidades da coorte, calculado no PostgreSQL. */
+  taxaGanho?: number | null;
   /** NULL quando nao ha oportunidades (divisao por zero) — exibir "—". */
   visitasPorOportunidade: number | null;
   /** NULL quando nao ha ganhos (divisao por zero) — exibir "—". */

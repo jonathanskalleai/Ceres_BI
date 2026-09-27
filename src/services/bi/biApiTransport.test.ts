@@ -59,6 +59,25 @@ describe("biApiTransport", () => {
     fetchMock.mockRestore();
   });
 
+  it("uses the versioned route for read-model freshness metadata", async () => {
+    vi.stubEnv("VITE_BI_API_ENABLED", "true");
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({
+        status: "ok",
+        data: { manifest: [] },
+        requestId: "req-status",
+        fetchedAt: "2026-09-23T00:00:00Z",
+      }), { status: 200, headers: { "Content-Type": "application/json" } }),
+    );
+
+    await expect(fetchBiApi("/model-status", {})).resolves.toEqual({ manifest: [] });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/bi/v1/model-status",
+      expect.objectContaining({ headers: expect.objectContaining({ Authorization: "Bearer test-token" }) }),
+    );
+    fetchMock.mockRestore();
+  });
+
   it("does not convert a partial response into fake zeros", async () => {
     vi.stubEnv("VITE_BI_API_ENABLED", "true");
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(

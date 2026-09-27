@@ -5,12 +5,15 @@ import { HorizontalBarChart, PieChart } from "@/components/bi/charts";
 import { CHART_COLORS, POSITIVE_COLOR, NEGATIVE_COLOR } from "@/lib/chartPalette";
 import { formatBRL } from "@/lib/dateUtils";
 import { type CategoriaFilter } from "@/lib/categoriaFunil";
+import { BiErrorState } from "@/components/bi/BiErrorState";
 
 interface Props {
   active: boolean;
   dateRange?: DateRange;
   categoria?: CategoriaFilter;
   funil?: string;
+  vendedor?: string;
+  cidade?: string;
 }
 
 function SectionTitle({ label }: { label: string }) {
@@ -24,9 +27,18 @@ function SectionTitle({ label }: { label: string }) {
   );
 }
 
-export default function InteligenciaSection({ active, dateRange, categoria, funil }: Props) {
-  const data = useInteligenciaBIRpc(active, dateRange, categoria, funil);
+export default function InteligenciaSection({ active, dateRange, categoria, funil, vendedor, cidade }: Props) {
+  const data = useInteligenciaBIRpc(active, dateRange, categoria, funil, undefined, vendedor, cidade);
   const { isLoading } = data;
+  const hasUsableData = data.winRatePorVendedor.length > 0
+    || data.motivosPerda.length > 0
+    || data.visitasPorNegocioGanho.length > 0
+    || data.sharePorBanco.length > 0
+    || data.receitaPorCidade.length > 0
+    || data.frotaRenovacao.length > 0
+    || data.slaPorFilial.length > 0
+    || data.slaPorTipoOS.length > 0
+    || data.mixFaturamento.total > 0;
 
   const winRateData = data.winRatePorVendedor.map((v) => ({
     name: v.name,
@@ -76,6 +88,14 @@ export default function InteligenciaSection({ active, dateRange, categoria, funi
 
   return (
     <div className="space-y-8 pt-4">
+      {data.errors.length > 0 && !hasUsableData && !isLoading && (
+        <BiErrorState message="Nenhum bloco de Inteligência pôde ser carregado." />
+      )}
+      {data.errors.length > 0 && hasUsableData && (
+        <div role="status" className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-[var(--voux-text-primary)]">
+          Alguns blocos de Inteligência estão indisponíveis. Os gráficos carregados continuam válidos; campos ausentes não significam zero.
+        </div>
+      )}
       {/* BLOCO 1: Funil & Esforco */}
       <SectionTitle label="EFICIENCIA DO FUNIL" />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

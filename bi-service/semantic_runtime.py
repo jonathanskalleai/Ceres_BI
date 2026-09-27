@@ -17,6 +17,7 @@ from observability import (
     filter_hash,
     payload_size,
     period_case,
+    rows_returned,
     safe_request_id,
 )
 from schemas import BiEnvelope, BiMetrics, BiRpcRequest, BiSnapshot
@@ -59,8 +60,9 @@ async def execute_semantic_rpc(
     )
     source = "rpc"
     try:
-        async def compute() -> tuple[Any, BiSnapshot]:
+        async def compute() -> tuple[Any, BiSnapshot, float]:
             nonlocal source
+            db_started_at = perf_counter()
             snapshot = await asyncio.to_thread(
                 fetch_semantic_snapshot,
                 database,
@@ -70,23 +72,26 @@ async def execute_semantic_rpc(
             )
             if snapshot is not None:
                 source = "read_model"
-                return snapshot
+                return snapshot[0], snapshot[1], round((perf_counter() - db_started_at) * 1000, 3)
             data = await asyncio.to_thread(
                 database.execute_rpc,
                 rpc_name,
                 args,
             )
-            return data, BiSnapshot(model=dashboard_id, status="ready", is_stale=False, source="rpc")
+            return data, BiSnapshot(model=dashboard_id, status="ready", is_stale=False, source="rpc"), round((perf_counter() - db_started_at) * 1000, 3)
 
         cached = await query_cache.get_or_compute(cache_key, compute)
-        data, snapshot = cached.value
+        data, snapshot, measured_db_ms = cached.value
         source = snapshot.source or source
         query_ms = 0.0 if cached.hit else round((perf_counter() - query_started_at) * 1000, 3)
+        db_ms = 0.0 if cached.hit else measured_db_ms
         api_ms = round((perf_counter() - route_started_at) * 1000, 3)
         metrics = BiMetrics(
             query_ms=query_ms,
+            db_ms=db_ms,
             api_ms=api_ms,
             payload_bytes=payload_size(data),
+            rows_returned=rows_returned(data),
             cache_hit=cached.hit,
         )
         response = BiEnvelope.success(data, rid, metrics)
@@ -102,8 +107,10 @@ async def execute_semantic_rpc(
             filters_hash=filter_hash(payload.params),
             status="ok",
             query_ms=query_ms,
+            db_ms=db_ms,
             api_ms=api_ms,
             payload_bytes=metrics.payload_bytes,
+            rows_returned=metrics.rows_returned,
             cache_hit=cached.hit,
             source=source,
         )
@@ -113,7 +120,7 @@ async def execute_semantic_rpc(
         api_ms = round((perf_counter() - route_started_at) * 1000, 3)
         code = error_code(exc)
         LOGGER.exception("bi_semantic_query_failed rpc=%s request_id=%s", rpc_name, rid)
-        metrics = BiMetrics(query_ms=query_ms, api_ms=api_ms, payload_bytes=0, cache_hit=False)
+        metrics = BiMetrics(query_ms=query_ms, db_ms=None, api_ms=api_ms, payload_bytes=0, rows_returned=None, cache_hit=False)
         response = BiEnvelope.failure(
             rid,
             message="Não foi possível carregar este bloco de dados.",
@@ -131,8 +138,10 @@ async def execute_semantic_rpc(
             filters_hash=filter_hash(payload.params),
             status="error",
             query_ms=query_ms,
+            db_ms=None,
             api_ms=api_ms,
             payload_bytes=metrics.payload_bytes,
+            rows_returned=None,
             cache_hit=False,
             error_code=code,
         )
