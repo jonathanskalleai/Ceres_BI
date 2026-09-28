@@ -22,7 +22,15 @@ set -euo pipefail
 STACK_NAME="ceresbi"
 
 docker_cmd() {
-  sudo docker "$@"
+  # The VPS operator is intentionally not in the docker group. Preserve only
+  # deployment configuration needed by Compose interpolation and explicitly
+  # remove credential values before sudo starts the Docker client.
+  sudo -E env \
+    -u CERESBI_AI_OPENROUTER_API_KEY \
+    -u CERESBI_AI_DATABASE_URL \
+    -u CERESBI_AI_JOB_TOKEN \
+    -u SUPABASE_JWT_SECRET \
+    docker "$@"
 }
 
 smoke_check() {
