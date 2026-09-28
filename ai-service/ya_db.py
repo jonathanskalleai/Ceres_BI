@@ -11,11 +11,12 @@ import psycopg2
 from fastapi import HTTPException
 
 from ai_logger import log_exception
+from secret_value import read_secret
 
 
-DATABASE_URL = os.getenv("DATABASE_URL", "")
-STATE_DATABASE_URL = os.getenv("STATE_DATABASE_URL") or DATABASE_URL
-ANALYTICAL_DATABASE_URL = os.getenv("ANALYTICAL_DATABASE_URL") or DATABASE_URL
+DATABASE_URL = read_secret("DATABASE_URL")
+STATE_DATABASE_URL = read_secret("STATE_DATABASE_URL") or DATABASE_URL
+ANALYTICAL_DATABASE_URL = read_secret("ANALYTICAL_DATABASE_URL") or DATABASE_URL
 
 
 def _bounded_ms(name: str, default: int, maximum: int) -> int:

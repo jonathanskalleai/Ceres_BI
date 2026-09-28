@@ -12,6 +12,7 @@ import httpx
 import psycopg2
 from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from auth import AuthenticatedUser
@@ -21,14 +22,16 @@ from ya_agent_prompt import PROMPT_VERSION
 from ya_catalog import CATALOG_VERSION
 from ya_db import database_health
 from ya_provider import provider_health
+from ai_logger import log_event, log_exception
+from secret_value import read_secret
 
 # --- Configuration ---
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+OPENROUTER_API_KEY = read_secret("OPENROUTER_API_KEY")
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 MODEL = "meta-llama/llama-3.3-70b-instruct"
 MODEL_VERSION = "field-signals-v3"
-DATABASE_URL = os.getenv("DATABASE_URL", "")
-AI_JOB_TOKEN = os.getenv("AI_JOB_TOKEN", "")
+DATABASE_URL = read_secret("DATABASE_URL")
+AI_JOB_TOKEN = read_secret("AI_JOB_TOKEN")
 
 ADMIN_FILTER = [
     'CAMILA ESSER COLET',
@@ -130,7 +133,7 @@ async def call_openrouter(
             data = response.json()
             return data["choices"][0]["message"]["content"]
     except Exception as e:
-        print(f"[ERROR] OpenRouter call failed: {e}")
+        log_exception("ai_openrouter_call_failed", e)
         raise
 
 
@@ -146,7 +149,7 @@ def run_query(sql: str, params=None):
         cur.close()
         return [dict(zip(columns, row)) for row in rows]
     except Exception as e:
-        print(f"[ERROR] Database query failed: {e}")
+        log_exception("ai_database_query_failed", e)
         raise
     finally:
         if conn:
@@ -266,7 +269,13 @@ async def call_verified_json(
         parsed = try_parse_json(response)
         if validator(parsed):
             return parsed
-        print(f"[WARN] {label} returned invalid structured JSON (attempt {attempt + 1}/{retries + 1})")
+        log_event(
+            30,
+            "ai_structured_response_invalid",
+            label=label,
+            attempt=attempt + 1,
+            max_attempts=retries + 1,
+        )
         current_prompt = prompt + retry_instruction
     raise ValueError(f"{label} não retornou JSON válido após {retries + 1} tentativas")
 
@@ -296,26 +305,48 @@ def last_closed_week(today: Optional[date] = None) -> tuple[date, date]:
 
 # --- Endpoints ---
 
+@app.get("/live")
+async def live():
+    """Liveness probe; readiness and database dependencies live in /health."""
+    return {"status": "ok", "service": "ceresbi-ai"}
+
+
 @app.get("/health")
 async def health():
-    return {
-        "status": "ok",
-        "process": "ok",
-        "database": database_health(),
-        "provider": provider_health(),
-        "catalog_version": CATALOG_VERSION,
-        "prompt_version": PROMPT_VERSION,
-    }
+    database = database_health()
+    provider = provider_health()
+    service_ok = (
+        database.get("state") == "ok"
+        and database.get("analytical") == "ok"
+        and provider.get("configured") is True
+    )
+    return JSONResponse(
+        status_code=200 if service_ok else 503,
+        content={
+            "status": "ok" if service_ok else "degraded",
+            "process": "ok",
+            "database": database,
+            "provider": provider,
+            "catalog_version": CATALOG_VERSION,
+            "prompt_version": PROMPT_VERSION,
+        },
+    )
 
 
 @app.get("/ai/health")
 async def ai_health():
     configured = bool(OPENROUTER_API_KEY and DATABASE_URL and AI_JOB_TOKEN)
-    return {
-        "status": "ok" if configured else "degraded",
-        "model": MODEL,
-        "schedulerConfigured": bool(AI_JOB_TOKEN),
-    }
+    database = database_health()
+    ready = configured and database.get("state") == "ok" and database.get("analytical") == "ok"
+    return JSONResponse(
+        status_code=200 if ready else 503,
+        content={
+            "status": "ok" if ready else "degraded",
+            "model": MODEL,
+            "schedulerConfigured": bool(AI_JOB_TOKEN),
+            "database": database,
+        },
+    )
 
 
 @app.post("/ai/client-analysis")
@@ -353,8 +384,8 @@ Responda de forma clara e objetiva em português."""
         analysis = await call_openrouter(prompt, system_prompt)
         return {"analysis": analysis}
     except Exception as e:
-        print(f"[ERROR] client-analysis failed: {e}")
-        return {"analysis": f"Erro ao gerar análise: {str(e)}"}
+        log_exception("ai_client_analysis_failed", e)
+        return {"analysis": "Não foi possível gerar a análise agora. Tente novamente."}
 
 
 @app.post("/ai/consultores-report")
@@ -409,8 +440,8 @@ async def consultores_report(
             run_query_async(pedidos_sql),
         )
     except Exception as e:
-        print(f"[ERROR] consultores-report DB query failed: {e}")
-        return {"error": f"Erro ao consultar banco de dados: {str(e)}"}
+        log_exception("ai_consultores_report_query_failed", e)
+        return {"error": "Não foi possível consultar os dados agora. Tente novamente."}
 
     # Aggregate by consultor
     consultores_data = {}
@@ -587,8 +618,8 @@ Responda APENAS com JSON válido no seguinte formato:
 
         return result
     except Exception as e:
-        print(f"[ERROR] consultores-report AI call failed: {e}")
-        return {"error": f"Erro ao gerar relatório: {str(e)}"}
+        log_exception("ai_consultores_report_generation_failed", e)
+        return {"error": "Não foi possível gerar o relatório agora. Tente novamente."}
 
 
 @app.post("/ai/negocios-insights")
@@ -627,8 +658,8 @@ async def negocios_insights(_user: AuthenticatedUser):
             run_query_async(observacoes_sql),
         )
     except Exception as e:
-        print(f"[ERROR] negocios-insights DB query failed: {e}")
-        return {"error": f"Erro ao consultar banco de dados: {str(e)}"}
+        log_exception("ai_negocios_insights_query_failed", e)
+        return {"error": "Não foi possível consultar os dados agora. Tente novamente."}
 
     # Format data for prompt
     resumo_text = json.dumps(negocios_resumo, default=str, ensure_ascii=False)
@@ -674,8 +705,8 @@ Responda APENAS com JSON válido no seguinte formato:
         parsed = try_parse_json(ai_response)
         return {"insights": parsed}
     except Exception as e:
-        print(f"[ERROR] negocios-insights AI call failed: {e}")
-        return {"error": f"Erro ao gerar insights: {str(e)}"}
+        log_exception("ai_negocios_insights_generation_failed", e)
+        return {"error": "Não foi possível gerar os insights agora. Tente novamente."}
 
 
 # --- Weekly Insights Helpers ---
@@ -690,7 +721,7 @@ def run_insert(sql: str, params=None):
         conn.commit()
         cur.close()
     except Exception as e:
-        print(f"[ERROR] Database insert failed: {e}")
+        log_exception("ai_database_insert_failed", e)
         if conn:
             conn.rollback()
         raise
@@ -718,7 +749,7 @@ def run_transaction(statements: list[tuple[str, Any]]) -> None:
     except Exception as e:
         if conn:
             conn.rollback()
-        print(f"[ERROR] Database transaction failed: {e}")
+        log_exception("ai_database_transaction_failed", e)
         raise
     finally:
         if conn:
@@ -1412,7 +1443,7 @@ async def generate_field_signal_narrative(week: date) -> dict[str, Any] | None:
             best_valid_response if not field_analysis_needs_expansion(best_valid_response) else {}, fallback
         )
     except Exception as exc:
-        print(f"[ERROR] Field signal narrative failed: {exc}")
+        log_exception("ai_field_signal_narrative_failed", exc)
         analysis = normalize_field_analysis({}, fallback)
 
     await run_insert_async(
@@ -1510,7 +1541,11 @@ async def generate_weekly_signals(
             await persist_signal_classifications(results)
             classified += len(results)
         except Exception as exc:
-            print(f"[ERROR] Field signals batch {offset // batch_size + 1} failed: {exc}")
+            log_exception(
+                "ai_field_signal_batch_failed",
+                exc,
+                batch=offset // batch_size + 1,
+            )
             return {
                 "error": "Falha ao classificar sinais; os lotes já persistidos permanecem idempotentes.",
                 "classificados": classified,
@@ -1680,8 +1715,8 @@ async def generate_weekly_insights(
             run_query_async(carteira_parada_sql),
         )
     except Exception as e:
-        print(f"[ERROR] generate-weekly-insights DB queries failed: {e}")
-        return {"error": f"Erro ao consultar banco de dados: {str(e)}"}
+        log_exception("ai_weekly_insights_query_failed", e)
+        return {"error": "Não foi possível consultar os dados agora. Tente novamente."}
 
     # Format descriptions for the prompt
     acoes_text_lines = []
@@ -1769,8 +1804,8 @@ Regras: selecione 3 a 5 insights sólidos; em cada insight, tipo é somente risc
             label="Insight semanal de equipe",
         )
     except Exception as e:
-        print(f"[ERROR] OpenRouter equipe call failed: {e}")
-        return {"error": f"Erro ao gerar insight de equipe: {str(e)}"}
+        log_exception("ai_weekly_team_generation_failed", e)
+        return {"error": "Não foi possível gerar o insight de equipe agora. Tente novamente."}
 
     # Save EQUIPE
     insert_sql = """
@@ -1787,7 +1822,7 @@ Regras: selecione 3 a 5 insights sólidos; em cada insight, tipo é somente risc
             json.dumps(equipe_dados, ensure_ascii=False) if isinstance(equipe_dados, dict) else json.dumps({"raw": equipe_dados}, ensure_ascii=False)
         ))
     except Exception as e:
-        print(f"[ERROR] Failed to save equipe insight: {e}")
+        log_exception("ai_weekly_team_persist_failed", e)
 
     # INDIVIDUAL — para cada consultor, filtra suas descrições
     individuais_count = 0
@@ -1858,7 +1893,7 @@ Regras: nota é somente A, B, C ou D. pontos_fortes e pontos_atencao podem ser [
                 label=f"Insight semanal individual de {nome}",
             )
         except Exception as e:
-            print(f"[ERROR] OpenRouter individual call failed for {nome}: {e}")
+            log_exception("ai_weekly_individual_generation_failed", e)
             continue
 
         try:
@@ -1868,6 +1903,6 @@ Regras: nota é somente A, B, C ou D. pontos_fortes e pontos_atencao podem ser [
             ))
             individuais_count += 1
         except Exception as e:
-            print(f"[ERROR] Failed to save individual insight for {nome}: {e}")
+            log_exception("ai_weekly_individual_persist_failed", e)
 
     return {"success": True, "equipe": 1, "individuais": individuais_count}

@@ -19,6 +19,17 @@ CERESBI_AI_JOB_TOKEN=<token aleatório longo>
 coloque em commits, logs ou comandos de terminal que possam aparecer na lista
 de processos.
 
+Na primeira migração para Swarm secrets, o deploy lê o JWT apenas para criar
+`CERESBI_AI_JWT_SECRET`. Depois disso, a variável pode continuar ausente do
+`.env`: o deploy reutiliza o secret externo e nunca imprime seu valor.
+
+O deploy limita o cache local do BuildKit a 4 GB por padrão e preserva pelo
+menos 1 GB para camadas reutilizáveis. `CERESBI_DOCKER_BUILD_CACHE_MAX`,
+`CERESBI_DOCKER_BUILD_CACHE_RESERVED`, `CERESBI_DOCKER_BUILD_CACHE_MIN_FREE` e
+`CERESBI_DEPLOY_MIN_FREE_GB` podem ser ajustados no `.env` da VPS; o deploy
+recusa iniciar um build se o espaço livre continuar abaixo do limite após a
+limpeza segura do cache.
+
 ## Publicação
 
 No checkout da VPS, execute `bash deploy.sh`. O script recusa diretório sem
@@ -51,3 +62,15 @@ CRON_TZ=America/Sao_Paulo
 O job estruturado reprocessa 14 dias para absorver atualizações tardias, mas
 não duplica classificações nem agregados. Para a carga inicial, execute uma vez
 o endpoint protegido com janela de 90 dias e `max_records=4000`.
+
+## Diagnóstico operacional
+
+Após instalar esta release, `sudo /usr/local/sbin/ceresbi-disk-report` mostra
+espaço, memória, BuildKit, logs, containers e o tamanho lógico do PostgreSQL
+sem imprimir credenciais. O instalador registra um backup lógico diário do
+PostgreSQL em `/var/backups/ceresbi` e um alerta periódico de capacidade.
+
+O backup não apaga cópias antigas automaticamente. A rotação/expurgo dos logs
+históricos do Docker/Supabase e do journal também fica fora do instalador: a
+VPS ainda contém logs grandes que devem ser inspecionados antes de qualquer
+truncamento ou política que remova histórico.

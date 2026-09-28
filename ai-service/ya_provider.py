@@ -11,9 +11,10 @@ import httpx
 from fastapi import HTTPException
 
 from ai_logger import log_event, log_exception
+from secret_value import read_secret
 
 
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+OPENROUTER_API_KEY = read_secret("OPENROUTER_API_KEY")
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 YA_MODEL = os.getenv("YA_CHAT_MODEL", os.getenv("OPENROUTER_MODEL", "meta-llama/llama-3.3-70b-instruct"))
 PROVIDER_TIMEOUT = float(os.getenv("YA_PROVIDER_TIMEOUT", "120.0"))

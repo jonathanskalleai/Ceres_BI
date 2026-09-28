@@ -23,6 +23,23 @@ export default defineConfig(async ({ mode }) => {
       },
     },
     plugins,
+    build: {
+      // Keep heavyweight visualization libraries out of the initial app
+      // chunk. Routes already lazy-load dashboard sections; these explicit
+      // vendor boundaries keep charts, maps and PDF export independently
+      // cacheable and prevent one dashboard from delaying every route.
+      rollupOptions: {
+        output: {
+          manualChunks(id: string) {
+            if (!id.includes("node_modules")) return undefined;
+            if (id.includes("echarts")) return "vendor-charts";
+            if (id.includes("leaflet") || id.includes("react-leaflet")) return "vendor-maps";
+            if (id.includes("jspdf")) return "vendor-pdf";
+            return undefined;
+          },
+        },
+      },
+    },
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),

@@ -15,10 +15,12 @@ from typing import Annotated
 import jwt
 import psycopg2
 from fastapi import Depends, Header, HTTPException, status
+from ai_logger import log_exception
+from secret_value import read_secret
 
 
-DATABASE_URL = os.getenv("STATE_DATABASE_URL") or os.getenv("DATABASE_URL", "")
-SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "")
+DATABASE_URL = read_secret("STATE_DATABASE_URL") or read_secret("DATABASE_URL")
+SUPABASE_JWT_SECRET = read_secret("SUPABASE_JWT_SECRET")
 SUPABASE_JWT_AUDIENCE = os.getenv("SUPABASE_JWT_AUDIENCE", "authenticated")
 
 
@@ -62,6 +64,7 @@ def _database_user(user_id: str, *, require_ya_access: bool) -> CurrentUser:
             )
             row = cur.fetchone()
     except psycopg2.Error as exc:
+        log_exception("ai_auth_database_failed", exc)
         raise HTTPException(status_code=503, detail="Não foi possível validar o acesso à AI") from exc
     finally:
         if conn:

@@ -17,6 +17,7 @@ from config import Settings
 from db import ReadOnlyDatabase
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from logging_config import configure_application_logging
 from observability import (
     emit_bi_query,
@@ -196,9 +197,16 @@ async def execute_rpc(
         return response
 
 
+@app.get("/live")
+@app.get("/api/bi/live")
+async def live() -> dict[str, str]:
+    """Process liveness probe; it intentionally does not touch PostgreSQL."""
+    return {"status": "ok", "service": "ceresbi-bi"}
+
+
 @app.get("/health")
 @app.get("/api/bi/health")
-async def health() -> dict[str, object]:
+async def health() -> JSONResponse:
     database_ok = False
     read_model_health: dict[str, object] = {"status": "unknown"}
     if database.configured:
@@ -216,8 +224,8 @@ async def health() -> dict[str, object]:
             except Exception as exc:
                 logger.error("bi_health_read_models_failed error_class=%s", type(exc).__name__)
                 read_model_health = {"status": "degraded", "staleModels": ["unknown"]}
-    service_ok = database_ok and bool(settings.jwt_secret) and read_model_health.get("status") in {"ready", "unknown"}
-    return {
+    service_ok = database_ok and bool(settings.jwt_secret) and read_model_health.get("status") == "ready"
+    payload = {
         "status": "ok" if service_ok else "degraded",
         "service": "ceresbi-bi",
         "databaseConfigured": database.configured,
@@ -225,6 +233,7 @@ async def health() -> dict[str, object]:
         "jwtConfigured": bool(settings.jwt_secret),
         "readModels": read_model_health,
     }
+    return JSONResponse(status_code=200 if service_ok else 503, content=payload)
 
 
 @app.get("/api/bi/painel/kpis", response_model=BiEnvelope)

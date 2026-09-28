@@ -1,0 +1,7 @@
+[Unit]
+Description=Ceres BI filesystem capacity check
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/usr/local/sbin/ceresbi-disk-check

@@ -45,4 +45,6 @@ COPY docker/web-assets-entrypoint.sh /docker-entrypoint.d/20-ceresbi-assets.sh
 RUN chmod +x /docker-entrypoint.d/20-ceresbi-assets.sh
 
 EXPOSE 80
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD ["wget", "--spider", "--quiet", "http://127.0.0.1/"]
 CMD ["nginx", "-g", "daemon off;"]

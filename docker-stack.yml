@@ -23,6 +23,12 @@ services:
       replicas: 1
       restart_policy:
         condition: any
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 128M
+        reservations:
+          memory: 32M
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.ceresbi.entrypoints=websecure"
@@ -41,18 +47,29 @@ services:
         max-size: "10m"
         max-file: "5"
     environment:
-      OPENROUTER_API_KEY: ${CERESBI_AI_OPENROUTER_API_KEY:?CERESBI_AI_OPENROUTER_API_KEY is required}
-      DATABASE_URL: ${CERESBI_AI_DATABASE_URL:?CERESBI_AI_DATABASE_URL is required}
-      AI_JOB_TOKEN: ${CERESBI_AI_JOB_TOKEN:?CERESBI_AI_JOB_TOKEN is required}
-      SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:?SUPABASE_JWT_SECRET is required}
+      OPENROUTER_API_KEY_FILE: /run/secrets/ai_openrouter_api_key
+      DATABASE_URL_FILE: /run/secrets/ai_database_url
+      AI_JOB_TOKEN_FILE: /run/secrets/ai_job_token
+      SUPABASE_JWT_SECRET_FILE: /run/secrets/ai_jwt_secret
       STATE_DATABASE_URL: ${CERESBI_AI_STATE_DATABASE_URL:-}
       ANALYTICAL_DATABASE_URL: ${CERESBI_AI_ANALYTICAL_DATABASE_URL:-}
       YA_AGENT_V2_ENABLED: ${CERESBI_AI_YA_AGENT_V2_ENABLED:-false}
       YA_CHAT_MODEL: ${CERESBI_AI_YA_CHAT_MODEL:-meta-llama/llama-3.3-70b-instruct}
+    secrets:
+      - ai_openrouter_api_key
+      - ai_database_url
+      - ai_job_token
+      - ai_jwt_secret
     deploy:
       replicas: 1
       restart_policy:
         condition: any
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          memory: 128M
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.ceresbi-ai.entrypoints=websecure"
@@ -197,6 +214,18 @@ volumes:
     driver: local
 
 secrets:
+  ai_openrouter_api_key:
+    external: true
+    name: ${CERESBI_AI_OPENROUTER_API_KEY_SECRET:-ceresbi_ai_openrouter_api_key_v1}
+  ai_database_url:
+    external: true
+    name: ${CERESBI_AI_DATABASE_URL_SECRET:-ceresbi_ai_database_url_v1}
+  ai_job_token:
+    external: true
+    name: ${CERESBI_AI_JOB_TOKEN_SECRET:-ceresbi_ai_job_token_v1}
+  ai_jwt_secret:
+    external: true
+    name: ${CERESBI_AI_JWT_SECRET:-ceresbi_ai_jwt_secret_v1}
   bi_database_url:
     external: true
     name: ${CERESBI_BI_DATABASE_URL_SECRET:-ceresbi_bi_database_url_v1}

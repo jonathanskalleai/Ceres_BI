@@ -15,14 +15,20 @@ from main import app, database, query_cache, require_bi_user
 
 def test_health_reports_missing_configuration_without_exposing_secrets() -> None:
     response = TestClient(app).get("/health")
-    assert response.status_code == 200
+    assert response.status_code == 503
     payload = response.json()
     assert payload["service"] == "ceresbi-bi"
     assert "databaseUrl" not in payload
 
     public_response = TestClient(app).get("/api/bi/health")
-    assert public_response.status_code == 200
+    assert public_response.status_code == 503
     assert public_response.json() == payload
+
+
+def test_live_does_not_depend_on_database_configuration() -> None:
+    response = TestClient(app).get("/live")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok", "service": "ceresbi-bi"}
 
 
 def test_protected_endpoint_requires_bearer_token() -> None:

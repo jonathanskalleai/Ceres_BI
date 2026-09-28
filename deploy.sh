@@ -21,6 +21,10 @@ set -euo pipefail
 
 STACK_NAME="ceresbi"
 
+docker_cmd() {
+  sudo docker "$@"
+}
+
 smoke_check() {
   local url="$1"
   local label="$2"
@@ -89,22 +93,56 @@ CERESBI_BI_CACHE_TTL_SECONDS="$(read_env_value CERESBI_BI_CACHE_TTL_SECONDS)"
 CERESBI_BI_CACHE_MAX_ITEMS="$(read_env_value CERESBI_BI_CACHE_MAX_ITEMS)"
 CERESBI_BI_CACHE_MAX_ENTRY_BYTES="$(read_env_value CERESBI_BI_CACHE_MAX_ENTRY_BYTES)"
 CERESBI_BI_CORS_ORIGINS="$(read_env_value CERESBI_BI_CORS_ORIGINS)"
+CERESBI_DOCKER_BUILD_CACHE_MAX="$(read_env_value CERESBI_DOCKER_BUILD_CACHE_MAX)"
+CERESBI_DOCKER_BUILD_CACHE_MAX="${CERESBI_DOCKER_BUILD_CACHE_MAX:-4GB}"
+CERESBI_DOCKER_BUILD_CACHE_RESERVED="$(read_env_value CERESBI_DOCKER_BUILD_CACHE_RESERVED)"
+CERESBI_DOCKER_BUILD_CACHE_RESERVED="${CERESBI_DOCKER_BUILD_CACHE_RESERVED:-1GB}"
+CERESBI_DOCKER_BUILD_CACHE_MIN_FREE="$(read_env_value CERESBI_DOCKER_BUILD_CACHE_MIN_FREE)"
+CERESBI_DOCKER_BUILD_CACHE_MIN_FREE="${CERESBI_DOCKER_BUILD_CACHE_MIN_FREE:-15GB}"
+CERESBI_DOCKER_BUILD_CACHE_PRUNE_AGE="$(read_env_value CERESBI_DOCKER_BUILD_CACHE_PRUNE_AGE)"
+CERESBI_DOCKER_BUILD_CACHE_PRUNE_AGE="${CERESBI_DOCKER_BUILD_CACHE_PRUNE_AGE:-168h}"
+CERESBI_DEPLOY_MIN_FREE_GB="$(read_env_value CERESBI_DEPLOY_MIN_FREE_GB)"
+CERESBI_DEPLOY_MIN_FREE_GB="${CERESBI_DEPLOY_MIN_FREE_GB:-8}"
+CERESBI_AI_OPENROUTER_API_KEY_SECRET="$(read_env_value CERESBI_AI_OPENROUTER_API_KEY_SECRET)"
+CERESBI_AI_OPENROUTER_API_KEY_SECRET="${CERESBI_AI_OPENROUTER_API_KEY_SECRET:-ceresbi_ai_openrouter_api_key_v1}"
+CERESBI_AI_DATABASE_URL_SECRET="$(read_env_value CERESBI_AI_DATABASE_URL_SECRET)"
+CERESBI_AI_DATABASE_URL_SECRET="${CERESBI_AI_DATABASE_URL_SECRET:-ceresbi_ai_database_url_v1}"
+CERESBI_AI_JOB_TOKEN_SECRET="$(read_env_value CERESBI_AI_JOB_TOKEN_SECRET)"
+CERESBI_AI_JOB_TOKEN_SECRET="${CERESBI_AI_JOB_TOKEN_SECRET:-ceresbi_ai_job_token_v1}"
+CERESBI_AI_JWT_SECRET="$(read_env_value CERESBI_AI_JWT_SECRET)"
+CERESBI_AI_JWT_SECRET="${CERESBI_AI_JWT_SECRET:-ceresbi_ai_jwt_secret_v1}"
 SUPABASE_JWT_SECRET="${SUPABASE_JWT_SECRET:-$(read_env_value SUPABASE_JWT_SECRET)}"
 if [ -z "${SUPABASE_JWT_SECRET}" ] && command -v docker >/dev/null 2>&1; then
-  SUPABASE_JWT_SECRET="$(docker service inspect ceresbi_ai --format '{{range .Spec.TaskTemplate.ContainerSpec.Env}}{{println .}}{{end}}' 2>/dev/null | sed -n 's/^SUPABASE_JWT_SECRET=//p' | tail -n 1)"
+  SUPABASE_JWT_SECRET="$(docker_cmd service inspect ceresbi_ai --format '{{range .Spec.TaskTemplate.ContainerSpec.Env}}{{println .}}{{end}}' 2>/dev/null | sed -n 's/^SUPABASE_JWT_SECRET=//p' | tail -n 1)"
 fi
 export CERESBI_AI_OPENROUTER_API_KEY CERESBI_AI_DATABASE_URL CERESBI_AI_JOB_TOKEN CERESBI_AI_YA_AGENT_V2_ENABLED SUPABASE_JWT_SECRET
-export CERESBI_BI_DATABASE_URL_SECRET CERESBI_BI_JWT_SECRET CERESBI_BI_REFRESH_DATABASE_URL_SECRET CERESBI_BI_DATABASE_POOL_MIN CERESBI_BI_DATABASE_POOL_MAX CERESBI_BI_POOL_WAIT_TIMEOUT_MS CERESBI_BI_LOG_LEVEL CERESBI_BI_STATEMENT_TIMEOUT_MS CERESBI_BI_LOCK_TIMEOUT_MS CERESBI_BI_CACHE_TTL_SECONDS CERESBI_BI_CACHE_MAX_ITEMS CERESBI_BI_CACHE_MAX_ENTRY_BYTES CERESBI_BI_CORS_ORIGINS
+export CERESBI_BI_DATABASE_URL_SECRET CERESBI_BI_JWT_SECRET CERESBI_BI_REFRESH_DATABASE_URL_SECRET CERESBI_BI_DATABASE_POOL_MIN CERESBI_BI_DATABASE_POOL_MAX CERESBI_BI_POOL_WAIT_TIMEOUT_MS CERESBI_BI_LOG_LEVEL CERESBI_BI_STATEMENT_TIMEOUT_MS CERESBI_BI_LOCK_TIMEOUT_MS CERESBI_BI_CACHE_TTL_SECONDS CERESBI_BI_CACHE_MAX_ITEMS CERESBI_BI_CACHE_MAX_ENTRY_BYTES CERESBI_BI_CORS_ORIGINS CERESBI_AI_OPENROUTER_API_KEY_SECRET CERESBI_AI_DATABASE_URL_SECRET CERESBI_AI_JOB_TOKEN_SECRET CERESBI_AI_JWT_SECRET
 
-for required in CERESBI_AI_OPENROUTER_API_KEY CERESBI_AI_DATABASE_URL CERESBI_AI_JOB_TOKEN SUPABASE_JWT_SECRET; do
+for required in CERESBI_AI_OPENROUTER_API_KEY CERESBI_AI_DATABASE_URL CERESBI_AI_JOB_TOKEN; do
   if [ -z "${!required:-}" ]; then
     echo "ERROR: ${required} is missing from .env" >&2
     exit 1
   fi
 done
 
+if [ -z "${SUPABASE_JWT_SECRET}" ] && ! docker_cmd secret inspect "${CERESBI_AI_JWT_SECRET}" >/dev/null 2>&1; then
+  echo "ERROR: SUPABASE_JWT_SECRET is missing and ${CERESBI_AI_JWT_SECRET} does not exist" >&2
+  exit 1
+fi
+
+ensure_docker_secret() {
+  local secret_name="$1"
+  local secret_value="$2"
+
+  if docker_cmd secret inspect "${secret_name}" >/dev/null 2>&1; then
+    return 0
+  fi
+  printf '%s' "${secret_value}" | docker_cmd secret create "${secret_name}" - >/dev/null
+  echo "==> Created missing Swarm secret ${secret_name}"
+}
+
 for required_secret in "${CERESBI_BI_DATABASE_URL_SECRET}" "${CERESBI_BI_JWT_SECRET}" "${CERESBI_BI_REFRESH_DATABASE_URL_SECRET}"; do
-  if ! docker secret inspect "${required_secret}" >/dev/null 2>&1; then
+  if ! docker_cmd secret inspect "${required_secret}" >/dev/null 2>&1; then
     echo "ERROR: required Docker secret ${required_secret} does not exist; provision the dedicated BI credentials before deploying" >&2
     exit 1
   fi
@@ -138,6 +176,44 @@ if [ "${CERESBI_AI_YA_AGENT_V2_ENABLED}" = "true" ]; then
   fi
 fi
 
+prune_build_cache() {
+  local available_kb
+  local minimum_kb
+  local prune_log
+
+  available_kb="$(df -Pk / | awk 'NR == 2 { print $4 }')"
+  minimum_kb="$((CERESBI_DEPLOY_MIN_FREE_GB * 1024 * 1024))"
+  if [ "${available_kb}" -lt "${minimum_kb}" ]; then
+    echo "==> Disk is below ${CERESBI_DEPLOY_MIN_FREE_GB} GB free; pruning BuildKit before build..."
+  fi
+
+  if ! docker_cmd buildx version >/dev/null 2>&1; then
+    echo "ERROR: Docker Buildx is required for bounded build cache" >&2
+    return 1
+  fi
+
+  prune_log="$(mktemp)"
+  if ! docker_cmd buildx prune \
+    --force \
+    --filter "until=${CERESBI_DOCKER_BUILD_CACHE_PRUNE_AGE}" \
+    --max-used-space "${CERESBI_DOCKER_BUILD_CACHE_MAX}" \
+    --reserved-space "${CERESBI_DOCKER_BUILD_CACHE_RESERVED}" \
+    --min-free-space "${CERESBI_DOCKER_BUILD_CACHE_MIN_FREE}" \
+    >"${prune_log}" 2>&1; then
+    tail -n 30 "${prune_log}" >&2
+    rm -f "${prune_log}"
+    return 1
+  fi
+  tail -n 3 "${prune_log}"
+  rm -f "${prune_log}"
+
+  available_kb="$(df -Pk / | awk 'NR == 2 { print $4 }')"
+  if [ "${available_kb}" -lt "${minimum_kb}" ]; then
+    echo "ERROR: insufficient disk after BuildKit pruning; refusing to build" >&2
+    return 1
+  fi
+}
+
 if [ ! -d .git ]; then
   echo "ERROR: $(pwd) is not a Git checkout. Restore it with the documented VPS bootstrap first." >&2
   exit 1
@@ -152,6 +228,14 @@ echo "==> Fetching origin/${DEPLOY_BRANCH}..."
 git fetch origin --prune
 git checkout -B "${DEPLOY_BRANCH}" "origin/${DEPLOY_BRANCH}"
 
+if [ -x ops/install-vps-runtime.sh ]; then
+  echo "==> Applying idempotent VPS runtime retention configuration..."
+  sudo ops/install-vps-runtime.sh
+fi
+
+echo "==> Bounding Docker build cache (${CERESBI_DOCKER_BUILD_CACHE_MAX} max)..."
+prune_build_cache
+
 GIT_SHA="$(git rev-parse --short=12 HEAD)"
 CERESBI_WEB_IMAGE="ceresbi:${GIT_SHA}"
 CERESBI_AI_IMAGE="ceresbi-ai:${GIT_SHA}"
@@ -160,7 +244,7 @@ export CERESBI_WEB_IMAGE CERESBI_AI_IMAGE
 export CERESBI_BI_IMAGE
 
 echo "==> Building web image ${CERESBI_WEB_IMAGE}..."
-docker build \
+docker_cmd build \
   --build-arg "VITE_SUPABASE_URL=${VITE_SUPABASE_URL}" \
   --build-arg "VITE_SUPABASE_PUBLISHABLE_KEY=${VITE_SUPABASE_PUBLISHABLE_KEY}" \
   --build-arg "VITE_YA_AGENT_V2_ENABLED=${VITE_YA_AGENT_V2_ENABLED}" \
@@ -169,19 +253,28 @@ docker build \
   --build-arg "VITE_BI_API_BASE_URL=${VITE_BI_API_BASE_URL}" \
   -t "${CERESBI_WEB_IMAGE}" .
 
-if [ "${CERESBI_AI_YA_AGENT_V2_ENABLED}" = "true" ] && ! docker run --rm --entrypoint sh "${CERESBI_WEB_IMAGE}" -c 'grep -R -F -q "/api/ai/v2/chat/stream" /usr/share/nginx/html'; then
+if [ "${CERESBI_AI_YA_AGENT_V2_ENABLED}" = "true" ] && ! docker_cmd run --rm --entrypoint sh "${CERESBI_WEB_IMAGE}" -c 'grep -R -F -q "/api/ai/v2/chat/stream" /usr/share/nginx/html'; then
   echo "ERROR: the web bundle does not contain the v2 streaming route" >&2
   exit 1
 fi
 
 echo "==> Building AI image ${CERESBI_AI_IMAGE}..."
-docker build -t "${CERESBI_AI_IMAGE}" ai-service
+docker_cmd build -t "${CERESBI_AI_IMAGE}" ai-service
 
 echo "==> Building BI image ${CERESBI_BI_IMAGE}..."
-docker build -t "${CERESBI_BI_IMAGE}" bi-service
+docker_cmd build -t "${CERESBI_BI_IMAGE}" bi-service
+
+# Create the secrets only after validation and all image builds passed. Failed
+# preflights/builds must not leave new credentials behind in Swarm.
+ensure_docker_secret "${CERESBI_AI_OPENROUTER_API_KEY_SECRET}" "${CERESBI_AI_OPENROUTER_API_KEY}"
+ensure_docker_secret "${CERESBI_AI_DATABASE_URL_SECRET}" "${CERESBI_AI_DATABASE_URL}"
+ensure_docker_secret "${CERESBI_AI_JOB_TOKEN_SECRET}" "${CERESBI_AI_JOB_TOKEN}"
+if [ -n "${SUPABASE_JWT_SECRET}" ]; then
+  ensure_docker_secret "${CERESBI_AI_JWT_SECRET}" "${SUPABASE_JWT_SECRET}"
+fi
 
 echo "==> Deploying stack ${STACK_NAME}..."
-docker stack deploy --detach=false -c docker-stack.yml "${STACK_NAME}"
+docker_cmd stack deploy --detach=false -c docker-stack.yml "${STACK_NAME}"
 
 # `docker stack deploy --detach=false` converges both services to the immutable
 # tags. Avoid a second concurrent service update: on single-node Swarm that can
@@ -189,7 +282,7 @@ docker stack deploy --detach=false -c docker-stack.yml "${STACK_NAME}"
 echo "==> Stack services converged; verifying immutable images..."
 
 for service in web ai bi bi_refresh; do
-  actual_image="$(docker service inspect --format '{{.Spec.TaskTemplate.ContainerSpec.Image}}' "${STACK_NAME}_${service}")"
+  actual_image="$(docker_cmd service inspect --format '{{.Spec.TaskTemplate.ContainerSpec.Image}}' "${STACK_NAME}_${service}")"
   expected_image="${CERESBI_WEB_IMAGE}"
   [ "${service}" = "ai" ] && expected_image="${CERESBI_AI_IMAGE}"
   [ "${service}" = "bi" ] && expected_image="${CERESBI_BI_IMAGE}"
@@ -204,7 +297,7 @@ echo "==> Waiting for web, AI, BI and refresh tasks..."
 for attempt in $(seq 1 30); do
   all_ready=true
   for service in web ai bi bi_refresh; do
-    replicas="$(docker service ls --filter "name=${STACK_NAME}_${service}" --format '{{.Replicas}}' | head -n 1)"
+    replicas="$(docker_cmd service ls --filter "name=${STACK_NAME}_${service}" --format '{{.Replicas}}' | head -n 1)"
     if [ "${replicas}" != "1/1" ]; then
       all_ready=false
       break
@@ -215,13 +308,13 @@ for attempt in $(seq 1 30); do
   fi
   if [ "${attempt}" -eq 30 ]; then
     echo "ERROR: stack tasks did not converge to 1/1" >&2
-    docker service ls --filter "name=${STACK_NAME}_" >&2 || true
+    docker_cmd service ls --filter "name=${STACK_NAME}_" >&2 || true
     exit 1
   fi
   sleep 2
 done
 
-actual_v2_flag="$(docker service inspect --format '{{range .Spec.TaskTemplate.ContainerSpec.Env}}{{println .}}{{end}}' "${STACK_NAME}_ai" | sed -n 's/^YA_AGENT_V2_ENABLED=//p' | tail -n 1)"
+actual_v2_flag="$(docker_cmd service inspect --format '{{range .Spec.TaskTemplate.ContainerSpec.Env}}{{println .}}{{end}}' "${STACK_NAME}_ai" | sed -n 's/^YA_AGENT_V2_ENABLED=//p' | tail -n 1)"
 if [ "${actual_v2_flag}" != "${CERESBI_AI_YA_AGENT_V2_ENABLED}" ]; then
   echo "ERROR: ${STACK_NAME}_ai has YA_AGENT_V2_ENABLED=${actual_v2_flag:-<unset>}, expected ${CERESBI_AI_YA_AGENT_V2_ENABLED}" >&2
   exit 1
