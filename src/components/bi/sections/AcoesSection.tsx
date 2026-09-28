@@ -24,8 +24,11 @@ import { AcoesMapaOportunidades } from "@/components/bi/sections/AcoesMapaOportu
 import { AcoesClientesCriticos } from "@/components/bi/sections/AcoesClientesCriticos";
 import { AcoesSinaisSemanaIA } from "@/components/bi/sections/AcoesSinaisSemanaIA";
 import { AcoesChartsGrid } from "@/components/bi/sections/AcoesChartsGrid";
+import { ChartCard } from "@/components/bi/ChartCard";
+import { PieChartWithLabels } from "@/components/bi/charts";
 import type { BarChartData } from "@/components/bi/charts/BarChart";
 import { faixaToDiasRange } from "@/lib/bi/acoesGestaoUtils";
+import { CHART_COLORS } from "@/lib/chartPalette";
 import { toISODate, getPreviousPeriod, formatDateBR } from "@/lib/dateUtils";
 import { useDelayedReady } from "@/hooks/useDelayedReady";
 import { useAlturaColunaEsquerda } from "@/hooks/bi/useAlturaColunaEsquerda";
@@ -50,6 +53,7 @@ const EMPTY: RpcAcoesBI = {
 const EMPTY_FUNIL: AcoesFunil = {
   visitas: 0, oportunidades: 0, valorOportunidades: 0,
   oportunidadesAbertas: 0, valorOportunidadesAbertas: 0,
+  negociosAbertosTocadosNoPeriodo: 0, valorPipelineAbertoTocadoNoPeriodo: 0,
   entradasEtapaOportunidade: 0, emEtapaOportunidade: 0,
   ganhos: 0, perdidos: 0, valorPerdido: 0,
   visitasPorOportunidade: null, oportPorFechamento: null,

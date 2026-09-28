@@ -295,7 +295,7 @@ mesma resposta. Os 4 negocios com `ngo_conclusao` divergente sao resolvidos por
 - Chart "Clientes em Risco" → barras com gradiente sequencial champagne→terracota (primeira barra mais clara, última mais escura) — NÃO cor única
 - Bloco 1 (Funil) → badge de contexto visível com `role="note"` (inspecionar DOM: `[role="note"]` presente dentro do funil)
 - Antes do bloco "Gestão de Carteira" → mini-cards top 3 "sem contato" visíveis (3 cards com nome de cliente + dias); se base sem dados de carteira, seção não renderiza (null) — não é erro
-- AcoesSection → gráficos de distribuição usam barras horizontais ordenadas DESC (HorizontalBarChart), NÃO pizza — PieChartWithLabels ausente desta tela (mas NÃO deletado do projeto)
+- AcoesChartsGrid → distribuições por consultor, cidade e tipo de ação usam barras horizontais ordenadas DESC; o card "Tipo de Contato" em AcoesSection usa PieChartWithLabels. O smoke de render de AcoesSection cobre a montagem desse card.
 - `npm run build` → sucesso (sem erros TS nas 6 files tocadas)
 
 ### v8 (dedup + paginação numerada — SEMPRE rodar)
